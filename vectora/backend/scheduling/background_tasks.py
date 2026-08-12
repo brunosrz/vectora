@@ -561,6 +561,24 @@ async def list_runs(session_id: str, limit: int = 50) -> list[dict[str, Any]]:
     return list(rows)
 
 
+async def list_runs_for_task(task_id: str, limit: int = 20) -> list[dict[str, Any]]:
+    """Histórico de execuções de UMA task — o que falta pro card do Kanban
+    conectar run history (hoje só `list_runs` por session existe, sem
+    filtro por card)."""
+    conn = await _get_db()
+    try:
+        cur = await conn.execute(
+            "SELECT * FROM vectora_background_runs WHERE task_id = ? "
+            "ORDER BY started_at DESC LIMIT ?",
+            (task_id, limit),
+        )
+        rows = await cur.fetchall()
+    finally:
+        with contextlib.suppress(Exception):
+            await conn.close()
+    return list(rows)
+
+
 # ---------------------------------------------------------------------------
 # Delegação de subagente (tool `task`) — vira histórico na aba Tarefas
 # ---------------------------------------------------------------------------

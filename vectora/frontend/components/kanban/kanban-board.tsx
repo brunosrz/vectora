@@ -129,13 +129,21 @@ const POLL_INTERVAL_MS = 30000;
 const SSE_URL = "/webhook/events";
 const SSE_RECONNECT_DELAY_MS = 3000;
 
+export interface KanbanDependency {
+  id: string;
+  name: string;
+  status: string;
+}
+
 export interface KanbanTask {
   id: string;
   name: string;
   status: string;
   block_kind: string | null;
   block_reason: string | null;
-  blocked_by?: string[];
+  //: Pais diretos (`vectora_task_links`) com status atual — substitui o
+  //: badge de texto solto por um contador N/M real, direto do backend.
+  dependencies?: KanbanDependency[];
   //: "tenant" do card — já existia no backend (`workspace_id`), só não
   //: chegava até aqui.
   workspace_id?: string | null;
@@ -243,6 +251,14 @@ export async function applyDragTransition(
   return true;
 }
 
+interface KanbanRun {
+  id: string;
+  status: string;
+  trigger_source: string;
+  started_at: string;
+  finished_at: string | null;
+}
+
 function TaskCard({
   task,
   threadId,
@@ -259,6 +275,20 @@ function TaskCard({
   const base = `/sessions/${threadId}/background/tasks/${task.id}`;
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: task.id });
+  const [runs, setRuns] = useState<KanbanRun[] | null>(null);
+  const [runsOpen, setRunsOpen] = useState(false);
+
+  const toggleRuns = () => {
+    if (runsOpen) {
+      setRunsOpen(false);
+      return;
+    }
+    setRunsOpen(true);
+    void fetch(`${base}/runs`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setRuns(Array.isArray(data) ? data : []))
+      .catch(() => setRuns([]));
+  };
 
   const desbloquear = () => {
     void fetch(`${base}/unblock`, {
@@ -333,12 +363,29 @@ function TaskCard({
           )}
         </div>
       ) : null}
-      {/* Dependência aparece como badge, não como linha desenhada: a v1 não
-          precisa de grafo pra dizer "espera aquele outro". */}
-      {task.blocked_by?.length ? (
-        <p className="text-[10px] text-muted-foreground">
-          {m.kanban_blocked_by()}: {task.blocked_by.join(", ")}
-        </p>
+      {/* Contador N/M real (vectora_task_links via TaskOut.dependencies) —
+          substitui o badge de texto solto que a v1 tinha. */}
+      {task.dependencies?.length ? (
+        <div className="text-[10px] text-muted-foreground">
+          <p>
+            {m.kanban_dependencies_progress({
+              done: task.dependencies.filter((d) => d.status === "done").length,
+              total: task.dependencies.length,
+            })}
+          </p>
+          <ul className="pl-2">
+            {task.dependencies.map((dep) => (
+              <li
+                key={dep.id}
+                className={
+                  dep.status === "done" ? "line-through opacity-60" : ""
+                }
+              >
+                {dep.name}
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
       {task.block_reason ? (
         <p className="text-[10px] text-amber-600 dark:text-amber-400">
@@ -370,7 +417,27 @@ function TaskCard({
             {m.kanban_action_cancel()}
           </button>
         )}
+        <button
+          onClick={toggleRuns}
+          className="text-[10px] text-muted-foreground hover:underline"
+        >
+          {runsOpen ? m.kanban_action_hide_runs() : m.kanban_action_show_runs()}
+        </button>
       </div>
+      {runsOpen ? (
+        <ul className="text-[10px] text-muted-foreground space-y-0.5 pl-2">
+          {runs === null ? null : runs.length === 0 ? (
+            <li>{m.kanban_no_runs()}</li>
+          ) : (
+            runs.map((run) => (
+              <li key={run.id}>
+                {run.status} · {run.trigger_source} ·{" "}
+                {new Date(run.started_at).toLocaleString()}
+              </li>
+            ))
+          )}
+        </ul>
+      ) : null}
     </div>
   );
 }

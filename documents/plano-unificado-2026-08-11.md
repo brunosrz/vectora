@@ -284,6 +284,32 @@ separados.
 - smoke: criar task com 2 dependências, resolver 1, confirmar "1/2" no card;
   adicionar comentário e recarregar a página, confirmar persistência.
 
+### Execução real (2026-08-12)
+
+- **Itens 3, 4 e 5 — entregues.** `backend/scheduling/kanban.py::
+get_dependencies` (pais diretos de `vectora_task_links` com status) +
+  `TaskOut.dependencies` (`backend/api/handlers/background.py`) — o
+  contador N/M real substitui o badge de texto `blocked_by` que o
+  frontend já declarava mas o backend nunca populava (achado confirmado
+  nesta sprint: campo morto desde a Sprint 7). `list_runs_for_task` +
+  `GET /sessions/{thread_id}/background/tasks/{task_id}/runs` novo —
+  fecha a desconexão registrada no texto original ("endpoint existe, só
+  por session"). Rename "Tasks"/"Tarefas" → "Rotinas"/"Routines"/"Rutinas"
+  nos 3 idiomas. 11 testes de backend + 33 de frontend (2 novos + 31
+  preexistentes, todos verdes após a migração do `blocked_by` pro
+  `dependencies`).
+- **Itens 1 e 2 (comentários + timeline com schema novo) cortados
+  deliberadamente nesta passada.** Exigem tabela nova e endpoints CRUD
+  próprios — escopo maior e mais arriscado que os itens 3-5, que
+  reaproveitaram infraestrutura já existente (`vectora_task_links`,
+  `vectora_background_runs`). Continuam registrados como pendência
+  explícita, candidatos a sprint própria.
+- **Achado durante a implementação**: `_to_out` (handler REST) era
+  síncrona e várias chamadas não passavam por `await` — virou `async def`
+  pra poder consultar `get_dependencies`; os 4 call-sites existentes
+  foram migrados no mesmo commit (nenhum ficou esquecido, confirmado
+  pela suíte completa passando).
+
 ---
 
 ## Sprint 22 — Fallback automático de modelo com suporte a imagem (dívida da Sprint 9)

@@ -33,6 +33,12 @@ router = APIRouter(prefix="/sessions/{thread_id}/background", tags=["background"
 # ---------------------------------------------------------------------------
 
 
+class TaskDependencyOut(BaseModel):
+    id: str
+    name: str
+    status: str
+
+
 class TaskOut(BaseModel):
     id: str
     session_id: str
@@ -52,6 +58,10 @@ class TaskOut(BaseModel):
     #: "assignee".
     agent_profile_id: str | None = None
     priority: str = "normal"
+    #: Pais diretos em `vectora_task_links`, com status atual — fonte real
+    #: do contador N/M do editor de dependência no card (antes o frontend
+    #: declarava `blocked_by` mas nada preenchia).
+    dependencies: list[TaskDependencyOut] = []
 
 
 class CreateTaskRequest(BaseModel):
@@ -109,7 +119,10 @@ def _user_id(request: Request) -> str:
     return str(user.id)
 
 
-def _to_out(t: BackgroundTask) -> TaskOut:
+async def _to_out(t: BackgroundTask) -> TaskOut:
+    from backend.scheduling.kanban import get_dependencies
+
+    deps = await get_dependencies(t.id)
     return TaskOut(
         id=t.id,
         session_id=t.session_id,
@@ -127,6 +140,7 @@ def _to_out(t: BackgroundTask) -> TaskOut:
         block_reason=t.block_reason,
         agent_profile_id=t.agent_profile_id,
         priority=t.priority,
+        dependencies=[TaskDependencyOut(**d) for d in deps],
     )
 
 
@@ -150,7 +164,7 @@ async def get_tasks(request: Request, thread_id: str) -> list[TaskOut]:
     from backend.scheduling.background_tasks import list_tasks
 
     _user_id(request)
-    return [_to_out(t) for t in await list_tasks(thread_id)]
+    return [await _to_out(t) for t in await list_tasks(thread_id)]
 
 
 @router.post("/tasks", response_model=TaskOut, status_code=201)
@@ -181,7 +195,7 @@ async def post_task(
     except Exception as exc:
         logger.exception("background: falha ao criar task")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-    return _to_out(task)
+    return await _to_out(task)
 
 
 #: Ações suportadas por `PATCH /tasks/bulk`. Só "archive" nesta leva — outras
@@ -253,7 +267,7 @@ async def patch_task(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if updated is None:
         raise HTTPException(status_code=404, detail="Task não encontrada")
-    return _to_out(updated)
+    return await _to_out(updated)
 
 
 @router.delete("/tasks/{task_id}", status_code=204)
@@ -280,7 +294,7 @@ async def unblock_task_endpoint(
     updated = await get_task(task_id)
     if updated is None:
         raise HTTPException(status_code=404, detail="Task não encontrada")
-    return _to_out(updated)
+    return await _to_out(updated)
 
 
 @router.post("/tasks/{task_id}/run", status_code=202)
@@ -336,22 +350,35 @@ async def resume_run_endpoint(
     return {"status": "queued", "run_id": run_id}
 
 
+def _row_to_run_out(r: dict[str, Any]) -> RunOut:
+    return RunOut(
+        id=r["id"],
+        task_id=r["task_id"],
+        run_thread_id=r.get("run_thread_id"),
+        trigger_source=r["trigger_source"],
+        status=r["status"],
+        summary=r.get("summary"),
+        started_at=r["started_at"],
+        finished_at=r.get("finished_at"),
+    )
+
+
 @router.get("/runs", response_model=list[RunOut])
 async def get_runs(request: Request, thread_id: str) -> list[RunOut]:
     from backend.scheduling.background_tasks import list_runs
 
     _user_id(request)
     rows = await list_runs(thread_id)
-    return [
-        RunOut(
-            id=r["id"],
-            task_id=r["task_id"],
-            run_thread_id=r.get("run_thread_id"),
-            trigger_source=r["trigger_source"],
-            status=r["status"],
-            summary=r.get("summary"),
-            started_at=r["started_at"],
-            finished_at=r.get("finished_at"),
-        )
-        for r in rows
-    ]
+    return [_row_to_run_out(r) for r in rows]
+
+
+@router.get("/tasks/{task_id}/runs", response_model=list[RunOut])
+async def get_task_runs(request: Request, thread_id: str, task_id: str) -> list[RunOut]:
+    """Histórico de execuções de UMA task — fecha a conexão que faltava
+    entre `GET /runs` (existia, só por session) e o card do Kanban."""
+    from backend.scheduling.background_tasks import list_runs_for_task
+
+    _user_id(request)
+    await _require_task(thread_id, task_id)
+    rows = await list_runs_for_task(task_id)
+    return [_row_to_run_out(r) for r in rows]

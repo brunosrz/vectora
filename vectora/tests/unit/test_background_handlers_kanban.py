@@ -221,3 +221,126 @@ async def test_bulk_com_acao_desconhecida_e_recusado(db):
         await bg_api.bulk_tasks_endpoint(_fake_request(), "s1", body)
 
     assert exc_info.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_get_tasks_devolve_dependencies_com_contador_nm(db):
+    """`TaskOut.dependencies` é a fonte real do contador N/M no card —
+    antes o frontend declarava `blocked_by` mas nada preenchia."""
+    pai_pronto = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Pai concluído",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    pai_pendente = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Pai pendente",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    filho = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Filho",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    await kanban.set_status(pai_pronto.id, "done")
+    await kanban.add_dependency(pai_pronto.id, filho.id)
+    await kanban.add_dependency(pai_pendente.id, filho.id)
+
+    saida = await bg_api.get_tasks(_fake_request(), "s1")
+    filho_out = next(t for t in saida if t.id == filho.id)
+
+    assert len(filho_out.dependencies) == 2
+    concluidas = [d for d in filho_out.dependencies if d.status == "done"]
+    assert len(concluidas) == 1
+    assert {d.id for d in filho_out.dependencies} == {pai_pronto.id, pai_pendente.id}
+
+
+@pytest.mark.asyncio
+async def test_get_tasks_sem_dependencia_devolve_lista_vazia(db):
+    """Edge: task sem nenhum pai em `vectora_task_links` não quebra — lista
+    vazia, não `None`/erro."""
+    await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="Sozinha",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+
+    saida = await bg_api.get_tasks(_fake_request(), "s1")
+
+    assert saida[0].dependencies == []
+
+
+@pytest.mark.asyncio
+async def test_get_task_runs_filtra_por_task_nao_por_session(db):
+    """`GET /tasks/{id}/runs` — fecha a lacuna registrada no plano: só
+    existia `list_runs` por session, sem filtro por card específico."""
+    task_a = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="A",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    task_b = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="B",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    conn = await bg._get_db()
+    for task, label in ((task_a, "run-a"), (task_b, "run-b")):
+        await conn.execute(
+            "INSERT INTO vectora_background_runs "
+            "(id, task_id, session_id, trigger_source, status, started_at) "
+            "VALUES (?, ?, ?, 'manual', 'done', datetime('now'))",
+            (label, task.id, "s1"),
+        )
+    await conn.commit()
+    await conn.close()
+
+    saida = await bg_api.get_task_runs(_fake_request(), "s1", task_a.id)
+
+    assert len(saida) == 1
+    assert saida[0].id == "run-a"
+    assert saida[0].task_id == task_a.id
+
+
+@pytest.mark.asyncio
+async def test_get_task_runs_task_de_outra_session_e_404(db):
+    """Bad path: task existente mas de outra session não vaza run history —
+    mesma checagem de `_require_task` já usada pelos demais endpoints."""
+    task = await bg.create_task(
+        session_id="s-outra",
+        user_id="u1",
+        kind="routine",
+        name="A",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await bg_api.get_task_runs(_fake_request(), "s1", task.id)
+
+    assert exc_info.value.status_code == 404

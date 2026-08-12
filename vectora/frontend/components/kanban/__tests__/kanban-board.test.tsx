@@ -133,12 +133,94 @@ describe("KanbanBoard", () => {
     expect(screen.getByText("falta a chave da API")).toBeInTheDocument();
   });
 
-  it("dependência aparece como badge, não como coluna", async () => {
-    mockTasks([task({ status: "todo", blocked_by: ["t0"] })]);
+  it("dependência aparece como contador N/M, não como coluna", async () => {
+    mockTasks([
+      task({
+        status: "todo",
+        dependencies: [
+          { id: "p1", name: "pai concluído", status: "done" },
+          { id: "p2", name: "pai pendente", status: "todo" },
+        ],
+      }),
+    ]);
 
     await montar();
 
-    expect(screen.getByText(/bloqueado por: t0/i)).toBeInTheDocument();
+    expect(screen.getByText("1/2 dependências concluídas")).toBeInTheDocument();
+    expect(screen.getByText("pai concluído")).toBeInTheDocument();
+    expect(screen.getByText("pai pendente")).toBeInTheDocument();
+  });
+
+  it("task sem dependências não mostra o contador (edge)", async () => {
+    mockTasks([task({ status: "todo", dependencies: [] })]);
+
+    await montar();
+
+    expect(
+      screen.queryByText(/dependências concluídas/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("botão 'Histórico de execuções' busca /runs sob demanda e lista o resultado", async () => {
+    const chamadas: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        chamadas.push(url);
+        if (url.endsWith("/runs")) {
+          return new Response(
+            JSON.stringify([
+              {
+                id: "r1",
+                status: "done",
+                trigger_source: "manual",
+                started_at: "2026-01-01T00:00:00Z",
+                finished_at: "2026-01-01T00:01:00Z",
+              },
+            ]),
+            { status: 200 },
+          );
+        }
+        return new Response(JSON.stringify([task({ id: "a" })]), {
+          status: 200,
+        });
+      }),
+    );
+
+    await montar();
+    const botao = screen.getByRole("button", {
+      name: /histórico de execuções/i,
+    });
+    await act(async () => {
+      botao.click();
+    });
+
+    expect(chamadas.some((c) => c.endsWith("/tasks/a/runs"))).toBe(true);
+    expect(screen.getByText(/done · manual/i)).toBeInTheDocument();
+  });
+
+  it("histórico sem nenhuma execução mostra mensagem, não lista vazia silenciosa", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.endsWith("/runs")) {
+          return new Response(JSON.stringify([]), { status: 200 });
+        }
+        return new Response(JSON.stringify([task({ id: "a" })]), {
+          status: 200,
+        });
+      }),
+    );
+
+    await montar();
+    const botao = screen.getByRole("button", {
+      name: /histórico de execuções/i,
+    });
+    await act(async () => {
+      botao.click();
+    });
+
+    expect(screen.getByText(/nenhuma execução ainda/i)).toBeInTheDocument();
   });
 
   it("triage e archived não aparecem nas cinco colunas por padrão", async () => {

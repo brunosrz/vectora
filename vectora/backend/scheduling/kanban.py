@@ -323,6 +323,26 @@ async def unblock_task(task_id: str) -> None:
     _emit_kanban_event(task_id, "ready", block_kind=None, block_reason=None)
 
 
+async def get_dependencies(task_id: str) -> list[dict[str, Any]]:
+    """Pais diretos de `task_id` (não transitivos) com status atual —
+    fonte real do contador N/M e da lista `blocked_by` no card do Kanban,
+    substituindo o campo que hoje o frontend declara mas o backend nunca
+    populava."""
+    db = await _get_db()
+    async with db.execute(
+        """
+        SELECT t.id, t.name, t.status
+        FROM vectora_task_links l
+        JOIN vectora_background_tasks t ON t.id = l.parent_id
+        WHERE l.child_id = ?
+        ORDER BY t.created_at
+        """,
+        (task_id,),
+    ) as cur:
+        rows = await cur.fetchall()
+    return [{"id": r["id"], "name": r["name"], "status": r["status"]} for r in rows]
+
+
 async def _depende_de(task_id: str) -> set[str]:
     """Ancestrais de `task_id` — usado pra detectar ciclo."""
     db = await _get_db()
