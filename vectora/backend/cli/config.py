@@ -370,6 +370,64 @@ def _run_category_command(category: str, args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Categorias de coleção (backend/config/collections.py) — recursos que são
+# listas, não pares chave→valor: modelos registrados por gateway (global) e
+# memórias/perfil de conta (por usuário, sentinela "local" no desktop —
+# mesmo sentinela já usado por rbac.auth.get_env_overrides/set_env_override).
+# ---------------------------------------------------------------------------
+
+_COLLECTION_ACTION_TO_CATEGORY = {
+    "provider-routing": "provider_routing",
+    "memory": "memory",
+    "account": "account",
+}
+_USER_SCOPED_CATEGORIES = frozenset({"memory", "account"})
+
+
+def _run_collection_command(action: str, args: argparse.Namespace) -> None:
+    """``vectora config provider-routing|memory|account --list`` — lista os
+    itens de um recurso de coleção do schema declarativo. Sem escrita: add/
+    remove de coleção continuam pelos comandos/endpoints especializados que
+    já existiam antes do registry (CRUD real, não par chave→valor)."""
+    import asyncio
+
+    from backend.config import collections_for_category, user_scoped_fields_for_category
+
+    if not getattr(args, "list_collection", False):
+        print(f"❌ Use --list para listar os itens de '{action}'.")
+        sys.exit(1)
+
+    category = _COLLECTION_ACTION_TO_CATEGORY[action]
+
+    if category in _USER_SCOPED_CATEGORIES:
+        user_id = getattr(args, "user_id", None) or "local"
+        fields = user_scoped_fields_for_category(category)
+        if not fields:
+            print(f"Nenhum recurso de coleção registrado na categoria '{category}'.")
+            return
+        for field in fields:
+            items = asyncio.run(field.list_items(user_id))
+            print(f"{field.key} (user_id={user_id}):")
+            if not items:
+                print("  (nenhum item)")
+            for item in items:
+                print(f"  {item}")
+        return
+
+    fields = collections_for_category(category)
+    if not fields:
+        print(f"Nenhum recurso de coleção registrado na categoria '{category}'.")
+        return
+    for field in fields:
+        items = asyncio.run(field.list_items())
+        print(f"{field.key}:")
+        if not items:
+            print("  (nenhum item)")
+        for item in items:
+            print(f"  {item}")
+
+
+# ---------------------------------------------------------------------------
 # Dispatcher principal
 # ---------------------------------------------------------------------------
 
@@ -382,8 +440,11 @@ def run_config(args: argparse.Namespace) -> None:
         _show_or_set(args)
         return
 
-    if action in _REGISTRY_CATEGORIES:
-        _run_category_command(action, args)
+    if action in _REGISTRY_CATEGORIES or action in _COLLECTION_ACTION_TO_CATEGORY:
+        if action in _REGISTRY_CATEGORIES:
+            _run_category_command(action, args)
+        else:
+            _run_collection_command(action, args)
         return
 
     if action == "keys":

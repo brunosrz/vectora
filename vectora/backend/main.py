@@ -248,7 +248,11 @@ def _build_parser() -> argparse.ArgumentParser:
             "  redis <url>          testa e persiste Redis\n"
             "  integrations|connect|preferences [--get KEY]... [--set KEY=VALUE]...\n"
             "                       schema declarativo (backend/config/registry.py) —\n"
-            "                       mesmas categorias do frontend (Ambiente/Preferências)"
+            "                       mesmas categorias do frontend (Ambiente/Preferências)\n"
+            "  provider-routing|memory|account --list [--user-id ID]\n"
+            "                       recursos de coleção do registry (backend/config/\n"
+            "                       collections.py) — memory/account são por usuário\n"
+            "                       (default: 'local', o mesmo sentinela do desktop)"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -264,6 +268,9 @@ def _build_parser() -> argparse.ArgumentParser:
             "integrations",
             "connect",
             "preferences",
+            "provider-routing",
+            "memory",
+            "account",
         ],
         help="Ação de configuração (sem ação = mostra/edita settings).",
     )
@@ -298,6 +305,18 @@ def _build_parser() -> argparse.ArgumentParser:
         action="append",
         dest="get_values",
         help="[integrations|connect|preferences] Lê uma chave do registry. Repetível.",
+    )
+    config_p.add_argument(
+        "--list",
+        action="store_true",
+        dest="list_collection",
+        help="[provider-routing|memory|account] Lista os itens do recurso de coleção.",
+    )
+    config_p.add_argument(
+        "--user-id",
+        dest="user_id",
+        default=None,
+        help="[memory|account] Dono do recurso per-usuário (default: 'local').",
     )
 
     # ── sessions ──────────────────────────────────────────────────────────────

@@ -257,6 +257,8 @@ class TestCliCategoryCommand:
             "api_key": None,
             "set_values": None,
             "get_values": None,
+            "list_collection": False,
+            "user_id": None,
         }
         base.update(overrides)
         return argparse.Namespace(**base)
@@ -322,3 +324,97 @@ class TestCliCategoryCommand:
             assert "0000" in out  # últimos 4 chars aparecem, o resto não
         finally:
             object.__setattr__(settings, "google_api_key", original)
+
+
+class TestCliCollectionCommand:
+    """`vectora config provider-routing|memory|account --list` — fecha a
+    lacuna registrada em `documents/plano-unificado-2026-08-11.md`: as
+    categorias de coleção têm adapter funcionando no backend desde os
+    commits 2970f264..52c46f5b, mas nenhum comando CLI as expunha."""
+
+    def _ns(self, **overrides):
+        import argparse
+
+        base = {
+            "config_action": None,
+            "config_arg": None,
+            "api_key": None,
+            "set_values": None,
+            "get_values": None,
+            "list_collection": False,
+            "user_id": None,
+        }
+        base.update(overrides)
+        return argparse.Namespace(**base)
+
+    def test_sem_list_flag_da_erro(self, capsys):
+        from backend.cli.config import run_config
+
+        with pytest.raises(SystemExit) as exc:
+            run_config(self._ns(config_action="provider-routing"))
+        assert exc.value.code == 1
+        out = capsys.readouterr().out
+        assert "--list" in out
+
+    def test_provider_routing_lista_modelos_registrados(self, capsys, monkeypatch):
+        from backend.cli.config import run_config
+        from backend.config.adapters import RegisteredModelsTableAdapter
+
+        async def _fake_list(self):
+            return [{"id": "1", "tag": "llama3", "created_at": "2026-01-01"}]
+
+        monkeypatch.setattr(RegisteredModelsTableAdapter, "list_items", _fake_list)
+
+        run_config(self._ns(config_action="provider-routing", list_collection=True))
+        out = capsys.readouterr().out
+        assert "ollama_registered_models" in out
+        assert "llama3" in out
+
+    def test_provider_routing_sem_itens_nao_quebra(self, capsys, monkeypatch):
+        from backend.cli.config import run_config
+        from backend.config.adapters import RegisteredModelsTableAdapter
+
+        async def _fake_list(self):
+            return []
+
+        monkeypatch.setattr(RegisteredModelsTableAdapter, "list_items", _fake_list)
+
+        run_config(self._ns(config_action="provider-routing", list_collection=True))
+        out = capsys.readouterr().out
+        assert "(nenhum item)" in out
+
+    def test_memory_usa_user_id_local_por_default(self, capsys, monkeypatch):
+        from backend.cli.config import run_config
+        from backend.config.adapters import MemoryAdapter
+
+        seen_user_ids = []
+
+        async def _fake_list(self, user_id):
+            seen_user_ids.append(user_id)
+            return [{"key": "k1", "content": "prefere respostas curtas"}]
+
+        monkeypatch.setattr(MemoryAdapter, "list_items", _fake_list)
+
+        run_config(self._ns(config_action="memory", list_collection=True))
+        out = capsys.readouterr().out
+        assert seen_user_ids == ["local"]
+        assert "prefere respostas curtas" in out
+
+    def test_account_respeita_user_id_explicito(self, capsys, monkeypatch):
+        from backend.cli.config import run_config
+        from backend.config.adapters import UserProfileAdapter
+
+        seen_user_ids = []
+
+        async def _fake_list(self, user_id):
+            seen_user_ids.append(user_id)
+            return [{"id": user_id, "username": "bruno"}]
+
+        monkeypatch.setattr(UserProfileAdapter, "list_items", _fake_list)
+
+        run_config(
+            self._ns(config_action="account", list_collection=True, user_id="user-42")
+        )
+        out = capsys.readouterr().out
+        assert seen_user_ids == ["user-42"]
+        assert "user-42" in out

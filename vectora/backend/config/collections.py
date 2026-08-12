@@ -161,3 +161,11 @@ def user_scoped_field(
 
 def get_user_scoped_field(key: str) -> UserScopedCollectionField | None:
     return _USER_SCOPED_REGISTRY.get(key)
+
+
+def user_scoped_fields_for_category(category: str) -> list[UserScopedCollectionField]:
+    return [f for f in _USER_SCOPED_REGISTRY.values() if f.category == category]
+
+
+def all_user_scoped_fields() -> Iterable[UserScopedCollectionField]:
+    return _USER_SCOPED_REGISTRY.values()

@@ -263,26 +263,27 @@ class TestApiKeysEndpoints:
                 captured.append(self.env_var)
                 return "AIzaSyFAKE123"
 
-        src = {
-            "google_api_key": {
-                "category": "integrations",
-                "adapter": _FakeAdapter("GOOGLE_API_KEY"),
-            },
-            "cohere_api_key": {
-                "category": "integrations",
-                "adapter": _FakeAdapter("COHERE_API_KEY"),
-            },
+            def set(self, key: str, value: object) -> None:
+                pass
+
+        adapters: dict[str, _FakeAdapter] = {
+            "google_api_key": _FakeAdapter("GOOGLE_API_KEY"),
+            "cohere_api_key": _FakeAdapter("COHERE_API_KEY"),
         }
-        monkeypatch.setattr(registry, "_REGISTRY", {
-            k: registry.SettingField(
-                key=k,
-                category=v["category"],
-                cli_flag=f"--{k}",
-                description="d",
-                adapter=v["adapter"],
-            )
-            for k, v in src.items()
-        })
+        monkeypatch.setattr(
+            registry,
+            "_REGISTRY",
+            {
+                k: registry.SettingField(
+                    key=k,
+                    category="integrations",
+                    cli_flag=f"--{k}",
+                    description="d",
+                    adapter=adapter,
+                )
+                for k, adapter in adapters.items()
+            },
+        )
 
         request = MagicMock()
         request.state.user = MagicMock(role="root")
