@@ -106,3 +106,34 @@ class RegisteredModelsTableAdapter:
         from backend.api.handlers.provider_routing import _unregister
 
         await _unregister(self.table, item_id)
+
+
+class UserRowAdapter:
+    """Envolve o acesso por-usuário a ``users.env_overrides_json``
+    (``backend/rbac/auth.py``) para uma única env var.
+
+    O registry escalar (`SettingField`) é **global** — um campo não tem
+    contexto de usuário. Este adapter é o contraponto por-usuário: encapsula
+    UMA chave e recebe ``user_id`` em cada operação, isolando o acesso à
+    tabela do resto da lógica de requisição. Delega para os mesmos serviços
+    de ``rbac.auth`` que o handler REST já usa — não duplica storage.
+    """
+
+    def __init__(self, env_key: str) -> None:
+        self.env_key = env_key
+
+    async def get(self, user_id: str) -> object:
+        from backend.rbac import auth as auth_svc
+
+        overrides = await auth_svc.get_env_overrides(user_id)
+        return overrides.get(self.env_key)
+
+    async def set(self, user_id: str, value: object) -> None:
+        from backend.rbac import auth as auth_svc
+
+        await auth_svc.set_env_override(user_id, self.env_key, str(value or ""))
+
+    async def delete(self, user_id: str) -> None:
+        from backend.rbac import auth as auth_svc
+
+        await auth_svc.delete_env_override(user_id, self.env_key)
