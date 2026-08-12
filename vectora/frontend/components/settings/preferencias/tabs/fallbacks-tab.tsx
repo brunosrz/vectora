@@ -44,6 +44,62 @@ async function saveFallbackOrder(order: string[]): Promise<void> {
   });
 }
 
+const IMAGE_FALLBACK_NONE = "__none__";
+
+async function fetchImageFallbackModel(): Promise<string> {
+  const res = await fetch("/admin/model/image-fallback");
+  if (!res.ok) return "";
+  const data = (await res.json()) as { model: string };
+  return data.model ?? "";
+}
+
+async function saveImageFallbackModel(model: string): Promise<void> {
+  await fetch("/admin/model/image-fallback", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: model === IMAGE_FALLBACK_NONE ? "" : model }),
+  });
+}
+
+function ImageFallbackModelSection() {
+  const [model, setModel] = useState<string>(IMAGE_FALLBACK_NONE);
+
+  useEffect(() => {
+    fetchImageFallbackModel()
+      .then((fetched) => setModel(fetched || IMAGE_FALLBACK_NONE))
+      .catch(() => setModel(IMAGE_FALLBACK_NONE));
+  }, []);
+
+  const onChange = (value: string) => {
+    setModel(value);
+    void saveImageFallbackModel(value);
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>{m.prefs_image_fallback_title()}</Label>
+      <p className="text-xs text-muted-foreground">
+        {m.prefs_image_fallback_help()}
+      </p>
+      <Select value={model} onValueChange={onChange}>
+        <SelectTrigger className="h-8 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={IMAGE_FALLBACK_NONE} className="text-xs">
+            {m.prefs_image_fallback_none()}
+          </SelectItem>
+          {getAllowedModels().map((mid) => (
+            <SelectItem key={mid} value={mid} className="text-xs">
+              {getModelDisplayName(mid as ModelOption) || mid}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export function FallbacksTab() {
   const [order, setOrder] = useState<string[]>([]);
   const [addModel, setAddModel] = useState<string>("");
@@ -86,89 +142,92 @@ export function FallbacksTab() {
   const available = getAllowedModels().filter((mid) => !order.includes(mid));
 
   return (
-    <div className="space-y-2">
-      <Label>{m.prefs_fallback_order_title()}</Label>
-      <p className="text-xs text-muted-foreground">
-        {m.prefs_fallback_order_help()}
-      </p>
-
-      {order.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic py-1">
-          {m.prefs_fallback_order_empty()}
+    <div className="space-y-6">
+      <ImageFallbackModelSection />
+      <div className="space-y-2">
+        <Label>{m.prefs_fallback_order_title()}</Label>
+        <p className="text-xs text-muted-foreground">
+          {m.prefs_fallback_order_help()}
         </p>
-      ) : (
-        <ul className="space-y-1">
-          {order.map((mid, i) => (
-            <li
-              key={mid}
-              className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 bg-muted/30 text-sm"
-            >
-              <ProviderIcon
-                provider={getModelProvider(mid as ModelOption)}
-                className="w-3.5 h-3.5 shrink-0 text-muted-foreground"
-              />
-              <span className="flex-1 truncate">
-                {getModelDisplayName(mid as ModelOption) || mid}
-              </span>
-              <button
-                onClick={() => moveUp(i)}
-                disabled={i === 0}
-                title={m.prefs_fallback_order_move_up()}
-                aria-label={m.prefs_fallback_order_move_up()}
-                className="p-1 rounded hover:bg-muted disabled:opacity-30"
-              >
-                <ArrowUp className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => moveDown(i)}
-                disabled={i === order.length - 1}
-                title={m.prefs_fallback_order_move_down()}
-                aria-label={m.prefs_fallback_order_move_down()}
-                className="p-1 rounded hover:bg-muted disabled:opacity-30"
-              >
-                <ArrowDown className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => remove(i)}
-                title={m.prefs_fallback_order_remove()}
-                aria-label={m.prefs_fallback_order_remove()}
-                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
 
-      {available.length > 0 && (
-        <div className="flex gap-2 pt-1">
-          <Select value={addModel} onValueChange={setAddModel}>
-            <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue
-                placeholder={m.prefs_fallback_order_add_placeholder()}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {available.map((mid) => (
-                <SelectItem key={mid} value={mid} className="text-xs">
+        {order.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic py-1">
+            {m.prefs_fallback_order_empty()}
+          </p>
+        ) : (
+          <ul className="space-y-1">
+            {order.map((mid, i) => (
+              <li
+                key={mid}
+                className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 bg-muted/30 text-sm"
+              >
+                <ProviderIcon
+                  provider={getModelProvider(mid as ModelOption)}
+                  className="w-3.5 h-3.5 shrink-0 text-muted-foreground"
+                />
+                <span className="flex-1 truncate">
                   {getModelDisplayName(mid as ModelOption) || mid}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 px-3 text-xs shrink-0"
-            onClick={add}
-            disabled={!addModel}
-          >
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            {m.prefs_fallback_order_add()}
-          </Button>
-        </div>
-      )}
+                </span>
+                <button
+                  onClick={() => moveUp(i)}
+                  disabled={i === 0}
+                  title={m.prefs_fallback_order_move_up()}
+                  aria-label={m.prefs_fallback_order_move_up()}
+                  className="p-1 rounded hover:bg-muted disabled:opacity-30"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => moveDown(i)}
+                  disabled={i === order.length - 1}
+                  title={m.prefs_fallback_order_move_down()}
+                  aria-label={m.prefs_fallback_order_move_down()}
+                  className="p-1 rounded hover:bg-muted disabled:opacity-30"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => remove(i)}
+                  title={m.prefs_fallback_order_remove()}
+                  aria-label={m.prefs_fallback_order_remove()}
+                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {available.length > 0 && (
+          <div className="flex gap-2 pt-1">
+            <Select value={addModel} onValueChange={setAddModel}>
+              <SelectTrigger className="flex-1 h-8 text-xs">
+                <SelectValue
+                  placeholder={m.prefs_fallback_order_add_placeholder()}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {available.map((mid) => (
+                  <SelectItem key={mid} value={mid} className="text-xs">
+                    {getModelDisplayName(mid as ModelOption) || mid}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-3 text-xs shrink-0"
+              onClick={add}
+              disabled={!addModel}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              {m.prefs_fallback_order_add()}
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

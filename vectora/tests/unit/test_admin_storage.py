@@ -245,6 +245,54 @@ class TestFallbackOrderEndpoint:
         assert resp.status_code in (200, 401, 403)
 
 
+class TestImageFallbackModelEndpoint:
+    """GET/PATCH /admin/model/image-fallback (Sprint 22)."""
+
+    def _fresh_runtime(self, tmp_path, monkeypatch):
+        import backend.workspace.runtime_settings as rt_mod
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        fresh = RuntimeSettings(path=tmp_path / "settings.json")
+        monkeypatch.setattr(rt_mod, "runtime_settings", fresh)
+        return fresh
+
+    @pytest.mark.asyncio
+    async def test_get_vazio_por_padrao(self, admin_client, tmp_path, monkeypatch):
+        """Sem configuração: string vazia, não erro — o comportamento
+        antigo (bloquear o envio) continua sendo o default."""
+        self._fresh_runtime(tmp_path, monkeypatch)
+        resp = await admin_client.get("/admin/model/image-fallback")
+        assert resp.status_code in (200, 401, 403)
+        if resp.status_code == 200:
+            assert resp.json()["model"] == ""
+
+    @pytest.mark.asyncio
+    async def test_patch_seta_e_get_reflete(self, admin_client, tmp_path, monkeypatch):
+        self._fresh_runtime(tmp_path, monkeypatch)
+        resp = await admin_client.patch(
+            "/admin/model/image-fallback",
+            json={"model": "google-genai:gemini-2.5-flash"},
+        )
+        assert resp.status_code in (200, 401, 403, 422)
+        if resp.status_code == 200:
+            assert resp.json()["model"] == "google-genai:gemini-2.5-flash"
+            get_resp = await admin_client.get("/admin/model/image-fallback")
+            assert get_resp.json()["model"] == "google-genai:gemini-2.5-flash"
+
+    @pytest.mark.asyncio
+    async def test_patch_string_vazia_limpa(self, admin_client, tmp_path, monkeypatch):
+        """Bad/edge: enviar string vazia limpa a config já salva, em vez de
+        ser rejeitado ou ignorado silenciosamente."""
+        fresh = self._fresh_runtime(tmp_path, monkeypatch)
+        fresh.set("image_fallback_model", "openai:gpt-4o")
+        resp = await admin_client.patch(
+            "/admin/model/image-fallback", json={"model": ""}
+        )
+        if resp.status_code == 200:
+            assert resp.json()["model"] == ""
+            assert fresh.get("image_fallback_model") == ""
+
+
 class TestPatchStorageRequiresPro:
     """Storage Completo (Postgres/Redis/Qdrant) é recurso do Vectora Pro.
 

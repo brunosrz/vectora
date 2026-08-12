@@ -158,6 +158,23 @@ async def _model_supports_vision(model_spec: str) -> bool:
     return False
 
 
+async def _resolve_image_fallback_model() -> str | None:
+    """Modelo de fallback configurado pra anexos de imagem quando o ativo
+    não processa (`runtime_settings["image_fallback_model"]`, vazio por
+    padrão — sem fallback configurado, o comportamento antigo de bloquear
+    o envio é preservado). Devolve `None` se não configurado, ou se o
+    próprio fallback também não suporta visão (config inconsistente não
+    deve criar um loop de bloqueio disfarçado de fallback)."""
+    from backend.workspace.runtime_settings import runtime_settings
+
+    spec = runtime_settings.get("image_fallback_model")
+    if not spec or not isinstance(spec, str):
+        return None
+    if not await _model_supports_vision(spec):
+        return None
+    return spec
+
+
 async def _model_no_vision_stream(thread_id: str) -> AsyncGenerator[str]:
     """Stream de um único erro — mensagem tem imagem anexada mas o provider
     resolvido não aceita conteúdo multimodal (ex.: Cohere, Ollama). Evita
@@ -634,11 +651,18 @@ async def stream_chat(
     # bloqueava até modelos com suporte real a visão (ex.: Gemini).
     has_image = any(att.kind == AttachmentKind.IMAGE for att in request.attachments)
     if has_image and not await _model_supports_vision(request.config.model):
-        return StreamingResponse(
-            _model_no_vision_stream(thread_id),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-        )
+        fallback_spec = await _resolve_image_fallback_model()
+        if fallback_spec is None:
+            return StreamingResponse(
+                _model_no_vision_stream(thread_id),
+                media_type="text/event-stream",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            )
+        # Modelo ativo não processa imagem, mas há um fallback configurado
+        # que processa — roteia pra ele nesta chamada em vez de bloquear o
+        # envio. Só troca o `configurable["model"]` desta request; a
+        # preferência do usuário no seletor não muda.
+        configurable["model"] = _normalize_model_spec(fallback_spec)
 
     # Code mode sempre usa tools (ALL_TOOLS) — modelos que rejeitam replay de
     # tool_calls no histórico nunca funcionam aqui, mesmo na primeira

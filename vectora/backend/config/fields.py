@@ -158,6 +158,18 @@ setting_field(
     description="Timezone IANA usado no agendamento de tarefas (ex.: America/Sao_Paulo).",
     adapter=RuntimeSettingsAdapter(settings_key="user_timezone"),
 )
+setting_field(
+    "image_fallback_model",
+    category="preferences",
+    cli_flag="--image-fallback-model",
+    description=(
+        "Modelo usado automaticamente quando o modelo ativo não processa "
+        "imagem e a mensagem tem anexo (formato 'provider:model', ex.: "
+        "'google-genai:gemini-2.5-flash'). Vazio = comportamento antigo "
+        "(bloqueia o envio com aviso)."
+    ),
+    adapter=RuntimeSettingsAdapter(),
+)
 
 # ── admin/config (~/.vectora/config.toml [server]) — hoje só via /admin/config REST ──
 

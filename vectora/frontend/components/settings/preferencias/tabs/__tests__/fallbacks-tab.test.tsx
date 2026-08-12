@@ -18,7 +18,10 @@ vi.mock("@/lib/paraglide/messages", () => ({
 }));
 
 import { FallbacksTab } from "../fallbacks-tab";
-import { getAllowedModels } from "@/lib/config/deployment-config";
+import {
+  getAllowedModels,
+  getModelDisplayName,
+} from "@/lib/config/deployment-config";
 
 beforeEach(() => {
   vi.stubGlobal("matchMedia", (q: string) => ({
@@ -37,9 +40,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function stubFetch(order: string[], opts: { ok?: boolean } = {}) {
-  const { ok = true } = opts;
+function stubFetch(
+  order: string[],
+  opts: { ok?: boolean; imageFallback?: string } = {},
+) {
+  const { ok = true, imageFallback = "" } = opts;
   const patches: string[][] = [];
+  const imagePatches: string[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string, init?: RequestInit) => {
@@ -55,10 +62,18 @@ function stubFetch(order: string[], opts: { ok?: boolean } = {}) {
         patches.push(body.order);
         return new Response(JSON.stringify({ status: "updated" }));
       }
+      if (u.includes("/admin/model/image-fallback") && method === "GET") {
+        return new Response(JSON.stringify({ model: imageFallback }));
+      }
+      if (u.includes("/admin/model/image-fallback") && method === "PATCH") {
+        const body = JSON.parse(String(init?.body)) as { model: string };
+        imagePatches.push(body.model);
+        return new Response(JSON.stringify({ status: "updated" }));
+      }
       return new Response(JSON.stringify({}));
     }),
   );
-  return patches;
+  return { patches, imagePatches };
 }
 
 describe("FallbacksTab", () => {
@@ -92,7 +107,7 @@ describe("FallbacksTab", () => {
 
   it("remover um modelo da fila persiste a nova ordem via PATCH", async () => {
     const [first] = getAllowedModels();
-    const patches = stubFetch([first]);
+    const { patches } = stubFetch([first]);
 
     render(<FallbacksTab />);
     await waitFor(() =>
@@ -114,5 +129,52 @@ describe("FallbacksTab", () => {
         screen.getByText("prefs_fallback_order_empty"),
       ).toBeInTheDocument(),
     );
+  });
+
+  it("modelo de fallback de imagem carrega o valor salvo do backend", async () => {
+    const [first] = getAllowedModels();
+    stubFetch([], { imageFallback: first });
+
+    render(<FallbacksTab />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("prefs_image_fallback_title"),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText(getModelDisplayName(first) || first),
+    ).toBeInTheDocument();
+  });
+
+  it("sem fallback configurado (edge), mostra a opção 'nenhum'", async () => {
+    stubFetch([], { imageFallback: "" });
+
+    render(<FallbacksTab />);
+
+    await waitFor(() =>
+      expect(screen.getByText("prefs_image_fallback_none")).toBeInTheDocument(),
+    );
+  });
+
+  it("trocar o select do fallback de imagem persiste via PATCH", async () => {
+    const [first, second] = getAllowedModels();
+    const { imagePatches } = stubFetch([], { imageFallback: first });
+
+    render(<FallbacksTab />);
+    await waitFor(() =>
+      expect(
+        screen.getByText(getModelDisplayName(first) || first),
+      ).toBeInTheDocument(),
+    );
+
+    const trigger = screen.getAllByRole("combobox")[0];
+    fireEvent.click(trigger);
+    const option = await screen.findByRole("option", {
+      name: getModelDisplayName(second) || second,
+    });
+    fireEvent.click(option);
+
+    await waitFor(() => expect(imagePatches.at(-1)).toBe(second));
   });
 });

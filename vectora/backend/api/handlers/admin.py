@@ -589,6 +589,38 @@ async def patch_fallback_order(request: Request, body: FallbackOrderBody) -> dic
     return {"status": "updated", "fallback_order": runtime_settings.fallback_order}
 
 
+class ImageFallbackModelBody(BaseModel):
+    model: str = ""
+
+
+@router.get("/model/image-fallback")
+async def get_image_fallback_model(request: Request) -> dict:
+    """Modelo usado automaticamente quando o ativo não processa imagem e a
+    mensagem tem anexo (`backend/api/handlers/chat.py::
+    _resolve_image_fallback_model`). String vazia = sem fallback
+    configurado (comportamento antigo: bloqueia o envio)."""
+    require_admin(_get_user(request))
+    from backend.config.registry import get_field
+
+    field = get_field("image_fallback_model")
+    value = str(field.get() or "") if field is not None else ""
+    return {"model": value}
+
+
+@router.patch("/model/image-fallback")
+async def patch_image_fallback_model(
+    request: Request, body: ImageFallbackModelBody
+) -> dict:
+    """Define (ou limpa, com string vazia) o modelo de fallback de imagem."""
+    require_admin(_get_user(request))
+    from backend.config.registry import get_field
+
+    field = get_field("image_fallback_model")
+    if field is not None:
+        field.set(body.model.strip())
+    return {"status": "updated", "model": body.model.strip()}
+
+
 class MediaModelsBody(BaseModel):
     """String vazia **limpa** a escolha (volta a valer a env var); `None`
     significa "não mexe nesta chave"."""

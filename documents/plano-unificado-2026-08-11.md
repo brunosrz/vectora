@@ -342,6 +342,29 @@ ficou registrado como não construído.
 Smoke: configurar um modelo sem visão como ativo, anexar imagem, confirmar
 que o fallback assume automaticamente (ou sugere, conforme decisão de UX).
 
+### Execução real (2026-08-12)
+
+- **Decisão de UX tomada**: roteia automaticamente (não sugere) — reaproveita
+  a mesma lógica de override de `configurable["model"]` por request que já
+  existe pra outros casos, sem exigir um novo componente de "sugestão" na UI.
+- **Config nova**: `image_fallback_model` entrou no registry declarativo
+  (`backend/config/fields.py`, categoria `preferences`) — ganha CLI (`vectora
+config preferences --set image_fallback_model=...`) de graça, herdando a
+  infraestrutura da Sprint 19. Backend: `backend/api/handlers/chat.py::
+_resolve_image_fallback_model` — `None` se não configurado ou se o próprio
+  fallback também não processa imagem (config inconsistente não vira loop de
+  bloqueio disfarçado). Endpoints REST dedicados (`GET`/`PATCH /admin/model/
+image-fallback`, mesmo padrão de `/admin/model/fallback-order`) porque não
+  existe hoje uma rota REST genérica que exponha campos do registry por
+  categoria — construir uma ficou fora do escopo desta sprint.
+- **UI**: nova seção em `frontend/components/settings/preferencias/tabs/
+fallbacks-tab.tsx` (mesma aba que já lida com fallback de modelo
+  cross-provider) — select com "Nenhum" (default, comportamento antigo) +
+  lista de `getAllowedModels()`.
+- 24 testes de backend (3 de `_resolve_image_fallback_model` + 3 dos
+  endpoints REST + regressão dos existentes) + 7 de frontend (3 novos),
+  todos verdes.
+
 ---
 
 ## Sprint 23 — Governança de custo e liveness de subagentes (Paperclip)

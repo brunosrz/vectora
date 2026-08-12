@@ -6,7 +6,13 @@ deve se traduzir corretamente para o dict ``configurable`` consumido pelo grafo.
 
 from __future__ import annotations
 
-from backend.api.handlers.chat import _build_configurable, _resolve_workspace_id
+import pytest
+
+from backend.api.handlers.chat import (
+    _build_configurable,
+    _resolve_image_fallback_model,
+    _resolve_workspace_id,
+)
 from backend.api.schemas import ChatConfig
 
 # ---------------------------------------------------------------------------
@@ -241,3 +247,57 @@ def test_resolve_creates_session_workspace_when_no_active(monkeypatch):
     assert result == "sess-ws"
     assert calls["thread_id"] == "thread1"
     assert calls["active"] == ("sess-ws", "u")
+
+
+# ---------------------------------------------------------------------------
+# _resolve_image_fallback_model — Sprint 22: modelo de fallback quando o
+# ativo não processa imagem, em vez de sempre bloquear o envio.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_sem_fallback_configurado_devolve_none(monkeypatch):
+    from backend.workspace.runtime_settings import runtime_settings
+
+    monkeypatch.setattr(runtime_settings, "get", lambda key, default=None: "")
+
+    assert await _resolve_image_fallback_model() is None
+
+
+@pytest.mark.asyncio
+async def test_fallback_configurado_e_com_visao_e_devolvido(monkeypatch):
+    from backend.workspace.runtime_settings import runtime_settings
+
+    async def _sempre_com_visao(spec: str) -> bool:
+        return True
+
+    monkeypatch.setattr(
+        runtime_settings,
+        "get",
+        lambda key, default=None: "google-genai:gemini-2.5-flash",
+    )
+    monkeypatch.setattr(
+        "backend.api.handlers.chat._model_supports_vision", _sempre_com_visao
+    )
+
+    assert await _resolve_image_fallback_model() == "google-genai:gemini-2.5-flash"
+
+
+@pytest.mark.asyncio
+async def test_fallback_configurado_mas_tambem_sem_visao_devolve_none(monkeypatch):
+    """Bad path: config inconsistente (fallback apontando pra outro modelo
+    sem visão) não vira loop de bloqueio disfarçado de fallback — trata
+    como se não houvesse fallback."""
+    from backend.workspace.runtime_settings import runtime_settings
+
+    async def _nunca_com_visao(spec: str) -> bool:
+        return False
+
+    monkeypatch.setattr(
+        runtime_settings, "get", lambda key, default=None: "cohere:command-a"
+    )
+    monkeypatch.setattr(
+        "backend.api.handlers.chat._model_supports_vision", _nunca_com_visao
+    )
+
+    assert await _resolve_image_fallback_model() is None
