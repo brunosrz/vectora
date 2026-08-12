@@ -205,6 +205,11 @@ ALTER TABLE vectora_background_tasks ADD COLUMN block_count INTEGER NOT NULL DEF
 -- "urgent". Não afeta ordem de claim (`claim_task` continua FIFO
 -- por `ready`/`scheduled`); é só sinal visual pro humano triar mais rápido.
 ALTER TABLE vectora_background_tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal';
+-- Percentual do budget_cents (ou do teto herdado do perfil) que dispara um
+-- aviso informativo em log — NULL = sem aviso configurado (opt-in, igual
+-- ao próprio budget_cents). Nunca pausa nada sozinho; só o hard-stop de
+-- budget_cents estourado bloqueia (backend/scheduling/budget.py).
+ALTER TABLE vectora_background_tasks ADD COLUMN budget_warn_percent INTEGER;
 
 CREATE INDEX IF NOT EXISTS idx_background_tasks_session ON vectora_background_tasks(session_id);
 CREATE INDEX IF NOT EXISTS idx_background_tasks_due     ON vectora_background_tasks(enabled, trigger_type);
@@ -238,6 +243,9 @@ CREATE TABLE IF NOT EXISTS vectora_background_runs (
 -- populado não ganha coluna nova via CREATE TABLE IF NOT EXISTS.
 ALTER TABLE vectora_background_runs ADD COLUMN tokens_used INTEGER;
 ALTER TABLE vectora_background_runs ADD COLUMN estimated_cost_cents REAL;
+-- Sinal de liveness semântica (backend/scheduling/liveness.py) — NULL quando
+-- nenhum padrão de estagnação foi reconhecido no texto final da run.
+ALTER TABLE vectora_background_runs ADD COLUMN liveness TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_background_runs_task    ON vectora_background_runs(task_id);
 CREATE INDEX IF NOT EXISTS idx_background_runs_session ON vectora_background_runs(session_id);

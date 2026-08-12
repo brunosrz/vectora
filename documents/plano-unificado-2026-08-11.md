@@ -406,6 +406,34 @@ background_tasks.py`/`kanban.py`, que hoje não rastreiam custo em nenhum
 - smoke: configurar budget baixo numa task de teste, confirmar pausa
   automática ao estourar.
 
+### Execução real (2026-08-12)
+
+- **Achado crítico investigando o item 1**: o mecanismo de budget
+  (`backend/scheduling/budget.py`) já existia por inteiro — hard-stop,
+  herança de teto do perfil de agente, `check_budget` já plugado em
+  `run_task` — mas **nunca funcionava de verdade**: `record_run_cost` (a
+  função que grava `estimated_cost_cents`) não tinha nenhum call-site em
+  todo o backend. `check_budget` sempre via `total=0` e nunca bloqueava
+  nada, silenciosamente. Corrigido: `run_task` (`background_tasks.py`)
+  agora extrai `usage_metadata` da última mensagem do agente
+  (`_extract_usage`), resolve o modelo usado (override do perfil ou
+  provider/model ativo do runtime) e chama `record_run_cost` de verdade
+  ao concluir a run.
+- **Item 1 (warnPercent)**: `budget_warn_percent` novo (coluna em
+  `vectora_background_tasks`) + `budget_status()` (leitura pura,
+  reaproveitada por `check_budget`) — cruzar o percentual loga aviso, sem
+  bloquear; só `budget_cents` estourado continua bloqueando de verdade.
+- **Item 2 (liveness)**: `backend/scheduling/liveness.py` novo —
+  `classify_liveness()`, 3 padrões regex (`blocked_external`/
+  `manager_review`/`planning_only`), gravado no novo campo
+  `vectora_background_runs.liveness` junto do custo, ao final de cada run.
+  Puramente informativo — nenhum código consome o rótulo pra agir
+  automaticamente ainda (fora de escopo desta sprint, como o texto original
+  já previa).
+- 41 testes de backend (27 de budget/liveness novos ou tocados + 95 de
+  regressão nos módulos que consomem `run_task`/Kanban/tools), `ruff`+`ty`
+  limpos.
+
 ---
 
 ## Sprint 24 — Segurança e retenção pendentes

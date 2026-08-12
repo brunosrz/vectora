@@ -36,6 +36,7 @@ async def db(tmp_path, monkeypatch):
             claim_lock   TEXT,
             claim_expires_at TEXT,
             budget_cents INTEGER,
+            budget_warn_percent INTEGER,
             agent_profile_id TEXT,
             block_count  INTEGER NOT NULL DEFAULT 0,
             updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
@@ -48,6 +49,7 @@ async def db(tmp_path, monkeypatch):
             status                TEXT NOT NULL DEFAULT 'running',
             tokens_used           INTEGER,
             estimated_cost_cents  REAL,
+            liveness              TEXT,
             started_at            TEXT NOT NULL DEFAULT (datetime('now'))
         );
         """
@@ -70,13 +72,14 @@ async def _task(
     task_id: str,
     budget_cents: int | None = None,
     agent_profile_id: str | None = None,
+    budget_warn_percent: int | None = None,
 ) -> None:
     await conn.execute(
         "INSERT INTO vectora_background_tasks "
         "(id, session_id, user_id, kind, name, instruction, trigger_type, "
-        "budget_cents, agent_profile_id) "
-        "VALUES (?, 's1', 'u1', 'subagent', 'n', 'i', 'interval', ?, ?)",
-        (task_id, budget_cents, agent_profile_id),
+        "budget_cents, agent_profile_id, budget_warn_percent) "
+        "VALUES (?, 's1', 'u1', 'subagent', 'n', 'i', 'interval', ?, ?, ?)",
+        (task_id, budget_cents, agent_profile_id, budget_warn_percent),
     )
     await conn.commit()
 
@@ -138,6 +141,42 @@ class TestRastreioDeCusto:
 
         assert row["tokens_used"] == 1500
         assert row["estimated_cost_cents"] == pytest.approx(2.5)
+
+    @pytest.mark.asyncio
+    async def test_liveness_e_persistido_junto_do_custo(self, db):
+        """Sprint 23: `record_run_cost` também grava o sinal de liveness
+        (backend/scheduling/liveness.py) — opcional, `None` por padrão."""
+        from backend.scheduling.budget import record_run_cost
+
+        await _task(db, "t1")
+        await _run(db, "t1", "r1", None)
+        await record_run_cost(
+            "r1", tokens_used=100, cost_cents=1.0, liveness="planning_only"
+        )
+
+        async with db.execute(
+            "SELECT liveness FROM vectora_background_runs WHERE id = 'r1'"
+        ) as cur:
+            row = await cur.fetchone()
+
+        assert row["liveness"] == "planning_only"
+
+    @pytest.mark.asyncio
+    async def test_liveness_ausente_por_padrao(self, db):
+        """Edge: chamar sem `liveness` (compat com os call-sites antigos)
+        grava NULL, não quebra."""
+        from backend.scheduling.budget import record_run_cost
+
+        await _task(db, "t1")
+        await _run(db, "t1", "r1", None)
+        await record_run_cost("r1", tokens_used=100, cost_cents=1.0)
+
+        async with db.execute(
+            "SELECT liveness FROM vectora_background_runs WHERE id = 'r1'"
+        ) as cur:
+            row = await cur.fetchone()
+
+        assert row["liveness"] is None
 
 
 class TestCorteAutomatico:
@@ -275,6 +314,61 @@ class TestCorteAutomatico:
         await _task(db, "t1", budget_cents=0)
 
         assert await check_budget("t1") is False
+
+
+class TestWarnPercent:
+    """Sprint 23: aviso informativo ao cruzar `budget_warn_percent`, sem
+    bloquear a task — só o hard-stop (`budget_cents` estourado) bloqueia."""
+
+    @pytest.mark.asyncio
+    async def test_cruzar_warn_percent_nao_bloqueia_mas_sinaliza(self, db):
+        from backend.scheduling.budget import budget_status, check_budget
+
+        await _task(db, "t1", budget_cents=100, budget_warn_percent=80)
+        await _run(db, "t1", "r1", custo=85.0)
+
+        assert await check_budget("t1") is True
+        status = await budget_status("t1")
+        assert status["warn"] is True
+        assert status["over"] is False
+
+    @pytest.mark.asyncio
+    async def test_sem_warn_percent_configurado_nao_quebra(self, db):
+        """Erro/borda: task com budget_cents mas sem budget_warn_percent
+        (None) nunca marca `warn=True` — não é um bug, é o opt-in de
+        sempre (mesmo espírito do próprio budget_cents)."""
+        from backend.scheduling.budget import budget_status, check_budget
+
+        await _task(db, "t1", budget_cents=100, budget_warn_percent=None)
+        await _run(db, "t1", "r1", custo=95.0)
+
+        assert await check_budget("t1") is True
+        status = await budget_status("t1")
+        assert status["warn"] is False
+
+    @pytest.mark.asyncio
+    async def test_estourar_o_teto_marca_warn_e_over_juntos(self, db):
+        from backend.scheduling.budget import budget_status
+
+        await _task(db, "t1", budget_cents=100, budget_warn_percent=80)
+        await _run(db, "t1", "r1", custo=150.0)
+
+        status = await budget_status("t1")
+        assert status["warn"] is True
+        assert status["over"] is True
+
+    @pytest.mark.asyncio
+    async def test_task_inexistente_devolve_status_neutro(self, db):
+        """Bad path: task_id desconhecido não lança — devolve o status
+        'sem limite algum', mesmo contrato de `check_budget` pra task
+        ausente."""
+        from backend.scheduling.budget import budget_status
+
+        status = await budget_status("nao-existe")
+
+        assert status["limit_cents"] is None
+        assert status["warn"] is False
+        assert status["over"] is False
 
 
 class TestRunEmAndamento:

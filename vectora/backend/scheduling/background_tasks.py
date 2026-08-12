@@ -670,6 +670,26 @@ def _extract_summary(result: Any) -> str:
     return ""
 
 
+def _extract_usage(result: Any) -> dict[str, Any] | None:
+    """`usage_metadata` da última mensagem do agente (input/output/total
+    tokens), quando o provider expõe. `None` — não `{}` — quando não dá
+    pra saber, mesma distinção que `budget.py::estimate_cost_cents` já
+    documenta (custo desconhecido não é custo zero)."""
+    try:
+        msgs = result.get("messages") if isinstance(result, dict) else None
+        if not msgs:
+            return None
+        last = msgs[-1]
+        usage = getattr(last, "usage_metadata", None)
+        if usage is None and isinstance(last, dict):
+            usage = last.get("usage_metadata")
+        if isinstance(usage, dict) and usage:
+            return usage
+    except Exception:
+        logger.debug("background_tasks: falha ao extrair usage_metadata", exc_info=True)
+    return None
+
+
 def _extract_interrupt(result: Any) -> Any | None:
     """Retorna o payload do 1º interrupt se a run pausou (HITL), senão ``None``.
 
@@ -929,6 +949,38 @@ async def run_task(
 
         summary = _extract_summary(result)
         await _finish_run(run_id, "done", summary)
+
+        # Custo real da run, gravado só agora que se sabe o resultado — sem
+        # isso, `check_budget`/`accumulated_cents` nunca via nada além de
+        # NULL e o corte automático de budget nunca disparava de verdade
+        # (achado desta sprint: o mecanismo existia, mas nada alimentava
+        # `estimated_cost_cents`). Liveness é puramente informativa — nunca
+        # bloqueia nem pausa a task sozinha.
+        try:
+            from backend.scheduling.budget import estimate_cost_cents, record_run_cost
+            from backend.scheduling.liveness import classify_liveness
+            from backend.workspace.runtime_settings import runtime_settings
+
+            usage = _extract_usage(result)
+            resolved_model = model_override or (
+                f"{runtime_settings.active_provider.replace('-', '_')}:"
+                f"{runtime_settings.active_model}"
+            )
+            cost_cents = estimate_cost_cents(resolved_model, usage)
+            tokens_used = usage.get("total_tokens") if usage else None
+            liveness = classify_liveness(summary)
+            await record_run_cost(
+                run_id,
+                tokens_used=tokens_used,
+                cost_cents=cost_cents,
+                liveness=liveness,
+            )
+        except Exception:
+            logger.warning(
+                "background_tasks: falha ao registrar custo/liveness da run",
+                exc_info=True,
+            )
+
         await _touch_last_run(task.id)
         _emit_run_event("done", task, run_id, run_thread_id, summary)
         await report_to_parent_session(task, run_thread_id, summary)

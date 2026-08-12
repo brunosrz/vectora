@@ -81,14 +81,20 @@ def estimate_cost_cents(model_id: str, usage: dict | None) -> float | None:
 
 
 async def record_run_cost(
-    run_id: str, *, tokens_used: int | None, cost_cents: float | None
+    run_id: str,
+    *,
+    tokens_used: int | None,
+    cost_cents: float | None,
+    liveness: str | None = None,
 ) -> None:
-    """Persiste o consumo da run já concluída."""
+    """Persiste o consumo da run já concluída, mais o sinal de liveness
+    (`backend/scheduling/liveness.py`) quando classificado — puramente
+    informativo, não afeta o corte de budget."""
     db = await _get_db()
     await db.execute(
         "UPDATE vectora_background_runs SET tokens_used = ?, "
-        "estimated_cost_cents = ? WHERE id = ?",
-        (tokens_used, cost_cents, run_id),
+        "estimated_cost_cents = ?, liveness = ? WHERE id = ?",
+        (tokens_used, cost_cents, liveness, run_id),
     )
     await db.commit()
 
@@ -117,25 +123,33 @@ async def accumulated_cents(task_id: str) -> tuple[float, int]:
     return total, desconhecidas
 
 
-async def check_budget(task_id: str) -> bool:
-    """`True` se a próxima run pode começar.
+async def budget_status(task_id: str) -> dict[str, Any]:
+    """Estado atual do budget da task — leitura pura, sem efeito colateral.
 
-    Estourado: a task vira `blocked` com `block_kind="capability"` — a
-    taxonomia usada para "não dá pra continuar assim". O motivo fica
-    no card em vez de a tarefa simplesmente parar de rodar em silêncio.
+    `warn` sinaliza que o gasto já cruzou `budget_warn_percent` do teto
+    (informativo — nunca pausa nada sozinho, diferente de `over`, que é o
+    que `check_budget` usa pra decidir o hard-stop).
     """
     db = await _get_db()
     async with db.execute(
-        "SELECT budget_cents, agent_profile_id FROM vectora_background_tasks "
-        "WHERE id = ?",
+        "SELECT budget_cents, budget_warn_percent, agent_profile_id "
+        "FROM vectora_background_tasks WHERE id = ?",
         (task_id,),
     ) as cur:
         linha = await cur.fetchone()
 
     if linha is None:
-        return True
+        return {
+            "limit_cents": None,
+            "warn_percent": None,
+            "spent_cents": 0.0,
+            "unknown_runs": 0,
+            "warn": False,
+            "over": False,
+        }
 
     teto = linha["budget_cents"]
+    warn_percent = linha["budget_warn_percent"]
     if teto is None and linha["agent_profile_id"]:
         # Task sem budget próprio herda o teto do perfil de agente — só
         # quando a task não definiu o próprio, nunca sobrescreve.
@@ -151,17 +165,56 @@ async def check_budget(task_id: str) -> bool:
                 task_id,
                 exc_info=True,
             )
-    if teto is None:
+
+    total, desconhecidas = await accumulated_cents(task_id)
+    warn = (
+        teto is not None
+        and warn_percent is not None
+        and total >= float(teto) * float(warn_percent) / 100
+    )
+    over = teto is not None and total >= float(teto)
+    return {
+        "limit_cents": teto,
+        "warn_percent": warn_percent,
+        "spent_cents": total,
+        "unknown_runs": desconhecidas,
+        "warn": warn,
+        "over": over,
+    }
+
+
+async def check_budget(task_id: str) -> bool:
+    """`True` se a próxima run pode começar.
+
+    Estourado: a task vira `blocked` com `block_kind="capability"` — a
+    taxonomia usada para "não dá pra continuar assim". O motivo fica
+    no card em vez de a tarefa simplesmente parar de rodar em silêncio.
+    Cruzar só o `warn_percent` (sem estourar) não bloqueia — só loga, pra
+    quem estiver acompanhando o log ver o aviso antes do corte de verdade.
+    """
+    status = await budget_status(task_id)
+    if status["limit_cents"] is None:
         # Sem budget definido (nem na task, nem no perfil) o comportamento
         # não muda — o corte é opt-in.
         return True
 
-    total, desconhecidas = await accumulated_cents(task_id)
-    if total < float(teto):
+    if status["warn"] and not status["over"]:
+        logger.warning(
+            "budget: task %s cruzou %s%% do teto (gasto %.2f de %s)",
+            task_id,
+            status["warn_percent"],
+            status["spent_cents"],
+            status["limit_cents"],
+        )
+
+    if not status["over"]:
         return True
 
     from backend.scheduling.kanban import block_task
 
+    teto = status["limit_cents"]
+    total = status["spent_cents"]
+    desconhecidas = status["unknown_runs"]
     detalhe = f"budget de {teto} centavos atingido (gasto {total:.2f})"
     if desconhecidas:
         detalhe += f", com {desconhecidas} run(s) de custo desconhecido"
