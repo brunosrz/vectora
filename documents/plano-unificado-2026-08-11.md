@@ -543,6 +543,20 @@ Parte do gate final da Sprint 14 (`scons lint && scons tests`) — não tem
 verificação própria separada, é a última costura antes do fechamento do
 motor nativo.
 
+### Status (2026-08-12) — bloqueada, não abandonada
+
+Confirmado ao chegar nesta sprint: a Sprint 14 WS3 (5 chat clients nativos)
+está `in_progress` e WS4-WS12 (persistência, loop de conversa, streaming/SSE,
+HITL, subagentes, MCP, guardrails, limpeza de deps) seguem `pending` — o
+motor de execução nativo, pré-requisito explícito desta sprint, está longe de
+pronto. Implementar o item 1 (migração do `nine_router`) ou verificar o item
+2 (guardrails pós-motor-nativo) agora seria prematuro por definição — não há
+"motor nativo" ainda para migrar OU verificar contra. Forçar isso agora
+violaria a própria nota de sequenciamento do texto original e o princípio de
+nunca implementar pela metade (CLAUDE.md §9). Sprint 25 permanece registrada
+e será retomada quando a Sprint 14 WS3-WS12 concluir — não é escopo cortado,
+é ordem de dependência real.
+
 ---
 
 ## Sprint 26 — Backlog de features futuras (sem escopo detalhado)
