@@ -25,7 +25,7 @@ class ChatClient(Protocol):
     google/openrouter/ollama) e ao ``FallbackChatClient`` que orquestra
     fallback entre eles."""
 
-    async def astream(
+    def astream(
         self,
         messages: list[VMessage],
         *,
@@ -35,7 +35,15 @@ class ChatClient(Protocol):
     ) -> AsyncIterator[VMessageChunk]:
         """Streaming — cada implementação faz `yield` de fragmentos
         `VMessageChunk` conforme o provider entrega (delta de texto, tool
-        call fragmentada ou completa, usage)."""
+        call fragmentada ou completa, usage).
+
+        Sem ``async`` na assinatura de propósito: as implementações são
+        funções geradoras assíncronas (``async def ... yield ...``), que já
+        devolvem um ``AsyncIterator`` na chamada síncrona — não um
+        ``Coroutine`` que precisa ser `await`ado antes de iterar. Declarar
+        ``async def`` aqui faria o Protocol descrever a assinatura errada
+        (`Coroutine[..., AsyncIterator]`), quebrando a checagem de tipo de
+        qualquer implementação real contra este Protocol."""
         ...
 
     async def agenerate(
