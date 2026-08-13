@@ -250,7 +250,7 @@ class TestHitl:
             ]
         )
 
-        def should_require_approval(nome, _ctx, _args):
+        def should_require_approval(nome, _ctx, _args, _history):
             return nome == "escrever_arquivo"
 
         resultado = await run_conversation(
@@ -393,7 +393,9 @@ class TestEmissaoDeEventos:
             thread_id="thread-1",
             config=LoopConfig(),
             on_event=on_event,
-            should_require_approval=lambda nome, _ctx, _args: nome == "escrever",
+            should_require_approval=lambda nome, _ctx, _args, _history: (
+                nome == "escrever"
+            ),
         )
 
         hitl_eventos = [e for e in eventos if isinstance(e, HitlRequested)]

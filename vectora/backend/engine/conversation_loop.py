@@ -11,14 +11,15 @@ mesmo código que o frontend já trata hoje via `ErrorSignal(code=
 "RECURSION_LIMIT")` no adapter atual (Workstream 6 mapeia esse resultado
 pro evento SSE equivalente).
 
-HITL (Workstream 7) entra por injeção: ``should_require_approval`` é uma
-função pura opcional — se fornecida e disparar pra qualquer tool call do
-lote, o loop pausa ali (``stopped_reason="interrupted"``) como controle
-normal, sem executar nenhuma tool do lote. Sem a função (workstream ainda
-não commitado), o loop nunca pausa. `interrupt_id` é gerado aqui
-(``uuid4``) — a persistência síncrona antes da espera (sobrevivência a
-restart) é o que o Workstream 7 adiciona por cima, não uma mudança neste
-loop.
+HITL (Workstream 7, ``backend/engine/hitl.py``) entra por injeção:
+``should_require_approval`` é uma função pura opcional (``hitl.
+should_require_approval`` é a implementação real) — se fornecida e
+disparar pra qualquer tool call do lote, o loop pausa ali (``stopped_
+reason="interrupted"``) como controle normal, sem executar nenhuma tool do
+lote. Sem a função, o loop nunca pausa. Quando um ``ApprovalGate`` é
+passado, a aprovação pendente é persistida SINCRONAMENTE (``SessionStore.
+put_pending_approval``) antes do loop retornar — sobrevive a restart do
+backend, porque o estado nunca fica só na call stack deste `await`.
 
 Eventos emitidos via ``on_event`` (Workstream 6, ``backend/engine/
 stream_events.py``) são os mesmos tipos que ``sse_adapter.py`` serializa
@@ -45,6 +46,7 @@ from backend.vtypes.message import ContentBlock, MessageRole, ToolCall, VMessage
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from backend.engine.hitl import ApprovalGate
     from backend.engine.stream_events import EventSink
     from backend.llm.base import ChatClient
     from backend.persistence.native.session_store import SessionStore
@@ -103,8 +105,11 @@ async def run_conversation(
     thread_id: str,
     config: LoopConfig,
     on_event: EventSink | None = None,
-    should_require_approval: Callable[[str, ToolContext, dict[str, Any]], bool]
+    should_require_approval: Callable[
+        [str, ToolContext, dict[str, Any], list[VMessage]], bool
+    ]
     | None = None,
+    approval_gate: ApprovalGate | None = None,
 ) -> LoopResult:
     emit = on_event or _noop_event
     tools = tool_registry.all()
@@ -164,16 +169,26 @@ async def run_conversation(
                 (
                     tc
                     for tc in tool_calls
-                    if should_require_approval(tc.name, ctx, tc.args)
+                    if should_require_approval(tc.name, ctx, tc.args, historico)
                 ),
                 None,
             )
             if pendente is not None:
+                interrupt_id = str(uuid4())
+                args_json = json.dumps(pendente.args, ensure_ascii=False)
+                if approval_gate is not None:
+                    await approval_gate.request_approval(
+                        thread_id,
+                        interrupt_id=interrupt_id,
+                        tool_name=pendente.name,
+                        tool_call_id=pendente.id,
+                        args=pendente.args,
+                    )
                 await emit(
                     HitlRequested(
                         tool_name=pendente.name,
-                        args_json=json.dumps(pendente.args, ensure_ascii=False),
-                        interrupt_id=str(uuid4()),
+                        args_json=args_json,
+                        interrupt_id=interrupt_id,
                     )
                 )
                 return LoopResult(
