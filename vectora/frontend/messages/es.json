@@ -1293,6 +1293,8 @@
   "rag_reranker_help": "Reordena los fragmentos recuperados por relevancia (Cohere/Voyage).",
   "rag_reranker_top_k": "Profundidad (top_k)",
   "rag_rerank_provider": "Proveedor de rerank",
+  "rag_provider_no_key_suffix": "(sin clave)",
+  "rag_rerank_provider_unavailable_warning": "El proveedor de rerank seleccionado no tiene clave configurada — el reranking está desactivado hasta que lo configures en Integraciones.",
   "rag_embed_provider": "Proveedor de embedding",
   "rag_provider_auto": "Automático (por key/fallback)",
   "rag_provider_cohere": "Cohere",

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from langchain_core.runnables import RunnableConfig
 
 
 class TestVectorSearch:
@@ -515,7 +517,8 @@ class TestIngestDocs:
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
             with patch(
-                "backend.services.security.is_safe_file_path", return_value=False
+                "backend.tools.fs._confine",
+                return_value=(None, "Access denied: outside allowed directory"),
             ):
                 result = await ingest_docs.ainvoke(
                     {"directory_path": "/etc", "collection": "articles"}
@@ -531,9 +534,7 @@ class TestIngestDocs:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            with patch(
-                "backend.services.security.is_safe_file_path", return_value=True
-            ):
+            with patch("backend.tools.fs._confine", return_value=(not_dir, "")):
                 result = await ingest_docs.ainvoke(
                     {"directory_path": str(not_dir), "collection": "articles"}
                 )
@@ -545,9 +546,7 @@ class TestIngestDocs:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            with patch(
-                "backend.services.security.is_safe_file_path", return_value=True
-            ):
+            with patch("backend.tools.fs._confine", return_value=(tmp_path, "")):
                 with patch(
                     "backend.services.ignore.load_ignore_spec", return_value=None
                 ):
@@ -570,9 +569,7 @@ class TestIngestDocs:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            with patch(
-                "backend.services.security.is_safe_file_path", return_value=True
-            ):
+            with patch("backend.tools.fs._confine", return_value=(tmp_path, "")):
                 with patch("backend.services.ignore.is_ignored", return_value=False):
                     with patch(
                         "backend.services.ignore.load_ignore_spec",
@@ -603,9 +600,7 @@ class TestIngestDocs:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            with patch(
-                "backend.services.security.is_safe_file_path", return_value=True
-            ):
+            with patch("backend.tools.fs._confine", return_value=(tmp_path, "")):
                 with patch(
                     "backend.services.ignore.load_ignore_spec", return_value=None
                 ):
@@ -643,9 +638,7 @@ class TestIngestDocs:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            with patch(
-                "backend.services.security.is_safe_file_path", return_value=True
-            ):
+            with patch("backend.tools.fs._confine", return_value=(tmp_path, "")):
                 with patch(
                     "backend.services.ignore.load_ignore_spec", return_value=None
                 ):
@@ -683,9 +676,7 @@ class TestIngestDocs:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            with patch(
-                "backend.services.security.is_safe_file_path", return_value=True
-            ):
+            with patch("backend.tools.fs._confine", return_value=(tmp_path, "")):
                 with patch("backend.services.ignore.is_ignored", return_value=False):
                     with patch(
                         "backend.services.ignore.load_ignore_spec",
@@ -719,9 +710,7 @@ class TestIngestDocs:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            with patch(
-                "backend.services.security.is_safe_file_path", return_value=True
-            ):
+            with patch("backend.tools.fs._confine", return_value=(tmp_path, "")):
                 with patch("backend.services.ignore.is_ignored", return_value=False):
                     with patch(
                         "backend.services.ignore.load_ignore_spec",
@@ -753,9 +742,7 @@ class TestIngestDocs:
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
             mock_settings.embedding_queue_enabled = True
-            with patch(
-                "backend.services.security.is_safe_file_path", return_value=True
-            ):
+            with patch("backend.tools.fs._confine", return_value=(tmp_path, "")):
                 with patch("backend.services.ignore.is_ignored", return_value=False):
                     with patch(
                         "backend.services.ignore.load_ignore_spec",
@@ -777,6 +764,96 @@ class TestIngestDocs:
         data = json.loads(result)
         assert data["status"] == "completed"
         assert mock_emb.ainvoke.called
+
+    @pytest.mark.asyncio
+    async def test_path_traversal_e_rejeitado_de_verdade(self, tmp_path, monkeypatch):
+        """Sprint 24: `directory_path` vem do modelo (tool call) — precisa
+        da mesma defesa forte que `file_read`/`file_write` já usam
+        (`resolve_within_workspace`), não a checagem leve de
+        `is_safe_file_path`. Sem mockar `_confine`: workspace real
+        confinado a `tmp_path`, tenta escapar via `..` de verdade."""
+        from backend.vtypes import Workspace
+        from backend.workspace import workspace as ws_mod
+
+        ws = Workspace(
+            id="testws",
+            name="testws",
+            cwd=str(tmp_path),
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+            hooks_approved=True,
+        )
+        monkeypatch.setattr(
+            ws_mod.workspace_registry,
+            "get",
+            lambda wid: ws if wid == "testws" else None,
+        )
+        config = cast("RunnableConfig", {"configurable": {"workspace_id": "testws"}})
+
+        from backend.tools.rag import ingest_docs
+
+        with patch("backend.tools.rag.settings") as mock_settings:
+            mock_settings.enable_file_operations = True
+            result = await ingest_docs.ainvoke(
+                {
+                    "directory_path": "../../etc",
+                    "collection": "articles",
+                },
+                config=config,
+            )
+
+        assert "fora do workspace" in result.lower() or "error" in result.lower()
+
+    @pytest.mark.asyncio
+    async def test_path_dentro_do_workspace_continua_funcionando(
+        self, tmp_path, monkeypatch
+    ):
+        """Regressão: path legítimo (relativo, dentro do workspace) segue
+        indexando normalmente com a defesa forte — não é só o caminho de
+        rejeição que muda."""
+        from backend.vtypes import Workspace
+        from backend.workspace import workspace as ws_mod
+
+        (tmp_path / "docs").mkdir()
+        (tmp_path / "docs" / "a.md").write_text("# A")
+
+        ws = Workspace(
+            id="testws",
+            name="testws",
+            cwd=str(tmp_path),
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+            hooks_approved=True,
+        )
+        monkeypatch.setattr(
+            ws_mod.workspace_registry,
+            "get",
+            lambda wid: ws if wid == "testws" else None,
+        )
+        config = cast("RunnableConfig", {"configurable": {"workspace_id": "testws"}})
+
+        from backend.tools.rag import ingest_docs
+
+        with patch("backend.tools.rag.settings") as mock_settings:
+            mock_settings.enable_file_operations = True
+            with patch("backend.tools.rag.embedding") as mock_emb:
+                mock_emb.ainvoke = AsyncMock(
+                    return_value=json.dumps(
+                        {"status": "fire_and_forget", "queue_id": "q1"}
+                    )
+                )
+                result = await ingest_docs.ainvoke(
+                    {
+                        "directory_path": "docs",
+                        "collection": "articles",
+                        "glob_pattern": "**/*.md",
+                    },
+                    config=config,
+                )
+
+        data = json.loads(result)
+        assert data["status"] == "completed"
+        assert data["total_files"] == 1
 
 
 class TestManageRetriever:

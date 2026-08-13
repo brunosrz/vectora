@@ -1293,6 +1293,8 @@
   "rag_reranker_help": "Reordena os trechos recuperados por relevância (Cohere/Voyage).",
   "rag_reranker_top_k": "Profundidade (top_k)",
   "rag_rerank_provider": "Provider de rerank",
+  "rag_provider_no_key_suffix": "(sem chave)",
+  "rag_rerank_provider_unavailable_warning": "O provider de rerank selecionado não tem chave configurada — o reranking está desligado até você configurar em Integrações.",
   "rag_embed_provider": "Provider de embedding",
   "rag_provider_auto": "Automático (por key/fallback)",
   "rag_provider_cohere": "Cohere",

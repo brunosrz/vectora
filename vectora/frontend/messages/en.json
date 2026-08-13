@@ -1293,6 +1293,8 @@
   "rag_reranker_help": "Reorders retrieved chunks by relevance (Cohere/Voyage).",
   "rag_reranker_top_k": "Depth (top_k)",
   "rag_rerank_provider": "Rerank provider",
+  "rag_provider_no_key_suffix": "(no key)",
+  "rag_rerank_provider_unavailable_warning": "The selected rerank provider has no key configured — reranking is off until you configure it in Integrations.",
   "rag_embed_provider": "Embedding provider",
   "rag_provider_auto": "Automatic (by key/fallback)",
   "rag_provider_cohere": "Cohere",

@@ -220,4 +220,96 @@ describe("RagSettingsPanel", () => {
     const modelSelect = screen.getAllByRole("combobox")[2] as HTMLSelectElement;
     expect(modelSelect.options.length).toBe(1);
   });
+
+  it("provider de rerank sem chave aparece desabilitado no dropdown (Sprint 24)", async () => {
+    FETCH.mockImplementation((url: string) => {
+      if (url.includes("/rag/settings"))
+        return jsonRes({
+          reranker_enabled: true,
+          reranker_top_k: 5,
+          rerank_provider: "auto",
+          embed_provider: "auto",
+          ingest_file_types: [],
+          rerank_provider_available: {
+            cohere: false,
+            voyage: false,
+            openrouter: false,
+          },
+        });
+      if (url.includes("/rag/collections")) return jsonRes({ collections: [] });
+      return jsonRes({});
+    });
+
+    render(<RagSettingsPanel />);
+    fireEvent.click(screen.getByTestId("rag-settings-btn"));
+    await waitFor(() =>
+      expect(screen.getByTestId("rag-settings-panel")).toBeInTheDocument(),
+    );
+
+    const rerankSelect = screen.getAllByRole(
+      "combobox",
+    )[0] as HTMLSelectElement;
+    const cohereOption = [...rerankSelect.options].find(
+      (o) => o.value === "cohere",
+    );
+    const openrouterOption = [...rerankSelect.options].find(
+      (o) => o.value === "openrouter",
+    );
+
+    expect(cohereOption?.disabled).toBe(true);
+    expect(cohereOption?.text).toContain("no key");
+    expect(openrouterOption?.disabled).toBe(true);
+  });
+
+  it("selecionar um provider indisponível mostra o aviso inline", async () => {
+    FETCH.mockImplementation((url: string) => {
+      if (url.includes("/rag/settings"))
+        return jsonRes({
+          reranker_enabled: true,
+          reranker_top_k: 5,
+          rerank_provider: "cohere",
+          embed_provider: "auto",
+          ingest_file_types: [],
+          rerank_provider_available: { cohere: false, voyage: true },
+        });
+      if (url.includes("/rag/collections")) return jsonRes({ collections: [] });
+      return jsonRes({});
+    });
+
+    render(<RagSettingsPanel />);
+    fireEvent.click(screen.getByTestId("rag-settings-btn"));
+    await waitFor(() =>
+      expect(screen.getByTestId("rag-settings-panel")).toBeInTheDocument(),
+    );
+
+    expect(screen.getByText(/reranking is off/i)).toBeInTheDocument();
+  });
+
+  it("provider 'auto' nunca mostra o aviso, mesmo com providers indisponíveis (edge)", async () => {
+    FETCH.mockImplementation((url: string) => {
+      if (url.includes("/rag/settings"))
+        return jsonRes({
+          reranker_enabled: true,
+          reranker_top_k: 5,
+          rerank_provider: "auto",
+          embed_provider: "auto",
+          ingest_file_types: [],
+          rerank_provider_available: {
+            cohere: false,
+            voyage: false,
+            openrouter: false,
+          },
+        });
+      if (url.includes("/rag/collections")) return jsonRes({ collections: [] });
+      return jsonRes({});
+    });
+
+    render(<RagSettingsPanel />);
+    fireEvent.click(screen.getByTestId("rag-settings-btn"));
+    await waitFor(() =>
+      expect(screen.getByTestId("rag-settings-panel")).toBeInTheDocument(),
+    );
+
+    expect(screen.queryByText(/reranking is off/i)).not.toBeInTheDocument();
+  });
 });

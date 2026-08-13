@@ -476,6 +476,37 @@ repropostos por engano.
 
 - `pnpm --dir vectora/frontend exec vitest run components/workbench/__tests__/rag-settings-panel.test.tsx`.
 
+### Execução real (2026-08-12)
+
+- **Item 1 — confirmado e corrigido.** `ingest_docs` (`backend/tools/rag.py`)
+  é de fato `@tool` chamável pelo modelo, recebendo `directory_path` direto
+  do LLM. Trocado `is_safe_file_path` por `backend/tools/fs.py::_confine`
+  (mesma defesa forte — `resolve_within_workspace` — usada por
+  `file_read`/`file_write`). 9 testes existentes migrados de mockar
+  `is_safe_file_path` para mockar `_confine`; 2 testes novos sem nenhum
+  mock de segurança (workspace real confinado a `tmp_path`) provando que
+  `..`/escape é rejeitado de verdade e que paths legítimos continuam
+  indexando.
+- **Item 2 — entregue, mais amplo que o texto original.** Ao investigar
+  "reusar `rerank_provider_available` da Sprint 18" descobri que a Sprint
+  18 só implementou a metade backend — o frontend (`ProviderSelect`
+  desabilitado + banner de aviso) nunca foi escrito, apesar do plano já
+  citar como pronto. Implementado agora: `"openrouter"` no dict do backend
+  (`GET /rag/settings`, checando key **e** modelo configurado — as duas
+  condições que `_build_openrouter_reranker` já exige) + `"openrouter"` no
+  `RERANK_PROVIDERS` do frontend + disabled-state real no `<select>` (sufixo
+  "(sem chave)") + banner de aviso inline quando o provider escolhido não
+  está disponível.
+- **Achado corrigido de passagem**: 2 testes pré-existentes de
+  `test_rag_handler.py` (da própria Sprint 18) estavam quebrados —
+  `patch.object(settings, "get_cohere_api_key", ...)` falha porque
+  `Settings` é um modelo pydantic que rejeita `setattr` de não-campos;
+  corrigido para `patch.object(type(settings), ...)` (patch na classe, não
+  na instância) — mesmo padrão que precisa valer para qualquer mock futuro
+  de método (não atributo) do `settings`.
+- 62 testes de backend (17 de `test_rag_handler.py` + 45 de
+  `test_tools_rag.py`) + 7 de frontend, todos verdes.
+
 ---
 
 ## Sprint 25 — Fechamento de conectores e motor nativo (dívida da Sprint 13/14)

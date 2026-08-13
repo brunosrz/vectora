@@ -100,17 +100,20 @@ class TestRagSettingsEndpoints:
         rs = RuntimeSettings(path=tmp_path / "settings.json")
         with (
             patch("backend.workspace.runtime_settings.runtime_settings", rs),
-            patch.object(settings, "get_cohere_api_key", lambda: "co-key"),
+            patch.object(type(settings), "get_cohere_api_key", lambda self: "co-key"),
             patch.object(settings, "voyage_api_key", None),
+            patch.object(settings, "openrouter_api_key", None),
         ):
             out = await handler.get_rag_settings()
 
-        assert out["rerank_provider_available"] == {"cohere": True, "voyage": False}
+        assert out["rerank_provider_available"] == {
+            "cohere": True,
+            "voyage": False,
+            "openrouter": False,
+        }
 
     @pytest.mark.asyncio
-    async def test_get_reports_both_unavailable_when_no_keys_configured(
-        self, tmp_path
-    ):
+    async def test_get_reports_both_unavailable_when_no_keys_configured(self, tmp_path):
         """Edge — nem Cohere nem Voyage configurados: os dois False, sem
         levantar erro (o painel deve mostrar os 2 desabilitados)."""
         from backend.api.handlers import rag as handler
@@ -120,12 +123,68 @@ class TestRagSettingsEndpoints:
         rs = RuntimeSettings(path=tmp_path / "settings.json")
         with (
             patch("backend.workspace.runtime_settings.runtime_settings", rs),
-            patch.object(settings, "get_cohere_api_key", lambda: None),
+            patch.object(type(settings), "get_cohere_api_key", lambda self: None),
             patch.object(settings, "voyage_api_key", None),
+            patch.object(settings, "openrouter_api_key", None),
         ):
             out = await handler.get_rag_settings()
 
-        assert out["rerank_provider_available"] == {"cohere": False, "voyage": False}
+        assert out["rerank_provider_available"] == {
+            "cohere": False,
+            "voyage": False,
+            "openrouter": False,
+        }
+
+    @pytest.mark.asyncio
+    async def test_get_openrouter_available_only_with_key_and_model(self, tmp_path):
+        """Sprint 24: openrouter só fica disponível com key E modelo de
+        rerank configurados — os dois, não só um (mesma checagem que
+        `_build_openrouter_reranker` já faz antes de instanciar o client)."""
+        from backend.api.handlers import rag as handler
+        from backend.settings import settings
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "settings.json")
+        with (
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+            patch.object(type(settings), "get_cohere_api_key", lambda self: None),
+            patch.object(settings, "voyage_api_key", None),
+            patch.object(settings, "openrouter_api_key", "or-key"),
+            patch(
+                "backend.settings.configured_gateway_model",
+                lambda provider, capability: (
+                    "some/model"
+                    if (provider, capability) == ("openrouter", "rerank")
+                    else ""
+                ),
+            ),
+        ):
+            out = await handler.get_rag_settings()
+
+        assert out["rerank_provider_available"]["openrouter"] is True
+
+    @pytest.mark.asyncio
+    async def test_get_openrouter_key_sem_modelo_configurado_fica_indisponivel(
+        self, tmp_path
+    ):
+        """Bad path: key presente mas sem modelo de rerank escolhido —
+        ainda indisponível, não é suficiente ter só a key."""
+        from backend.api.handlers import rag as handler
+        from backend.settings import settings
+        from backend.workspace.runtime_settings import RuntimeSettings
+
+        rs = RuntimeSettings(path=tmp_path / "settings.json")
+        with (
+            patch("backend.workspace.runtime_settings.runtime_settings", rs),
+            patch.object(settings, "openrouter_api_key", "or-key"),
+            patch(
+                "backend.settings.configured_gateway_model",
+                lambda provider, capability: "",
+            ),
+        ):
+            out = await handler.get_rag_settings()
+
+        assert out["rerank_provider_available"]["openrouter"] is False
 
     @pytest.mark.asyncio
     async def test_patch_updates_and_returns(self, tmp_path):

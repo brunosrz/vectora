@@ -35,6 +35,10 @@ interface RagSettings {
   embed_provider: string;
   embed_model: string;
   ingest_file_types: string[];
+  //: Quais providers de rerank têm key/modelo configurados — vem de
+  //: GET /rag/settings (backend/api/handlers/rag.py). "auto" nunca entra
+  //: aqui: está sempre "disponível" (o backend escolhe o que der certo).
+  rerank_provider_available?: Record<string, boolean>;
 }
 
 interface Collection {
@@ -49,13 +53,15 @@ const DEFAULTS: RagSettings = {
   embed_provider: "auto",
   embed_model: "",
   ingest_file_types: [],
+  rerank_provider_available: {},
 };
 
-// Reranker é só Cohere/Voyage (nenhum dos dois gateways locais/dinâmicos tem
-// endpoint de rerank nativo). Embedding aceita os 4 — backend resolve em
-// storage/factory.py::_build_lc_embeddings (lê embed_provider/embed_model
-// deste mesmo /rag/settings).
-const RERANK_PROVIDERS = ["auto", "cohere", "voyage"] as const;
+// Reranker: Cohere/Voyage (rerank nativo fixo) + OpenRouter (rerank via
+// modelo configurado em Provider Routing — depende de key + modelo
+// escolhido, ver rerank_provider_available). Embedding aceita os 4 —
+// backend resolve em storage/factory.py::_build_lc_embeddings (lê
+// embed_provider/embed_model deste mesmo /rag/settings).
+const RERANK_PROVIDERS = ["auto", "cohere", "voyage", "openrouter"] as const;
 const EMBED_PROVIDERS = [
   "auto",
   "cohere",
@@ -239,8 +245,22 @@ export function RagSettingsSlidePanel({
             value={settings.rerank_provider}
             onChange={(v) => void patch({ rerank_provider: v })}
             providers={RERANK_PROVIDERS}
+            unavailable={
+              new Set(
+                Object.entries(settings.rerank_provider_available ?? {})
+                  .filter(([, available]) => !available)
+                  .map(([provider]) => provider),
+              )
+            }
           />
         </label>
+        {settings.rerank_provider !== "auto" &&
+          settings.rerank_provider_available?.[settings.rerank_provider] ===
+            false && (
+            <p className="text-[10px] text-amber-600 dark:text-amber-400">
+              {m.rag_rerank_provider_unavailable_warning()}
+            </p>
+          )}
         <label className="flex items-center justify-between gap-2">
           <span className="text-foreground">{m.rag_embed_provider()}</span>
           <ProviderSelect
@@ -366,10 +386,15 @@ function ProviderSelect({
   value,
   onChange,
   providers,
+  unavailable,
 }: {
   value: string;
   onChange: (v: string) => void;
   providers: readonly string[];
+  //: Providers sem key/config — ficam no dropdown mas desabilitados, com
+  //: sufixo "(sem chave)". Escolher um provider que sabidamente não vai
+  //: funcionar é pior que impedir a escolha (Sprint 18/24).
+  unavailable?: Set<string>;
 }) {
   return (
     <select
@@ -378,8 +403,9 @@ function ProviderSelect({
       className="bg-background border border-border/60 rounded px-1.5 py-0.5 text-foreground"
     >
       {providers.map((p) => (
-        <option key={p} value={p}>
+        <option key={p} value={p} disabled={unavailable?.has(p)}>
           {PROVIDER_LABELS[p]()}
+          {unavailable?.has(p) ? ` ${m.rag_provider_no_key_suffix()}` : ""}
         </option>
       ))}
     </select>
