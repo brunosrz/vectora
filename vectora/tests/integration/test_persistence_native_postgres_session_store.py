@@ -161,6 +161,35 @@ class TestAppendMessageEGetHistory:
         assert [m.text() for m in branch_antiga] == ["primeira pergunta"]
 
 
+class TestGetBranchHeadId:
+    @pytest.mark.asyncio
+    @pytest.mark.storage
+    async def test_thread_sem_mensagem_devolve_none(self, pg_pool):
+        store = PostgresSessionStore(pg_pool)
+        thread_id = _thread_id()
+        await store.create_session(thread_id, user_id="alice")
+
+        assert await store.get_branch_head_id(thread_id) is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.storage
+    async def test_devolve_o_id_da_ultima_mensagem_apendada(self, pg_pool):
+        store = PostgresSessionStore(pg_pool)
+        thread_id = _thread_id()
+        await store.create_session(thread_id, user_id="alice")
+
+        id1 = await store.append_message(
+            thread_id, text_message(MessageRole.USER, "oi")
+        )
+        id2 = await store.append_message(
+            thread_id,
+            text_message(MessageRole.ASSISTANT, "olá"),
+            parent_message_id=id1,
+        )
+
+        assert await store.get_branch_head_id(thread_id) == id2
+
+
 class TestPendingApprovals:
     @pytest.mark.asyncio
     @pytest.mark.storage

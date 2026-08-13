@@ -200,6 +200,22 @@ class SessionStore:
             await conn.commit()
         return int(new_id)
 
+    async def get_branch_head_id(self, thread_id: str) -> int | None:
+        """`id` da mensagem que é a ponta ativa da branch, ou `None` se a
+        thread ainda não tem mensagem nenhuma — usado pelo caller (loop de
+        conversa nativo, Workstream 5) pra encadear `parent_message_id` ao
+        persistir a próxima mensagem, sem precisar reler o histórico
+        inteiro só pra descobrir o último `id`."""
+        await self.setup()
+        async with self._pool.acquire() as conn:
+            cur = await conn.execute(
+                "SELECT id FROM messages WHERE thread_id = ? "
+                "AND is_branch_head = 1 ORDER BY id DESC LIMIT 1",
+                (thread_id,),
+            )
+            row = await cur.fetchone()
+        return row[0] if row is not None else None
+
     async def get_history(
         self, thread_id: str, *, up_to_message_id: int | None = None
     ) -> list[VMessage]:

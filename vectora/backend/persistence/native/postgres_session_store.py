@@ -175,6 +175,18 @@ class PostgresSessionStore:
             )
         return int(new_id)
 
+    async def get_branch_head_id(self, thread_id: str) -> int | None:
+        """`id` da ponta ativa da branch, ou `None` se a thread ainda não
+        tem mensagem — mesmo papel de `SessionStore.get_branch_head_id`."""
+        await self.setup()
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT id FROM vectora_messages WHERE thread_id = $1 "
+                "AND is_branch_head = TRUE ORDER BY id DESC LIMIT 1",
+                thread_id,
+            )
+        return row["id"] if row is not None else None
+
     async def get_history(
         self, thread_id: str, *, up_to_message_id: int | None = None
     ) -> list[VMessage]:

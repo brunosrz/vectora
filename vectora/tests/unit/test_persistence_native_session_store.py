@@ -135,6 +135,26 @@ class TestAppendMessageEGetHistory:
         assert [m.text() for m in branch_antiga] == ["primeira pergunta"]
 
 
+class TestGetBranchHeadId:
+    async def test_thread_sem_mensagem_devolve_none(self, store: SessionStore):
+        await store.create_session("thread-1", user_id="alice")
+
+        assert await store.get_branch_head_id("thread-1") is None
+
+    async def test_devolve_o_id_da_ultima_mensagem_apendada(self, store: SessionStore):
+        await store.create_session("thread-1", user_id="alice")
+        id1 = await store.append_message(
+            "thread-1", text_message(MessageRole.USER, "oi")
+        )
+        id2 = await store.append_message(
+            "thread-1",
+            text_message(MessageRole.ASSISTANT, "olá"),
+            parent_message_id=id1,
+        )
+
+        assert await store.get_branch_head_id("thread-1") == id2
+
+
 class TestSetBranchHead:
     async def test_reaponta_a_branch_ativa_sem_apagar_mensagens(
         self, store: SessionStore
