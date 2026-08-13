@@ -15,29 +15,41 @@ HITL (Workstream 7) entra por injeção: ``should_require_approval`` é uma
 função pura opcional — se fornecida e disparar pra qualquer tool call do
 lote, o loop pausa ali (``stopped_reason="interrupted"``) como controle
 normal, sem executar nenhuma tool do lote. Sem a função (workstream ainda
-não commitado), o loop nunca pausa.
+não commitado), o loop nunca pausa. `interrupt_id` é gerado aqui
+(``uuid4``) — a persistência síncrona antes da espera (sobrevivência a
+restart) é o que o Workstream 7 adiciona por cima, não uma mudança neste
+loop.
+
+Eventos emitidos via ``on_event`` (Workstream 6, ``backend/engine/
+stream_events.py``) são os mesmos tipos que ``sse_adapter.py`` serializa
+pro contrato SSE que o frontend já consome — o loop não sabe nada sobre
+SSE, só produz o vocabulário nativo.
 """
 
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any
+from uuid import uuid4
 
+from backend.engine.stream_events import (
+    HitlRequested,
+    MessageBreak,
+    MessageChunk,
+    ToolResult,
+)
 from backend.engine.tool_batch import execute_tool_batch
 from backend.vtypes.message import ContentBlock, MessageRole, ToolCall, VMessage
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from backend.engine.stream_events import EventSink
     from backend.llm.base import ChatClient
     from backend.persistence.native.session_store import SessionStore
     from backend.tools.context import ToolContext
     from backend.tools.registry import ToolRegistry
-
-
-class EventSink(Protocol):
-    async def __call__(self, event_type: str, payload: dict[str, Any]) -> None: ...
 
 
 @dataclass(slots=True)
@@ -58,7 +70,7 @@ class LoopResult:
     final_message: VMessage | None = None
 
 
-async def _noop_event(_event_type: str, _payload: dict[str, Any]) -> None:
+async def _noop_event(_event: object) -> None:
     return None
 
 
@@ -112,7 +124,7 @@ async def run_conversation(
         ):
             if chunk.delta_text:
                 partes_texto.append(chunk.delta_text)
-                await emit("token", {"content": chunk.delta_text})
+                await emit(MessageChunk(content=chunk.delta_text))
 
             for tc_chunk in chunk.tool_call_chunks:
                 acumulado = tool_call_chunks_por_indice.setdefault(
@@ -124,8 +136,9 @@ async def run_conversation(
                     acumulado["name"] = tc_chunk.name
                 acumulado["args_fragment"] += tc_chunk.args_fragment
 
-            if chunk.usage:
-                await emit("usage", dict(chunk.usage))
+            # `usage` não tem evento SSE dedicado — rastreio de custo
+            # (Workstream 10) lê `VMessageChunk.usage` diretamente do
+            # stream do chat client, não via `on_event`.
 
         texto_final = "".join(partes_texto)
         tool_calls = _resolve_tool_calls(tool_call_chunks_por_indice)
@@ -141,7 +154,7 @@ async def run_conversation(
         parent_id = await session_store.append_message(
             thread_id, assistant_msg, parent_message_id=parent_id
         )
-        await emit("message_break", {"role": "assistant"})
+        await emit(MessageBreak())
 
         if not tool_calls:
             return LoopResult(stopped_reason="stop", final_message=assistant_msg)
@@ -157,8 +170,11 @@ async def run_conversation(
             )
             if pendente is not None:
                 await emit(
-                    "hitl",
-                    {"tool_call_id": pendente.id, "tool_name": pendente.name},
+                    HitlRequested(
+                        tool_name=pendente.name,
+                        args_json=json.dumps(pendente.args, ensure_ascii=False),
+                        interrupt_id=str(uuid4()),
+                    )
                 )
                 return LoopResult(
                     stopped_reason="interrupted", final_message=assistant_msg
@@ -172,12 +188,11 @@ async def run_conversation(
                 thread_id, resultado, parent_message_id=parent_id
             )
             await emit(
-                "tool_result",
-                {
-                    "tool_call_id": resultado.tool_call_id,
-                    "content": resultado.text(),
-                    "is_error": resultado.is_error,
-                },
+                ToolResult(
+                    tool_call_id=resultado.tool_call_id or "",
+                    content_json=resultado.text(),
+                    is_error=resultado.is_error,
+                )
             )
 
     return LoopResult(stopped_reason="max_iterations")

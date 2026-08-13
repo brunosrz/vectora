@@ -9,6 +9,13 @@ from __future__ import annotations
 import pytest
 
 from backend.engine.conversation_loop import LoopConfig, run_conversation
+from backend.engine.stream_events import (
+    EngineEvent,
+    HitlRequested,
+    MessageBreak,
+    MessageChunk,
+    ToolResult,
+)
 from backend.persistence.native.session_store import SessionStore
 from backend.storage.sqlite.pool import AsyncConnectionPool
 from backend.tools.context import ToolContext
@@ -290,3 +297,107 @@ class TestHitl:
 
         assert resultado.stopped_reason == "stop"
         assert client.chamadas == 2
+
+
+class TestEmissaoDeEventos:
+    async def test_token_e_message_break_emitidos_na_ordem(self, session_store, ctx):
+        client = _ScriptedChatClient([[_texto_chunk("oi"), _texto_chunk(" tudo bem")]])
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=ToolRegistry(),
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        assert eventos == [
+            MessageChunk(content="oi"),
+            MessageChunk(content=" tudo bem"),
+            MessageBreak(),
+        ]
+
+    async def test_tool_result_emitido_apos_execucao(self, session_store, ctx):
+        @vtool(extras=ToolExtras())
+        async def somar(a: int, b: int, ctx: ToolContext) -> str:
+            """soma dois números.
+            Args:
+                a: primeiro
+                b: segundo
+            """
+            return str(a + b)
+
+        registry = ToolRegistry()
+        _register(registry, "somar")
+
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0, id="call_1", name="somar", args='{"a":1,"b":2}'
+                    )
+                ],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        resultados_tool = [e for e in eventos if isinstance(e, ToolResult)]
+        assert resultados_tool == [
+            ToolResult(tool_call_id="call_1", content_json="3", is_error=False)
+        ]
+
+    async def test_hitl_requested_emitido_com_argumentos_da_tool(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras(destructive=True))
+        async def escrever(ctx: ToolContext) -> str:
+            """escreve algo."""
+            return "nunca roda"
+
+        registry = ToolRegistry()
+        _register(registry, "escrever")
+
+        client = _ScriptedChatClient(
+            [[_tool_call_chunk(index=0, id="call_1", name="escrever", args="{}")]]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+            should_require_approval=lambda nome, _ctx, _args: nome == "escrever",
+        )
+
+        hitl_eventos = [e for e in eventos if isinstance(e, HitlRequested)]
+        assert len(hitl_eventos) == 1
+        assert hitl_eventos[0].tool_name == "escrever"
+        assert hitl_eventos[0].args_json == "{}"
+        assert hitl_eventos[0].interrupt_id  # gerado, não vazio
