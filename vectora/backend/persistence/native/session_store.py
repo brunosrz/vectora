@@ -1,16 +1,6 @@
-"""``SessionStore`` — persistência simplificada de sessões/mensagens sobre
-``aiosqlite``.
-
-Para o motor de conversa nativo, substitui o schema de checkpoint do
-LangGraph (``VectoraSqliteSaver``, ``sqlite_checkpointer.py``) por um
-schema append-only simples: ``sessions`` + ``messages`` +
-``pending_approvals``. O protocolo de checkpoint (``channel_versions``,
-``pending_writes``, ``checkpoint_id`` por superstep) existe pra reconstituir
-um grafo multi-nó em qualquer superstep — sem grafo declarativo, isso é peso
-morto que o loop nativo não precisa carregar.
-
-O que o Vectora precisa e o schema minimalista do Hermes não modela
-sobrevive por outro caminho, mais simples que branch de checkpoint:
+"""``SessionStore`` — persistência de sessões/mensagens do motor de
+conversa nativo sobre ``aiosqlite``: schema append-only ``sessions`` +
+``messages`` + ``pending_approvals``.
 
 - **Fork de conversa** (editar mensagem/regenerar) via ``parent_message_id``
   — a mensagem nova aponta pro ponto da cadeia de onde diverge; mensagens
@@ -19,8 +9,8 @@ sobrevive por outro caminho, mais simples que branch de checkpoint:
   IMEDIATA e SINCRONAMENTE antes de qualquer espera, nunca só em memória
   de processo.
 
-Coexiste com ``VectoraSqliteSaver`` até o loop de conversa nativo existir
-e cortar o dispatch pro motor nativo — sem consumidor de produção ainda.
+Coexiste com ``VectoraSqliteSaver`` até o dispatch de produção migrar pro
+motor nativo.
 """
 
 from __future__ import annotations
@@ -139,22 +129,26 @@ class SessionStore:
         await self.setup()
         agora = _now()
         async with self._pool.acquire() as conn:
-            await conn.execute(
-                "INSERT OR IGNORE INTO sessions (thread_id, user_id, workspace_id, "
-                "parent_thread_id, mode, permission_mode, created_at, updated_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    thread_id,
-                    user_id,
-                    workspace_id,
-                    parent_thread_id,
-                    mode,
-                    permission_mode,
-                    agora,
-                    agora,
-                ),
-            )
-            await conn.commit()
+            try:
+                await conn.execute(
+                    "INSERT OR IGNORE INTO sessions (thread_id, user_id, workspace_id, "
+                    "parent_thread_id, mode, permission_mode, created_at, updated_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        thread_id,
+                        user_id,
+                        workspace_id,
+                        parent_thread_id,
+                        mode,
+                        permission_mode,
+                        agora,
+                        agora,
+                    ),
+                )
+                await conn.commit()
+            except Exception:
+                await conn.rollback()
+                raise
 
     async def append_message(
         self, thread_id: str, msg: VMessage, *, parent_message_id: int | None = None
@@ -168,35 +162,39 @@ class SessionStore:
         agora = _now()
         role, content_json, tool_calls_json, tool_call_id, name = _message_to_row(msg)
         async with self._pool.acquire() as conn:
-            cur = await conn.execute(
-                "INSERT INTO messages (thread_id, parent_message_id, role, "
-                "content_json, tool_calls_json, tool_call_id, name, is_branch_head, "
-                "created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)",
-                (
-                    thread_id,
-                    parent_message_id,
-                    role,
-                    content_json,
-                    tool_calls_json,
-                    tool_call_id,
-                    name,
-                    agora,
-                ),
-            )
-            new_id = cur.lastrowid
-            if new_id is None:
-                erro = "INSERT em `messages` não gerou lastrowid"
-                raise RuntimeError(erro)
-            await conn.execute(
-                "UPDATE messages SET is_branch_head = 0 "
-                "WHERE thread_id = ? AND id != ?",
-                (thread_id, new_id),
-            )
-            await conn.execute(
-                "UPDATE sessions SET updated_at = ? WHERE thread_id = ?",
-                (agora, thread_id),
-            )
-            await conn.commit()
+            try:
+                cur = await conn.execute(
+                    "INSERT INTO messages (thread_id, parent_message_id, role, "
+                    "content_json, tool_calls_json, tool_call_id, name, is_branch_head, "
+                    "created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)",
+                    (
+                        thread_id,
+                        parent_message_id,
+                        role,
+                        content_json,
+                        tool_calls_json,
+                        tool_call_id,
+                        name,
+                        agora,
+                    ),
+                )
+                new_id = cur.lastrowid
+                if new_id is None:
+                    erro = "INSERT em `messages` não gerou lastrowid"
+                    raise RuntimeError(erro)
+                await conn.execute(
+                    "UPDATE messages SET is_branch_head = 0 "
+                    "WHERE thread_id = ? AND id != ?",
+                    (thread_id, new_id),
+                )
+                await conn.execute(
+                    "UPDATE sessions SET updated_at = ? WHERE thread_id = ?",
+                    (agora, thread_id),
+                )
+                await conn.commit()
+            except Exception:
+                await conn.rollback()
+                raise
         return int(new_id)
 
     async def get_branch_head_id(self, thread_id: str) -> int | None:
@@ -237,8 +235,16 @@ class SessionStore:
                 start_id = row[0] if row is not None else None
 
             cadeia: list[Any] = []
+            visitados: set[int] = set()
             current_id = start_id
             while current_id is not None:
+                if current_id in visitados:
+                    erro = (
+                        f"ciclo detectado em parent_message_id da thread "
+                        f"'{thread_id}' (id {current_id} repetido)"
+                    )
+                    raise RuntimeError(erro)
+                visitados.add(current_id)
                 cur = await conn.execute(
                     "SELECT id, parent_message_id, role, content_json, "
                     "tool_calls_json, tool_call_id, name FROM messages "
@@ -256,18 +262,32 @@ class SessionStore:
 
     async def set_branch_head(self, thread_id: str, message_id: int) -> None:
         """Marca `message_id` como a ponta ativa da thread — fork explícito
-        (editar mensagem/regenerar) sem apagar nenhuma mensagem existente."""
+        (editar mensagem/regenerar) sem apagar nenhuma mensagem existente.
+
+        `message_id` precisa pertencer a `thread_id`; caso contrário a
+        thread ficaria sem nenhuma ponta ativa (histórico "sumiria")."""
         await self.setup()
         async with self._pool.acquire() as conn:
-            await conn.execute(
-                "UPDATE messages SET is_branch_head = 0 WHERE thread_id = ?",
-                (thread_id,),
-            )
-            await conn.execute(
-                "UPDATE messages SET is_branch_head = 1 WHERE thread_id = ? AND id = ?",
+            cur = await conn.execute(
+                "SELECT 1 FROM messages WHERE thread_id = ? AND id = ?",
                 (thread_id, message_id),
             )
-            await conn.commit()
+            if await cur.fetchone() is None:
+                erro = f"mensagem {message_id} não pertence à thread '{thread_id}'"
+                raise ValueError(erro)
+            try:
+                await conn.execute(
+                    "UPDATE messages SET is_branch_head = 0 WHERE thread_id = ?",
+                    (thread_id,),
+                )
+                await conn.execute(
+                    "UPDATE messages SET is_branch_head = 1 WHERE thread_id = ? AND id = ?",
+                    (thread_id, message_id),
+                )
+                await conn.commit()
+            except Exception:
+                await conn.rollback()
+                raise
 
     async def get_pending_approval(self, thread_id: str) -> dict[str, Any] | None:
         await self.setup()

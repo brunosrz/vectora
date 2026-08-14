@@ -17,6 +17,7 @@ explicitamente na chamada.
 from __future__ import annotations
 
 import inspect
+import logging
 import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -25,6 +26,8 @@ from typing import Any, get_type_hints
 from pydantic import BaseModel, create_model
 
 from backend.tools.context import ToolContext
+
+logger = logging.getLogger(__name__)
 
 _CTX_PARAM_NAME = "ctx"
 
@@ -54,23 +57,14 @@ class ToolSpec:
     handler: Callable[..., Awaitable[str]]
     extras: ToolExtras
     needs_ctx: bool
+    ctx_param_name: str = _CTX_PARAM_NAME
 
     def openai_schema(self) -> dict[str, Any]:
         """JSON Schema no shape ``{"type":"function","function":{...}}`` —
         mesmo formato que os 5 chat clients (``backend/llm/*/chat.py``)
         já consomem hoje via ``convert_to_openai_tool``."""
         params = self.args_model.model_json_schema()
-        # Só `title` no nível raiz é removido — providers não esperam esse
-        # campo em `parameters`. `$defs` (gerado por Pydantic quando um
-        # parâmetro usa um tipo composto/BaseModel aninhado) É mantido de
-        # propósito: os `$ref` dentro de `properties` apontam pra lá,
-        # removê-lo quebraria o schema. Nenhuma tool de produção usa tipo
-        # composto hoje (confirmado — só as tools de teste deste módulo
-        # exercitam esse caminho); se uma tool migrada vier a precisar,
-        # normalização de strict-mode por provider (ex.
-        # `backend/llm/openai/chat_client.py::_normalize_strict_schema`)
-        # precisa recursar em `$defs` também, não só em `properties`.
-        params.pop("title", None)
+        _strip_titles(params)
         return {
             "type": "function",
             "function": {
@@ -87,24 +81,36 @@ class ToolSpec:
         try:
             validated = self.args_model(**args)
         except Exception as exc:
+            logger.warning(
+                "argumentos inválidos para tool",
+                extra={"tool": self.name, "error": str(exc)},
+            )
             return f"Error: argumentos inválidos para '{self.name}': {exc}"
-        kwargs = validated.model_dump()
+        # getattr (não model_dump()) preserva instâncias de BaseModel
+        # aninhado — model_dump() as rebaixaria a dict, quebrando handlers
+        # que esperam o tipo composto declarado na assinatura.
+        kwargs = {
+            name: getattr(validated, name) for name in self.args_model.model_fields
+        }
         if self.needs_ctx:
-            kwargs[_CTX_PARAM_NAME] = ctx
+            kwargs[self.ctx_param_name] = ctx
         try:
             return await self.handler(**kwargs)
         except Exception as exc:
+            logger.exception("tool falhou", extra={"tool": self.name})
             return f"Error: '{self.name}' falhou: {exc}"
 
 
 class ToolRegistry:
     """Registro global de ``ToolSpec`` — ``vtool`` popula, o motor nativo e
-    a agregação por categoria (``registry_bundles.py``) consultam."""
+    a agregação por categoria consultam."""
 
     def __init__(self) -> None:
         self._tools: dict[str, ToolSpec] = {}
 
     def register(self, spec: ToolSpec) -> None:
+        if spec.name in self._tools:
+            raise ValueError(f"tool '{spec.name}' já registrada — nome duplicado")
         self._tools[spec.name] = spec
 
     def get(self, name: str) -> ToolSpec | None:
@@ -140,6 +146,20 @@ def _parse_arg_descriptions(docstring: str | None) -> dict[str, str]:
     return descriptions
 
 
+def _strip_titles(node: Any) -> None:
+    """Remove ``title`` recursivamente de todo o schema (raiz, ``properties``
+    e ``$defs``) — Pydantic emite ``title`` por campo por padrão, mas
+    ``convert_to_openai_tool`` (o gerador legado que este módulo substitui)
+    nunca emitia; providers como Gemini rejeitam a chave em ``Schema``."""
+    if isinstance(node, dict):
+        node.pop("title", None)
+        for value in node.values():
+            _strip_titles(value)
+    elif isinstance(node, list):
+        for item in node:
+            _strip_titles(item)
+
+
 def _summary(docstring: str | None) -> str:
     """Primeira linha não vazia da docstring — descrição curta da tool
     (mesmo comportamento que ``@tool`` do LangChain já tinha)."""
@@ -169,9 +189,11 @@ def vtool(
 
         fields: dict[str, Any] = {}
         needs_ctx = False
+        ctx_param_name: str | None = None
         for name, param in sig.parameters.items():
-            if name == _CTX_PARAM_NAME:
+            if hints.get(name) is ToolContext:
                 needs_ctx = True
+                ctx_param_name = name
                 continue
             annotation = hints.get(name, Any)
             if param.default is inspect.Parameter.empty:
@@ -194,6 +216,7 @@ def vtool(
             handler=fn,
             extras=resolved_extras,
             needs_ctx=needs_ctx,
+            ctx_param_name=ctx_param_name or _CTX_PARAM_NAME,
         )
         TOOL_REGISTRY.register(spec)
         return fn

@@ -179,22 +179,34 @@ class TestSetBranchHead:
 
         assert [m.text() for m in historico] == ["pergunta", "resposta"]
 
-    async def test_apontar_para_mensagem_de_outra_thread_nao_afeta_historico(
+    async def test_apontar_para_mensagem_de_outra_thread_rejeita_sem_corromper_historico(
         self, store: SessionStore
     ):
         await store.create_session("thread-1", user_id="alice")
         await store.create_session("thread-2", user_id="alice")
+        id_thread1 = await store.append_message(
+            "thread-1", text_message(MessageRole.USER, "thread 1")
+        )
         id_thread2 = await store.append_message(
             "thread-2", text_message(MessageRole.USER, "outra thread")
         )
 
-        # Nenhuma linha bate (thread_id errado) — não deve corromper thread-1.
-        await store.set_branch_head("thread-1", id_thread2)
+        with pytest.raises(ValueError, match="não pertence"):
+            await store.set_branch_head("thread-1", id_thread2)
 
-        assert await store.get_history("thread-1") == []
+        # thread-1 continua com sua própria ponta ativa — nunca fica sem head.
+        assert [m.text() for m in await store.get_history("thread-1")] == ["thread 1"]
+        assert await store.get_branch_head_id("thread-1") == id_thread1
         assert [m.text() for m in await store.get_history("thread-2")] == [
             "outra thread"
         ]
+
+    async def test_apontar_para_id_inexistente_levanta_erro(self, store: SessionStore):
+        await store.create_session("thread-1", user_id="alice")
+        await store.append_message("thread-1", text_message(MessageRole.USER, "oi"))
+
+        with pytest.raises(ValueError, match="não pertence"):
+            await store.set_branch_head("thread-1", 999999)
 
 
 class TestPendingApprovals:

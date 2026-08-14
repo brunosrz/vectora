@@ -1,20 +1,16 @@
 """Context de execução do agente Vectora (runtime, imutável por turno).
 
-``VectoraContext`` é o ``context_schema`` passado a ``create_deep_agent``.
-O LangGraph popula os campos automaticamente a partir de ``configurable``
-(chaves com o mesmo nome) no início de cada run.
+``VectoraContext`` (usado como ``ToolContext`` pelo tool registry nativo,
+``backend/tools/context.py``) carrega os dados de sessão que toda tool
+precisa: identidade do usuário, workspace ativo, modo de permissão.
 
-Isso substitui o padrão artesanal ``config["configurable"]["user_id"]``
-presente nas tools — as tools podem acessar ``runtime.context.user_id``
-de forma tipada via ``ToolRuntime[VectoraContext]``.
+``ctx_from_config`` constrói um ``VectoraContext`` a partir de um dict
+``{"configurable": {...}}`` — usado por código que ainda recebe esse shape
+(handlers legados, adapters de compatibilidade) em vez do context já
+tipado.
 
-Tools que ainda não recebem ``runtime: ToolRuntime[VectoraContext]`` por
-injeção automática continuam lendo ``configurable`` diretamente; o helper
-``ctx_from_config`` constrói o mesmo ``VectoraContext`` a partir desse dict
-para quem precisa da forma tipada sem a injeção do LangGraph.
-
-Campos intencionalmente simples (str/None) para compatibilidade com o
-serializer de ``configurable`` do LangGraph (não aceita tipos complexos).
+Campos intencionalmente simples (str/None) para permanecerem serializáveis
+sem transformação extra.
 """
 
 from __future__ import annotations
@@ -24,11 +20,10 @@ from dataclasses import dataclass, field
 
 @dataclass
 class VectoraContext:
-    """Contexto imutável de run injetado pelo LangGraph em todas as tools.
+    """Contexto imutável de execução, passado a toda tool do turno.
 
-    Campos populados a partir de ``configurable`` no request de cada turno.
-    Todos os campos são opcionais para compatibilidade retroativa com requests
-    que não incluem algum campo no ``configurable``.
+    Todos os campos são opcionais para compatibilidade retroativa com
+    chamadores que não populam algum deles.
     """
 
     user_id: str = "local"
@@ -61,19 +56,15 @@ class VectoraContext:
     uma task se auto-atualizando (`kanban_update_status` no próprio id, sem
     aprovação) de uma task tentando mudar o status de OUTRA."""
 
-    # Campos extras reservados para futuras extensões
     _extra: dict = field(default_factory=dict, repr=False, compare=False)
+    """Campos adicionais não cobertos pelos atributos tipados acima."""
 
 
 def ctx_from_config(config: dict | None) -> VectoraContext:
-    """Cria VectoraContext a partir de um RunnableConfig (fallback legado).
-
-    Usado em tools que ainda não recebem ``runtime: ToolRuntime[VectoraContext]``
-    via injeção automática do LangGraph. Permite migração gradual sem quebrar
-    tools existentes.
+    """Cria ``VectoraContext`` a partir de um dict ``{"configurable": {...}}``.
 
     Args:
-        config: RunnableConfig dict. Aceita ``None`` (retorna context padrão).
+        config: dict com chave ``configurable``. Aceita ``None`` (retorna context padrão).
 
     Returns:
         ``VectoraContext`` com campos populados do ``configurable``, ou defaults.

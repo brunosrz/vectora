@@ -11,9 +11,12 @@ nunca sobre tipos do LangChain.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Literal
+
+logger = logging.getLogger(__name__)
 
 
 class MessageRole(StrEnum):
@@ -113,27 +116,41 @@ class VMessage:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VMessage:
         """Desserialização — contraparte de `to_dict`, usada por
-        `SessionStore.get_history`."""
-        return cls(
-            role=MessageRole(data["role"]),
-            content=[
-                ContentBlock(
-                    kind=b["kind"],
-                    text=b.get("text"),
-                    image_url=b.get("image_url"),
-                    reasoning_text=b.get("reasoning_text"),
-                )
-                for b in data.get("content", [])
-            ],
-            tool_calls=[
-                ToolCall(id=tc["id"], name=tc["name"], args=tc["args"])
-                for tc in data.get("tool_calls", [])
-            ],
-            tool_call_id=data.get("tool_call_id"),
-            name=data.get("name"),
-            finish_reason=data.get("finish_reason"),
-            is_error=bool(data.get("is_error", False)),
-        )
+        `SessionStore.get_history`. Linha corrompida no histórico nunca
+        derruba a reconstrução inteira — vira mensagem de erro visível
+        no lugar dela."""
+        try:
+            return cls(
+                role=MessageRole(data["role"]),
+                content=[
+                    ContentBlock(
+                        kind=b["kind"],
+                        text=b.get("text"),
+                        image_url=b.get("image_url"),
+                        reasoning_text=b.get("reasoning_text"),
+                    )
+                    for b in data.get("content", [])
+                ],
+                tool_calls=[
+                    ToolCall(id=tc["id"], name=tc["name"], args=tc["args"])
+                    for tc in data.get("tool_calls", [])
+                ],
+                tool_call_id=data.get("tool_call_id"),
+                name=data.get("name"),
+                finish_reason=data.get("finish_reason"),
+                is_error=bool(data.get("is_error", False)),
+            )
+        except (KeyError, ValueError) as exc:
+            logger.exception("mensagem corrompida no histórico", extra={"data": data})
+            return cls(
+                role=MessageRole.SYSTEM,
+                content=[
+                    ContentBlock(
+                        kind="text", text=f"[mensagem corrompida no histórico: {exc}]"
+                    )
+                ],
+                is_error=True,
+            )
 
 
 def text_message(role: MessageRole, text: str, *, name: str | None = None) -> VMessage:

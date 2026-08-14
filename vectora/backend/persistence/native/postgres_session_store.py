@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     import asyncpg
 
 _SETUP_SQL = """
-CREATE TABLE IF NOT EXISTS vectora_sessions (
+CREATE TABLE IF NOT EXISTS vectora_native_sessions (
     thread_id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     workspace_id TEXT,
@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS vectora_sessions (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
-CREATE TABLE IF NOT EXISTS vectora_messages (
+CREATE TABLE IF NOT EXISTS vectora_native_messages (
     id BIGSERIAL PRIMARY KEY,
-    thread_id TEXT NOT NULL REFERENCES vectora_sessions(thread_id),
+    thread_id TEXT NOT NULL REFERENCES vectora_native_sessions(thread_id),
     parent_message_id BIGINT,
     role TEXT NOT NULL,
     content_json TEXT NOT NULL,
@@ -43,10 +43,10 @@ CREATE TABLE IF NOT EXISTS vectora_messages (
     is_branch_head BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS ix_vectora_messages_thread
-    ON vectora_messages(thread_id, id);
-CREATE TABLE IF NOT EXISTS vectora_pending_approvals (
-    thread_id TEXT PRIMARY KEY REFERENCES vectora_sessions(thread_id),
+CREATE INDEX IF NOT EXISTS ix_vectora_native_messages_thread
+    ON vectora_native_messages(thread_id, id);
+CREATE TABLE IF NOT EXISTS vectora_native_pending_approvals (
+    thread_id TEXT PRIMARY KEY REFERENCES vectora_native_sessions(thread_id),
     interrupt_id TEXT NOT NULL,
     tool_name TEXT NOT NULL,
     tool_call_id TEXT NOT NULL,
@@ -124,7 +124,7 @@ class PostgresSessionStore:
         agora = _now()
         async with self._pool.acquire() as conn:
             await conn.execute(
-                "INSERT INTO vectora_sessions (thread_id, user_id, workspace_id, "
+                "INSERT INTO vectora_native_sessions (thread_id, user_id, workspace_id, "
                 "parent_thread_id, mode, permission_mode, created_at, updated_at) "
                 "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "
                 "ON CONFLICT (thread_id) DO NOTHING",
@@ -148,8 +148,17 @@ class PostgresSessionStore:
         agora = _now()
         role, content_json, tool_calls_json, tool_call_id, name = _message_to_row(msg)
         async with self._pool.acquire() as conn, conn.transaction():
+            # Lock de linha na sessão serializa `append_message` concorrente
+            # na mesma thread — sem isso, dois INSERTs em paralelo sob READ
+            # COMMITTED não enxergam a linha um do outro e o UPDATE seguinte
+            # (`is_branch_head = FALSE WHERE id != new_id`) deixa as duas
+            # mensagens marcadas como ponta ativa.
+            await conn.execute(
+                "SELECT 1 FROM vectora_native_sessions WHERE thread_id = $1 FOR UPDATE",
+                thread_id,
+            )
             new_id = await conn.fetchval(
-                "INSERT INTO vectora_messages (thread_id, parent_message_id, role, "
+                "INSERT INTO vectora_native_messages (thread_id, parent_message_id, role, "
                 "content_json, tool_calls_json, tool_call_id, name, is_branch_head, "
                 "created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, $8) "
                 "RETURNING id",
@@ -163,13 +172,13 @@ class PostgresSessionStore:
                 agora,
             )
             await conn.execute(
-                "UPDATE vectora_messages SET is_branch_head = FALSE "
+                "UPDATE vectora_native_messages SET is_branch_head = FALSE "
                 "WHERE thread_id = $1 AND id != $2",
                 thread_id,
                 new_id,
             )
             await conn.execute(
-                "UPDATE vectora_sessions SET updated_at = $1 WHERE thread_id = $2",
+                "UPDATE vectora_native_sessions SET updated_at = $1 WHERE thread_id = $2",
                 agora,
                 thread_id,
             )
@@ -181,7 +190,7 @@ class PostgresSessionStore:
         await self.setup()
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
-                "SELECT id FROM vectora_messages WHERE thread_id = $1 "
+                "SELECT id FROM vectora_native_messages WHERE thread_id = $1 "
                 "AND is_branch_head = TRUE ORDER BY id DESC LIMIT 1",
                 thread_id,
             )
@@ -199,18 +208,26 @@ class PostgresSessionStore:
                 start_id: int | None = up_to_message_id
             else:
                 row = await conn.fetchrow(
-                    "SELECT id FROM vectora_messages WHERE thread_id = $1 "
+                    "SELECT id FROM vectora_native_messages WHERE thread_id = $1 "
                     "AND is_branch_head = TRUE ORDER BY id DESC LIMIT 1",
                     thread_id,
                 )
                 start_id = row["id"] if row is not None else None
 
             cadeia: list[Any] = []
+            visitados: set[int] = set()
             current_id = start_id
             while current_id is not None:
+                if current_id in visitados:
+                    erro = (
+                        f"ciclo detectado em parent_message_id da thread "
+                        f"'{thread_id}' (id {current_id} repetido)"
+                    )
+                    raise RuntimeError(erro)
+                visitados.add(current_id)
                 row = await conn.fetchrow(
                     "SELECT id, parent_message_id, role, content_json, "
-                    "tool_calls_json, tool_call_id, name FROM vectora_messages "
+                    "tool_calls_json, tool_call_id, name FROM vectora_native_messages "
                     "WHERE thread_id = $1 AND id = $2",
                     thread_id,
                     current_id,
@@ -224,15 +241,27 @@ class PostgresSessionStore:
         return [_row_to_message(row) for row in cadeia]
 
     async def set_branch_head(self, thread_id: str, message_id: int) -> None:
+        """Marca `message_id` como a ponta ativa da thread.
+
+        `message_id` precisa pertencer a `thread_id`; caso contrário a
+        thread ficaria sem nenhuma ponta ativa (histórico "sumiria")."""
         await self.setup()
         async with self._pool.acquire() as conn, conn.transaction():
+            exists = await conn.fetchval(
+                "SELECT 1 FROM vectora_native_messages WHERE thread_id = $1 AND id = $2",
+                thread_id,
+                message_id,
+            )
+            if exists is None:
+                erro = f"mensagem {message_id} não pertence à thread '{thread_id}'"
+                raise ValueError(erro)
             await conn.execute(
-                "UPDATE vectora_messages SET is_branch_head = FALSE "
+                "UPDATE vectora_native_messages SET is_branch_head = FALSE "
                 "WHERE thread_id = $1",
                 thread_id,
             )
             await conn.execute(
-                "UPDATE vectora_messages SET is_branch_head = TRUE "
+                "UPDATE vectora_native_messages SET is_branch_head = TRUE "
                 "WHERE thread_id = $1 AND id = $2",
                 thread_id,
                 message_id,
@@ -243,7 +272,7 @@ class PostgresSessionStore:
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
                 "SELECT interrupt_id, tool_name, tool_call_id, args_json, "
-                "reasoning, created_at FROM vectora_pending_approvals "
+                "reasoning, created_at FROM vectora_native_pending_approvals "
                 "WHERE thread_id = $1",
                 thread_id,
             )
@@ -271,7 +300,7 @@ class PostgresSessionStore:
         await self.setup()
         async with self._pool.acquire() as conn:
             await conn.execute(
-                "INSERT INTO vectora_pending_approvals (thread_id, interrupt_id, "
+                "INSERT INTO vectora_native_pending_approvals (thread_id, interrupt_id, "
                 "tool_name, tool_call_id, args_json, reasoning, created_at) "
                 "VALUES ($1, $2, $3, $4, $5, $6, $7) "
                 "ON CONFLICT (thread_id) DO UPDATE SET "
@@ -294,6 +323,6 @@ class PostgresSessionStore:
         await self.setup()
         async with self._pool.acquire() as conn:
             await conn.execute(
-                "DELETE FROM vectora_pending_approvals WHERE thread_id = $1",
+                "DELETE FROM vectora_native_pending_approvals WHERE thread_id = $1",
                 thread_id,
             )
