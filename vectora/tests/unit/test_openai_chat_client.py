@@ -1,5 +1,5 @@
 """``OpenAIChatClient`` — chat nativo da OpenAI (Responses API), Protocol
-``ChatClient`` (Sprint 14 WS3). Espelha `test_openai_chat.py`
+``ChatClient``. Espelha `test_openai_chat.py`
 (`VectoraOpenAIChat`, ainda em produção) operando sobre `VMessage` em vez
 de tipos LangChain — mesmo caminho crítico: tool-calling, streaming, e o
 edge case confirmado pela doc oficial (`.done` sem delta anterior).

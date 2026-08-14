@@ -2,7 +2,7 @@ from backend.vtypes.message import ContentBlock, MessageRole, VMessage
 from backend.vtypes.message import ToolCall as VToolCall
 
 # ---------------------------------------------------------------------------
-# Factories nativas (Sprint 14) — VMessage, sem langchain_core.
+# Factories nativas — VMessage, sem langchain_core.
 # ---------------------------------------------------------------------------
 
 

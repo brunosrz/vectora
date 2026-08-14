@@ -2,11 +2,11 @@
 ``langchain_core.messages.{BaseMessage,HumanMessage,AIMessage,SystemMessage,
 ToolMessage,AIMessageChunk}``.
 
-Sprint 14 (remoção de LangGraph/deepagents/``langchain_core``): fundação de
-todo o resto do motor — o loop de conversa nativo (``backend/engine/
-conversation_loop.py``), os 5 chat clients (``backend/llm/*/chat.py``) e a
-persistência (``backend/persistence/native/session_store.py``) operam todos
-sobre ``VMessage``, nunca sobre tipos do LangChain.
+Fundação de todo o resto do motor nativo — o loop de conversa
+(``backend/engine/conversation_loop.py``), os 5 chat clients
+(``backend/llm/*/chat_client.py``) e a persistência (``backend/
+persistence/native/session_store.py``) operam todos sobre ``VMessage``,
+nunca sobre tipos do LangChain.
 """
 
 from __future__ import annotations

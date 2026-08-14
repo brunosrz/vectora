@@ -1,8 +1,7 @@
 """``FallbackChatClient`` — chat nativo com fallback automático de provider
 por quota, implementa o Protocol ``ChatClient`` (``backend/llm/base.py``).
-Sprint 14 (remoção de ``langchain_core`` do núcleo agêntico), Workstream 3 —
-último componente do WS3, fecha os 5 chat clients (openai/anthropic/
-google_genai/ollama/openrouter) num único ponto de entrada com fallback.
+Fecha os 5 chat clients (openai/anthropic/google_genai/ollama/openrouter)
+num único ponto de entrada com fallback.
 
 Substitui ``backend/llm/fallback_chat_model.py`` (``FallbackChatModel``,
 subclasse de ``BaseChatModel``). A troca de mecanismo elimina o hack de
@@ -11,13 +10,13 @@ subclasse de ``BaseChatModel``). A troca de mecanismo elimina o hack de
 ``astream``/``agenerate``, cada candidato recebe as mesmas tools sem
 precisar de bind prévio. `adispatch_custom_event` (evento `model_switched`
 via callback manager do LangGraph) vira um callback direto
-(`on_model_switch`), passado pelo loop de conversa nativo (Workstream 5)
-em vez de descoberto via contexto ambiente.
+(`on_model_switch`), passado pelo loop de conversa nativo em vez de
+descoberto via contexto ambiente.
 
 Arquivo separado dos 5 `chat_client.py` de provider por natureza — não é
 mais um cliente de provider, é o orquestrador entre eles. Coexiste com
-`fallback_chat_model.py` até o Workstream 5 (loop de conversa nativo)
-existir e cortar o dispatch pro motor nativo.
+`fallback_chat_model.py` até o loop de conversa nativo existir e cortar o
+dispatch pro motor nativo.
 """
 
 from __future__ import annotations

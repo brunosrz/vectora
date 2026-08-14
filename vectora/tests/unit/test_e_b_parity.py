@@ -279,8 +279,7 @@ class TestMemoryToolsNamespace:
 class TestBuildStore:
     async def test_build_store_returns_vectora_store(self):
         """build_store() (async) retorna VectoraStore (nativo, aiosqlite)
-        persistente — não mais AsyncSqliteStore (langgraph-checkpoint-sqlite),
-        migrado na Sprint 14."""
+        persistente — não mais AsyncSqliteStore (langgraph-checkpoint-sqlite)."""
         import contextlib
 
         from backend.llm.backends import build_store

@@ -1,7 +1,7 @@
-"""``should_require_approval``/``ApprovalGate`` — HITL nativo (Sprint 14
-WS7). Migração da política canônica de `backend/services/middleware.py`
-pra função pura, mais a persistência síncrona da aprovação pendente
-(sobrevivência a restart, sobre o SessionStore do Workstream 4).
+"""``should_require_approval``/``ApprovalGate`` — HITL nativo. Migração da
+política canônica de `backend/services/middleware.py` pra função pura,
+mais a persistência síncrona da aprovação pendente (sobrevivência a
+restart, sobre o SessionStore).
 """
 
 from __future__ import annotations

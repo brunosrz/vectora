@@ -1,12 +1,12 @@
 """_ensure_infra (backend/services/agent_factory.py) — checkpointer/store Postgres (D1).
 
-Antes da Sprint 14, TODO checkpointer/store era SQLite mesmo em
+Antes desta migração, TODO checkpointer/store era SQLite mesmo em
 storage_mode="complete" com Postgres configurado — Qdrant/Redis já eram
 reais nesse modo, mas o estado do agente (thread messages, memória) ficava
 preso no SQLite de qualquer forma. Agora "complete" + postgres_dsn usa
-VectoraPostgresSaver/VectoraPostgresStore (nativos, asyncpg — Sprint 14
-Workstream A); qualquer falha ao abrir Postgres degrada pro SQLite (nunca
-impede a sessão de iniciar).
+VectoraPostgresSaver/VectoraPostgresStore (nativos, asyncpg); qualquer
+falha ao abrir Postgres degrada pro SQLite (nunca impede a sessão de
+iniciar).
 """
 
 from __future__ import annotations

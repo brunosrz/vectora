@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import pytest
 
-from backend.config import registry as registry_mod
 from backend.config import collections as collections_mod
+from backend.config import registry as registry_mod
+from backend.config.adapters import RegisteredModelsTableAdapter
 from backend.config.collections import (
     CollectionSettingField,
     DuplicateCollectionFieldError,
 )
-from backend.config.adapters import RegisteredModelsTableAdapter
 
 
 @pytest.fixture  # type: ignore[misc]
@@ -104,11 +104,12 @@ class TestCollectionRegistry:
 class TestRegisteredModelsTableAdapter:
     @pytest.mark.asyncio
     async def test_add_list_remove(self, tmp_path, monkeypatch):
-        from backend.api.handlers.provider_routing import _get_db
-
         # Usa DB isolado em tmp_path via monkeypatch do resolutor de DB.
         import sqlite3
+
         import aiosqlite
+
+        from backend.api.handlers.provider_routing import _get_db
 
         db_path = tmp_path / "provider.db"
 

@@ -1,5 +1,5 @@
 """``PostgresSessionStore`` — persistência simplificada de sessões/mensagens
-sobre ``asyncpg`` (Sprint 14, Workstream 4).
+sobre ``asyncpg``.
 
 Mesma semântica/contrato de ``SessionStore``
 (``backend/persistence/native/session_store.py``) — só os tipos de coluna e

@@ -1,5 +1,5 @@
 """``OpenRouterChatClient`` — chat nativo do OpenRouter (formato OpenAI-
-compatível), Protocol ``ChatClient`` (Sprint 14 WS3). Espelha os demais
+compatível), Protocol ``ChatClient``. Espelha os demais
 `test_*_chat_client.py`: `reasoning` em canal próprio (nunca concatenado ao
 texto), tool_calls fragmentado no streaming por `index`, `arguments`
 inválido não derruba a resposta.

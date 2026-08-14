@@ -1,15 +1,14 @@
-"""``ToolContext`` — contexto de execução injetado em toda tool nativa
-(Sprint 14, Workstream 2). Substitui ``Annotated[RunnableConfig,
-InjectedToolArg]`` — nunca vai pro JSON Schema exposto ao LLM (``vtool``,
-``backend/tools/registry.py``, filtra o parâmetro `ctx` na geração do
-schema).
+"""``ToolContext`` — contexto de execução injetado em toda tool nativa.
+Substitui ``Annotated[RunnableConfig, InjectedToolArg]`` — nunca vai pro
+JSON Schema exposto ao LLM (``vtool``, ``backend/tools/registry.py``,
+filtra o parâmetro `ctx` na geração do schema).
 
 ``VectoraContext`` (``backend/vtypes/context.py``) já era um dataclass
 próprio, não um tipo LangChain — só populado hoje via ``context_schema`` do
 ``create_deep_agent``. Reusar em vez de duplicar: mesmos campos, mesmo
 ``ctx_from_config`` de compatibilidade, agora também a interface direta que
 toda tool nativa recebe por injeção do loop de conversa
-(``backend/engine/conversation_loop.py``, Workstream 5).
+(``backend/engine/conversation_loop.py``).
 """
 
 from __future__ import annotations

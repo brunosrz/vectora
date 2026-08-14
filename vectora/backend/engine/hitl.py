@@ -1,21 +1,20 @@
-"""``should_require_approval`` — política HITL nativa (Sprint 14, Workstream
-7). Migração literal de ``backend/services/middleware.py`` (``_REQUIRE_
-APPROVAL``, ``_dynamic_hitl_when``, ``_mode_should_interrupt``, ``_is_self_
-kanban_update``, ``_workspace_is_jailed``) pra função pura, sem LangGraph.
+"""``should_require_approval`` — política HITL nativa. Migração literal de
+``backend/services/middleware.py`` (``_REQUIRE_APPROVAL``, ``_dynamic_
+hitl_when``, ``_mode_should_interrupt``, ``_is_self_kanban_update``,
+``_workspace_is_jailed``) pra função pura, sem LangGraph.
 
 Chamada IDENTICAMENTE pelo loop principal (``backend/engine/
-conversation_loop.py``) e por qualquer subagente (Workstream 8) — resolve a
-propagação de HITL pra dentro de delegações sem o truque de "mesma
-instância de middleware compartilhada" que o ``HumanInTheLoopMiddleware``
-do deepagents exigia (o subagente hoje herda `interrupt_on` do
-``create_deep_agent`` top-level, nunca o `middleware=` custom do pai —
-achado da Sprint 11 que motivou o fix ali; aqui a função é a mesma pra
-qualquer chamador, não há "herança" pra vazar).
+conversation_loop.py``) e por qualquer subagente — resolve a propagação de
+HITL pra dentro de delegações sem o truque de "mesma instância de
+middleware compartilhada" que o ``HumanInTheLoopMiddleware`` do
+deepagents exigia (o subagente herda `interrupt_on` do `create_deep_agent`
+top-level, nunca o `middleware=` custom do pai; aqui a função é a mesma
+pra qualquer chamador, não há "herança" pra vazar).
 
 Sobrevivência a restart: a persistência SÍNCRONA da aprovação pendente
-(``SessionStore.put_pending_approval``, já implementado no Workstream 4,
-ANTES de qualquer espera) é o que dá o invariante — este módulo só decide
-SE pausa, ``ApprovalGate`` (abaixo) decide COMO persistir/esperar.
+(``SessionStore.put_pending_approval``, ANTES de qualquer espera) é o que
+dá o invariante — este módulo só decide SE pausa, ``ApprovalGate`` (abaixo)
+decide COMO persistir/esperar.
 """
 
 from __future__ import annotations
@@ -155,7 +154,7 @@ def should_require_approval(
     history: list[VMessage],
 ) -> bool:
     """Predicate único do HITL nativo — mesma assinatura que `run_conversation`
-    (Workstream 5) já aceita opcionalmente em `should_require_approval`."""
+    já aceita opcionalmente em `should_require_approval`."""
     if _is_self_kanban_update(ctx, tool_name, args):
         return False
     if tool_name in _JAILED_BYPASS_TOOLS and _workspace_is_jailed(ctx.workspace_id):

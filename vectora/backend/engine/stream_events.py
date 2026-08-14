@@ -1,5 +1,5 @@
-"""Vocabulário de eventos do motor nativo (Sprint 14, Workstream 6) —
-análogo a ``gateway/stream_events.py`` do Hermes Agent: um dataclass
+"""Vocabulário de eventos do motor nativo — análogo a ``gateway/
+stream_events.py`` do Hermes Agent: um dataclass
 ``frozen=True`` por tipo de evento SSE hoje existente (17 tipos, campos
 idênticos aos payloads que ``backend/api/schemas.py`` já define e que o
 frontend já consome via ``use-stream-handler.ts``).
@@ -172,8 +172,8 @@ EngineEvent = (
 
 
 class EventSink(Protocol):
-    """Callback que o loop de conversa (Workstream 5) e demais produtores
-    do motor nativo chamam pra emitir um `EngineEvent` — o adapter (
-    `sse_adapter.py`) é só um dos consumidores possíveis dessa interface."""
+    """Callback que o loop de conversa e demais produtores do motor nativo
+    chamam pra emitir um `EngineEvent` — o adapter (`sse_adapter.py`) é só
+    um dos consumidores possíveis dessa interface."""
 
     async def __call__(self, event: EngineEvent) -> None: ...

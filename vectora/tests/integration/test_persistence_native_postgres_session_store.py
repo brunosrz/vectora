@@ -1,4 +1,4 @@
-"""Testes de integração — ``PostgresSessionStore`` (Sprint 14 WS4).
+"""Testes de integração — ``PostgresSessionStore``.
 
 Requer Postgres rodando (vectora-postgres via docker) — `pg_pool` pula os
 testes automaticamente se Docker estiver indisponível (mesmo padrão de

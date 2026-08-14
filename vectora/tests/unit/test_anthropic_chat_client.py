@@ -1,5 +1,5 @@
 """``AnthropicChatClient`` — chat nativo da Anthropic (Messages API), Protocol
-``ChatClient`` (Sprint 14 WS3). Espelha `test_openai_chat_client.py`, adaptado
+``ChatClient``. Espelha `test_openai_chat_client.py`, adaptado
 pro formato da Anthropic: `system` top-level, tool_result como mensagem
 `user`, streaming por `content_block.index`, `usage` cumulativo.
 """

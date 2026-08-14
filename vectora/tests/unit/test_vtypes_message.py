@@ -1,5 +1,5 @@
-"""``backend/vtypes/message.py`` — tipo de mensagem nativo do motor agêntico
-(Sprint 14), substitui ``langchain_core.messages.*``.
+"""``backend/vtypes/message.py`` — tipo de mensagem nativo do motor agêntico,
+substitui ``langchain_core.messages.*``.
 """
 
 from __future__ import annotations

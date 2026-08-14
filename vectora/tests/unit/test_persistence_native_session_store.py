@@ -1,5 +1,5 @@
-"""``SessionStore`` — persistência simplificada de sessões/mensagens
-(Sprint 14 WS4). Mesmo padrão de fixture de
+"""``SessionStore`` — persistência simplificada de sessões/mensagens.
+Mesmo padrão de fixture de
 `test_persistence_native_sqlite_checkpointer.py`: pool real sobre
 `tmp_path`, sem mock."""
 

@@ -1,6 +1,5 @@
-"""``execute_tool_batch`` — paralelização de tool calls do mesmo turno
-(Sprint 14, Workstream 5). Substitui ``backend/nodes/parallel_tools.py::
-ParallelToolNode(ToolNode)``.
+"""``execute_tool_batch`` — paralelização de tool calls do mesmo turno.
+Substitui ``backend/nodes/parallel_tools.py::ParallelToolNode(ToolNode)``.
 
 Regra de segurança de paralelismo: tool calls não-destrutivas do mesmo lote
 rodam via ``asyncio.gather`` (mesma granularidade que ``ToolExtras.

@@ -1,5 +1,5 @@
-"""``to_sse_line`` — serialização do vocabulário nativo de eventos
-(Sprint 14 WS6) pro mesmo contrato SSE que o frontend já consome hoje via
+"""``to_sse_line`` — serialização do vocabulário nativo de eventos pro
+mesmo contrato SSE que o frontend já consome hoje via
 `use-stream-handler.ts`. Paridade byte-a-byte: cada `EngineEvent` precisa
 produzir a MESMA linha que `backend/api/schemas.py::encode_event` já produz
 pro schema Pydantic equivalente — não uma reimplementação paralela.

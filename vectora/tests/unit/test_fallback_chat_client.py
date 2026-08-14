@@ -1,5 +1,5 @@
 """``FallbackChatClient`` — orquestrador de fallback entre os 5 chat clients
-nativos (Sprint 14 WS3). Espelha o comportamento do antigo
+nativos. Espelha o comportamento do antigo
 ``FallbackChatModel``: troca de provider em quota/timeout/incompatibilidade,
 nunca depois de já ter streamado chunks, e erro não recuperável no primário
 propaga sem tentar fallback.

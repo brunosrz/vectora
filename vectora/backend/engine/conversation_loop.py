@@ -1,30 +1,28 @@
-"""``run_conversation`` — loop de conversa nativo (Sprint 14, Workstream 5).
-Substitui o ``StateGraph`` do LangGraph por um loop ``while`` imperativo,
-estilo Hermes Agent: a cada volta relê o histórico da persistência (nunca
-mantém estado só em memória — reload/resume funcionam por reconstrução,
-mesmo invariante de ``SessionStore``), chama o chat client em streaming,
-acumula os fragmentos, executa as tool calls resultantes, e repete.
+"""``run_conversation`` — loop de conversa nativo. Substitui o
+``StateGraph`` do LangGraph por um loop ``while`` imperativo, estilo
+Hermes Agent: a cada volta relê o histórico da persistência (nunca mantém
+estado só em memória — reload/resume funcionam por reconstrução, mesmo
+invariante de ``SessionStore``), chama o chat client em streaming, acumula
+os fragmentos, executa as tool calls resultantes, e repete.
 
 ``max_iterations`` substitui ``recursion_limit`` (o teto de super-steps que
 o LangGraph aplicava); estourar emite ``stopped_reason="max_iterations"`` —
 mesmo código que o frontend já trata hoje via `ErrorSignal(code=
-"RECURSION_LIMIT")` no adapter atual (Workstream 6 mapeia esse resultado
-pro evento SSE equivalente).
+"RECURSION_LIMIT")` no adapter atual.
 
-HITL (Workstream 7, ``backend/engine/hitl.py``) entra por injeção:
-``should_require_approval`` é uma função pura opcional (``hitl.
-should_require_approval`` é a implementação real) — se fornecida e
-disparar pra qualquer tool call do lote, o loop pausa ali (``stopped_
-reason="interrupted"``) como controle normal, sem executar nenhuma tool do
-lote. Sem a função, o loop nunca pausa. Quando um ``ApprovalGate`` é
-passado, a aprovação pendente é persistida SINCRONAMENTE (``SessionStore.
+HITL entra por injeção: ``should_require_approval`` (``backend/engine/
+hitl.py``) é uma função pura opcional — se fornecida e disparar pra
+qualquer tool call do lote, o loop pausa ali (``stopped_reason=
+"interrupted"``) como controle normal, sem executar nenhuma tool do lote.
+Sem a função, o loop nunca pausa. Quando um ``ApprovalGate`` é passado, a
+aprovação pendente é persistida SINCRONAMENTE (``SessionStore.
 put_pending_approval``) antes do loop retornar — sobrevive a restart do
 backend, porque o estado nunca fica só na call stack deste `await`.
 
-Eventos emitidos via ``on_event`` (Workstream 6, ``backend/engine/
-stream_events.py``) são os mesmos tipos que ``sse_adapter.py`` serializa
-pro contrato SSE que o frontend já consome — o loop não sabe nada sobre
-SSE, só produz o vocabulário nativo.
+Eventos emitidos via ``on_event`` (``backend/engine/stream_events.py``)
+são os mesmos tipos que ``sse_adapter.py`` serializa pro contrato SSE que
+o frontend já consome — o loop não sabe nada sobre SSE, só produz o
+vocabulário nativo.
 """
 
 from __future__ import annotations
@@ -141,9 +139,9 @@ async def run_conversation(
                     acumulado["name"] = tc_chunk.name
                 acumulado["args_fragment"] += tc_chunk.args_fragment
 
-            # `usage` não tem evento SSE dedicado — rastreio de custo
-            # (Workstream 10) lê `VMessageChunk.usage` diretamente do
-            # stream do chat client, não via `on_event`.
+            # `usage` não tem evento SSE dedicado — rastreio de custo lê
+            # `VMessageChunk.usage` diretamente do stream do chat client,
+            # não via `on_event`.
 
         texto_final = "".join(partes_texto)
         tool_calls = _resolve_tool_calls(tool_call_chunks_por_indice)

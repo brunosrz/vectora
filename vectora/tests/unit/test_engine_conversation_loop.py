@@ -1,4 +1,4 @@
-"""``run_conversation`` — loop de conversa nativo (Sprint 14 WS5). `ChatClient`
+"""``run_conversation`` — loop de conversa nativo. `ChatClient`
 mockado com uma sequência de turnos controlada (`finish_reason` por
 chamada): parada normal, `max_iterations`, tool_calls sequenciais, tool_calls
 paralelos não-destrutivos, e interrupção HITL no meio de um lote misto.

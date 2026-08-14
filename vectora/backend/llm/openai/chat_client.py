@@ -1,15 +1,13 @@
 """``OpenAIChatClient`` — chat nativo da OpenAI (Responses API), implementa
-o Protocol ``ChatClient`` (``backend/llm/base.py``). Sprint 14 (remoção de
-``langchain_core`` do núcleo agêntico), Workstream 3.
+o Protocol ``ChatClient`` (``backend/llm/base.py``).
 
 Arquivo separado de ``chat.py`` (``VectoraOpenAIChat``, subclasse de
 ``BaseChatModel``) de propósito: o núcleo agêntico em produção hoje
 (``backend/services/agent_factory.py`` via ``create_deep_agent``/LangGraph)
 ainda depende de ``VectoraOpenAIChat``/``BaseChatModel`` — substituí-la
-in-place quebraria a wiring de produção antes do Workstream 5 (loop de
-conversa nativo) existir pra consumir esta classe. Quando o Workstream 5
-cortar o dispatch pro motor nativo, ``chat.py`` é removido e este arquivo
-assume o nome final.
+in-place quebraria a wiring de produção antes do loop de conversa nativo
+existir pra consumir esta classe. Quando o dispatch cortar pro motor
+nativo, ``chat.py`` é removido e este arquivo assume o nome final.
 
 A Responses API é o sucessor recomendado da Chat Completions desde 2026 —
 usa `input`/`output` (items) em vez de `messages`/`choices`, e streaming por

@@ -1,12 +1,11 @@
-"""``backend/tools/registry.py`` — tool registry nativo (Sprint 14 WS2),
-substitui ``@tool``/``BaseTool``/``convert_to_openai_tool`` do LangChain.
+"""``backend/tools/registry.py`` — tool registry nativo, substitui
+``@tool``/``BaseTool``/``convert_to_openai_tool`` do LangChain.
 
 Tools de exemplo definidas aqui (não em ``backend/tools/*.py`` de produção)
-— migrar as ~152 tools reais fica pro corte de dispatch feito no
-Workstream 5 (o loop nativo), quando o mecanismo antigo (deepagents/
-LangGraph, que exige ``BaseTool``) é substituído de vez. Registrar as duas
-listas de tools em paralelo agora duplicaria toda tool existente sem
-necessidade.
+— migrar as ~152 tools reais fica pro corte de dispatch feito quando o
+loop nativo assume, e o mecanismo antigo (deepagents/LangGraph, que exige
+``BaseTool``) é substituído de vez. Registrar as duas listas de tools em
+paralelo agora duplicaria toda tool existente sem necessidade.
 """
 
 from __future__ import annotations

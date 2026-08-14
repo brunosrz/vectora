@@ -1,7 +1,7 @@
 """Exercício real de ``VectoraSqliteSaver`` — antes desta auditoria, o
-checkpointer nativo (Sprint 14 WS1, já em produção via ``agent_factory.py``)
-não tinha nenhum teste que de fato gravasse/lesse checkpoint: a fixture que
-deveria fazer isso (``backend.testing.fixtures.checkpointer``) nunca era
+checkpointer nativo (já em produção via ``agent_factory.py``) não tinha
+nenhum teste que de fato gravasse/lesse checkpoint: a fixture que deveria
+fazer isso (``backend.testing.fixtures.checkpointer``) nunca era
 importada por nenhum teste."""
 
 from __future__ import annotations

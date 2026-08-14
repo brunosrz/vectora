@@ -1,6 +1,6 @@
 """``ChatClient`` — Protocol nativo que os 5 clients de chat de provider
-implementam (Sprint 14, Workstream 3). Substitui
-``langchain_core.language_models.chat_models.BaseChatModel``.
+implementam. Substitui ``langchain_core.language_models.chat_models.
+BaseChatModel``.
 
 Diferença central em relação ao ``BaseChatModel``: não existe mais
 ``bind_tools()`` produzindo uma instância nova imutável com as tools

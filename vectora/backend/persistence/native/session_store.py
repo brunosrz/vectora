@@ -1,9 +1,9 @@
 """``SessionStore`` — persistência simplificada de sessões/mensagens sobre
-``aiosqlite`` (Sprint 14, Workstream 4).
+``aiosqlite``.
 
-Para o motor de conversa nativo (Workstream 5), substitui o schema de
-checkpoint do LangGraph (``VectoraSqliteSaver``, ``sqlite_checkpointer.py``)
-por um schema append-only simples: ``sessions`` + ``messages`` +
+Para o motor de conversa nativo, substitui o schema de checkpoint do
+LangGraph (``VectoraSqliteSaver``, ``sqlite_checkpointer.py``) por um
+schema append-only simples: ``sessions`` + ``messages`` +
 ``pending_approvals``. O protocolo de checkpoint (``channel_versions``,
 ``pending_writes``, ``checkpoint_id`` por superstep) existe pra reconstituir
 um grafo multi-nó em qualquer superstep — sem grafo declarativo, isso é peso
@@ -15,13 +15,12 @@ sobrevive por outro caminho, mais simples que branch de checkpoint:
 - **Fork de conversa** (editar mensagem/regenerar) via ``parent_message_id``
   — a mensagem nova aponta pro ponto da cadeia de onde diverge; mensagens
   da branch anterior nunca são apagadas, só deixam de ser ``is_branch_head``.
-- **HITL sobrevivendo a restart** (Workstream 7) via ``pending_approvals``
-  — persistido IMEDIATA e SINCRONAMENTE antes de qualquer espera, nunca só
-  em memória de processo.
+- **HITL sobrevivendo a restart** via ``pending_approvals`` — persistido
+  IMEDIATA e SINCRONAMENTE antes de qualquer espera, nunca só em memória
+  de processo.
 
-Coexiste com ``VectoraSqliteSaver`` até o Workstream 5 (loop de conversa
-nativo) existir e cortar o dispatch pro motor nativo — sem consumidor de
-produção ainda.
+Coexiste com ``VectoraSqliteSaver`` até o loop de conversa nativo existir
+e cortar o dispatch pro motor nativo — sem consumidor de produção ainda.
 """
 
 from __future__ import annotations
@@ -203,9 +202,9 @@ class SessionStore:
     async def get_branch_head_id(self, thread_id: str) -> int | None:
         """`id` da mensagem que é a ponta ativa da branch, ou `None` se a
         thread ainda não tem mensagem nenhuma — usado pelo caller (loop de
-        conversa nativo, Workstream 5) pra encadear `parent_message_id` ao
-        persistir a próxima mensagem, sem precisar reler o histórico
-        inteiro só pra descobrir o último `id`."""
+        conversa nativo) pra encadear `parent_message_id` ao persistir a
+        próxima mensagem, sem precisar reler o histórico inteiro só pra
+        descobrir o último `id`."""
         await self.setup()
         async with self._pool.acquire() as conn:
             cur = await conn.execute(
@@ -223,7 +222,7 @@ class SessionStore:
         partir da ponta ativa (ou de `up_to_message_id`, pra reler uma
         branch antiga sem apagar o que veio depois) até a raiz — reload/
         resume acontece por reconstrução da persistência, nunca por estado
-        mantido só em memória (invariante do loop nativo, Workstream 5)."""
+        mantido só em memória (invariante do loop nativo)."""
         await self.setup()
         async with self._pool.acquire() as conn:
             if up_to_message_id is not None:
@@ -302,8 +301,8 @@ class SessionStore:
         reasoning: str | None = None,
     ) -> None:
         """Persiste IMEDIATA e SINCRONAMENTE a aprovação pendente, antes de
-        qualquer espera — invariante do Workstream 7 (HITL sobrevive a
-        restart do backend porque o estado nunca vive só em memória)."""
+        qualquer espera — HITL sobrevive a restart do backend porque o
+        estado nunca vive só em memória."""
         await self.setup()
         async with self._pool.acquire() as conn:
             await conn.execute(

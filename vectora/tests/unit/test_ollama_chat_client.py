@@ -1,5 +1,5 @@
-"""``OllamaChatClient`` — chat nativo do Ollama, Protocol ``ChatClient``
-(Sprint 14 WS3). Espelha os demais `test_*_chat_client.py`, adaptado pro
+"""``OllamaChatClient`` — chat nativo do Ollama, Protocol ``ChatClient``.
+Espelha os demais `test_*_chat_client.py`, adaptado pro
 formato do Ollama: streaming NDJSON (não SSE), `thinking` separado do
 `content`, imagem em base64 puro sem prefixo `data:`, tool call sempre
 completa num único evento (sem fragmentação).

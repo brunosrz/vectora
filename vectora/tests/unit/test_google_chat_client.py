@@ -1,5 +1,5 @@
 """``GoogleChatClient`` — chat nativo do Google Gemini, Protocol
-``ChatClient`` (Sprint 14 WS3). Espelha `test_openai_chat_client.py`/
+``ChatClient``. Espelha `test_openai_chat_client.py`/
 `test_anthropic_chat_client.py`, adaptado pro formato do Gemini: cada
 evento SSE é o `GenerateContentResponse` inteiro (não um delta de campo
 isolado), `functionCall.args` completo num único chunk, `usageMetadata`

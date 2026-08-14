@@ -1,29 +1,27 @@
-"""Delegação de subagentes nativa (Sprint 14, Workstream 8). Cada subagente
-é uma instância nova do motor nativo (``run_conversation``, Workstream 5)
-rodando com seu próprio ``SessionStore`` thread, tools restritas ao
-``SubagentSpec``, e prompt de sistema próprio — ``asyncio.Task``, nunca
-thread OS (CLAUDE.md regra 10).
+"""Delegação de subagentes nativa. Cada subagente é uma instância nova do
+motor nativo (``run_conversation``) rodando com seu próprio ``SessionStore``
+thread, tools restritas ao ``SubagentSpec``, e prompt de sistema próprio —
+``asyncio.Task``, nunca thread OS (CLAUDE.md regra 10).
 
-``SubagentSpec.tools`` já são ``ToolSpec`` do registry nativo (Workstream 2)
-— não os ``@tool`` do LangChain que ``backend/agents/souls.py`` (catálogo
-real em produção, ``SOUL_CATALOG``) ainda usa. Esse arquivo continua sendo
-a fonte de verdade em produção até a migração das ~152 tools pro registry
-nativo acontecer e o dispatch cortar pro motor novo (Workstream 12) — este
-módulo entrega o MECANISMO de delegação nativo, testável com qualquer
-``ToolRegistry``, coexistindo sem depender de um catálogo ainda inexistente.
+``SubagentSpec.tools`` já são ``ToolSpec`` do registry nativo — não os
+``@tool`` do LangChain que ``backend/agents/souls.py`` (catálogo real em
+produção, ``SOUL_CATALOG``) ainda usa. Esse arquivo continua sendo a fonte
+de verdade em produção até a migração das ~152 tools pro registry nativo
+acontecer e o dispatch cortar pro motor novo — este módulo entrega o
+MECANISMO de delegação nativo, testável com qualquer ``ToolRegistry``,
+coexistindo sem depender de um catálogo ainda inexistente.
 
 Sub-thread_id = ``f"{parent_thread_id}:{spec.name}:{uuid4()}"`` com
 ``parent_thread_id`` gravado em ``SessionStore.create_session`` — dá
 rastreabilidade completa (qualquer subagente sabe de qual conversa/task
 veio).
 
-HITL dentro do subagente: ``should_require_approval`` (Workstream 7,
-``backend/engine/hitl.py``) é passado direto pro `run_conversation` do
-subagente — chamado IDENTICAMENTE ao do agente principal, porque é código
-importado, não estado injetado por instância de middleware. Resolve o gap
-que o deepagents tinha (subagente herdava `interrupt_on` do topo do grafo,
-nunca o `middleware=` custom do pai) sem precisar de nenhum truque de
-propagação.
+HITL dentro do subagente: ``should_require_approval`` (``backend/engine/
+hitl.py``) é passado direto pro `run_conversation` do subagente — chamado
+IDENTICAMENTE ao do agente principal, porque é código importado, não
+estado injetado por instância de middleware. Resolve o gap que o
+deepagents tinha (subagente herdava `interrupt_on` do topo do grafo, nunca
+o `middleware=` custom do pai) sem precisar de nenhum truque de propagação.
 """
 
 from __future__ import annotations

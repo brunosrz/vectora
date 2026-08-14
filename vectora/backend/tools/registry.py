@@ -1,6 +1,6 @@
-"""Tool registry nativo (Sprint 14, Workstream 2) — substitui ``@tool`` de
-``langchain.tools``, ``langchain_core.tools.BaseTool`` e
-``langchain_core.utils.function_calling.convert_to_openai_tool``.
+"""Tool registry nativo — substitui ``@tool`` de ``langchain.tools``,
+``langchain_core.tools.BaseTool`` e ``langchain_core.utils.
+function_calling.convert_to_openai_tool``.
 
 Usa Pydantic (``pydantic.create_model`` — já dependência do projeto, não
 LangChain-family) pra gerar o JSON Schema de cada tool a partir da
@@ -10,8 +10,8 @@ cumpria antes em cima de ``BaseTool.args_schema``.
 Toda tool nativa é ``async def`` (CLAUDE.md regra 10) e recebe
 ``ctx: ToolContext`` como parâmetro normal — o decorator ``vtool`` filtra
 esse parâmetro na hora de gerar o schema (nunca aparece pro LLM), mas o
-caller (``backend/engine/conversation_loop.py``, Workstream 5) sempre passa
-``ctx=`` explicitamente na chamada.
+caller (``backend/engine/conversation_loop.py``) sempre passa ``ctx=``
+explicitamente na chamada.
 """
 
 from __future__ import annotations
@@ -98,9 +98,8 @@ class ToolSpec:
 
 
 class ToolRegistry:
-    """Registro global de ``ToolSpec`` — ``vtool`` popula, o motor
-    (Workstream 5) e a agregação por categoria (Workstream 2,
-    ``registry_bundles.py``) consultam."""
+    """Registro global de ``ToolSpec`` — ``vtool`` popula, o motor nativo e
+    a agregação por categoria (``registry_bundles.py``) consultam."""
 
     def __init__(self) -> None:
         self._tools: dict[str, ToolSpec] = {}

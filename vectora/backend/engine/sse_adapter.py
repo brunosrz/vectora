@@ -1,6 +1,6 @@
 """``to_sse_line`` — serializa um ``EngineEvent`` nativo (``stream_events.py``)
-pra uma linha SSE (Sprint 14, Workstream 6). Substitui
-``backend/api/adapters.py::adapt_stream`` como fonte do stream — mesmo
+pra uma linha SSE. Substitui ``backend/api/adapters.py::adapt_stream``
+como fonte do stream — mesmo
 alvo de paridade: os schemas Pydantic existentes em ``backend/api/
 schemas.py`` (``ThreadEvent``, ``TokenEvent``, etc.) e o `encode_event()`
 que já serializa esse envelope. Só a origem dos dados muda (motor nativo

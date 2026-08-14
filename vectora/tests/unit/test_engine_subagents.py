@@ -1,6 +1,6 @@
 """``run_subagent``/``spawn_subagent_background`` — delegação de
-subagentes nativa (Sprint 14 WS8). Cada subagente é uma instância nova do
-motor (`run_conversation`) numa sub-thread isolada com `parent_thread_id`
+subagentes nativa. Cada subagente é uma instância nova do motor
+(`run_conversation`) numa sub-thread isolada com `parent_thread_id`
 gravado — testado com o mesmo `_ScriptedChatClient` de
 `test_engine_conversation_loop.py`.
 """
