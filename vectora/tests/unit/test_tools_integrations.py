@@ -53,7 +53,7 @@ class TestGoogleDriveTools:
         from backend.tools.gdrive import google_drive_list
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await google_drive_list.ainvoke({"folder_id": "root"})
+            result = await google_drive_list(folder_id="root")
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
     @pytest.mark.asyncio
@@ -78,7 +78,7 @@ class TestGoogleDriveTools:
                 "httpx.AsyncClient", return_value=_mock_http_client([files_response])
             ),
         ):
-            result = await google_drive_list.ainvoke({"folder_id": "root"})
+            result = await google_drive_list(folder_id="root")
         assert "README.md" in result
         assert "docs" in result
 
@@ -91,7 +91,7 @@ class TestGoogleDriveTools:
             patch.dict("os.environ", {"GOOGLE_ACCESS_TOKEN": "tok"}),
             patch("httpx.AsyncClient", return_value=_mock_http_client([empty])),
         ):
-            result = await google_drive_list.ainvoke({"folder_id": "root"})
+            result = await google_drive_list(folder_id="root")
         assert "vazia" in result.lower()
 
     @pytest.mark.asyncio
@@ -103,7 +103,7 @@ class TestGoogleDriveTools:
             patch.dict("os.environ", {"GOOGLE_ACCESS_TOKEN": "tok"}),
             patch("httpx.AsyncClient", return_value=_mock_http_client([empty])),
         ):
-            result = await google_drive_search.ainvoke({"query": "inexistente"})
+            result = await google_drive_search(query="inexistente")
         assert "nenhum" in result.lower()
 
 

@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Any
 
-from langchain.tools import tool
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def _token() -> str:
     return tok
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="folder"))
 async def google_drive_list(folder_id: str = "root") -> str:
     """Lista arquivos e pastas do Google Drive.
 
@@ -66,7 +66,7 @@ async def google_drive_list(folder_id: str = "root") -> str:
         return f"Erro ao listar Drive: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="file-text"))
 async def google_drive_read(file_id: str) -> str:
     """Lê o conteúdo de um arquivo do Google Drive.
 
@@ -112,7 +112,7 @@ async def google_drive_read(file_id: str) -> str:
         return f"Erro ao ler arquivo {file_id}: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="search"))
 async def google_drive_search(query: str, max_results: int = 10) -> str:
     """Busca arquivos no Google Drive por nome ou conteúdo.
 

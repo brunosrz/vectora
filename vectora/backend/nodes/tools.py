@@ -31,6 +31,9 @@ from backend.tools import (
     fs as _fs_module,
 )
 from backend.tools import (
+    gdrive as _gdrive_module,
+)
+from backend.tools import (
     gh as _gh_module,
 )
 from backend.tools import (
@@ -77,11 +80,6 @@ from backend.tools import (
 )
 from backend.tools import (
     workspace as _workspace_module,
-)
-from backend.tools.gdrive import (
-    google_drive_list,
-    google_drive_read,
-    google_drive_search,
 )
 from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.langchain_bridge import as_langchain_tool
@@ -235,6 +233,9 @@ linear_update_issue = _bridge("linear_update_issue")
 jira_list_issues = _bridge("jira_list_issues")
 jira_create_issue = _bridge("jira_create_issue")
 jira_transition = _bridge("jira_transition")
+google_drive_list = _bridge("google_drive_list")
+google_drive_read = _bridge("google_drive_read")
+google_drive_search = _bridge("google_drive_search")
 gh_pr_list = _bridge("gh_pr_list")
 gh_pr_create = _bridge("gh_pr_create")
 gh_pr_view = _bridge("gh_pr_view")
