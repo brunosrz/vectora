@@ -42,6 +42,9 @@ from backend.tools import (
 from backend.tools import (
     thinking as _thinking_module,
 )
+from backend.tools import (
+    workspace as _workspace_module,
+)
 from backend.tools.gdrive import (
     google_drive_list,
     google_drive_read,
@@ -98,12 +101,6 @@ from backend.tools.registry import TOOL_REGISTRY
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.terminal_sessions import close_terminal, list_terminals
 from backend.tools.web import fetch_url, web_crawl, web_map, web_search
-from backend.tools.workspace import (
-    bucket_summary,
-    get_workbench_context,
-    workspace_describe,
-    workspace_list,
-)
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
@@ -224,6 +221,10 @@ gh_issue_list = _bridge("gh_issue_list")
 gh_issue_create = _bridge("gh_issue_create")
 gh_issue_view = _bridge("gh_issue_view")
 gh_issue_comment = _bridge("gh_issue_comment")
+workspace_describe = _bridge("workspace_describe")
+workspace_list = _bridge("workspace_list")
+bucket_summary = _bridge("bucket_summary")
+get_workbench_context = _bridge("get_workbench_context")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)
@@ -292,7 +293,7 @@ BROWSER_TOOLS: list[BaseTool] = [
     browser_lighthouse_audit,
 ]
 
-#: Ferramentas de memória (C4: search_memory adicionado; Remember: learning loop)
+#: Ferramentas de memória — inclui busca semântica e o loop de aprendizado (Remember)
 MEMORY_TOOLS: list[BaseTool] = [
     save_memory,
     get_memory,
@@ -322,7 +323,7 @@ LIBRARY_TOOLS: list[BaseTool] = [
     save_mcp_env_var,
 ]
 
-#: Ferramentas de workspace e manifests (B6)
+#: Ferramentas de workspace e manifests
 WORKSPACE_TOOLS: list[BaseTool] = [
     workspace_describe,
     workspace_list,
@@ -505,7 +506,7 @@ for _t in [
     kanban_create,
     kanban_update_status,
     kanban_decompose,
-    # G3 — Git + GitHub CLI
+    # Git + GitHub CLI
     git_status,
     git_log,
     git_diff,

@@ -9,13 +9,11 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Annotated
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from typing import TYPE_CHECKING
 
 from backend.persistence.kv import get_kv
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 if TYPE_CHECKING:
     from backend.vtypes import Workspace
@@ -83,15 +81,12 @@ def _append_graph_summary(workspace_cwd: str, result: dict) -> None:
         pass
 
 
-def _resolve_workspace(
-    workspace_id: str | None, config: RunnableConfig | None
-) -> Workspace | None:
-    """Resolve workspace_id → Workspace, priorizando config quando id é None."""
+def _resolve_workspace(workspace_id: str | None, ctx: ToolContext) -> Workspace | None:
+    """Resolve workspace_id → Workspace, priorizando o argumento explícito
+    sobre ``ctx.workspace_id`` quando ambos estão presentes."""
     from backend.workspace.workspace import workspace_registry
 
-    wid = workspace_id
-    if wid is None and config is not None:
-        wid = (config.get("configurable") or {}).get("workspace_id")
+    wid = workspace_id or ctx.workspace_id or None
 
     if wid:
         ws = workspace_registry.get(wid)
@@ -102,17 +97,17 @@ def _resolve_workspace(
     return workspace_registry.get_or_create()
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "workspace",
-        "destructive": False,
-        "icon": "layout-dashboard",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="workspace",
+        destructive=False,
+        icon="layout-dashboard",
+    )
 )
 async def workspace_describe(
+    ctx: ToolContext,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Descreve o workspace ativo: base de conhecimento indexada, buckets e tópicos.
 
@@ -122,7 +117,7 @@ async def workspace_describe(
     Args:
         workspace_id: ID do workspace (usa o workspace do diretório atual se omitido)
     """
-    ws = _resolve_workspace(workspace_id, config)
+    ws = _resolve_workspace(workspace_id, ctx)
     if ws is None:
         return json.dumps(
             {"status": "not_found", "message": "Nenhum workspace encontrado."}
@@ -160,13 +155,13 @@ async def workspace_describe(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "workspace",
-        "destructive": False,
-        "icon": "list",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="workspace",
+        destructive=False,
+        icon="list",
+    )
 )
 async def workspace_list() -> str:
     """Lista todos os workspaces Vectora registrados.
@@ -197,18 +192,18 @@ async def workspace_list() -> str:
     return json.dumps({"status": "success", "workspaces": items, "count": len(items)})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "workspace",
-        "destructive": False,
-        "icon": "database",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="workspace",
+        destructive=False,
+        icon="database",
+    )
 )
 async def bucket_summary(
+    ctx: ToolContext,
     bucket: str,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Retorna o resumo de um bucket específico do workspace.
 
@@ -219,7 +214,7 @@ async def bucket_summary(
         bucket: Nome do bucket (ex: "code", "docs", "notes", "web_cache")
         workspace_id: ID do workspace (usa o ativo se omitido)
     """
-    ws = _resolve_workspace(workspace_id, config)
+    ws = _resolve_workspace(workspace_id, ctx)
     if ws is None:
         return json.dumps(
             {"status": "not_found", "message": "Nenhum workspace encontrado."}
@@ -254,33 +249,29 @@ async def bucket_summary(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "workspace",
-        "destructive": False,
-        "icon": "file-search",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="workspace",
+        destructive=False,
+        icon="file-search",
+    )
 )
-async def get_workbench_context(
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def get_workbench_context(ctx: ToolContext) -> str:
     """Retorna o arquivo em foco e os arquivos abertos no editor do workbench.
 
     Lê o contexto do editor que o frontend publica via KV ao trocar de arquivo.
     Use para saber qual arquivo o usuário está editando antes de fazer alterações.
     """
-    workspace_id = "default"
+    workspace_id = ctx.workspace_id or "default"
     try:
-        configurable = (config or {}).get("configurable") or {}
-        workspace_id = configurable.get("workspace_id", "default")
         key = _workbench_ctx_key(workspace_id)
         kv = await get_kv()
         raw = await kv.get(key)
         if raw is None:
             return json.dumps({"status": "no_context"})
-        ctx = json.loads(raw)
-        return json.dumps({"status": "success", **ctx})
+        data = json.loads(raw)
+        return json.dumps({"status": "success", **data})
     except json.JSONDecodeError:
         logger.warning(
             "get_workbench_context: KV corrompido para workspace=%s", workspace_id
