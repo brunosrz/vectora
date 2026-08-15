@@ -440,6 +440,79 @@ class TestAutoEnableSemVectoraToml:
         assert policy_module._wsl2_eligible_sync() is True
 
 
+class TestAutoEnableNativoLinuxMacos:
+    """Linux (`bwrap`) e macOS (`sandbox-exec`) — diferente do WSL2, não
+    exigem detecção assíncrona no startup, só `shutil.which` no hot path
+    síncrono de `parse_policy()`."""
+
+    def test_linux_com_bwrap_disponivel_auto_habilita(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(policy_module.sys, "platform", "linux")
+        monkeypatch.setattr(
+            policy_module.shutil, "which", lambda nome: "/usr/bin/bwrap"
+        )
+
+        result = parse_policy(tmp_path / "vectora.toml")
+
+        assert result == AUTO_ENABLED_POLICY
+
+    def test_linux_sem_bwrap_mantem_desabilitado(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(policy_module.sys, "platform", "linux")
+        monkeypatch.setattr(policy_module.shutil, "which", lambda nome: None)
+
+        result = parse_policy(tmp_path / "vectora.toml")
+
+        assert result == DISABLED_POLICY
+
+    def test_macos_com_sandbox_exec_disponivel_auto_habilita(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.setattr(policy_module.sys, "platform", "darwin")
+        monkeypatch.setattr(
+            policy_module.shutil, "which", lambda nome: "/usr/bin/sandbox-exec"
+        )
+
+        result = parse_policy(tmp_path / "vectora.toml")
+
+        assert result == AUTO_ENABLED_POLICY
+
+    def test_macos_sem_sandbox_exec_mantem_desabilitado(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(policy_module.sys, "platform", "darwin")
+        monkeypatch.setattr(policy_module.shutil, "which", lambda nome: None)
+
+        result = parse_policy(tmp_path / "vectora.toml")
+
+        assert result == DISABLED_POLICY
+
+    def test_windows_sem_wsl2_nao_e_afetado_pela_checagem_nativa(
+        self, tmp_path, monkeypatch
+    ):
+        """Regressão: Windows continua exigindo WSL2 elegível — a checagem
+        nativa (bwrap/sandbox-exec) nunca dispara fora de Linux/macOS, então
+        não pode virar um auto-enable espúrio em Windows sem WSL2."""
+        monkeypatch.setattr(policy_module.sys, "platform", "win32")
+        monkeypatch.setattr(
+            policy_module.shutil, "which", lambda nome: "/algum/binario"
+        )
+
+        result = parse_policy(tmp_path / "vectora.toml")
+
+        assert result == DISABLED_POLICY
+
+    def test_checagem_nativa_e_sincrona_sem_cache(self, monkeypatch):
+        """`_native_sandbox_available_sync` não depende de warm-up prévio
+        (diferente de `_wsl2_eligible_sync`) — reflete o `shutil.which`
+        atual a cada chamada."""
+        monkeypatch.setattr(policy_module.sys, "platform", "linux")
+
+        monkeypatch.setattr(policy_module.shutil, "which", lambda nome: None)
+        assert policy_module._native_sandbox_available_sync() is False
+
+        monkeypatch.setattr(
+            policy_module.shutil, "which", lambda nome: "/usr/bin/bwrap"
+        )
+        assert policy_module._native_sandbox_available_sync() is True
+
+
 def _fake_wsl_proc(stdout_bytes: bytes = b"", returncode: int = 0):
     proc = MagicMock()
     proc.communicate = AsyncMock(return_value=(stdout_bytes, b""))

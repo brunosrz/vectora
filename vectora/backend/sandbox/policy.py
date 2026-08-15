@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import shutil
+import sys
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -40,13 +42,19 @@ class SandboxPolicy:
 
 DISABLED_POLICY = SandboxPolicy(enabled=False)
 
-# Habilitada por padrão quando `detect_wsl2()` já achou uma distro elegível
-# (cache populado no startup do backend, ver `warm_wsl2_cache()`) e o
+# Habilitada por padrão quando o ambiente já suporta isolamento nativo e o
 # workspace não tem `vectora.toml` nenhum — o worker jailado ainda tem RW
 # completo dentro do próprio workspace (rw_paths é só pra paths extras fora
 # dele), então isso não quebra operação normal, só adiciona a defesa em
-# profundidade (Landlock/seccomp/rlimits) sem exigir opt-in manual por
-# workspace quando o ambiente já suporta.
+# profundidade (Landlock/seccomp/rlimits/Seatbelt) sem exigir opt-in manual
+# por workspace quando o ambiente já suporta. Três checagens, uma por
+# plataforma: WSL2 (`detect_wsl2()`, cache populado por `warm_wsl2_cache()`
+# no startup — exige spawnar `wsl.exe`, por isso é async/cacheado) no
+# Windows; `bwrap` (Linux nativo) e `sandbox-exec` (macOS, binário built-in
+# da Apple) via `shutil.which` — as duas não exigem detecção assíncrona,
+# `shutil.which` é seguro de chamar direto no hot path síncrono. Windows
+# sem WSL2 elegível mantém o teto atual (não é seguro auto-instalar WSL2
+# silenciosamente).
 AUTO_ENABLED_POLICY = SandboxPolicy(enabled=True, backend="local")
 
 # Política mais restritiva possível — usada quando o parse falha (fail-closed:
@@ -67,7 +75,8 @@ def parse_policy(vectora_toml_path: Path) -> SandboxPolicy:
     o erro e desabilitar a proteção silenciosamente.
     """
     if not vectora_toml_path.is_file():
-        return AUTO_ENABLED_POLICY if _wsl2_eligible_sync() else DISABLED_POLICY
+        auto_enable = _wsl2_eligible_sync() or _native_sandbox_available_sync()
+        return AUTO_ENABLED_POLICY if auto_enable else DISABLED_POLICY
     try:
         raw = tomllib.loads(vectora_toml_path.read_text(encoding="utf-8"))
     except Exception:
@@ -124,6 +133,19 @@ def _wsl2_eligible_sync() -> bool:
     não se auto-habilita até a detecção real terminar), nunca um falso
     positivo por checar cedo demais."""
     return not isinstance(_wsl2_distro_cache, _Unset) and _wsl2_distro_cache is not None
+
+
+def _native_sandbox_available_sync() -> bool:
+    """Linux (`bwrap`) e macOS (`sandbox-exec`) — diferente do WSL2, não
+    exigem spawnar processo externo pra decidir (`detect_wsl2()` roda
+    `wsl.exe`), então não precisam de cache nem de warm-up assíncrono no
+    startup: `shutil.which` é uma checagem de filesystem, segura de chamar
+    direto no hot path síncrono de `parse_policy()`."""
+    if sys.platform == "linux":
+        return shutil.which("bwrap") is not None
+    if sys.platform == "darwin":
+        return shutil.which("sandbox-exec") is not None
+    return False
 
 
 async def warm_wsl2_cache() -> None:
