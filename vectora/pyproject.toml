@@ -28,6 +28,7 @@ dependencies = [
     "pyarrow>=24.0.0",
     "sqlalchemy>=2.0.51",
     "langchain-mcp-adapters>=0.3.0",
+    "mcp>=1.29.0",
     "rich>=15.0.0",
     "rank-bm25>=0.2.2",
     "python-dotenv>=1.2.2",

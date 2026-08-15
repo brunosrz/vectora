@@ -120,6 +120,24 @@ def _track(task: asyncio.Task[None]) -> None:
     task.add_done_callback(_background_tasks.discard)
 
 
+@pytest.fixture(autouse=True)
+def _isolate_native_tool_registry() -> Generator[None]:
+    """``backend.tools.registry.TOOL_REGISTRY`` é um singleton de processo —
+    vários testes definem tools locais via ``@vtool`` com o mesmo nome (ex.
+    ``buscar``, repetido em test_*_chat_client.py e test_engine_conversation_
+    loop.py). Sem isolamento, rodar a suíte inteira num processo só colide
+    ("tool já registrada") mesmo com cada teste passando isolado. Snapshot +
+    restore em vez de ``clear()`` — preserva qualquer tool que um módulo de
+    produção venha a registrar de verdade no import (hoje nenhum, mas não
+    assume isso pra sempre)."""
+    from backend.tools.registry import TOOL_REGISTRY
+
+    snapshot = dict(TOOL_REGISTRY._tools)
+    yield
+    TOOL_REGISTRY._tools.clear()
+    TOOL_REGISTRY._tools.update(snapshot)
+
+
 @pytest.fixture
 async def spawned_backend(tmp_path: Path):
     """Backend real (``python -m backend.main start``) rodando num

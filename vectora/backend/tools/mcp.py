@@ -1,14 +1,23 @@
 """MCP tool: invoca ferramentas de outros servidores via Model Context Protocol.
 
-Usa o `MultiServerMCPClient` oficial da biblioteca `langchain-mcp-adapters`.
-O cliente carrega tools LangChain-compatíveis de servidores MCP externos
-configurados em settings (`mcp_server_url` e/ou `mcp_command`).
+Usa o SDK oficial `mcp` (Python) direto — este módulo não depende mais de
+`langchain-mcp-adapters`/`MultiServerMCPClient` (a lib segue no projeto só
+por causa de `backend/workspace/plugins.py`, que resolve tools MCP
+por-usuário direto pro grafo LangChain; migra junto do corte de dispatch).
+`VectoraMCPClient` mantém uma `ClientSession` por servidor configurado
+(stdio/SSE/streamable_http) e expõe as `mcp.types.Tool` agregadas.
 
-Ganhos sobre a implementação antiga (client customizado, quebrado):
-- `get_tools()` devolve `BaseTool` prontos — sem parsing manual de JSON-RPC
-- `tool_interceptors` para logging/observabilidade de cada chamada externa
-- Suporte nativo a stdio, SSE e streamable_http
-- Sessões persistentes via `async with client.session(...)`
+A tool `call_mcp_tool` em si continua no formato `@tool` do
+`langchain.tools` (não `@vtool`/`ToolSpec`) — o dispatch de produção
+(`agent_factory.py`/`create_deep_agent`) ainda consome `BaseTool`; a
+migração pro registry nativo é escopo da etapa de "migração de tools de
+produção" da conclusão da Sprint 14, não desta workstream (que troca só o
+client MCP por baixo, sem tocar a interface exposta ao agente).
+
+Subprocess stdio nunca herda `os.environ` inteiro do processo pai — só um
+allowlist mínimo (`_SAFE_SUBPROCESS_ENV_KEYS`) é repassado, fechando o vazamento
+de API keys de LLM/tokens pro servidor MCP local (achado da comparação com o
+Hermes, `documents/features.md` §4).
 """
 
 from __future__ import annotations
@@ -16,77 +25,171 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import time
-from typing import TYPE_CHECKING, Any
+from contextlib import AsyncExitStack
+from typing import Any
 
 from langchain.tools import tool
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.sse import sse_client
+from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamable_http_client
+from mcp.types import Tool as MCPTool
 
 from backend.settings import settings
 
-try:
-    from langchain_mcp_adapters.client import MultiServerMCPClient
-except ImportError:
-    MultiServerMCPClient = None  # type: ignore[assignment,misc]  # ty: ignore[invalid-assignment]
-
-if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
-
 logger = logging.getLogger(__name__)
 
-# Cache global — reutiliza cliente e tools entre chamadas.
-# Protegido por lock para evitar race condition em inicialização concorrente.
-_mcp_client: Any | None = None
-_mcp_tools_by_name: dict[str, Any] | None = None
+#: Variáveis de ambiente sempre repassadas ao subprocess stdio — o mínimo
+#: pra um processo Python/Node/etc. rodar (PATH, home dir, locale, temp).
+#: Nunca inclui API keys, tokens ou segredos do processo Vectora.
+_SAFE_SUBPROCESS_ENV_KEYS = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "USERPROFILE",
+        "SYSTEMROOT",
+        "SYSTEMDRIVE",
+        "WINDIR",
+        "TEMP",
+        "TMP",
+        "LANG",
+        "LC_ALL",
+        "PYTHONIOENCODING",
+        "APPDATA",
+        "LOCALAPPDATA",
+    }
+)
+
+
+def _safe_subprocess_env() -> dict[str, str]:
+    """Allowlist do ambiente do processo pai — nunca `os.environ` cru."""
+    return {k: v for k, v in os.environ.items() if k in _SAFE_SUBPROCESS_ENV_KEYS}
+
+
+class VectoraMCPClient:
+    """Uma `ClientSession` MCP por servidor configurado.
+
+    Substitui `langchain_mcp_adapters.client.MultiServerMCPClient` — mesma
+    responsabilidade (gerenciar conexões + expor tools agregadas), sem
+    depender de `BaseTool`/`langchain_core`.
+    """
+
+    def __init__(self) -> None:
+        self._stack = AsyncExitStack()
+        self._sessions: dict[str, ClientSession] = {}
+        self._tools_by_name: dict[str, tuple[str, MCPTool]] = {}
+        self._connected = False
+
+    async def connect(self, connections: dict[str, dict[str, Any]]) -> None:
+        """Abre uma sessão por servidor configurado. Falha de um servidor
+        não impede os demais — cada conexão é isolada e logada."""
+        for server_name, cfg in connections.items():
+            try:
+                session = await self._connect_one(server_name, cfg)
+            except Exception:
+                logger.exception(
+                    "mcp: falha ao conectar servidor", extra={"server": server_name}
+                )
+                continue
+            self._sessions[server_name] = session
+            try:
+                listed = await session.list_tools()
+            except Exception:
+                logger.exception(
+                    "mcp: falha ao listar tools", extra={"server": server_name}
+                )
+                continue
+            for t in listed.tools:
+                self._tools_by_name[t.name] = (server_name, t)
+        self._connected = True
+
+    async def _connect_one(
+        self, server_name: str, cfg: dict[str, Any]
+    ) -> ClientSession:
+        transport = cfg["transport"]
+        if transport == "stdio":
+            params = StdioServerParameters(
+                command=cfg["command"],
+                args=cfg.get("args") or [],
+                env=_safe_subprocess_env(),
+            )
+            read, write = await self._stack.enter_async_context(stdio_client(params))
+        elif transport == "sse":
+            read, write = await self._stack.enter_async_context(sse_client(cfg["url"]))
+        elif transport == "streamable_http":
+            read, write, _ = await self._stack.enter_async_context(
+                streamable_http_client(cfg["url"])
+            )
+        else:
+            raise ValueError(f"transporte MCP desconhecido: {transport!r}")
+
+        session = await self._stack.enter_async_context(ClientSession(read, write))
+        await session.initialize()
+        logger.info("mcp: servidor conectado", extra={"server": server_name})
+        return session
+
+    def tools(self) -> dict[str, MCPTool]:
+        return {name: tool for name, (_, tool) in self._tools_by_name.items()}
+
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> str:
+        """Invoca `tool_name` no servidor que a expõe. Levanta `KeyError` se
+        a tool não é conhecida — o chamador (`call_mcp_tool`) trata."""
+        server_name, _ = self._tools_by_name[tool_name]
+        session = self._sessions[server_name]
+        t0 = time.perf_counter()
+        logger.info(
+            "mcp_external_tool_call", extra={"tool": tool_name, "server": server_name}
+        )
+        try:
+            result = await session.call_tool(tool_name, arguments)
+        except Exception:
+            logger.exception("mcp_external_tool_failed", extra={"tool": tool_name})
+            raise
+        logger.debug(
+            "mcp_external_tool_done",
+            extra={"tool": tool_name, "elapsed_s": round(time.perf_counter() - t0, 3)},
+        )
+        return _render_call_result(result)
+
+    async def aclose(self) -> None:
+        await self._stack.aclose()
+        self._sessions.clear()
+        self._tools_by_name.clear()
+        self._connected = False
+
+
+def _render_call_result(result: Any) -> str:
+    """Concatena os blocos de conteúdo de um `CallToolResult` em texto —
+    mesmo shape de string que `call_mcp_tool` sempre devolveu."""
+    parts: list[str] = []
+    for block in getattr(result, "content", []) or []:
+        text = getattr(block, "text", None)
+        if text is not None:
+            parts.append(text)
+        else:
+            parts.append(str(block))
+    rendered = "\n".join(parts) if parts else str(result)
+    if getattr(result, "isError", False):
+        return f"Erro da tool MCP: {rendered}"
+    return rendered
+
+
+# ---------------------------------------------------------------------------
+# Configuração de conexões + cache global
+# ---------------------------------------------------------------------------
+
+_mcp_client: VectoraMCPClient | None = None
 _mcp_lock: asyncio.Lock = asyncio.Lock()
 
 
-# ---------------------------------------------------------------------------
-# Interceptor — observabilidade de tools de servidores MCP externos
-# ---------------------------------------------------------------------------
-
-
-async def _logging_interceptor(
-    request: Any,
-    handler: Callable[[Any], Awaitable[Any]],
-) -> Any:
-    """Loga cada chamada a tools de servidores MCP externos.
-
-    Satisfaz o Protocol `ToolCallInterceptor` (callable async). Nunca altera
-    request/result — só registra timing e nome para auditoria. Falhas de log
-    jamais quebram a chamada da tool.
-    """
-    name = getattr(request, "name", "?")
-    server = getattr(request, "server_name", "?")
-    t0 = time.perf_counter()
-    logger.info("mcp_external_tool_call", extra={"tool": name, "server": server})
-    try:
-        result = await handler(request)
-    except Exception:
-        logger.exception("mcp_external_tool_failed", extra={"tool": name})
-        raise
-    logger.debug(
-        "mcp_external_tool_done",
-        extra={"tool": name, "elapsed_s": round(time.perf_counter() - t0, 3)},
-    )
-    return result
-
-
-# ---------------------------------------------------------------------------
-# Configuração de conexões
-# ---------------------------------------------------------------------------
-
-
 def _build_connections() -> dict[str, dict[str, Any]]:
-    """Monta o dict de conexões a partir das settings.
-
-    Formato exigido pelo MultiServerMCPClient 0.2.x: cada servidor é um dict
-    com `transport` ("stdio" | "sse" | "streamable_http") + campos específicos.
-    """
+    """Monta o dict de conexões a partir das settings — mesmo shape de
+    antes (`transport` + campos específicos por tipo)."""
     connections: dict[str, dict[str, Any]] = {}
 
     if settings.mcp_server_url:
-        # URL → transport HTTP. mcp_transport_type "http" mapeia para o
-        # streamable_http moderno; "sse" mantém o legado SSE.
         transport = "sse" if settings.mcp_transport_type == "sse" else "streamable_http"
         connections["default"] = {
             "transport": transport,
@@ -103,16 +206,12 @@ def _build_connections() -> dict[str, dict[str, Any]]:
     return connections
 
 
-async def _get_mcp_client() -> Any | None:
-    """Obtém ou cria a instância global do MultiServerMCPClient."""
+async def _get_mcp_client() -> VectoraMCPClient | None:
+    """Obtém ou cria a instância global do `VectoraMCPClient`."""
     global _mcp_client
 
     if _mcp_client is not None:
         return _mcp_client
-
-    if MultiServerMCPClient is None:
-        logger.warning("langchain-mcp-adapters não instalado")
-        return None
 
     connections = _build_connections()
     if not connections:
@@ -122,46 +221,19 @@ async def _get_mcp_client() -> Any | None:
     async with _mcp_lock:
         if _mcp_client is not None:  # double-check após o lock
             return _mcp_client
+        client = VectoraMCPClient()
         try:
-            _mcp_client = MultiServerMCPClient(
-                connections,  # ty: ignore[invalid-argument-type]
-                tool_interceptors=[_logging_interceptor],
-            )
-            logger.info(
-                "MCP client inicializado",
-                extra={"servers": list(connections.keys())},
-            )
+            await client.connect(connections)
         except Exception:
             logger.exception("Falha ao inicializar MCP client")
-            _mcp_client = None
+            await client.aclose()
+            return None
+        _mcp_client = client
+        logger.info(
+            "MCP client inicializado", extra={"servers": list(connections.keys())}
+        )
 
     return _mcp_client
-
-
-async def _get_mcp_tools() -> dict[str, Any]:
-    """Carrega as tools de todos os servidores MCP configurados.
-
-    Returns:
-        Dict {tool_name: BaseTool}. Vazio se nenhum servidor disponível.
-    """
-    global _mcp_tools_by_name
-
-    if _mcp_tools_by_name is not None:
-        return _mcp_tools_by_name
-
-    client = await _get_mcp_client()
-    if client is None:
-        return {}
-
-    try:
-        tools = await client.get_tools()
-        _mcp_tools_by_name = {t.name: t for t in tools}
-        logger.info("MCP tools carregadas", extra={"count": len(_mcp_tools_by_name)})
-    except Exception:
-        logger.exception("Falha ao listar MCP tools")
-        _mcp_tools_by_name = {}
-
-    return _mcp_tools_by_name
 
 
 @tool(
@@ -185,9 +257,6 @@ async def call_mcp_tool(tool_name: str, arguments: str) -> str:
     Returns:
         Resposta da ferramenta MCP, ou mensagem de erro descritiva
     """
-    if MultiServerMCPClient is None:
-        return "MCP indisponível. Instale: pip install langchain-mcp-adapters"
-
     if not settings.enable_mcp:
         return "MCP desabilitado. Defina ENABLE_MCP=true para usar servidores externos."
 
@@ -196,26 +265,23 @@ async def call_mcp_tool(tool_name: str, arguments: str) -> str:
     except json.JSONDecodeError as e:
         return f"Erro: 'arguments' deve ser JSON válido — {e}"
 
-    tools = await _get_mcp_tools()
-    if not tools:
+    client = await _get_mcp_client()
+    if client is None:
         return (
             "Nenhuma tool MCP disponível. Verifique mcp_server_url / mcp_command "
             "nas configurações."
         )
 
-    target = tools.get(tool_name)
-    if target is None:
+    tools = client.tools()
+    if tool_name not in tools:
         return (
             f"Tool MCP '{tool_name}' não encontrada. "
             f"Disponíveis: {', '.join(sorted(tools))}"
         )
 
-    logger.info("call_mcp_tool", extra={"tool": tool_name})
-
     try:
         async with asyncio.timeout(settings.mcp_timeout):
-            result = await target.ainvoke(args_dict)
-        return str(result)
+            return await client.call_tool(tool_name, args_dict)
     except TimeoutError:
         logger.warning("call_mcp_tool timeout", extra={"tool": tool_name})
         return f"Erro: tool MCP '{tool_name}' excedeu {settings.mcp_timeout}s."
