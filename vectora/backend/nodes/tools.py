@@ -40,6 +40,9 @@ from backend.tools import (
     homeassistant as _homeassistant_module,
 )
 from backend.tools import (
+    jira as _jira_module,
+)
+from backend.tools import (
     kanban as _kanban_module,
 )
 from backend.tools import (
@@ -81,7 +84,6 @@ from backend.tools.gdrive import (
     google_drive_search,
 )
 from backend.tools.gmail import gmail_list, gmail_read
-from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.mcp import call_mcp_tool
 from backend.tools.native import (
@@ -230,6 +232,9 @@ notion_create_page = _bridge("notion_create_page")
 linear_list_issues = _bridge("linear_list_issues")
 linear_create_issue = _bridge("linear_create_issue")
 linear_update_issue = _bridge("linear_update_issue")
+jira_list_issues = _bridge("jira_list_issues")
+jira_create_issue = _bridge("jira_create_issue")
+jira_transition = _bridge("jira_transition")
 gh_pr_list = _bridge("gh_pr_list")
 gh_pr_create = _bridge("gh_pr_create")
 gh_pr_view = _bridge("gh_pr_view")

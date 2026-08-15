@@ -278,7 +278,7 @@ class TestJiraTools:
         from backend.tools.jira import jira_list_issues
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await jira_list_issues.ainvoke({})
+            result = await jira_list_issues()
         assert "obrigatórios" in result or "erro" in result.lower()
 
     @pytest.mark.asyncio
@@ -303,7 +303,7 @@ class TestJiraTools:
             patch.dict("os.environ", self._env),
             patch("httpx.AsyncClient", return_value=_mock_http_client([resp])),
         ):
-            result = await jira_list_issues.ainvoke({})
+            result = await jira_list_issues()
         assert "PROJ-1" in result
         assert "Bug no login" in result
 
@@ -312,9 +312,7 @@ class TestJiraTools:
         from backend.tools.jira import jira_create_issue
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await jira_create_issue.ainvoke(
-                {"project_key": "PROJ", "summary": "x"}
-            )
+            result = await jira_create_issue(project_key="PROJ", summary="x")
         assert "obrigatórios" in result or "erro" in result.lower()
 
 

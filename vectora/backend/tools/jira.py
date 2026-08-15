@@ -9,7 +9,7 @@ import base64
 import logging
 import os
 
-from langchain.tools import tool
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def _auth() -> tuple[str, dict[str, str]]:
     }
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="list"))
 async def jira_list_issues(
     jql: str = "assignee = currentUser() ORDER BY updated DESC", max_results: int = 20
 ) -> str:
@@ -72,7 +72,7 @@ async def jira_list_issues(
         return f"Erro ao listar issues Jira: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=True, category="integrations", icon="plus-circle"))
 async def jira_create_issue(
     project_key: str, summary: str, description: str = "", issue_type: str = "Task"
 ) -> str:
@@ -119,7 +119,7 @@ async def jira_create_issue(
         return f"Erro ao criar issue Jira: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=True, category="integrations", icon="move"))
 async def jira_transition(issue_key: str, transition_name: str) -> str:
     """Muda o status de uma issue do Jira.
 
