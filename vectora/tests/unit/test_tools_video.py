@@ -10,7 +10,7 @@ Duas coisas específicas de vídeo que estes testes travam:
   estão em `VISION_CAPABLE_PROVIDERS` e não aceitam vídeo como entrada;
   reaproveitar aquela lista prometeria uma capacidade que a API recusa.
 
-Cada caminho feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
+Cada caminho feliz tem o par de erro/borda no mesmo teste.
 """
 
 from __future__ import annotations
@@ -19,14 +19,14 @@ import json
 from pathlib import Path
 
 import pytest
-from langchain_core.runnables import RunnableConfig
 
 from backend.settings import provider_supports
 from backend.tools import media
+from backend.tools.context import ToolContext
 
 
-def _cfg(model: str) -> RunnableConfig:
-    return {"configurable": {"model": model, "thread_id": "t-video"}}
+def _ctx(model: str) -> ToolContext:
+    return ToolContext(model=model, thread_id="t-video")
 
 
 # ---------------------------------------------------------------------------
@@ -85,8 +85,8 @@ async def test_generate_video_provider_sem_suporte_avisa_sem_chamar_sdk(monkeypa
     monkeypatch.setattr(media, "_generate_video_bytes", _nunca)
 
     saida = json.loads(
-        await media.generate_video.ainvoke(
-            {"prompt": "um gato de chapéu"}, _cfg("cohere:command-a")
+        await media.generate_video(
+            ctx=_ctx("cohere:command-a"), prompt="um gato de chapéu"
         )
     )
 
@@ -106,8 +106,8 @@ async def test_generate_video_grava_mp4_e_prompt_vazio_e_recusado(
     monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
 
     saida = json.loads(
-        await media.generate_video.ainvoke(
-            {"prompt": "um gato de chapéu"}, _cfg("google-genai:gemini-2.5-pro")
+        await media.generate_video(
+            ctx=_ctx("google-genai:gemini-2.5-pro"), prompt="um gato de chapéu"
         )
     )
 
@@ -121,8 +121,8 @@ async def test_generate_video_grava_mp4_e_prompt_vazio_e_recusado(
     # Erro/borda: prompt vazio nunca chega ao provider (geração de vídeo é
     # a chamada mais cara do produto).
     vazio = json.loads(
-        await media.generate_video.ainvoke(
-            {"prompt": "   "}, _cfg("google-genai:gemini-2.5-pro")
+        await media.generate_video(
+            ctx=_ctx("google-genai:gemini-2.5-pro"), prompt="   "
         )
     )
     assert "error" in vazio
@@ -142,8 +142,8 @@ async def test_generate_video_vazio_nao_grava_arquivo_de_zero_byte(
     monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
 
     saida = json.loads(
-        await media.generate_video.ainvoke(
-            {"prompt": "um gato"}, _cfg("google-genai:gemini-2.5-pro")
+        await media.generate_video(
+            ctx=_ctx("google-genai:gemini-2.5-pro"), prompt="um gato"
         )
     )
 
@@ -165,8 +165,8 @@ async def test_generate_video_timeout_vira_erro_legivel(monkeypatch, tmp_path):
     monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
 
     saida = json.loads(
-        await media.generate_video.ainvoke(
-            {"prompt": "um gato"}, _cfg("google-genai:gemini-2.5-pro")
+        await media.generate_video(
+            ctx=_ctx("google-genai:gemini-2.5-pro"), prompt="um gato"
         )
     )
 
@@ -269,9 +269,10 @@ async def test_analyze_video_provider_sem_entrada_de_video_avisa(monkeypatch, tm
     arquivo.write_bytes(b"conteudo")
 
     saida = json.loads(
-        await media.analyze_video.ainvoke(
-            {"path": str(arquivo), "question": "o que acontece?"},
-            _cfg("anthropic:claude-sonnet-4-5"),
+        await media.analyze_video(
+            ctx=_ctx("anthropic:claude-sonnet-4-5"),
+            path=str(arquivo),
+            question="o que acontece?",
         )
     )
 
@@ -291,18 +292,20 @@ async def test_analyze_video_responde_e_arquivo_inexistente_e_recusado(
     arquivo.write_bytes(b"conteudo")
 
     saida = json.loads(
-        await media.analyze_video.ainvoke(
-            {"path": str(arquivo), "question": "o que acontece?"},
-            _cfg("google-genai:gemini-2.5-pro"),
+        await media.analyze_video(
+            ctx=_ctx("google-genai:gemini-2.5-pro"),
+            path=str(arquivo),
+            question="o que acontece?",
         )
     )
     assert "v.mp4" in saida["answer"]
 
     # Erro/borda: caminho que não existe não pode virar upload de nada.
     faltando = json.loads(
-        await media.analyze_video.ainvoke(
-            {"path": str(tmp_path / "nao-existe.mp4"), "question": "?"},
-            _cfg("google-genai:gemini-2.5-pro"),
+        await media.analyze_video(
+            ctx=_ctx("google-genai:gemini-2.5-pro"),
+            path=str(tmp_path / "nao-existe.mp4"),
+            question="?",
         )
     )
     assert "error" in faltando
@@ -310,7 +313,7 @@ async def test_analyze_video_responde_e_arquivo_inexistente_e_recusado(
 
 @pytest.mark.asyncio
 async def test_analyze_video_falha_do_sdk_vira_erro_tipado(monkeypatch, tmp_path):
-    """Regra 11: tool nunca propaga exceção — vira observação pro LLM."""
+    """Tool nunca propaga exceção — vira observação pro LLM."""
 
     async def _explode(*_a, **_k):
         raise RuntimeError("quota estourada")
@@ -320,9 +323,10 @@ async def test_analyze_video_falha_do_sdk_vira_erro_tipado(monkeypatch, tmp_path
     arquivo.write_bytes(b"conteudo")
 
     saida = json.loads(
-        await media.analyze_video.ainvoke(
-            {"path": str(arquivo), "question": "?"},
-            _cfg("google-genai:gemini-2.5-pro"),
+        await media.analyze_video(
+            ctx=_ctx("google-genai:gemini-2.5-pro"),
+            path=str(arquivo),
+            question="?",
         )
     )
 

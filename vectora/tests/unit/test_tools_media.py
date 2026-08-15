@@ -3,7 +3,7 @@
 Invariante central coberto aqui: a tool **nunca** troca de provider por
 conta própria. Se o modelo escolhido não gera imagem, o certo é avisar —
 gerar em outro lugar chamaria (e cobraria) uma API que o usuário não pediu.
-Cada caminho feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
+Cada caminho feliz tem o par de erro/borda no mesmo teste.
 """
 
 from __future__ import annotations
@@ -11,14 +11,14 @@ from __future__ import annotations
 import json
 
 import pytest
-from langchain_core.runnables import RunnableConfig
 
 from backend.settings import provider_supports
 from backend.tools import media
+from backend.tools.context import ToolContext
 
 
-def _cfg(model: str) -> RunnableConfig:
-    return {"configurable": {"model": model, "thread_id": "t-media"}}
+def _ctx(model: str) -> ToolContext:
+    return ToolContext(model=model, thread_id="t-media")
 
 
 # ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ def test_provider_supports_gateway_depende_do_modelo_configurado(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_generate_image_provider_sem_suporte_avisa_e_nao_chama_sdk(monkeypatch):
+async def test_generate_image_provider_sem_suporte_avisa_e_nao_chama_sdk(monkeypatch):
     chamou = {"sdk": False}
 
     def _nunca(*_a, **_k):
@@ -70,7 +70,7 @@ def test_generate_image_provider_sem_suporte_avisa_e_nao_chama_sdk(monkeypatch):
     monkeypatch.setattr(media, "_generate_image_bytes", _nunca)
 
     out = json.loads(
-        media.generate_image.invoke({"prompt": "um gato"}, _cfg("cohere:command-r"))
+        await media.generate_image(ctx=_ctx("cohere:command-r"), prompt="um gato")
     )
 
     assert "error" in out
@@ -80,12 +80,12 @@ def test_generate_image_provider_sem_suporte_avisa_e_nao_chama_sdk(monkeypatch):
     assert chamou["sdk"] is False
 
 
-def test_generate_image_happy_path_persiste_arquivo(monkeypatch, tmp_path):
+async def test_generate_image_happy_path_persiste_arquivo(monkeypatch, tmp_path):
     monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
     monkeypatch.setattr(media, "_generate_image_bytes", lambda *_a: b"\x89PNG-fake")
 
     out = json.loads(
-        media.generate_image.invoke({"prompt": "um gato"}, _cfg("openai:gpt-5"))
+        await media.generate_image(ctx=_ctx("openai:gpt-5"), prompt="um gato")
     )
 
     assert "error" not in out
@@ -96,25 +96,25 @@ def test_generate_image_happy_path_persiste_arquivo(monkeypatch, tmp_path):
     assert Path(out["path"]).read_bytes() == b"\x89PNG-fake"
 
 
-def test_generate_image_prompt_vazio_e_sdk_quebrado_viram_erro_tipado(
+async def test_generate_image_prompt_vazio_e_sdk_quebrado_viram_erro_tipado(
     monkeypatch, tmp_path
 ):
     monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
 
     # Erro/borda 1: prompt vazio nunca chega no SDK.
     vazio = json.loads(
-        media.generate_image.invoke({"prompt": "   "}, _cfg("openai:gpt-5"))
+        await media.generate_image(ctx=_ctx("openai:gpt-5"), prompt="   ")
     )
     assert "error" in vazio
 
     # Erro/borda 2: SDK explodindo vira string de erro, não exceção
-    # propagada (CLAUDE.md regra 11 — falha de tool não derruba o grafo).
+    # propagada (falha de tool não derruba o grafo).
     def _explode(*_a):
         raise RuntimeError("cota estourada")
 
     monkeypatch.setattr(media, "_generate_image_bytes", _explode)
     quebrado = json.loads(
-        media.generate_image.invoke({"prompt": "um gato"}, _cfg("openai:gpt-5"))
+        await media.generate_image(ctx=_ctx("openai:gpt-5"), prompt="um gato")
     )
     assert "error" in quebrado
     assert "cota estourada" in quebrado["error"]
@@ -122,7 +122,7 @@ def test_generate_image_prompt_vazio_e_sdk_quebrado_viram_erro_tipado(
     # Erro/borda 3: provider devolvendo vazio não grava arquivo de 0 byte.
     monkeypatch.setattr(media, "_generate_image_bytes", lambda *_a: b"")
     vazio_sdk = json.loads(
-        media.generate_image.invoke({"prompt": "um gato"}, _cfg("openai:gpt-5"))
+        await media.generate_image(ctx=_ctx("openai:gpt-5"), prompt="um gato")
     )
     assert "error" in vazio_sdk
 
@@ -132,33 +132,35 @@ def test_generate_image_prompt_vazio_e_sdk_quebrado_viram_erro_tipado(
 # ---------------------------------------------------------------------------
 
 
-def test_text_to_speech_sem_suporte_avisa_com_suporte_persiste(monkeypatch, tmp_path):
+async def test_text_to_speech_sem_suporte_avisa_com_suporte_persiste(
+    monkeypatch, tmp_path
+):
     monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
 
     # Erro/borda: Anthropic não sintetiza voz.
     negado = json.loads(
-        media.text_to_speech.invoke({"text": "olá"}, _cfg("anthropic:claude"))
+        await media.text_to_speech(ctx=_ctx("anthropic:claude"), text="olá")
     )
     assert "error" in negado
 
     # Happy: OpenAI sintetiza.
     monkeypatch.setattr(media, "_synthesize_speech_bytes", lambda *_a: b"ID3-fake")
-    ok = json.loads(media.text_to_speech.invoke({"text": "olá"}, _cfg("openai:gpt-5")))
+    ok = json.loads(await media.text_to_speech(ctx=_ctx("openai:gpt-5"), text="olá"))
     assert "error" not in ok
     assert ok["bytes"] == len(b"ID3-fake")
 
 
-def test_text_to_speech_texto_vazio_e_audio_vazio_sao_rejeitados(monkeypatch, tmp_path):
+async def test_text_to_speech_texto_vazio_e_audio_vazio_sao_rejeitados(
+    monkeypatch, tmp_path
+):
     monkeypatch.setattr(media, "_media_dir", lambda _s: tmp_path / "media")
 
-    vazio = json.loads(
-        media.text_to_speech.invoke({"text": "  "}, _cfg("openai:gpt-5"))
-    )
+    vazio = json.loads(await media.text_to_speech(ctx=_ctx("openai:gpt-5"), text="  "))
     assert "error" in vazio
 
     monkeypatch.setattr(media, "_synthesize_speech_bytes", lambda *_a: b"")
     sem_audio = json.loads(
-        media.text_to_speech.invoke({"text": "olá"}, _cfg("openai:gpt-5"))
+        await media.text_to_speech(ctx=_ctx("openai:gpt-5"), text="olá")
     )
     assert "error" in sem_audio
 
@@ -170,7 +172,7 @@ def test_text_to_speech_texto_vazio_e_audio_vazio_sao_rejeitados(monkeypatch, tm
 
 def test_provider_vem_do_config_da_sessao_nao_do_global(monkeypatch):
     """A sessão pode ter trocado de modelo em runtime — vale o que está no
-    config daquela conversa, não a preferência global."""
+    ctx daquela conversa, não a preferência global."""
 
     class _Global:
         active_provider = "cohere"
@@ -179,17 +181,17 @@ def test_provider_vem_do_config_da_sessao_nao_do_global(monkeypatch):
         "backend.workspace.runtime_settings.runtime_settings", _Global()
     )
 
-    # Happy: config manda.
-    assert media._active_provider(_cfg("openai:gpt-5")) == "openai"
+    # Happy: ctx manda.
+    assert media._active_provider(_ctx("openai:gpt-5")) == "openai"
 
-    # Erro/borda: sem config (ou sem modelo no config) cai no global —
-    # nunca retorna vazio silenciosamente quando há um provider ativo.
-    assert media._active_provider(None) == "cohere"
-    assert media._active_provider({"configurable": {}}) == "cohere"
+    # Erro/borda: sem modelo no ctx cai no global — nunca retorna vazio
+    # silenciosamente quando há um provider ativo.
+    assert media._active_provider(ToolContext()) == "cohere"
+    assert media._active_provider(_ctx("")) == "cohere"
 
 
 @pytest.mark.parametrize("capability", ["image", "tts"])
-def test_nenhuma_tool_de_midia_troca_de_provider_sozinha(capability, monkeypatch):
+async def test_nenhuma_tool_de_midia_troca_de_provider_sozinha(capability, monkeypatch):
     """Mesmo com outro provider perfeitamente capaz configurado, a tool
     recusa em vez de desviar para ele."""
     from backend.settings import settings
@@ -197,10 +199,10 @@ def test_nenhuma_tool_de_midia_troca_de_provider_sozinha(capability, monkeypatch
     monkeypatch.setattr(settings, "ollama_image_model", "modelo-capaz", raising=False)
     monkeypatch.setattr(settings, "ollama_tts_model", "modelo-capaz", raising=False)
 
-    tool = media.generate_image if capability == "image" else media.text_to_speech
-    payload = {"prompt": "x"} if capability == "image" else {"text": "x"}
+    fn = media.generate_image if capability == "image" else media.text_to_speech
+    kwargs = {"prompt": "x"} if capability == "image" else {"text": "x"}
 
-    out = json.loads(tool.invoke({**payload}, _cfg("anthropic:claude")))
+    out = json.loads(await fn(ctx=_ctx("anthropic:claude"), **kwargs))
 
     assert "error" in out
     # Recusou em vez de desviar: nenhum arquivo foi gerado e nenhum outro

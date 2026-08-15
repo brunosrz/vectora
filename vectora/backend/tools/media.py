@@ -14,41 +14,37 @@ novo, não uma versão do anterior).
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Any
 from uuid import uuid4
 
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg, tool
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
 
-def _session_id(config: RunnableConfig | None) -> str:
-    """thread_id do config — nunca do texto do prompt (mesma razão de
+def _session_id(ctx: ToolContext) -> str:
+    """thread_id do contexto — nunca do texto do prompt (mesma razão de
     `fs.py::_session_id_from_config`: o system prompt é cacheado por
     workspace, o thread real não aparece nele)."""
-    return (
-        str((config.get("configurable") or {}).get("thread_id", "")) if config else ""
-    )
+    return ctx.thread_id
 
 
-def _active_provider(config: RunnableConfig | None) -> str:
+def _active_provider(ctx: ToolContext) -> str:
     """Provider do modelo ativo da sessão.
 
-    Lê do config primeiro (a sessão pode ter trocado de modelo em runtime)
-    e só cai no runtime_settings quando o config não traz — assim a tool
-    respeita a escolha feita naquela conversa, não a global.
+    Lê de `ctx.model` primeiro (a sessão pode ter trocado de modelo em
+    runtime) e só cai no runtime_settings quando o contexto não traz —
+    assim a tool respeita a escolha feita naquela conversa, não a global.
     """
-    if config:
-        configurable = config.get("configurable") or {}
-        model = str(configurable.get("model", ""))
-        if ":" in model:
-            return model.split(":", 1)[0]
+    if ":" in ctx.model:
+        return ctx.model.split(":", 1)[0]
     try:
         from backend.workspace.runtime_settings import runtime_settings
 
@@ -57,16 +53,13 @@ def _active_provider(config: RunnableConfig | None) -> str:
         return ""
 
 
-def _active_model(config: RunnableConfig | None) -> str:
+def _active_model(ctx: ToolContext) -> str:
     """Nome do modelo ativo, sem o prefixo de provider.
 
     O SDK espera `gemini-2.5-flash`, não `google-genai:gemini-2.5-flash` —
     mandar o spec inteiro vira 404 de modelo inexistente.
     """
-    if not config:
-        return ""
-    model = str((config.get("configurable") or {}).get("model", ""))
-    return model.split(":", 1)[1] if ":" in model else model
+    return ctx.model.split(":", 1)[1] if ":" in ctx.model else ctx.model
 
 
 def _media_dir(session_id: str) -> Path:
@@ -195,18 +188,15 @@ def _synthesize_speech_bytes(provider: str, text: str, voice: str) -> bytes:
     )
 
 
-@tool(
-    extras={
-        "render_hint": "image",
-        "category": "media",
-        "destructive": False,
-        "icon": "image",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="image",
+        category="media",
+        destructive=False,
+        icon="image",
+    )
 )
-def generate_image(
-    prompt: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def generate_image(ctx: ToolContext, prompt: str) -> str:
     """Gera uma imagem a partir de uma descrição, usando o modelo ativo.
 
     Só funciona se o provider selecionado gera imagem (Gemini e OpenAI
@@ -223,7 +213,7 @@ def generate_image(
         JSON com o path do arquivo gerado, ou com `error` se o provider
         ativo não gera imagem.
     """
-    provider = _active_provider(config)
+    provider = _active_provider(ctx)
     try:
         from backend.settings import provider_supports
 
@@ -237,10 +227,10 @@ def generate_image(
         if not prompt.strip():
             return json.dumps({"error": "prompt vazio — descreva a imagem"})
 
-        data = _generate_image_bytes(provider, prompt)
+        data = await asyncio.to_thread(_generate_image_bytes, provider, prompt)
         if not data:
             return json.dumps({"error": "provider devolveu imagem vazia"})
-        path = _persist(_session_id(config), data, ".png")
+        path = await asyncio.to_thread(_persist, _session_id(ctx), data, ".png")
         logger.info("generate_image: %s bytes → %s", len(data), path)
         return json.dumps(
             {"path": str(path), "provider": provider, "bytes": len(data)},
@@ -253,19 +243,15 @@ def generate_image(
         )
 
 
-@tool(
-    extras={
-        "render_hint": "audio",
-        "category": "media",
-        "destructive": False,
-        "icon": "volume-2",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="audio",
+        category="media",
+        destructive=False,
+        icon="volume-2",
+    )
 )
-def text_to_speech(
-    text: str,
-    voice: str = "",
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def text_to_speech(ctx: ToolContext, text: str, voice: str = "") -> str:
     """Converte texto em áudio falado, usando o modelo ativo.
 
     Mesma regra de `generate_image`: se o provider ativo não faz síntese de
@@ -278,7 +264,7 @@ def text_to_speech(
     Returns:
         JSON com o path do áudio gerado, ou com `error`.
     """
-    provider = _active_provider(config)
+    provider = _active_provider(ctx)
     try:
         from backend.settings import provider_supports
 
@@ -292,10 +278,10 @@ def text_to_speech(
         if not text.strip():
             return json.dumps({"error": "texto vazio — nada a falar"})
 
-        data = _synthesize_speech_bytes(provider, text, voice)
+        data = await asyncio.to_thread(_synthesize_speech_bytes, provider, text, voice)
         if not data:
             return json.dumps({"error": "provider devolveu áudio vazio"})
-        path = _persist(_session_id(config), data, ".mp3")
+        path = await asyncio.to_thread(_persist, _session_id(ctx), data, ".mp3")
         logger.info("text_to_speech: %s bytes → %s", len(data), path)
         return json.dumps(
             {"path": str(path), "provider": provider, "bytes": len(data)},
@@ -445,18 +431,15 @@ async def _analyze_video_text(
     raise NotImplementedError(f"análise de vídeo via {provider} não é suportada")
 
 
-@tool(
-    extras={
-        "render_hint": "artifact",
-        "category": "media",
-        "destructive": False,
-        "icon": "video",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="artifact",
+        category="media",
+        destructive=False,
+        icon="video",
+    )
 )
-async def generate_video(
-    prompt: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def generate_video(ctx: ToolContext, prompt: str) -> str:
     """Gera um vídeo curto a partir de uma descrição, usando o modelo ativo.
 
     Só o Gemini (Veo) gera vídeo nativamente; com Ollama/OpenRouter depende
@@ -473,7 +456,7 @@ async def generate_video(
     Returns:
         JSON com o path do vídeo gerado, ou com `error`.
     """
-    provider = _active_provider(config)
+    provider = _active_provider(ctx)
     try:
         from backend.settings import provider_supports
 
@@ -490,7 +473,7 @@ async def generate_video(
         data = await _generate_video_bytes(provider, prompt)
         if not data:
             return json.dumps({"error": "provider devolveu vídeo vazio"})
-        path = _persist(_session_id(config), data, ".mp4")
+        path = await asyncio.to_thread(_persist, _session_id(ctx), data, ".mp4")
         logger.info("generate_video: %s bytes → %s", len(data), path)
         return json.dumps(
             {"path": str(path), "provider": provider, "bytes": len(data)},
@@ -501,19 +484,15 @@ async def generate_video(
         return json.dumps({"error": f"falha ao gerar vídeo: {exc}"}, ensure_ascii=False)
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "media",
-        "destructive": False,
-        "icon": "video",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="media",
+        destructive=False,
+        icon="video",
+    )
 )
-async def analyze_video(
-    path: str,
-    question: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def analyze_video(ctx: ToolContext, path: str, question: str) -> str:
     """Responde uma pergunta sobre o conteúdo de um vídeo em disco.
 
     Aceitar vídeo é mais raro que aceitar imagem: hoje só o Gemini lê vídeo
@@ -527,7 +506,7 @@ async def analyze_video(
     Returns:
         JSON com `answer`, ou com `error`.
     """
-    provider = _active_provider(config)
+    provider = _active_provider(ctx)
     try:
         from backend.settings import VIDEO_INPUT_PROVIDERS
 
@@ -545,7 +524,7 @@ async def analyze_video(
         if not question.strip():
             return json.dumps({"error": "pergunta vazia — diga o que quer saber"})
 
-        model = _active_model(config)
+        model = _active_model(ctx)
         resposta = await _analyze_video_text(provider, model, path, question)
         if not resposta.strip():
             return json.dumps({"error": "provider devolveu resposta vazia"})
@@ -555,14 +534,3 @@ async def analyze_video(
         return json.dumps(
             {"error": f"falha ao analisar vídeo: {exc}"}, ensure_ascii=False
         )
-
-
-MEDIA_TOOLS: list[Any] = [generate_image, text_to_speech, generate_video, analyze_video]
-
-__all__ = [
-    "MEDIA_TOOLS",
-    "analyze_video",
-    "generate_image",
-    "generate_video",
-    "text_to_speech",
-]

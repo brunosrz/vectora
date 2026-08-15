@@ -40,6 +40,9 @@ from backend.tools import (
     library as _library_module,
 )
 from backend.tools import (
+    media as _media_module,
+)
+from backend.tools import (
     memory as _memory_module,
 )
 from backend.tools import (
@@ -86,12 +89,6 @@ from backend.tools.linear import (
     linear_update_issue,
 )
 from backend.tools.mcp import call_mcp_tool
-from backend.tools.media import (
-    analyze_video,
-    generate_image,
-    generate_video,
-    text_to_speech,
-)
 from backend.tools.native import (
     base64_decode,
     base64_encode,
@@ -243,6 +240,10 @@ save_memory = _bridge("save_memory")
 get_memory = _bridge("get_memory")
 delete_memory = _bridge("delete_memory")
 search_memory = _bridge("search_memory")
+generate_image = _bridge("generate_image")
+text_to_speech = _bridge("text_to_speech")
+generate_video = _bridge("generate_video")
+analyze_video = _bridge("analyze_video")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)
