@@ -29,9 +29,7 @@ class TestGithubFetchPrDiff:
     async def test_sem_token_retorna_erro(self, monkeypatch):
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         result = json.loads(
-            await github_fetch_pr_diff.ainvoke(
-                {"owner": "vectora", "repo": "vectora", "pr_number": 1}
-            )
+            await github_fetch_pr_diff(owner="vectora", repo="vectora", pr_number=1)
         )
         assert result["status"] == "error"
         assert "GITHUB_TOKEN" in result["error"]
@@ -45,8 +43,8 @@ class TestGithubFetchPrDiff:
 
         with patch("httpx.AsyncClient", return_value=_mock_httpx(mock_response)):
             result = json.loads(
-                await github_fetch_pr_diff.ainvoke(
-                    {"owner": "vectora", "repo": "vectora", "pr_number": 42}
+                await github_fetch_pr_diff(
+                    owner="vectora", repo="vectora", pr_number=42
                 )
             )
 
@@ -62,8 +60,8 @@ class TestGithubFetchPrDiff:
 
         with patch("httpx.AsyncClient", return_value=_mock_httpx(mock_response)):
             result = json.loads(
-                await github_fetch_pr_diff.ainvoke(
-                    {"owner": "vectora", "repo": "vectora", "pr_number": 999}
+                await github_fetch_pr_diff(
+                    owner="vectora", repo="vectora", pr_number=999
                 )
             )
 
@@ -80,9 +78,7 @@ class TestGithubFetchPrDiff:
 
         with patch("httpx.AsyncClient", return_value=mock_ctx):
             result = json.loads(
-                await github_fetch_pr_diff.ainvoke(
-                    {"owner": "vectora", "repo": "vectora", "pr_number": 1}
-                )
+                await github_fetch_pr_diff(owner="vectora", repo="vectora", pr_number=1)
             )
 
         assert result["status"] == "error"
@@ -94,13 +90,8 @@ class TestGithubPostPrComment:
     async def test_sem_token_retorna_erro(self, monkeypatch):
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         result = json.loads(
-            await github_post_pr_comment.ainvoke(
-                {
-                    "owner": "vectora",
-                    "repo": "vectora",
-                    "pr_number": 1,
-                    "body": "LGTM",
-                }
+            await github_post_pr_comment(
+                owner="vectora", repo="vectora", pr_number=1, body="LGTM"
             )
         )
         assert result["status"] == "error"
@@ -117,13 +108,11 @@ class TestGithubPostPrComment:
 
         with patch("httpx.AsyncClient", return_value=_mock_httpx(mock_response)):
             result = json.loads(
-                await github_post_pr_comment.ainvoke(
-                    {
-                        "owner": "vectora",
-                        "repo": "vectora",
-                        "pr_number": 42,
-                        "body": "Revisado — sem observações.",
-                    }
+                await github_post_pr_comment(
+                    owner="vectora",
+                    repo="vectora",
+                    pr_number=42,
+                    body="Revisado — sem observações.",
                 )
             )
 
@@ -139,13 +128,8 @@ class TestGithubPostPrComment:
 
         with patch("httpx.AsyncClient", return_value=_mock_httpx(mock_response)):
             result = json.loads(
-                await github_post_pr_comment.ainvoke(
-                    {
-                        "owner": "vectora",
-                        "repo": "vectora",
-                        "pr_number": 1,
-                        "body": "x",
-                    }
+                await github_post_pr_comment(
+                    owner="vectora", repo="vectora", pr_number=1, body="x"
                 )
             )
 

@@ -1,10 +1,10 @@
 """Pipeline de referência: webhook `pull_request.opened` → diff → comentário.
 
-Percorre o caminho real de tool-calling (`langchain.agents.create_agent` +
-tools de produção `github_fetch_pr_diff`/`github_post_pr_comment`), com um
-``BaseChatModel`` real (não um mock do agente inteiro — CLAUDE.md/plano:
-"testa o pipeline, não a qualidade do LLM") que decide os tool calls a
-partir do mesmo payload embutido no prompt por
+Percorre o caminho real de tool-calling do motor de execução ainda em
+produção (`create_agent` + tools de produção `github_fetch_pr_diff`/
+`github_post_pr_comment`), com um modelo de chat real (não um mock do
+agente inteiro — testa o pipeline, não a qualidade do LLM) que decide
+os tool calls a partir do mesmo payload embutido no prompt por
 ``background_tasks.run_task``. Só a chamada HTTP real ao GitHub é mockada.
 """
 
@@ -20,7 +20,21 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
-from backend.tools.github import github_fetch_pr_diff, github_post_pr_comment
+from backend.tools import (
+    github as _github_module,
+)
+from backend.tools.langchain_bridge import as_langchain_tool
+from backend.tools.registry import TOOL_REGISTRY
+
+
+def _bridge(name: str):
+    spec = TOOL_REGISTRY.get(name)
+    assert spec is not None, f"tool nativa '{name}' não registrada"
+    return as_langchain_tool(spec)
+
+
+github_fetch_pr_diff = _bridge("github_fetch_pr_diff")
+github_post_pr_comment = _bridge("github_post_pr_comment")
 
 _PR_PAYLOAD = {
     "action": "opened",

@@ -12,7 +12,8 @@ import logging
 import os
 
 import httpx
-from langchain.tools import tool
+
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +24,13 @@ def _github_token() -> str:
     return os.environ.get("GITHUB_TOKEN", "").strip()
 
 
-@tool(
-    extras={
-        "render_hint": "diff",
-        "category": "github",
-        "destructive": False,
-        "icon": "git-pull-request",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="diff",
+        category="github",
+        destructive=False,
+        icon="git-pull-request",
+    )
 )
 async def github_fetch_pr_diff(owner: str, repo: str, pr_number: int) -> str:
     """Busca o diff completo de um Pull Request via API do GitHub.
@@ -74,12 +75,12 @@ async def github_fetch_pr_diff(owner: str, repo: str, pr_number: int) -> str:
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "destructive": True,
-        "category": "github",
-        "icon": "message-square",
-    }
+@vtool(
+    extras=ToolExtras(
+        destructive=True,
+        category="github",
+        icon="message-square",
+    )
 )
 async def github_post_pr_comment(
     owner: str, repo: str, pr_number: int, body: str
