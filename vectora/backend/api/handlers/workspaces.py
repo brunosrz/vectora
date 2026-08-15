@@ -745,9 +745,10 @@ async def list_worktrees(
     workspace_id: Annotated[str, Query()] = "",
 ) -> ListWorktreesResponse:
     """Lista as worktrees de um workspace git."""
+    from backend.tools.context import ctx_from_config
     from backend.tools.git import _git_worktree_impl, _open_repo
 
-    repo, err = _open_repo(workspace_id or None, None)
+    repo, err = _open_repo(workspace_id or None, ctx_from_config(None))
     if err:
         return ListWorktreesResponse(worktrees=[])
     result = _git_worktree_impl(repo, workspace_id, action="list")
@@ -767,9 +768,10 @@ async def list_worktrees(
 @router.post("/CreateWorktree", response_model=StatusResponse)
 async def create_worktree(body: CreateWorktreeRequest) -> StatusResponse:
     """Cria uma nova worktree para o workspace."""
+    from backend.tools.context import ctx_from_config
     from backend.tools.git import _git_worktree_impl, _open_repo
 
-    repo, err = _open_repo(body.workspace_id or None, None)
+    repo, err = _open_repo(body.workspace_id or None, ctx_from_config(None))
     if err:
         return StatusResponse(
             status="error", message=json.loads(err).get("message", "")
@@ -794,9 +796,9 @@ view_router = APIRouter(prefix="/workspaces", tags=["workspaces-view"])
 
 #: Todo endpoint sob `/workspaces/{workspace_id}/...` migra pra cá — a
 #: dependency barra 403 (dono errado) antes do handler rodar, pra nenhuma
-#: rota nova esquecer o check de ownership (Sprint 17 WS2). Workspace
-#: inexistente não é interceptado aqui — cada handler mantém seu próprio
-#: "não encontrado" (ver `_enforce_workspace_ownership`).
+#: rota nova esquecer o check de ownership. Workspace inexistente não é
+#: interceptado aqui — cada handler mantém seu próprio "não encontrado"
+#: (ver `_enforce_workspace_ownership`).
 workspace_scoped_router = APIRouter(
     prefix="/workspaces/{workspace_id}",
     tags=["workspaces-view"],
@@ -1806,9 +1808,10 @@ async def git_cherry_pick_inline(
 @workspace_scoped_router.get("/worktrees", response_model=ListWorktreesResponse)
 async def list_workspace_worktrees(workspace_id: str) -> ListWorktreesResponse:
     """Lista as worktrees do workspace (via view_router)."""
+    from backend.tools.context import ctx_from_config
     from backend.tools.git import _git_worktree_impl, _open_repo
 
-    repo, err = _open_repo(workspace_id, None)
+    repo, err = _open_repo(workspace_id, ctx_from_config(None))
     if err:
         return ListWorktreesResponse(worktrees=[])
     result = _git_worktree_impl(repo, workspace_id, action="list")
@@ -1830,9 +1833,10 @@ async def create_workspace_worktree(
     workspace_id: str, body: CreateWorktreeRequest
 ) -> StatusResponse:
     """Cria uma worktree no workspace."""
+    from backend.tools.context import ctx_from_config
     from backend.tools.git import _git_worktree_impl, _open_repo
 
-    repo, err = _open_repo(workspace_id, None)
+    repo, err = _open_repo(workspace_id, ctx_from_config(None))
     if err:
         return StatusResponse(
             status="error", message=json.loads(err).get("message", "")

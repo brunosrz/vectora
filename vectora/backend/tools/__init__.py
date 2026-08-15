@@ -25,6 +25,7 @@ from langchain.tools import BaseTool
 
 from backend.settings import settings
 from backend.tools import fs as _fs_module
+from backend.tools import git as _git_module
 from backend.tools.browser import (
     browser_click,
     browser_fill,
@@ -33,7 +34,6 @@ from backend.tools.browser import (
     browser_screenshot,
     browser_scroll,
 )
-from backend.tools.git import git_stage, git_unstage
 from backend.tools.github import github_fetch_pr_diff, github_post_pr_comment
 from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.mcp import call_mcp_tool
@@ -79,6 +79,8 @@ file_write = _bridge("file_write")
 grep = _bridge("grep")
 list_dir = _bridge("list_dir")
 terminal = _bridge("terminal")
+git_stage = _bridge("git_stage")
+git_unstage = _bridge("git_unstage")
 
 
 def _build_tools_list() -> list[BaseTool]:

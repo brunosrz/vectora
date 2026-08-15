@@ -67,61 +67,53 @@ def dirty_repo(tmp_path: Path) -> git.Repo:
 # ===========================================================================
 
 
+def _tool_extras(name: str):
+    from backend.tools.registry import TOOL_REGISTRY
+
+    spec = TOOL_REGISTRY.get(name)
+    assert spec is not None, f"tool {name!r} não registrada"
+    return spec.extras
+
+
 class TestGitToolMetadata:
     """Verifica que cada tool tem os metadados corretos declarados."""
 
     def test_git_status_metadata(self) -> None:
-        from backend.tools.git import git_status
-
-        extras = git_status.metadata or {}
-        assert extras.get("render_hint") == "code_block"
-        assert extras.get("category") == "git"
-        assert extras.get("destructive") is False
+        extras = _tool_extras("git_status")
+        assert extras.render_hint == "code_block"
+        assert extras.category == "git"
+        assert extras.destructive is False
 
     def test_git_log_metadata(self) -> None:
-        from backend.tools.git import git_log
-
-        extras = git_log.metadata or {}
-        assert extras.get("render_hint") == "table"
-        assert extras.get("destructive") is False
+        extras = _tool_extras("git_log")
+        assert extras.render_hint == "table"
+        assert extras.destructive is False
 
     def test_git_diff_metadata(self) -> None:
-        from backend.tools.git import git_diff
-
-        extras = git_diff.metadata or {}
-        assert extras.get("render_hint") == "diff"
-        assert extras.get("destructive") is False
+        extras = _tool_extras("git_diff")
+        assert extras.render_hint == "diff"
+        assert extras.destructive is False
 
     def test_git_branch_metadata(self) -> None:
-        from backend.tools.git import git_branch
-
-        extras = git_branch.metadata or {}
-        assert extras.get("render_hint") == "table"
-        assert extras.get("category") == "git"
+        extras = _tool_extras("git_branch")
+        assert extras.render_hint == "table"
+        assert extras.category == "git"
 
     def test_git_commit_is_destructive(self) -> None:
-        from backend.tools.git import git_commit
-
-        extras = git_commit.metadata or {}
-        assert extras.get("destructive") is True
+        extras = _tool_extras("git_commit")
+        assert extras.destructive is True
 
     def test_git_push_is_destructive(self) -> None:
-        from backend.tools.git import git_push
-
-        extras = git_push.metadata or {}
-        assert extras.get("destructive") is True
+        extras = _tool_extras("git_push")
+        assert extras.destructive is True
 
     def test_git_checkout_is_destructive(self) -> None:
-        from backend.tools.git import git_checkout
-
-        extras = git_checkout.metadata or {}
-        assert extras.get("destructive") is True
+        extras = _tool_extras("git_checkout")
+        assert extras.destructive is True
 
     def test_git_stash_metadata(self) -> None:
-        from backend.tools.git import git_stash
-
-        extras = git_stash.metadata or {}
-        assert extras.get("category") == "git"
+        extras = _tool_extras("git_stash")
+        assert extras.category == "git"
 
 
 # ===========================================================================

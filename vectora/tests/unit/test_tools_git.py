@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from backend.tools.context import ctx_from_config
 from backend.tools.git import (
     git_compare,
     git_discard,
@@ -13,6 +14,7 @@ from backend.tools.git import (
     git_stash,
     git_unstage,
 )
+from backend.tools.registry import TOOL_REGISTRY
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -44,6 +46,12 @@ def _make_config(ws_id: str) -> Any:
     return {"configurable": {"workspace_id": ws_id, "thread_id": "t1"}}
 
 
+def _tool_extras(name: str):
+    spec = TOOL_REGISTRY.get(name)
+    assert spec is not None, f"tool {name!r} não registrada"
+    return spec.extras
+
+
 # ---------------------------------------------------------------------------
 # git_stage
 # ---------------------------------------------------------------------------
@@ -54,9 +62,10 @@ async def test_git_stage_ok(mock_ws):
     """Stageia arquivo existente com sucesso."""
     mock_repo = MagicMock()
     with patch("backend.tools.git.git.Repo", return_value=mock_repo):
-        result_raw = await git_stage.ainvoke(
-            {"path": "src/main.py", "workspace_id": mock_ws.id},
-            config=_make_config(mock_ws.id),
+        result_raw = await git_stage(
+            path="src/main.py",
+            workspace_id=mock_ws.id,
+            ctx=ctx_from_config(_make_config(mock_ws.id)),
         )
     result = json.loads(result_raw)
     assert result["status"] == "ok"
@@ -70,9 +79,10 @@ async def test_git_stage_path_vazio(mock_ws):
     """Path vazio deve retornar erro, não propagar exceção."""
     mock_repo = MagicMock()
     with patch("backend.tools.git.git.Repo", return_value=mock_repo):
-        result_raw = await git_stage.ainvoke(
-            {"path": "", "workspace_id": mock_ws.id},
-            config=_make_config(mock_ws.id),
+        result_raw = await git_stage(
+            path="",
+            workspace_id=mock_ws.id,
+            ctx=ctx_from_config(_make_config(mock_ws.id)),
         )
     result = json.loads(result_raw)
     assert result["status"] == "error"
@@ -87,9 +97,10 @@ async def test_git_stage_git_error(mock_ws):
     mock_repo = MagicMock()
     mock_repo.git.add.side_effect = gitpy.GitCommandError("add", 128)
     with patch("backend.tools.git.git.Repo", return_value=mock_repo):
-        result_raw = await git_stage.ainvoke(
-            {"path": "missing.py", "workspace_id": mock_ws.id},
-            config=_make_config(mock_ws.id),
+        result_raw = await git_stage(
+            path="missing.py",
+            workspace_id=mock_ws.id,
+            ctx=ctx_from_config(_make_config(mock_ws.id)),
         )
     result = json.loads(result_raw)
     assert result["status"] == "error"
@@ -105,9 +116,10 @@ async def test_git_unstage_ok(mock_ws):
     """Remove arquivo do stage com sucesso."""
     mock_repo = MagicMock()
     with patch("backend.tools.git.git.Repo", return_value=mock_repo):
-        result_raw = await git_unstage.ainvoke(
-            {"path": "src/main.py", "workspace_id": mock_ws.id},
-            config=_make_config(mock_ws.id),
+        result_raw = await git_unstage(
+            path="src/main.py",
+            workspace_id=mock_ws.id,
+            ctx=ctx_from_config(_make_config(mock_ws.id)),
         )
     result = json.loads(result_raw)
     assert result["status"] == "ok"
@@ -120,9 +132,10 @@ async def test_git_unstage_path_vazio(mock_ws):
     """Path vazio retorna erro estruturado."""
     mock_repo = MagicMock()
     with patch("backend.tools.git.git.Repo", return_value=mock_repo):
-        result_raw = await git_unstage.ainvoke(
-            {"path": "", "workspace_id": mock_ws.id},
-            config=_make_config(mock_ws.id),
+        result_raw = await git_unstage(
+            path="",
+            workspace_id=mock_ws.id,
+            ctx=ctx_from_config(_make_config(mock_ws.id)),
         )
     result = json.loads(result_raw)
     assert result["status"] == "error"
@@ -137,9 +150,10 @@ async def test_git_unstage_git_error(mock_ws):
     mock_repo = MagicMock()
     mock_repo.git.reset.side_effect = gitpy.GitCommandError("reset", 128)
     with patch("backend.tools.git.git.Repo", return_value=mock_repo):
-        result_raw = await git_unstage.ainvoke(
-            {"path": "staged.py", "workspace_id": mock_ws.id},
-            config=_make_config(mock_ws.id),
+        result_raw = await git_unstage(
+            path="staged.py",
+            workspace_id=mock_ws.id,
+            ctx=ctx_from_config(_make_config(mock_ws.id)),
         )
     result = json.loads(result_raw)
     assert result["status"] == "error"
@@ -190,8 +204,8 @@ async def test_git_stage_real_repo_adds_to_index(real_repo_ws):
     ws, repo, root = real_repo_ws
     (root / "novo.py").write_text("x = 1\n", encoding="utf-8")
 
-    result_raw = await git_stage.ainvoke(
-        {"path": "novo.py", "workspace_id": ws.id}, config=_make_config(ws.id)
+    result_raw = await git_stage(
+        path="novo.py", workspace_id=ws.id, ctx=ctx_from_config(_make_config(ws.id))
     )
     result = json.loads(result_raw)
 
@@ -207,8 +221,8 @@ async def test_git_unstage_real_repo_removes_from_index(real_repo_ws):
     repo.index.add(["novo.py"])
     assert "novo.py" in {entry[0] for entry in repo.index.entries}
 
-    result_raw = await git_unstage.ainvoke(
-        {"path": "novo.py", "workspace_id": ws.id}, config=_make_config(ws.id)
+    result_raw = await git_unstage(
+        path="novo.py", workspace_id=ws.id, ctx=ctx_from_config(_make_config(ws.id))
     )
     result = json.loads(result_raw)
 
@@ -229,8 +243,8 @@ async def test_git_discard_real_repo_reverte_mudanca_nao_staged(real_repo_ws):
     readme.write_text("# repo\nmudança não staged\n", encoding="utf-8")
     assert repo.is_dirty()
 
-    result_raw = await git_discard.ainvoke(
-        {"path": "README.md", "workspace_id": ws.id}, config=_make_config(ws.id)
+    result_raw = await git_discard(
+        path="README.md", workspace_id=ws.id, ctx=ctx_from_config(_make_config(ws.id))
     )
     result = json.loads(result_raw)
 
@@ -242,9 +256,10 @@ async def test_git_discard_real_repo_reverte_mudanca_nao_staged(real_repo_ws):
 async def test_git_discard_path_vazio(mock_ws):
     mock_repo = MagicMock()
     with patch("backend.tools.git.git.Repo", return_value=mock_repo):
-        result_raw = await git_discard.ainvoke(
-            {"path": "", "workspace_id": mock_ws.id},
-            config=_make_config(mock_ws.id),
+        result_raw = await git_discard(
+            path="",
+            workspace_id=mock_ws.id,
+            ctx=ctx_from_config(_make_config(mock_ws.id)),
         )
     result = json.loads(result_raw)
     assert result["status"] == "error"
@@ -254,8 +269,8 @@ async def test_git_discard_path_vazio(mock_ws):
 async def test_git_discard_arquivo_sem_mudanca_nao_lanca(real_repo_ws):
     ws, _repo, _root = real_repo_ws
 
-    result_raw = await git_discard.ainvoke(
-        {"path": "README.md", "workspace_id": ws.id}, config=_make_config(ws.id)
+    result_raw = await git_discard(
+        path="README.md", workspace_id=ws.id, ctx=ctx_from_config(_make_config(ws.id))
     )
     result = json.loads(result_raw)
 
@@ -263,8 +278,8 @@ async def test_git_discard_arquivo_sem_mudanca_nao_lanca(real_repo_ws):
 
 
 def test_git_discard_e_destructive():
-    meta = git_discard.extras or git_discard.metadata or {}
-    assert meta.get("destructive") is True
+    meta = _tool_extras("git_discard")
+    assert meta.destructive is True
 
 
 # ---------------------------------------------------------------------------
@@ -279,8 +294,8 @@ async def test_git_stash_apply_aplica_sem_remover(real_repo_ws):
     repo.git.stash("push")
     assert not repo.is_dirty()
 
-    result_raw = await git_stash.ainvoke(
-        {"action": "apply", "workspace_id": ws.id}, config=_make_config(ws.id)
+    result_raw = await git_stash(
+        action="apply", workspace_id=ws.id, ctx=ctx_from_config(_make_config(ws.id))
     )
     result = json.loads(result_raw)
 
@@ -298,8 +313,8 @@ async def test_git_stash_pop_ainda_remove_do_stash_regressao(real_repo_ws):
     (root / "README.md").write_text("# repo\nstashed\n", encoding="utf-8")
     repo.git.stash("push")
 
-    result_raw = await git_stash.ainvoke(
-        {"action": "pop", "workspace_id": ws.id}, config=_make_config(ws.id)
+    result_raw = await git_stash(
+        action="pop", workspace_id=ws.id, ctx=ctx_from_config(_make_config(ws.id))
     )
     result = json.loads(result_raw)
 
@@ -322,9 +337,11 @@ async def test_git_compare_sem_file_path_mantem_lista_de_arquivos_regressao(
     repo.index.add(["README.md"])
     repo.index.commit("update readme")
 
-    result_raw = await git_compare.ainvoke(
-        {"base": "master", "head": "feature", "workspace_id": ws.id},
-        config=_make_config(ws.id),
+    result_raw = await git_compare(
+        base="master",
+        head="feature",
+        workspace_id=ws.id,
+        ctx=ctx_from_config(_make_config(ws.id)),
     )
     result = json.loads(result_raw)
 
@@ -341,14 +358,12 @@ async def test_git_compare_com_file_path_devolve_hunks_do_arquivo(real_repo_ws):
     repo.index.add(["README.md"])
     repo.index.commit("update readme")
 
-    result_raw = await git_compare.ainvoke(
-        {
-            "base": "master",
-            "head": "feature",
-            "file_path": "README.md",
-            "workspace_id": ws.id,
-        },
-        config=_make_config(ws.id),
+    result_raw = await git_compare(
+        base="master",
+        head="feature",
+        file_path="README.md",
+        workspace_id=ws.id,
+        ctx=ctx_from_config(_make_config(ws.id)),
     )
     result = json.loads(result_raw)
 
@@ -363,38 +378,30 @@ async def test_git_compare_com_file_path_devolve_hunks_do_arquivo(real_repo_ws):
 
 
 def test_git_stage_tem_invalidates_diff():
-    meta = git_stage.extras or git_stage.metadata or {}
-    assert "diff" in meta.get("invalidates", [])
+    meta = _tool_extras("git_stage")
+    assert "diff" in meta.invalidates
 
 
 def test_git_unstage_tem_invalidates_diff():
-    meta = git_unstage.extras or git_unstage.metadata or {}
-    assert "diff" in meta.get("invalidates", [])
+    meta = _tool_extras("git_unstage")
+    assert "diff" in meta.invalidates
 
 
 def test_git_commit_tem_invalidates_diff():
-    from backend.tools.git import git_commit
-
-    meta = git_commit.extras or git_commit.metadata or {}
-    assert "diff" in meta.get("invalidates", [])
+    meta = _tool_extras("git_commit")
+    assert "diff" in meta.invalidates
 
 
 def test_git_checkout_tem_invalidates_files_e_diff():
-    from backend.tools.git import git_checkout
-
-    meta = git_checkout.extras or git_checkout.metadata or {}
-    tabs = meta.get("invalidates", [])
-    assert "diff" in tabs
-    assert "files" in tabs
+    meta = _tool_extras("git_checkout")
+    assert "diff" in meta.invalidates
+    assert "files" in meta.invalidates
 
 
 def test_git_pull_tem_invalidates_files_e_diff():
-    from backend.tools.git import git_pull
-
-    meta = git_pull.extras or git_pull.metadata or {}
-    tabs = meta.get("invalidates", [])
-    assert "diff" in tabs
-    assert "files" in tabs
+    meta = _tool_extras("git_pull")
+    assert "diff" in meta.invalidates
+    assert "files" in meta.invalidates
 
 
 # ---------------------------------------------------------------------------
@@ -419,8 +426,9 @@ class TestGitCommandNotFound:
         with patch("backend.tools.git.git.Repo", return_value=mock_repo):
             from backend.tools.git import git_diff
 
-            result_raw = await git_diff.ainvoke(
-                {"workspace_id": mock_ws.id}, config=_make_config(mock_ws.id)
+            result_raw = await git_diff(
+                workspace_id=mock_ws.id,
+                ctx=ctx_from_config(_make_config(mock_ws.id)),
             )
         result = json.loads(result_raw)
         assert result["status"] == "git_not_found"
@@ -436,8 +444,9 @@ class TestGitCommandNotFound:
         with patch("backend.tools.git.git.Repo", return_value=mock_repo):
             from backend.tools.git import git_log
 
-            result_raw = await git_log.ainvoke(
-                {"workspace_id": mock_ws.id}, config=_make_config(mock_ws.id)
+            result_raw = await git_log(
+                workspace_id=mock_ws.id,
+                ctx=ctx_from_config(_make_config(mock_ws.id)),
             )
         result = json.loads(result_raw)
         assert result["status"] == "git_not_found"

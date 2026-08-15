@@ -4,7 +4,7 @@ git_status, git_log, git_diff, git_branch, git_checkout, git_commit,
 git_push, git_pull, git_stash.
 
 Todas as tools:
-- Resolvem o CWD via _resolve_workspace (workspace_id → config → cwd atual)
+- Resolvem o CWD via _resolve_workspace (workspace_id → ctx → cwd atual)
 - Retornam JSON estruturado compatível com os render_hints declarados
 - Funções-helper públicas (_git_*_impl) recebem git.Repo diretamente,
   facilitando testes unitários sem dependência do WorkspaceRegistry.
@@ -19,16 +19,16 @@ import json
 import logging
 import os
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import Any
 
 # GitPython roda Git.refresh() em `import git` e levanta ImportError se não
 # achar o executável git no PATH — precisa disso antes do import abaixo.
 os.environ.setdefault("GIT_PYTHON_REFRESH", "quiet")
 
 import git
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +38,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _resolve_workspace(workspace_id: str | None, config: RunnableConfig | None) -> Any:
+def _resolve_workspace(workspace_id: str | None, ctx: ToolContext) -> Any:
     """Resolve workspace → Workspace (mesmo padrão de workspace.py)."""
     from backend.workspace.workspace import workspace_registry
 
-    wid = workspace_id
-    if wid is None and config is not None:
-        wid = (config.get("configurable") or {}).get("workspace_id")
+    wid = workspace_id or ctx.workspace_id or None
     if wid:
         ws = workspace_registry.get(wid)
         if ws is not None:
@@ -52,12 +50,12 @@ def _resolve_workspace(workspace_id: str | None, config: RunnableConfig | None) 
     return workspace_registry.get_or_create()
 
 
-def _open_repo(workspace_id: str | None, config: RunnableConfig | None) -> Any:
+def _open_repo(workspace_id: str | None, ctx: ToolContext) -> Any:
     """Abre git.Repo para o workspace ativo.
 
     Retorna (repo, None) em sucesso ou (None, error_json_str) em falha.
     """
-    ws = _resolve_workspace(workspace_id, config)
+    ws = _resolve_workspace(workspace_id, ctx)
     if ws is None:
         return None, json.dumps(
             {"status": "error", "message": "Workspace não encontrado."}
@@ -824,22 +822,19 @@ def _run_pre_commit_hooks(repo: git.Repo) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# @tool wrappers
+# tools nativas
 # ---------------------------------------------------------------------------
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "git-branch",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="git-branch",
+    )
 )
-async def git_status(
-    workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def git_status(ctx: ToolContext, workspace_id: str | None = None) -> str:
     """Mostra o estado do repositório git: arquivos modificados, staged, untracked.
 
     Retorna branch ativa, contagem ahead/behind e listas de arquivos por categoria.
@@ -848,25 +843,25 @@ async def git_status(
     Args:
         workspace_id: ID do workspace (usa o workspace ativo se omitido).
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(_safe_call(lambda: _git_status_impl(repo)))
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "git",
-        "destructive": False,
-        "icon": "git-commit",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="git",
+        destructive=False,
+        icon="git-commit",
+    )
 )
 async def git_log(
+    ctx: ToolContext,
     n: int = 10,
     branch: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Exibe o histórico de commits do repositório.
 
@@ -875,24 +870,24 @@ async def git_log(
         branch: Branch específica (usa branch ativa se omitida).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(_safe_call(lambda: _git_log_impl(repo, n=n, branch=branch)))
 
 
-@tool(
-    extras={
-        "render_hint": "diff",
-        "category": "git",
-        "destructive": False,
-        "icon": "diff",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="diff",
+        category="git",
+        destructive=False,
+        icon="diff",
+    )
 )
 async def git_diff(
+    ctx: ToolContext,
     ref: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Mostra o diff do working tree ou em relação a um commit/branch.
 
@@ -900,25 +895,25 @@ async def git_diff(
         ref: Commit hash, tag ou branch para comparar (compara working tree se omitido).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(_safe_call(lambda: _git_diff_impl(repo, ref=ref)))
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "git",
-        "destructive": False,
-        "icon": "git-branch",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="git",
+        destructive=False,
+        icon="git-branch",
+    )
 )
 async def git_branch(
+    ctx: ToolContext,
     action: str = "list",
     name: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Gerencia branches: lista, cria ou deleta.
 
@@ -927,7 +922,7 @@ async def git_branch(
         name: Nome da branch (obrigatório para create/delete).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(
@@ -935,20 +930,20 @@ async def git_branch(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-branch",
-        "invalidates": ["files", "diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-branch",
+        invalidates=["files", "diff"],
+    )
 )
 async def git_checkout(
+    ctx: ToolContext,
     ref: str = "",
     create: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Troca para uma branch ou commit; `create=True` cria a branch antes.
 
@@ -961,7 +956,7 @@ async def git_checkout(
                 (equivalente a `git checkout -b`).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not ref:
@@ -971,22 +966,22 @@ async def git_checkout(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-commit",
-        "invalidates": ["diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-commit",
+        invalidates=["diff"],
+    )
 )
 async def git_commit(
+    ctx: ToolContext,
     message: str = "",
     all: bool = False,  # noqa: A002
     body: str | None = None,
     amend: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria um commit com os arquivos staged (ou emenda o último, com `amend`).
 
@@ -1000,7 +995,7 @@ async def git_commit(
         amend: Se True, substitui o último commit em vez de criar um novo.
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not message:
@@ -1016,21 +1011,21 @@ async def git_commit(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-commit",
-        "invalidates": ["diff", "history"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-commit",
+        invalidates=["diff", "history"],
+    )
 )
 async def git_squash(
+    ctx: ToolContext,
     base_ref: str = "",
     message: str = "",
     body: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Squasha os commits de `base_ref` até HEAD numa mensagem só.
 
@@ -1040,7 +1035,7 @@ async def git_squash(
         body: Descrição opcional do commit resultante.
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not base_ref or not message:
@@ -1056,19 +1051,19 @@ async def git_squash(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-commit",
-        "invalidates": ["diff", "history"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-commit",
+        invalidates=["diff", "history"],
+    )
 )
 async def git_reorder(
+    ctx: ToolContext,
     commits: list[str] | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Reordena commits locais (ainda não pushados) pra sequência de `commits`.
 
@@ -1076,7 +1071,7 @@ async def git_reorder(
         commits: SHAs na ordem final desejada (do mais antigo pro mais novo).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(
@@ -1084,20 +1079,20 @@ async def git_reorder(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-commit",
-        "invalidates": ["diff", "history"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-commit",
+        invalidates=["diff", "history"],
+    )
 )
 async def git_cherry_pick(
+    ctx: ToolContext,
     sha: str = "",
     no_commit: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Aplica um commit de outra branch/ref na branch ativa.
 
@@ -1106,7 +1101,7 @@ async def git_cherry_pick(
         no_commit: Se True, só stageia as mudanças (sem criar o commit).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not sha:
@@ -1116,18 +1111,18 @@ async def git_cherry_pick(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "download-cloud",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="download-cloud",
+    )
 )
 async def git_fetch(
+    ctx: ToolContext,
     remote: str = "origin",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Baixa refs do remote sem integrar (não toca no working tree).
 
@@ -1135,26 +1130,26 @@ async def git_fetch(
         remote: Nome do remote (default: "origin").
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(_safe_call(lambda: _git_fetch_impl(repo, remote=remote)))
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-merge",
-        "invalidates": ["files", "diff", "history"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-merge",
+        invalidates=["files", "diff", "history"],
+    )
 )
 async def git_merge(
+    ctx: ToolContext,
     branch: str = "",
     no_ff: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Faz merge de `branch` na branch ativa.
 
@@ -1164,7 +1159,7 @@ async def git_merge(
                possível.
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not branch:
@@ -1174,20 +1169,20 @@ async def git_merge(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-commit",
-        "invalidates": ["files", "diff", "history"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-commit",
+        invalidates=["files", "diff", "history"],
+    )
 )
 async def git_revert(
+    ctx: ToolContext,
     sha: str = "",
     no_commit: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Reverte um commit — cria um commit inverso (ou só stageia, com
     `no_commit`).
@@ -1197,7 +1192,7 @@ async def git_revert(
         no_commit: Se True, só stageia as mudanças (sem criar o commit).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not sha:
@@ -1207,20 +1202,20 @@ async def git_revert(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "git",
-        "destructive": False,
-        "icon": "git-compare",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="git",
+        destructive=False,
+        icon="git-compare",
+    )
 )
 async def git_compare(
+    ctx: ToolContext,
     base: str = "",
     head: str = "",
     file_path: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Compara dois refs — lista arquivos alterados entre `base` e `head`,
     ou (com `file_path`) o diff (hunks) de um arquivo específico.
@@ -1232,7 +1227,7 @@ async def git_compare(
             vez da lista de arquivos alterados.
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not base or not head:
@@ -1246,20 +1241,20 @@ async def git_compare(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-merge",
-        "invalidates": ["files", "diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-merge",
+        invalidates=["files", "diff"],
+    )
 )
 async def git_resolve_conflict(
+    ctx: ToolContext,
     path: str = "",
     strategy: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Resolve um conflito de merge escolhendo um dos dois lados.
 
@@ -1269,7 +1264,7 @@ async def git_resolve_conflict(
                   incoming).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(
@@ -1279,18 +1274,15 @@ async def git_resolve_conflict(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "check-circle",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="check-circle",
+    )
 )
-async def git_check_hooks(
-    workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def git_check_hooks(ctx: ToolContext, workspace_id: str | None = None) -> str:
     """Roda os hooks de pre-commit configurados sem criar um commit
     (dry-run) — útil pra checar se o working tree passaria antes de
     commitar de verdade.
@@ -1298,26 +1290,26 @@ async def git_check_hooks(
     Args:
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(_safe_call(lambda: _run_pre_commit_hooks(repo)))
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "upload-cloud",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="upload-cloud",
+    )
 )
 async def git_push(
+    ctx: ToolContext,
     remote: str = "origin",
     branch: str | None = None,
     force: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Envia commits locais para o remote.
 
@@ -1329,7 +1321,7 @@ async def git_push(
         force: Se True, usa --force (cuidado em branches compartilhadas).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(
@@ -1339,20 +1331,20 @@ async def git_push(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "download-cloud",
-        "invalidates": ["files", "diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="download-cloud",
+        invalidates=["files", "diff"],
+    )
 )
 async def git_pull(
+    ctx: ToolContext,
     remote: str = "origin",
     branch: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Baixa e integra commits do remote.
 
@@ -1361,7 +1353,7 @@ async def git_pull(
         branch: Branch a baixar (usa branch ativa se omitida).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(
@@ -1369,20 +1361,20 @@ async def git_pull(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "layers",
-        "invalidates": ["diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="layers",
+        invalidates=["diff"],
+    )
 )
 async def git_stash(
+    ctx: ToolContext,
     action: str = "push",
     name: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Gerencia o stash: salva, aplica ou lista mudanças temporárias.
 
@@ -1392,7 +1384,7 @@ async def git_stash(
         name: Nome descritivo do stash (opcional, apenas para push).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(
@@ -1400,18 +1392,15 @@ async def git_stash(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "git-branch",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="git-branch",
+    )
 )
-async def git_init(
-    workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def git_init(ctx: ToolContext, workspace_id: str | None = None) -> str:
     """Inicializa um repositório git no workspace ativo.
 
     Útil quando a pasta selecionada ainda não é um repositório. Idempotente —
@@ -1420,26 +1409,26 @@ async def git_init(
     Args:
         workspace_id: ID do workspace (usa o workspace ativo se omitido).
     """
-    ws = _resolve_workspace(workspace_id, config)
+    ws = _resolve_workspace(workspace_id, ctx)
     if ws is None:
         return json.dumps({"status": "error", "message": "Workspace não encontrado."})
     return json.dumps(_safe_call(lambda: git_init_repo(ws.cwd)))
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-branch",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="git",
+        destructive=True,
+        icon="git-branch",
+    )
 )
 async def git_worktree(
+    ctx: ToolContext,
     action: str = "list",
     name: str | None = None,
     branch: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Gerencia worktrees do repositório: lista, adiciona ou remove.
 
@@ -1452,8 +1441,8 @@ async def git_worktree(
         branch: Branch a criar na worktree (apenas para add).
         workspace_id: ID do workspace.
     """
-    ws = _resolve_workspace(workspace_id, config)
-    repo, err = _open_repo(workspace_id, config)
+    ws = _resolve_workspace(workspace_id, ctx)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     return json.dumps(
@@ -1465,19 +1454,19 @@ async def git_worktree(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "plus-circle",
-        "invalidates": ["diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="plus-circle",
+        invalidates=["diff"],
+    )
 )
 async def git_stage(
+    ctx: ToolContext,
     path: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Stageia um arquivo específico (`git add <path>`).
 
@@ -1487,7 +1476,7 @@ async def git_stage(
         path: Caminho do arquivo a stagear (relativo à raiz do repositório).
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not path:
@@ -1495,19 +1484,19 @@ async def git_stage(
     return json.dumps(_safe_call(lambda: _git_stage_impl(repo, path=path)))
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "minus-circle",
-        "invalidates": ["diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="minus-circle",
+        invalidates=["diff"],
+    )
 )
 async def git_unstage(
+    ctx: ToolContext,
     path: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Remove um arquivo do stage (`git reset HEAD <path>`).
 
@@ -1515,7 +1504,7 @@ async def git_unstage(
         path: Caminho do arquivo a remover do stage.
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not path:
@@ -1523,19 +1512,19 @@ async def git_unstage(
     return json.dumps(_safe_call(lambda: _git_unstage_impl(repo, path=path)))
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "undo-2",
-        "invalidates": ["diff", "files"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="undo-2",
+        invalidates=["diff", "files"],
+    )
 )
 async def git_discard(
+    ctx: ToolContext,
     path: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Descarta mudanças não staged de um arquivo (`git restore -- <path>`,
     mesma paridade do botão "Descartar" da aba Git — reaproveita
@@ -1548,33 +1537,12 @@ async def git_discard(
         path: Caminho do arquivo cujas mudanças serão descartadas.
         workspace_id: ID do workspace.
     """
-    repo, err = _open_repo(workspace_id, config)
+    repo, err = _open_repo(workspace_id, ctx)
     if err:
         return err
     if not path:
         return json.dumps({"status": "error", "message": "path é obrigatório."})
     return json.dumps(_safe_call(lambda: _git_restore_impl(repo, path=path)))
-
-
-# Sincroniza .extras → .metadata para compatibilidade com testes e endpoint GetTools
-for _t in (
-    git_status,
-    git_log,
-    git_diff,
-    git_branch,
-    git_checkout,
-    git_commit,
-    git_push,
-    git_pull,
-    git_stash,
-    git_init,
-    git_worktree,
-    git_stage,
-    git_unstage,
-    git_discard,
-):
-    if _t.extras:
-        _t.metadata = _t.extras
 
 
 # ---------------------------------------------------------------------------

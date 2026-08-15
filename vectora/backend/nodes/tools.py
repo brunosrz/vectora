@@ -22,6 +22,9 @@ from backend.tools import (
     fs as _fs_module,
 )
 from backend.tools import (
+    git as _git_module,
+)
+from backend.tools import (
     thinking as _thinking_module,
 )
 from backend.tools.background import (
@@ -88,31 +91,6 @@ from backend.tools.gh import (
     gh_pr_list,
     gh_pr_merge,
     gh_pr_view,
-)
-from backend.tools.git import (
-    git_branch,
-    git_check_hooks,
-    git_checkout,
-    git_cherry_pick,
-    git_commit,
-    git_compare,
-    git_diff,
-    git_discard,
-    git_fetch,
-    git_init,
-    git_log,
-    git_merge,
-    git_pull,
-    git_push,
-    git_reorder,
-    git_resolve_conflict,
-    git_revert,
-    git_squash,
-    git_stage,
-    git_stash,
-    git_status,
-    git_unstage,
-    git_worktree,
 )
 from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.homeassistant import (
@@ -218,6 +196,29 @@ grep = _bridge("grep")
 list_dir = _bridge("list_dir")
 terminal = _bridge("terminal")
 create_artifact = _bridge("create_artifact")
+git_status = _bridge("git_status")
+git_log = _bridge("git_log")
+git_diff = _bridge("git_diff")
+git_branch = _bridge("git_branch")
+git_checkout = _bridge("git_checkout")
+git_commit = _bridge("git_commit")
+git_squash = _bridge("git_squash")
+git_reorder = _bridge("git_reorder")
+git_cherry_pick = _bridge("git_cherry_pick")
+git_fetch = _bridge("git_fetch")
+git_merge = _bridge("git_merge")
+git_revert = _bridge("git_revert")
+git_compare = _bridge("git_compare")
+git_resolve_conflict = _bridge("git_resolve_conflict")
+git_check_hooks = _bridge("git_check_hooks")
+git_push = _bridge("git_push")
+git_pull = _bridge("git_pull")
+git_stash = _bridge("git_stash")
+git_init = _bridge("git_init")
+git_worktree = _bridge("git_worktree")
+git_stage = _bridge("git_stage")
+git_unstage = _bridge("git_unstage")
+git_discard = _bridge("git_discard")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)
