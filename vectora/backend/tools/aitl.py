@@ -16,17 +16,22 @@ da resposta desta tool — documentado explicitamente no docstring de
 
 Exposta só dentro dos SOULs de `backend/agents/souls.py` — nunca no toolset
 do orquestrador (ele não tem "pai" a quem perguntar).
+
+Primeira tool migrada pro registry nativo (`@vtool`/`ToolSpec`) — usa
+`FallbackChatClient` (native `ChatClient`) em vez de `FallbackChatModel`
+(LangChain). `souls.py` consome via `backend.tools.langchain_bridge.
+as_langchain_tool` até o corte de dispatch acontecer.
 """
 
 from __future__ import annotations
 
 import json
 import logging
-from typing import Annotated
 
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from backend.llm.fallback_chat_client import FallbackChatClient
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
+from backend.vtypes.message import ContentBlock, MessageRole, VMessage
 
 logger = logging.getLogger(__name__)
 
@@ -39,17 +44,15 @@ _DECISION_SYSTEM_PROMPT = (
 )
 
 
-@tool(
-    extras={
-        "destructive": False,
-        "category": "workspace",
-        "icon": "help-circle",
-    }
+@vtool(
+    extras=ToolExtras(
+        destructive=False,
+        category="workspace",
+        icon="help-circle",
+    )
 )
 async def ask_parent_agent(
-    reason: str,
-    requested_tool: str = "",
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    reason: str, ctx: ToolContext, requested_tool: str = ""
 ) -> str:
     """Pede uma decisão ao agente pai (AITL) — para quando você, como
     subagent, precisa de algo fora do seu escopo atual antes de continuar.
@@ -71,27 +74,26 @@ async def ask_parent_agent(
         Nunca levanta exceção — falha na decisão vira `approved=False`.
     """
     try:
-        configurable = (config or {}).get("configurable") or {}
-        model_id = configurable.get("model", "")
-
-        from langchain_core.messages import HumanMessage, SystemMessage
-
-        from backend.llm.fallback_chat_model import FallbackChatModel
-
-        llm = FallbackChatModel(primary_model_id=model_id)
-        human_parts = [f"Subagent request: {reason}"]
+        llm = FallbackChatClient(primary_model_id=ctx.model)
+        texto_pedido = f"Subagent request: {reason}"
         if requested_tool:
-            human_parts.append(f"Requested tool: {requested_tool}")
+            texto_pedido += f"\nRequested tool: {requested_tool}"
 
-        response = await llm.ainvoke(
+        resposta = await llm.agenerate(
             [
-                SystemMessage(content=_DECISION_SYSTEM_PROMPT),
-                HumanMessage(content="\n".join(human_parts)),
+                VMessage(
+                    role=MessageRole.SYSTEM,
+                    content=[ContentBlock(kind="text", text=_DECISION_SYSTEM_PROMPT)],
+                ),
+                VMessage(
+                    role=MessageRole.USER,
+                    content=[ContentBlock(kind="text", text=texto_pedido)],
+                ),
             ]
         )
-        text = str(response.content or "").strip()
-        approved = text.upper().startswith("APPROVED")
-        return json.dumps({"status": "ok", "approved": approved, "reason": text})
+        texto = resposta.text().strip()
+        approved = texto.upper().startswith("APPROVED")
+        return json.dumps({"status": "ok", "approved": approved, "reason": texto})
     except Exception as exc:
         logger.exception("ask_parent_agent: erro inesperado")
         return json.dumps(

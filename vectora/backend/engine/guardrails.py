@@ -14,10 +14,14 @@ turno inteiro, não por volta.
 
 Nota de escopo: o timeout+cap do AITL (``backend/tools/aitl.py::
 ask_parent_agent``) descrito no plano original desta workstream continua
-fora daqui — esse tool ainda vive no mundo LangChain antigo
-(``FallbackChatModel``/``@tool``), sem acesso a ``ToolContext``/
-``TurnBudget`` até a migração de tools de produção + corte de dispatch da
-conclusão da Sprint 14. ``TurnBudget.record_aitl_call`` já existe pronto
+fora daqui. O tool em si já foi migrado pro registry nativo (``@vtool``,
+``FallbackChatClient``, ``ToolContext``) — mas até o corte de dispatch
+acontecer, ele só é invocado pelo grafo LangGraph atual via
+``backend.tools.langchain_bridge.as_langchain_tool``, sem nenhum
+``TurnBudget`` em escopo (esse objeto só existe dentro do loop de
+conversa nativo, `run_conversation`/`execute_tool_batch`). O tool está
+pronto pra receber o teto assim que for chamado de dentro do motor
+nativo de verdade — ``TurnBudget.record_aitl_call`` já existe pronto
 pra esse dia, sem consumidor real ainda.
 """
 

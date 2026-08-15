@@ -22,6 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+import backend.tools.aitl
 from backend.agents._identity import VECTORA_IDENTITY
 from backend.nodes.tools import (
     BROWSER_TOOLS,
@@ -42,7 +43,8 @@ from backend.nodes.tools import (
     list_dir,
     terminal,
 )
-from backend.tools.aitl import ask_parent_agent
+from backend.tools.langchain_bridge import as_langchain_tool
+from backend.tools.registry import TOOL_REGISTRY
 
 
 @dataclass(frozen=True)
@@ -443,6 +445,15 @@ SOUL_CATALOG: dict[str, Soul] = {
 
 # AITL: toda SOUL ganha ask_parent_agent — só faz sentido dentro de uma
 # delegação (pedir algo ao pai), nunca no orquestrador (que não tem pai).
+# `ask_parent_agent` é a primeira tool migrada pro registry nativo
+# (`backend.tools.aitl`, `@vtool`) — o dispatch LangGraph atual consome a
+# versão em BaseTool via `as_langchain_tool` (ponte removida no corte de
+# dispatch final).
+_ask_parent_agent_spec = TOOL_REGISTRY.get("ask_parent_agent")
+if _ask_parent_agent_spec is None:
+    msg = "ask_parent_agent não registrado — backend.tools.aitl não foi importado"
+    raise RuntimeError(msg)
+_ask_parent_agent_lc = as_langchain_tool(_ask_parent_agent_spec)
 for _soul in SOUL_CATALOG.values():
-    _soul.tools.append(ask_parent_agent)
+    _soul.tools.append(_ask_parent_agent_lc)
 del _soul
