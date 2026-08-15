@@ -127,7 +127,7 @@ fix = true
 show-fixes = true
 indent-width = 4
 exclude = [
-    ".venv", "data", "logs", "chrome-devtools-mcp-main", "hermes-agent-main",
+    ".venv", "data", "logs", "chrome-devtools-mcp-main", "hermes-agent",
     "paperclip-master", ".claude/worktrees", "node_modules", "dist", "build",
     "coverage", "__pycache__",
 ]

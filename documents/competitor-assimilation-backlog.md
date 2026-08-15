@@ -187,7 +187,7 @@ editam arquivos em paralelo (hoje compartilham o working tree). Habilita o
 ### H-4. Inventário de tools do Hermes — o que existe lá e não aqui
 
 **Levantado na auditoria de código de 2026-07-29/30** (~70 tools no Hermes,
-confirmadas contra `hermes-agent-main/`). Serve como mapa de candidatos, não
+confirmadas contra `hermes-agent/`). Serve como mapa de candidatos, não
 como lista de coisas a copiar: a maioria das categorias abaixo já foi
 decidida (entrou no plano de sprints ou foi descartada com motivo).
 

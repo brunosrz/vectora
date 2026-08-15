@@ -26,7 +26,7 @@ exclude: |
     # em qualquer .mjs, casado com a intenção original (excluir tudo).
     .*\.mjs$|
     ^chrome-devtools-mcp-main/.*|
-    ^hermes-agent-main/.*|
+    ^hermes-agent/.*|
     ^paperclip-master/.*|
     ^omskills-main/.*|
     ^ragflow-main/.*|
