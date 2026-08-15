@@ -9,34 +9,23 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Annotated
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
 
 from backend.services.env import get_env
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
 
-def _user_id(config: RunnableConfig | None) -> str:
-    configurable = (config or {}).get("configurable") or {}
-    return str(configurable.get("user_id", "local"))
-
-
-@tool(
-    extras={
-        "invalidates": ["mcp"],
-        "destructive": True,
-        "category": "library",
-        "icon": "puzzle",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["mcp"],
+        destructive=True,
+        category="library",
+        icon="puzzle",
+    )
 )
-async def install_mcp_from_registry(
-    connector_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def install_mcp_from_registry(connector_id: str, ctx: ToolContext) -> str:
     """Instala um conector MCP do registry (curados + registry oficial de
     MCP) — mesma lista que a aba Library mostra. Se o conector exigir
     variáveis de ambiente ainda não configuradas, não instala e lista o que
@@ -72,8 +61,7 @@ async def install_mcp_from_registry(
                 }
             )
 
-        user_id = _user_id(config)
-        result = await install_mcp(InstallRequest(mcp_id=connector_id), user_id)
+        result = await install_mcp(InstallRequest(mcp_id=connector_id), ctx.user_id)
         return json.dumps(result)
     except Exception as exc:
         logger.exception(
@@ -82,18 +70,15 @@ async def install_mcp_from_registry(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["skills"],
-        "destructive": True,
-        "category": "library",
-        "icon": "sparkles",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["skills"],
+        destructive=True,
+        category="library",
+        icon="sparkles",
+    )
 )
-async def install_skill_from_catalog(
-    skill_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def install_skill_from_catalog(skill_id: str, ctx: ToolContext) -> str:
     """Instala uma skill curada do catálogo remoto (`GET /skills/catalog`) —
     distinto de escrever uma skill nova via `install_learned_skill`.
 
@@ -114,8 +99,7 @@ async def install_skill_from_catalog(
                 }
             )
 
-        user_id = _user_id(config)
-        skill = install_skill(user_id, entry["source"])
+        skill = install_skill(ctx.user_id, entry["source"])
         return json.dumps({"status": "installed", "skill_id": skill.id})
     except Exception as exc:
         logger.exception(
@@ -124,13 +108,13 @@ async def install_skill_from_catalog(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["memory"],
-        "destructive": True,
-        "category": "library",
-        "icon": "database",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["memory"],
+        destructive=True,
+        category="library",
+        icon="database",
+    )
 )
 async def install_memory_bucket(bucket_id: str) -> str:
     """Baixa e instala um bucket da Vectora Memory Library como coleção
@@ -155,18 +139,15 @@ async def install_memory_bucket(bucket_id: str) -> str:
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["mcp"],
-        "destructive": True,
-        "category": "library",
-        "icon": "puzzle",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["mcp"],
+        destructive=True,
+        category="library",
+        icon="puzzle",
+    )
 )
-async def uninstall_mcp(
-    connector_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def uninstall_mcp(connector_id: str, ctx: ToolContext) -> str:
     """Desinstala um conector MCP previamente instalado (o inverso de
     `install_mcp_from_registry`).
 
@@ -179,26 +160,24 @@ async def uninstall_mcp(
             uninstall_mcp as _http_uninstall,
         )
 
-        user_id = _user_id(config)
-        result = await _http_uninstall(UninstallRequest(mcp_id=connector_id), user_id)
+        result = await _http_uninstall(
+            UninstallRequest(mcp_id=connector_id), ctx.user_id
+        )
         return json.dumps(result)
     except Exception as exc:
         logger.exception("uninstall_mcp failed", extra={"connector_id": connector_id})
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["skills"],
-        "destructive": True,
-        "category": "library",
-        "icon": "trash-2",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["skills"],
+        destructive=True,
+        category="library",
+        icon="trash-2",
+    )
 )
-async def delete_skill(
-    skill_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def delete_skill(skill_id: str, ctx: ToolContext) -> str:
     """Remove uma skill instalada do usuário.
 
     Args:
@@ -207,8 +186,7 @@ async def delete_skill(
     try:
         from backend.workspace.skills import remove_skill
 
-        user_id = _user_id(config)
-        removed = remove_skill(user_id, skill_id)
+        removed = remove_skill(ctx.user_id, skill_id)
         if not removed:
             return json.dumps(
                 {"status": "error", "error": f"skill '{skill_id}' não encontrada"}
@@ -219,18 +197,15 @@ async def delete_skill(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["skills"],
-        "destructive": False,
-        "category": "library",
-        "icon": "check-circle",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["skills"],
+        destructive=False,
+        category="library",
+        icon="check-circle",
+    )
 )
-async def verify_skill(
-    skill_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def verify_skill(skill_id: str, ctx: ToolContext) -> str:
     """Revalida o SKILL.md de uma skill instalada (útil após edição manual
     do arquivo no disco).
 
@@ -240,21 +215,20 @@ async def verify_skill(
     try:
         from backend.workspace.skills import verify_skill as _verify
 
-        user_id = _user_id(config)
-        result = _verify(user_id, skill_id)
+        result = _verify(ctx.user_id, skill_id)
         return json.dumps(result)
     except Exception as exc:
         logger.exception("verify_skill failed", extra={"skill_id": skill_id})
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["memory"],
-        "destructive": True,
-        "category": "library",
-        "icon": "upload",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["memory"],
+        destructive=True,
+        category="library",
+        icon="upload",
+    )
 )
 async def publish_memory_bucket_tool(
     bucket_id: str,
@@ -299,13 +273,13 @@ async def publish_memory_bucket_tool(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["skills"],
-        "destructive": True,
-        "category": "library",
-        "icon": "upload",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["skills"],
+        destructive=True,
+        category="library",
+        icon="upload",
+    )
 )
 async def publish_skill_tool(
     source: str,
@@ -355,19 +329,16 @@ async def publish_skill_tool(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["mcp"],
-        "destructive": True,
-        "category": "library",
-        "icon": "key",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["mcp"],
+        destructive=True,
+        category="library",
+        icon="key",
+    )
 )
 async def save_mcp_env_var(
-    connector_id: str,
-    key: str,
-    value: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    connector_id: str, key: str, value: str, ctx: ToolContext
 ) -> str:
     """Salva uma variável de ambiente exigida por um conector MCP (ex.: a
     que `install_mcp_from_registry` listou como faltante em
@@ -382,8 +353,7 @@ async def save_mcp_env_var(
     try:
         from backend.rbac.auth import set_env_override
 
-        user_id = _user_id(config)
-        await set_env_override(user_id, key, value)
+        await set_env_override(ctx.user_id, key, value)
         return json.dumps({"status": "saved", "connector_id": connector_id, "key": key})
     except Exception as exc:
         logger.exception(
@@ -402,7 +372,7 @@ def _match(entry_text: str, query: str) -> bool:
     return not query or query.lower() in entry_text.lower()
 
 
-@tool(extras={"category": "library", "icon": "puzzle"})
+@vtool(extras=ToolExtras(category="library", icon="puzzle"))
 async def list_mcp_catalog(query: str = "") -> str:
     """Lista conectores MCP disponíveis para instalar (curados + registry
     oficial), com id, nome e descrição — use antes de sugerir uma instalação,
@@ -435,7 +405,7 @@ async def list_mcp_catalog(query: str = "") -> str:
         return json.dumps({"items": [], "total": 0, "error": str(exc)})
 
 
-@tool(extras={"category": "library", "icon": "sparkles"})
+@vtool(extras=ToolExtras(category="library", icon="sparkles"))
 async def list_skills_catalog(query: str = "") -> str:
     """Lista skills disponíveis no catálogo, com id, nome e descrição — use
     antes de sugerir a instalação de uma skill.
@@ -468,7 +438,7 @@ async def list_skills_catalog(query: str = "") -> str:
         return json.dumps({"items": [], "total": 0, "error": str(exc)})
 
 
-@tool(extras={"category": "library", "icon": "database"})
+@vtool(extras=ToolExtras(category="library", icon="database"))
 async def list_memory_bucket_catalog(query: str = "") -> str:
     """Lista buckets de memória publicados na Vectora Memory Library, com id,
     nome e descrição — use antes de sugerir baixar uma base de conhecimento.

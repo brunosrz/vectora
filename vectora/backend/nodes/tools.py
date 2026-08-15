@@ -31,6 +31,9 @@ from backend.tools import (
     git as _git_module,
 )
 from backend.tools import (
+    library as _library_module,
+)
+from backend.tools import (
     thinking as _thinking_module,
 )
 from backend.tools.background import (
@@ -80,20 +83,6 @@ from backend.tools.learning import (
     install_learned_skill,
     learn_from_session,
     save_learned_fact,
-)
-from backend.tools.library import (
-    delete_skill,
-    install_mcp_from_registry,
-    install_memory_bucket,
-    install_skill_from_catalog,
-    list_mcp_catalog,
-    list_memory_bucket_catalog,
-    list_skills_catalog,
-    publish_memory_bucket_tool,
-    publish_skill_tool,
-    save_mcp_env_var,
-    uninstall_mcp,
-    verify_skill,
 )
 from backend.tools.linear import (
     linear_create_issue,
@@ -187,6 +176,18 @@ git_worktree = _bridge("git_worktree")
 git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 git_discard = _bridge("git_discard")
+install_mcp_from_registry = _bridge("install_mcp_from_registry")
+install_skill_from_catalog = _bridge("install_skill_from_catalog")
+install_memory_bucket = _bridge("install_memory_bucket")
+uninstall_mcp = _bridge("uninstall_mcp")
+delete_skill = _bridge("delete_skill")
+verify_skill = _bridge("verify_skill")
+publish_memory_bucket_tool = _bridge("publish_memory_bucket_tool")
+publish_skill_tool = _bridge("publish_skill_tool")
+save_mcp_env_var = _bridge("save_mcp_env_var")
+list_mcp_catalog = _bridge("list_mcp_catalog")
+list_skills_catalog = _bridge("list_skills_catalog")
+list_memory_bucket_catalog = _bridge("list_memory_bucket_catalog")
 browser_navigate = _bridge("browser_navigate")
 browser_screenshot = _bridge("browser_screenshot")
 browser_click = _bridge("browser_click")

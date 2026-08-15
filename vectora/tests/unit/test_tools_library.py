@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from backend.tools.context import ToolContext
 from backend.tools.library import (
     delete_skill,
     install_mcp_from_registry,
@@ -25,8 +26,8 @@ from backend.tools.library import (
 )
 
 
-def _config(user_id: str = "local") -> dict:
-    return {"configurable": {"user_id": user_id}}
+def _ctx(user_id: str = "local") -> ToolContext:
+    return ToolContext(user_id=user_id)
 
 
 # ---------------------------------------------------------------------------
@@ -60,9 +61,7 @@ async def test_install_mcp_from_registry_installs_connector_without_env_vars(
     )
 
     result = json.loads(
-        await install_mcp_from_registry.ainvoke(
-            {"connector_id": "filesystem", "config": _config()}
-        )
+        await install_mcp_from_registry(connector_id="filesystem", ctx=_ctx())
     )
 
     assert result == {"status": "installed", "mcp_id": "filesystem"}
@@ -89,9 +88,7 @@ async def test_install_mcp_from_registry_missing_env_vars_does_not_install(
     monkeypatch.delenv("BRAVE_API_KEY_DOES_NOT_EXIST_XYZ", raising=False)
 
     result = json.loads(
-        await install_mcp_from_registry.ainvoke(
-            {"connector_id": "brave-search", "config": _config()}
-        )
+        await install_mcp_from_registry(connector_id="brave-search", ctx=_ctx())
     )
 
     assert result["status"] == "error"
@@ -106,9 +103,7 @@ async def test_install_mcp_from_registry_unknown_connector_returns_error(monkeyp
     monkeypatch.setattr(mcp_marketplace, "list_registry", AsyncMock(return_value=[]))
 
     result = json.loads(
-        await install_mcp_from_registry.ainvoke(
-            {"connector_id": "does-not-exist", "config": _config()}
-        )
+        await install_mcp_from_registry(connector_id="does-not-exist", ctx=_ctx())
     )
 
     assert result["status"] == "error"
@@ -146,9 +141,7 @@ async def test_install_skill_from_catalog_installs_skill(monkeypatch):
     )
 
     result = json.loads(
-        await install_skill_from_catalog.ainvoke(
-            {"skill_id": "pdf-extract", "config": _config()}
-        )
+        await install_skill_from_catalog(skill_id="pdf-extract", ctx=_ctx())
     )
 
     assert result == {"status": "installed", "skill_id": "pdf-extract"}
@@ -161,9 +154,7 @@ async def test_install_skill_from_catalog_unknown_skill_returns_error(monkeypatc
     monkeypatch.setattr(registry_client, "fetch_catalog", AsyncMock(return_value=[]))
 
     result = json.loads(
-        await install_skill_from_catalog.ainvoke(
-            {"skill_id": "does-not-exist", "config": _config()}
-        )
+        await install_skill_from_catalog(skill_id="does-not-exist", ctx=_ctx())
     )
 
     assert result["status"] == "error"
@@ -184,7 +175,7 @@ async def test_install_memory_bucket_installs_collection(monkeypatch):
         AsyncMock(return_value="shared_docs-2024"),
     )
 
-    result = json.loads(await install_memory_bucket.ainvoke({"bucket_id": "docs-2024"}))
+    result = json.loads(await install_memory_bucket(bucket_id="docs-2024"))
 
     assert result == {"status": "installed", "collection": "shared_docs-2024"}
 
@@ -200,7 +191,7 @@ async def test_install_memory_bucket_error_returns_status_error_not_raised(
 
     monkeypatch.setattr(memory_library, "download_memory_bucket", _boom)
 
-    result = json.loads(await install_memory_bucket.ainvoke({"bucket_id": "docs-2024"}))
+    result = json.loads(await install_memory_bucket(bucket_id="docs-2024"))
 
     assert result["status"] == "error"
     assert "embed_model incompatível" in result["error"]
@@ -221,9 +212,7 @@ async def test_uninstall_mcp_removes_connector(monkeypatch):
         AsyncMock(return_value={"status": "removed", "mcp_id": "filesystem"}),
     )
 
-    result = json.loads(
-        await uninstall_mcp.ainvoke({"connector_id": "filesystem", "config": _config()})
-    )
+    result = json.loads(await uninstall_mcp(connector_id="filesystem", ctx=_ctx()))
 
     assert result == {"status": "removed", "mcp_id": "filesystem"}
 
@@ -238,9 +227,7 @@ async def test_uninstall_mcp_not_installed_returns_not_found(monkeypatch):
         AsyncMock(return_value={"status": "not_found", "mcp_id": "nope"}),
     )
 
-    result = json.loads(
-        await uninstall_mcp.ainvoke({"connector_id": "nope", "config": _config()})
-    )
+    result = json.loads(await uninstall_mcp(connector_id="nope", ctx=_ctx()))
 
     assert result["status"] == "not_found"
 
@@ -256,9 +243,7 @@ async def test_delete_skill_removes_installed_skill(monkeypatch):
 
     monkeypatch.setattr(skills_mod, "remove_skill", lambda user_id, skill_id: True)
 
-    result = json.loads(
-        await delete_skill.ainvoke({"skill_id": "pdf-extract", "config": _config()})
-    )
+    result = json.loads(await delete_skill(skill_id="pdf-extract", ctx=_ctx()))
 
     assert result == {"status": "removed", "skill_id": "pdf-extract"}
 
@@ -269,9 +254,7 @@ async def test_delete_skill_unknown_skill_returns_error(monkeypatch):
 
     monkeypatch.setattr(skills_mod, "remove_skill", lambda user_id, skill_id: False)
 
-    result = json.loads(
-        await delete_skill.ainvoke({"skill_id": "does-not-exist", "config": _config()})
-    )
+    result = json.loads(await delete_skill(skill_id="does-not-exist", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -291,9 +274,7 @@ async def test_verify_skill_revalidates_and_returns_status(monkeypatch):
         lambda user_id, skill_id: {"status": "valid", "skill_id": skill_id},
     )
 
-    result = json.loads(
-        await verify_skill.ainvoke({"skill_id": "pdf-extract", "config": _config()})
-    )
+    result = json.loads(await verify_skill(skill_id="pdf-extract", ctx=_ctx()))
 
     assert result == {"status": "valid", "skill_id": "pdf-extract"}
 
@@ -307,9 +288,7 @@ async def test_verify_skill_propagates_internal_error_as_typed_error(monkeypatch
 
     monkeypatch.setattr(skills_mod, "verify_skill", _boom)
 
-    result = json.loads(
-        await verify_skill.ainvoke({"skill_id": "pdf-extract", "config": _config()})
-    )
+    result = json.loads(await verify_skill(skill_id="pdf-extract", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -332,13 +311,11 @@ async def test_publish_memory_bucket_tool_publishes_with_token(monkeypatch):
     )
 
     result = json.loads(
-        await publish_memory_bucket_tool.ainvoke(
-            {
-                "bucket_id": "docs-2024",
-                "name": "Docs 2024",
-                "description": "# Docs",
-                "license": "MIT",
-            }
+        await publish_memory_bucket_tool(
+            bucket_id="docs-2024",
+            name="Docs 2024",
+            description="# Docs",
+            license="MIT",
         )
     )
 
@@ -357,12 +334,10 @@ async def test_publish_memory_bucket_tool_no_token_returns_error_without_publish
     monkeypatch.setattr(memory_library, "publish_memory_bucket", publish_spy)
 
     result = json.loads(
-        await publish_memory_bucket_tool.ainvoke(
-            {
-                "bucket_id": "docs-2024",
-                "name": "Docs 2024",
-                "description": "# Docs",
-            }
+        await publish_memory_bucket_tool(
+            bucket_id="docs-2024",
+            name="Docs 2024",
+            description="# Docs",
         )
     )
 
@@ -385,14 +360,12 @@ async def test_publish_skill_tool_publishes_with_token(monkeypatch):
     monkeypatch.setattr(registry_client, "publish_skill", publish_spy)
 
     result = json.loads(
-        await publish_skill_tool.ainvoke(
-            {
-                "source": "https://github.com/user/skill",
-                "name": "Minha Skill",
-                "description": "faz coisas",
-                "category": "devtools",
-                "tags": ["cli"],
-            }
+        await publish_skill_tool(
+            source="https://github.com/user/skill",
+            name="Minha Skill",
+            description="faz coisas",
+            category="devtools",
+            tags=["cli"],
         )
     )
 
@@ -419,12 +392,10 @@ async def test_publish_skill_tool_no_token_returns_error_without_publishing(
     monkeypatch.setattr(registry_client, "publish_skill", publish_spy)
 
     result = json.loads(
-        await publish_skill_tool.ainvoke(
-            {
-                "source": "https://github.com/user/skill",
-                "name": "Minha Skill",
-                "description": "faz coisas",
-            }
+        await publish_skill_tool(
+            source="https://github.com/user/skill",
+            name="Minha Skill",
+            description="faz coisas",
         )
     )
 
@@ -447,12 +418,10 @@ async def test_publish_skill_tool_registry_error_returns_typed_error_not_excepti
     )
 
     result = json.loads(
-        await publish_skill_tool.ainvoke(
-            {
-                "source": "não é url",
-                "name": "x",
-                "description": "y",
-            }
+        await publish_skill_tool(
+            source="não é url",
+            name="x",
+            description="y",
         )
     )
 
@@ -473,13 +442,11 @@ async def test_save_mcp_env_var_persists_override(monkeypatch):
     monkeypatch.setattr(auth_svc, "set_env_override", set_spy)
 
     result = json.loads(
-        await save_mcp_env_var.ainvoke(
-            {
-                "connector_id": "brave-search",
-                "key": "BRAVE_API_KEY",
-                "value": "sk-abc",
-                "config": _config(),
-            }
+        await save_mcp_env_var(
+            connector_id="brave-search",
+            key="BRAVE_API_KEY",
+            value="sk-abc",
+            ctx=_ctx(),
         )
     )
 
@@ -501,13 +468,11 @@ async def test_save_mcp_env_var_internal_error_returns_typed_error(monkeypatch):
     monkeypatch.setattr(auth_svc, "set_env_override", _boom)
 
     result = json.loads(
-        await save_mcp_env_var.ainvoke(
-            {
-                "connector_id": "brave-search",
-                "key": "BRAVE_API_KEY",
-                "value": "sk-abc",
-                "config": _config(),
-            }
+        await save_mcp_env_var(
+            connector_id="brave-search",
+            key="BRAVE_API_KEY",
+            value="sk-abc",
+            ctx=_ctx(),
         )
     )
 

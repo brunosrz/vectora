@@ -30,25 +30,25 @@ async def test_list_mcp_catalog_filtra_e_degrada_sem_lancar(monkeypatch):
 
     monkeypatch.setattr("backend.api.handlers.mcp_marketplace.list_registry", _registry)
 
-    todos = json.loads(await library.list_mcp_catalog.ainvoke({}))
+    todos = json.loads(await library.list_mcp_catalog())
     assert todos["total"] == 2
     assert {i["id"] for i in todos["items"]} == {"github", "postgres"}
 
-    filtrado = json.loads(await library.list_mcp_catalog.ainvoke({"query": "repos"}))
+    filtrado = json.loads(await library.list_mcp_catalog(query="repos"))
     assert [i["id"] for i in filtrado["items"]] == ["github"]
 
     # Erro/borda: filtro sem resultado é lista vazia, não erro — o LLM precisa
     # poder dizer "não achei nada" em vez de receber uma exceção.
-    vazio = json.loads(await library.list_mcp_catalog.ainvoke({"query": "zzz"}))
+    vazio = json.loads(await library.list_mcp_catalog(query="zzz"))
     assert vazio == {"items": [], "total": 0}
 
     # Erro/borda: registry fora do ar degrada com lista vazia + erro descrito,
-    # nunca propaga (CLAUDE.md regra 11).
+    # nunca propaga.
     async def _explode():
         raise OSError("registry inacessível")
 
     monkeypatch.setattr("backend.api.handlers.mcp_marketplace.list_registry", _explode)
-    caido = json.loads(await library.list_mcp_catalog.ainvoke({}))
+    caido = json.loads(await library.list_mcp_catalog())
     assert caido["items"] == []
     assert "registry inacessível" in caido["error"]
 
@@ -59,14 +59,14 @@ async def test_list_skills_catalog_happy_e_catalogo_vazio(monkeypatch):
         return [{"id": "revisar-pr", "name": "Revisar PR", "description": "Como"}]
 
     monkeypatch.setattr("backend.services.registry_client.fetch_catalog", _catalog)
-    out = json.loads(await library.list_skills_catalog.ainvoke({}))
+    out = json.loads(await library.list_skills_catalog())
     assert [i["id"] for i in out["items"]] == ["revisar-pr"]
 
     async def _vazio(_kind):
         return []
 
     monkeypatch.setattr("backend.services.registry_client.fetch_catalog", _vazio)
-    assert json.loads(await library.list_skills_catalog.ainvoke({}))["total"] == 0
+    assert json.loads(await library.list_skills_catalog())["total"] == 0
 
 
 @pytest.mark.asyncio
@@ -75,24 +75,23 @@ async def test_list_memory_bucket_catalog_happy_e_falha(monkeypatch):
         return [{"id": "leis-br", "name": "Leis BR", "description": "Legislação"}]
 
     monkeypatch.setattr("backend.services.memory_library.list_catalog", _catalog)
-    out = json.loads(await library.list_memory_bucket_catalog.ainvoke({}))
+    out = json.loads(await library.list_memory_bucket_catalog())
     assert [i["id"] for i in out["items"]] == ["leis-br"]
 
     async def _explode():
         raise RuntimeError("library fora do ar")
 
     monkeypatch.setattr("backend.services.memory_library.list_catalog", _explode)
-    caido = json.loads(await library.list_memory_bucket_catalog.ainvoke({}))
+    caido = json.loads(await library.list_memory_bucket_catalog())
     assert caido["items"] == []
     assert "library fora do ar" in caido["error"]
 
 
-def test_catalogo_grande_e_truncado_com_total_real(monkeypatch):
+@pytest.mark.asyncio
+async def test_catalogo_grande_e_truncado_com_total_real(monkeypatch):
     # Regressão de contexto: o registry oficial tem centenas de entradas e
     # despejar tudo gastaria a janela do LLM. `total` continua o número real
     # pra o agente saber que há mais.
-    import asyncio
-
     async def _registry():
         return [
             SimpleNamespace(id=f"c{i}", name=f"C{i}", description="x", env_vars=[])
@@ -100,7 +99,7 @@ def test_catalogo_grande_e_truncado_com_total_real(monkeypatch):
         ]
 
     monkeypatch.setattr("backend.api.handlers.mcp_marketplace.list_registry", _registry)
-    out = json.loads(asyncio.run(library.list_mcp_catalog.ainvoke({})))
+    out = json.loads(await library.list_mcp_catalog())
     assert len(out["items"]) == library._CATALOG_PAGE_SIZE
     assert out["total"] == 200
 
