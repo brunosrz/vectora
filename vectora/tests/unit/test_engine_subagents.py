@@ -14,6 +14,7 @@ import pytest
 from backend.engine.guardrails import LoopCapConfig, TurnBudget
 from backend.engine.stream_events import SubagentOutput
 from backend.engine.subagents import (
+    LivenessConfig,
     SubagentSpec,
     run_subagent,
     spawn_subagent_background,
@@ -23,6 +24,21 @@ from backend.storage.sqlite.pool import AsyncConnectionPool
 from backend.tools.context import ToolContext
 from backend.tools.registry import TOOL_REGISTRY, ToolExtras, vtool
 from backend.vtypes.message import ToolCallChunk, VMessageChunk
+
+
+class _HangingChatClient:
+    """Nunca progride — simula um subagente preso em loop, sem depender de
+    tempo real longo (o teste cancela via `asyncio.sleep` cancelável)."""
+
+    async def astream(self, messages, *, tools=None, temperature=None, max_tokens=None):
+        await asyncio.sleep(3600)
+        yield  # pragma: no cover - nunca alcançado, mantém a função geradora
+
+    async def agenerate(
+        self, messages, *, tools=None, temperature=None, max_tokens=None
+    ):
+        msg = "não usado (astream-only)"
+        raise NotImplementedError(msg)
 
 
 class _ScriptedChatClient:
@@ -276,3 +292,132 @@ class TestTurnBudgetDoTurnoPai:
         assert resultado == "ok"
         assert budget.subagent_spawns == 1
         assert budget.exceeded is None
+
+
+class TestLivenessAtiva:
+    async def test_sem_liveness_config_roda_ate_completar_normalmente(
+        self, session_store, ctx
+    ):
+        client = _ScriptedChatClient([[_texto_chunk("completou sem watchdog")]])
+
+        resultado = await run_subagent(
+            _spec(),
+            "faça algo",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+        )
+
+        assert resultado == "completou sem watchdog"
+
+    async def test_subagente_progredindo_nao_dispara_cancelamento(
+        self, session_store, ctx
+    ):
+        """Happy path: watchdog ativo, mas o subagente termina rápido —
+        nunca chega a competir com o watchdog."""
+        client = _ScriptedChatClient([[_texto_chunk("terminei rápido")]])
+
+        resultado = await run_subagent(
+            _spec(),
+            "faça algo",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+            liveness=LivenessConfig(heartbeat_interval_s=5.0, max_stalled_heartbeats=3),
+        )
+
+        assert resultado == "terminei rápido"
+
+    async def test_subagente_sem_progresso_e_cancelado_pelo_watchdog(
+        self, session_store, ctx
+    ):
+        """Erro/borda: subagente travado (nunca emite evento) é cancelado
+        depois de `heartbeat_interval_s * max_stalled_heartbeats`, resultado
+        vira status='cancelled' — nunca trava o processo pai pra sempre."""
+        client = _HangingChatClient()
+        eventos: list[SubagentOutput] = []
+
+        async def on_event(event):
+            if isinstance(event, SubagentOutput):
+                eventos.append(event)
+
+        resultado = await run_subagent(
+            _spec(),
+            "faça algo",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+            liveness=LivenessConfig(
+                heartbeat_interval_s=0.02, max_stalled_heartbeats=2
+            ),
+            on_event=on_event,
+        )
+
+        assert "cancelado por inatividade" in resultado
+        assert eventos[-1].status == "cancelled"
+
+
+class TestEscopoRBACDoSubagente:
+    async def test_soul_com_toolset_dentro_do_escopo_delega_normalmente(
+        self, session_store, ctx, monkeypatch
+    ):
+        from backend.rbac import tool_policy
+
+        @vtool(extras=ToolExtras())
+        async def tool_permitida(ctx: ToolContext) -> str:
+            """tool permitida."""
+            return "ok"
+
+        spec = TOOL_REGISTRY.get("tool_permitida")
+        assert spec is not None
+        monkeypatch.setattr(tool_policy, "effective_disabled", lambda _uid: set())
+
+        client = _ScriptedChatClient([[_texto_chunk("delegado")]])
+
+        resultado = await run_subagent(
+            _spec(tools=[spec]),
+            "faça algo",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+        )
+
+        assert resultado == "delegado"
+
+    async def test_soul_pedindo_tool_fora_do_escopo_e_rejeitada_sem_chamar_llm(
+        self, session_store, ctx, monkeypatch
+    ):
+        """Erro/borda: tool desabilitada (kill-switch global ou ABAC do
+        usuário) nunca chega a rodar dentro do subagente — erro tipado
+        antes de qualquer sessão/chamada ao chat client."""
+        from backend.rbac import tool_policy
+
+        @vtool(extras=ToolExtras())
+        async def tool_fora_do_escopo(ctx: ToolContext) -> str:
+            """tool fora do escopo."""
+            return "nunca deveria rodar"
+
+        spec = TOOL_REGISTRY.get("tool_fora_do_escopo")
+        assert spec is not None
+        monkeypatch.setattr(
+            tool_policy, "effective_disabled", lambda _uid: {"tool_fora_do_escopo"}
+        )
+
+        client = _ScriptedChatClient([[_texto_chunk("nunca deveria rodar")]])
+
+        resultado = await run_subagent(
+            _spec(tools=[spec]),
+            "faça algo",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+        )
+
+        assert "fora do escopo RBAC" in resultado
+        assert "tool_fora_do_escopo" in resultado
+        assert client.chamadas == 0
