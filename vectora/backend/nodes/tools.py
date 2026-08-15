@@ -128,7 +128,12 @@ from backend.tools.homeassistant import (
     ha_list_services,
 )
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
-from backend.tools.kanban import kanban_create, kanban_list, kanban_update_status
+from backend.tools.kanban import (
+    kanban_create,
+    kanban_decompose,
+    kanban_list,
+    kanban_update_status,
+)
 from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.learning import (
     apply_memory_consolidation,
@@ -328,6 +333,7 @@ WORKSPACE_TOOLS: list[BaseTool] = [
     kanban_list,
     kanban_create,
     kanban_update_status,
+    kanban_decompose,
 ]
 
 #: Ferramentas do Context Graph (grafo de conhecimento do workspace)
@@ -490,6 +496,7 @@ for _t in [
     kanban_list,
     kanban_create,
     kanban_update_status,
+    kanban_decompose,
     # G3 — Git + GitHub CLI
     git_status,
     git_log,

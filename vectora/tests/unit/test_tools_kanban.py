@@ -11,12 +11,21 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 import backend
 from backend.scheduling import background_tasks as bg
 from backend.scheduling import kanban
+from backend.vtypes.message import ContentBlock, MessageRole, VMessage
+
+
+def _fake_response(texto: str) -> VMessage:
+    return VMessage(
+        role=MessageRole.ASSISTANT, content=[ContentBlock(kind="text", text=texto)]
+    )
+
 
 _SCHEMA = (
     Path(backend.__file__).parent / "storage" / "migrations" / "sqlite" / "schema.sql"
@@ -223,3 +232,155 @@ class TestKanbanList:
 
         out = json.loads(await kanban_list.ainvoke({"status": "review"}, _cfg()))
         assert [c["name"] for c in out["cards"]] == ["card review"]
+
+
+class TestKanbanDecompose:
+    @pytest.mark.asyncio
+    async def test_decompoe_triage_em_children_com_dependencia(self, db):
+        from backend.tools.kanban import kanban_create, kanban_decompose
+
+        created = json.loads(
+            await kanban_create.ainvoke(
+                {
+                    "name": "Migrar auth",
+                    "instruction": "Migre o módulo de auth pra OIDC",
+                },
+                _cfg(),
+            )
+        )
+        task_id = created["task_id"]
+        await kanban.set_status(task_id, "triage")
+
+        grafo = json.dumps(
+            [
+                {
+                    "name": "Escrever cliente OIDC",
+                    "instruction": "Implemente o client",
+                    "parents": [],
+                },
+                {
+                    "name": "Migrar endpoints",
+                    "instruction": "Troque os handlers",
+                    "parents": [0],
+                },
+            ]
+        )
+        fake_agenerate = AsyncMock(return_value=_fake_response(grafo))
+        with patch(
+            "backend.llm.fallback_chat_client.FallbackChatClient.agenerate",
+            fake_agenerate,
+        ):
+            out = json.loads(
+                await kanban_decompose.ainvoke({"task_id": task_id}, _cfg())
+            )
+
+        assert out["status"] == "ok"
+        assert out["decomposed"] is True
+        assert len(out["children"]) == 2
+
+        pai_id, filho_id = out["children"]
+        deps = await kanban.get_dependencies(filho_id)
+        assert [d["id"] for d in deps] == [pai_id]
+
+        estado_filho = await kanban.get_task_status(filho_id)
+        assert estado_filho["status"] == "todo"
+        estado_pai = await kanban.get_task_status(pai_id)
+        assert estado_pai["status"] == "ready"
+
+        estado_original = await kanban.get_task_status(task_id)
+        assert estado_original["status"] == "archived"
+
+    @pytest.mark.asyncio
+    async def test_resposta_malformada_do_modelo_nao_quebra_e_mantem_triage(self, db):
+        """Erro/borda: JSON inválido, `parents` apontando pra índice
+        inexistente ou grafo vazio nunca derrubam a tool — o card original
+        segue em `triage` sem nenhum child criado."""
+        from backend.tools.kanban import kanban_create, kanban_decompose
+
+        created = json.loads(
+            await kanban_create.ainvoke(
+                {"name": "card", "instruction": "faça algo"}, _cfg()
+            )
+        )
+        task_id = created["task_id"]
+        await kanban.set_status(task_id, "triage")
+
+        fake_agenerate = AsyncMock(return_value=_fake_response("isso não é JSON"))
+        with patch(
+            "backend.llm.fallback_chat_client.FallbackChatClient.agenerate",
+            fake_agenerate,
+        ):
+            out = json.loads(
+                await kanban_decompose.ainvoke({"task_id": task_id}, _cfg())
+            )
+
+        assert out["status"] == "ok"
+        assert out["decomposed"] is False
+
+        estado = await kanban.get_task_status(task_id)
+        assert estado["status"] == "triage"
+        assert [t.id for t in await bg.list_tasks("s1")] == [task_id]
+
+    @pytest.mark.asyncio
+    async def test_ciclo_proposto_pelo_modelo_e_ignorado_sem_quebrar_os_demais(
+        self, db
+    ):
+        """Erro/borda: um nó que se autorreferencia como pai (`parents: [1]`
+        no próprio índice 1) é descartado nó a nó — o resto do grafo continua
+        criado normalmente."""
+        from backend.tools.kanban import kanban_create, kanban_decompose
+
+        created = json.loads(
+            await kanban_create.ainvoke(
+                {"name": "card", "instruction": "faça algo"}, _cfg()
+            )
+        )
+        task_id = created["task_id"]
+        await kanban.set_status(task_id, "triage")
+
+        grafo = json.dumps(
+            [
+                {"name": "nó A", "instruction": "faça A", "parents": []},
+                {"name": "nó B (autoref)", "instruction": "faça B", "parents": [1]},
+            ]
+        )
+        fake_agenerate = AsyncMock(return_value=_fake_response(grafo))
+        with patch(
+            "backend.llm.fallback_chat_client.FallbackChatClient.agenerate",
+            fake_agenerate,
+        ):
+            out = json.loads(
+                await kanban_decompose.ainvoke({"task_id": task_id}, _cfg())
+            )
+
+        assert out["decomposed"] is True
+        assert len(out["children"]) == 2
+        no_b_id = out["children"][1]
+        estado_b = await kanban.get_task_status(no_b_id)
+        assert estado_b["status"] == "ready"
+
+    @pytest.mark.asyncio
+    async def test_task_fora_de_triage_retorna_erro_tipado_sem_chamar_llm(self, db):
+        from backend.tools.kanban import kanban_create, kanban_decompose
+
+        created = json.loads(
+            await kanban_create.ainvoke(
+                {"name": "card", "instruction": "faça algo"}, _cfg()
+            )
+        )
+        task_id = created["task_id"]
+
+        fake_agenerate = AsyncMock(
+            side_effect=AssertionError("não deveria chamar o LLM")
+        )
+        with patch(
+            "backend.llm.fallback_chat_client.FallbackChatClient.agenerate",
+            fake_agenerate,
+        ):
+            out = json.loads(
+                await kanban_decompose.ainvoke({"task_id": task_id}, _cfg())
+            )
+
+        assert out["status"] == "error"
+        assert "triage" in out["error"]
+        fake_agenerate.assert_not_called()
