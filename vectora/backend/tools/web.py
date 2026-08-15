@@ -1,30 +1,30 @@
 """Web tools: busca e extração de conteúdo da internet via Tavily.
 
-Cliente HTTP nativo (`backend/tools/tavily/`), não `langchain-tavily`: o
-pacote cobria só `/search` e `/extract` e prendia `search_depth`/`max_results`
-na instanciação.
+Cliente HTTP nativo (`backend/tools/tavily/`), não o pacote de integração de
+terceiros: aquele cobria só `/search` e `/extract` e prendia
+`search_depth`/`max_results` na instanciação.
 
-Os wrappers `@tool web_search` e `fetch_url` preservam nome e formato de saída
-— JSON list para `web_search`, texto puro para `fetch_url`. Esse é o contrato
+As tools `web_search` e `fetch_url` preservam nome e formato de saída —
+JSON list para `web_search`, texto puro para `fetch_url`. Esse é o contrato
 com o LLM e não muda.
 """
 
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import logging
 import time
 from typing import Any, Literal
 
-from langchain.tools import tool
-
 from backend.settings import settings
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
 #: `max_results` e `search_depth` agora são por chamada — o cliente nativo
-#: não os prende na construção como o `langchain-tavily` fazia.
+#: não os prende na construção como o pacote de integração de terceiros fazia.
 _MAX_RESULTS = 5
 
 
@@ -34,11 +34,6 @@ def _tavily_client() -> Any:
     from backend.tools.tavily.client import TavilyClient
 
     return TavilyClient(api_key=settings.tavily_api_key or "")
-
-
-def _run_sync(coro: Any) -> Any:
-    """Roda a corrotina do cliente async a partir da tool síncrona."""
-    return asyncio.run(coro)
 
 
 def _get_search_tool() -> Any:
@@ -58,21 +53,25 @@ def _get_extract_tool() -> Any:
     return resolve_backend()
 
 
-def _invoke_backend(tool: Any, payload: dict[str, Any]) -> Any:
+async def _invoke_backend(tool: Any, payload: dict[str, Any]) -> Any:
     """Executa um backend de teste ou produção com a interface disponível.
 
     Alguns backends expõem `.search()`/`.extract()`, enquanto os mocks de
     teste usam `.invoke()`. Este helper aceita ambos sem quebrar o contrato
-    externo das tools.
+    externo das tools — o resultado é aguardado só quando o backend
+    devolveu algo awaitable (produção); mocks síncronos passam direto.
     """
-
     if hasattr(tool, "invoke"):
-        return tool.invoke(payload)
-    if "url" in payload and hasattr(tool, "extract"):
-        return tool.extract([payload["url"]], extract_depth="advanced")
-    if "query" in payload and hasattr(tool, "search"):
-        return tool.search(payload["query"])
-    raise AttributeError("backend tool does not expose invoke/search/extract")
+        result = tool.invoke(payload)
+    elif "url" in payload and hasattr(tool, "extract"):
+        result = tool.extract([payload["url"]], extract_depth="advanced")
+    elif "query" in payload and hasattr(tool, "search"):
+        result = tool.search(payload["query"])
+    else:
+        raise AttributeError("backend tool does not expose invoke/search/extract")
+    if inspect.isawaitable(result):
+        return await result
+    return result
 
 
 def _is_quota_error(err: str) -> bool:
@@ -83,7 +82,7 @@ def _is_quota_error(err: str) -> bool:
     )
 
 
-def _search_via_fallback(query: str) -> str:
+async def _search_via_fallback(query: str) -> str:
     """Fallback sem API key: API JSON oficial do DuckDuckGo (sem chave).
 
     Nunca propaga — qualquer falha (rede, DNS) vira o mesmo erro textual
@@ -92,7 +91,7 @@ def _search_via_fallback(query: str) -> str:
     try:
         from backend.browser.search_fallback import search_fallback
 
-        results = search_fallback(query)
+        results = await asyncio.to_thread(search_fallback, query)
         logger.info(
             "web_search fallback completed",
             extra={"query": query, "num_results": len(results)},
@@ -112,7 +111,7 @@ def _search_via_fallback(query: str) -> str:
         )
 
 
-def _fetch_via_fallback(url: str) -> str:
+async def _fetch_via_fallback(url: str) -> str:
     """Fallback sem API key para `fetch_url`: Chromium real (Playwright).
     Mesmo contrato de `_search_via_fallback` — nunca propaga."""
     try:
@@ -122,7 +121,7 @@ def _fetch_via_fallback(url: str) -> str:
             envelope_untrusted,
         )
 
-        content = fetch_fallback(url)
+        content = await asyncio.to_thread(fetch_fallback, url)
         logger.info(
             "fetch_url fallback completed",
             extra={"url": url, "content_length": len(content)},
@@ -141,15 +140,15 @@ def _fetch_via_fallback(url: str) -> str:
         )
 
 
-@tool(
-    extras={
-        "render_hint": "search_results",
-        "category": "web",
-        "destructive": False,
-        "icon": "globe",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="search_results",
+        category="web",
+        destructive=False,
+        icon="globe",
+    )
 )
-def web_search(
+async def web_search(
     query: str,
     topic: Literal["general", "news", "finance"] = "general",
     time_range: Literal["day", "week", "month", "year"] | None = None,
@@ -188,7 +187,7 @@ def web_search(
     backend_name = getattr(backend, "name", "tavily")
     if backend_name != "tavily":
         try:
-            resultados = _run_sync(_invoke_backend(backend, {"query": query}))
+            resultados = await _invoke_backend(backend, {"query": query})
             logger.info(
                 "web_search via backend alternativo",
                 extra={"query": query, "backend": backend_name},
@@ -210,17 +209,15 @@ def web_search(
 
     try:
         client = _tavily_client()
-        results = _run_sync(
-            client.search(
-                query,
-                topic=topic,
-                time_range=time_range,
-                include_domains=include_domains,
-                exclude_domains=exclude_domains,
-                max_results=_MAX_RESULTS,
-                search_depth="advanced",
-                include_raw_content=True,
-            )
+        results = await client.search(
+            query,
+            topic=topic,
+            time_range=time_range,
+            include_domains=include_domains,
+            exclude_domains=exclude_domains,
+            max_results=_MAX_RESULTS,
+            search_depth="advanced",
+            include_raw_content=True,
         )
         n_results = len(results)
 
@@ -260,7 +257,7 @@ def web_search(
                 "Tavily quota/rate limit atingido — usando fallback via Chromium",
                 extra={"query": query},
             )
-            return _search_via_fallback(query)
+            return await _search_via_fallback(query)
         # TavilySearch levanta ToolException quando não há resultados —
         # para o cascading isso é uma lista vazia, não um erro.
         if "no search results found" in err.lower():
@@ -273,15 +270,15 @@ def web_search(
         )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "web",
-        "destructive": False,
-        "icon": "link",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="web",
+        destructive=False,
+        icon="link",
+    )
 )
-def fetch_url(url: str) -> str:
+async def fetch_url(url: str) -> str:
     """Busca e extrai conteúdo de texto de uma URL específica usando Tavily.
 
     Args:
@@ -305,7 +302,7 @@ def fetch_url(url: str) -> str:
 
     if not settings.tavily_api_key:
         logger.warning("TAVILY_API_KEY not configured — usando fallback via Chromium")
-        return _fetch_via_fallback(url)
+        return await _fetch_via_fallback(url)
 
     logger.info("fetch_url tool called", extra={"url": url})
 
@@ -317,7 +314,7 @@ def fetch_url(url: str) -> str:
 
     try:
         client = _get_extract_tool()
-        results = _run_sync(_invoke_backend(client, {"url": url}))
+        results = await _invoke_backend(client, {"url": url})
         if not results:
             logger.warning("fetch_url returned no content", extra={"url": url})
             if _tracer:
@@ -370,21 +367,21 @@ def fetch_url(url: str) -> str:
                 "Tavily quota/rate limit atingido — usando fallback via Chromium",
                 extra={"url": url},
             )
-            return _fetch_via_fallback(url)
+            return await _fetch_via_fallback(url)
         if "no extracted results" in err.lower():
             return f"No content found at {url}"
         return "Error occurred fetching URL. Please check logs."
 
 
-@tool(
-    extras={
-        "render_hint": "search_results",
-        "category": "web",
-        "destructive": True,
-        "icon": "globe",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="search_results",
+        category="web",
+        destructive=True,
+        icon="globe",
+    )
 )
-def web_crawl(
+async def web_crawl(
     url: str,
     max_depth: int = 1,
     limit: int = 20,
@@ -413,13 +410,11 @@ def web_crawl(
 
     try:
         client = _tavily_client()
-        saida = _run_sync(
-            client.crawl(
-                url,
-                max_depth=max_depth,
-                limit=limit,
-                instructions=instructions,
-            )
+        saida = await client.crawl(
+            url,
+            max_depth=max_depth,
+            limit=limit,
+            instructions=instructions,
         )
         return json.dumps(saida.get("results", []))
     except Exception as exc:
@@ -427,15 +422,15 @@ def web_crawl(
         return json.dumps({"error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "search_results",
-        "category": "web",
-        "destructive": True,
-        "icon": "globe",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="search_results",
+        category="web",
+        destructive=True,
+        icon="globe",
+    )
 )
-def web_map(url: str, limit: int = 50) -> str:
+async def web_map(url: str, limit: int = 50) -> str:
     """Mapeia a estrutura de links de um site, sem extrair o conteúdo.
 
     Mais barato que `web_crawl` (não lê as páginas), mas ainda percorre o
@@ -457,7 +452,7 @@ def web_map(url: str, limit: int = 50) -> str:
 
     try:
         client = _tavily_client()
-        saida = _run_sync(client.map(url, limit=limit))
+        saida = await client.map(url, limit=limit)
         return json.dumps(saida.get("results", []))
     except Exception as exc:
         logger.exception("web_map failed", extra={"url": url})

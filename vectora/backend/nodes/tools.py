@@ -43,6 +43,9 @@ from backend.tools import (
     thinking as _thinking_module,
 )
 from backend.tools import (
+    web as _web_module,
+)
+from backend.tools import (
     workspace as _workspace_module,
 )
 from backend.tools.gdrive import (
@@ -100,7 +103,6 @@ from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_s
 from backend.tools.registry import TOOL_REGISTRY
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.terminal_sessions import close_terminal, list_terminals
-from backend.tools.web import fetch_url, web_crawl, web_map, web_search
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
@@ -225,6 +227,10 @@ workspace_describe = _bridge("workspace_describe")
 workspace_list = _bridge("workspace_list")
 bucket_summary = _bridge("bucket_summary")
 get_workbench_context = _bridge("get_workbench_context")
+web_search = _bridge("web_search")
+fetch_url = _bridge("fetch_url")
+web_crawl = _bridge("web_crawl")
+web_map = _bridge("web_map")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)

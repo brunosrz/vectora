@@ -23,6 +23,7 @@ from backend.tools.web import fetch_url, web_search
 
 pytestmark = [
     pytest.mark.live,
+    pytest.mark.asyncio,
     pytest.mark.skipif(
         not settings.tavily_api_key,
         reason="TAVILY_API_KEY não configurado em ~/.vectora/.env",
@@ -41,8 +42,8 @@ def _results(raw: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def test_web_search_query_generica_real():
-    raw = web_search.invoke({"query": "LangChain framework"})
+async def test_web_search_query_generica_real():
+    raw = await web_search(query="LangChain framework")
     results = _results(raw)
     assert len(results) > 0
     for r in results:
@@ -51,31 +52,29 @@ def test_web_search_query_generica_real():
         assert r.get("content") is not None
 
 
-def test_web_search_query_local_com_time_range_real():
-    raw = web_search.invoke(
-        {"query": "clima em São Paulo hoje", "topic": "general", "time_range": "day"}
+async def test_web_search_query_local_com_time_range_real():
+    raw = await web_search(
+        query="clima em São Paulo hoje", topic="general", time_range="day"
     )
     results = _results(raw)
     assert len(results) > 0
 
 
-def test_web_search_query_tecnica_especifica_real():
-    raw = web_search.invoke({"query": "LangGraph StateGraph checkpointer async"})
+async def test_web_search_query_tecnica_especifica_real():
+    raw = await web_search(query="LangGraph StateGraph checkpointer async")
     results = _results(raw)
     assert len(results) > 0
     assert any("content" in r and r["content"] for r in results)
 
 
-def test_web_search_topic_finance_real():
-    raw = web_search.invoke({"query": "Nvidia stock price", "topic": "finance"})
+async def test_web_search_topic_finance_real():
+    raw = await web_search(query="Nvidia stock price", topic="finance")
     results = _results(raw)
     assert len(results) > 0
 
 
-def test_web_search_com_include_domains_real():
-    raw = web_search.invoke(
-        {"query": "python asyncio", "include_domains": ["github.com"]}
-    )
+async def test_web_search_com_include_domains_real():
+    raw = await web_search(query="python asyncio", include_domains=["github.com"])
     results = _results(raw)
     # Tavily pode devolver menos resultados quando restrito a um domínio —
     # o importante é que nenhum resultado escape do domínio pedido.
@@ -83,20 +82,19 @@ def test_web_search_com_include_domains_real():
         assert "github.com" in r.get("url", "")
 
 
-def test_web_search_com_exclude_domains_real():
-    raw = web_search.invoke(
-        {"query": "python asyncio tutorial", "exclude_domains": ["github.com"]}
+async def test_web_search_com_exclude_domains_real():
+    raw = await web_search(
+        query="python asyncio tutorial", exclude_domains=["github.com"]
     )
     results = _results(raw)
     for r in results:
         assert "github.com" not in r.get("url", "")
 
 
-def test_web_search_query_vazia_borda():
+async def test_web_search_query_vazia_borda():
     # Par de erro/borda: query vazia não deve derrubar a tool nem propagar
-    # exceção — TavilySearch trata como sem resultados/erro tipado, mas o
-    # contrato da tool (nunca lançar) tem que se manter.
-    raw = web_search.invoke({"query": ""})
+    # exceção — o contrato da tool (nunca lançar) tem que se manter.
+    raw = await web_search(query="")
     data = json.loads(raw)
     assert isinstance(data, (list, dict))
     if isinstance(data, dict):
@@ -108,24 +106,24 @@ def test_web_search_query_vazia_borda():
 # ---------------------------------------------------------------------------
 
 
-def test_fetch_url_pagina_real():
-    content = fetch_url.invoke({"url": "https://python.langchain.com/"})
+async def test_fetch_url_pagina_real():
+    content = await fetch_url(url="https://python.langchain.com/")
     assert isinstance(content, str)
     assert content.strip()
     assert not content.startswith("Error:")
 
 
-def test_fetch_url_url_invalida_sem_lancar():
+async def test_fetch_url_url_invalida_sem_lancar():
     # Borda: URL sem esquema não bate rede nenhuma — validação local, mas
     # ainda cobre o contrato "nunca lança, sempre devolve string de erro".
-    result = fetch_url.invoke({"url": "not-a-real-url"})
+    result = await fetch_url(url="not-a-real-url")
     assert result.startswith("Error:")
 
 
-def test_fetch_url_pagina_inexistente_real_nao_lanca():
+async def test_fetch_url_pagina_inexistente_real_nao_lanca():
     # Domínio real, path que garantidamente não existe — extração real
     # falha, mas a tool deve degradar para texto de erro, nunca propagar.
-    content = fetch_url.invoke(
-        {"url": "https://python.langchain.com/este-path-nao-existe-vectora-test-404"}
+    content = await fetch_url(
+        url="https://python.langchain.com/este-path-nao-existe-vectora-test-404"
     )
     assert isinstance(content, str)
