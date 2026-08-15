@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from backend.services.learning import DistillationResult, SkillDraft
+from backend.tools.context import ToolContext
 from backend.tools.learning import (
     apply_memory_consolidation,
     install_learned_skill,
@@ -19,7 +20,7 @@ from backend.vtypes.skill import Skill
 
 @pytest.mark.asyncio
 async def test_learn_from_session_missing_thread_id_returns_error():
-    result = json.loads(await learn_from_session.ainvoke({}, {}))
+    result = json.loads(await learn_from_session(ctx=ToolContext()))
 
     assert result["status"] == "error"
     assert "thread_id" in result["error"]
@@ -67,9 +68,7 @@ async def test_learn_from_session_returns_deduped_proposal(monkeypatch):
     )
 
     result = json.loads(
-        await learn_from_session.ainvoke(
-            {}, {"configurable": {"thread_id": "t1", "user_id": "u1"}}
-        )
+        await learn_from_session(ctx=ToolContext(thread_id="t1", user_id="u1"))
     )
 
     assert result["status"] == "ok"
@@ -94,9 +93,7 @@ async def test_learn_from_session_no_signal_returns_empty_lists_not_error(
     )
     monkeypatch.setattr("backend.workspace.skills.list_skills", lambda user_id: [])
 
-    result = json.loads(
-        await learn_from_session.ainvoke({}, {"configurable": {"thread_id": "t1"}})
-    )
+    result = json.loads(await learn_from_session(ctx=ToolContext(thread_id="t1")))
 
     assert result == {"status": "ok", "skills": [], "facts": []}
 
@@ -111,13 +108,11 @@ async def test_install_learned_skill_calls_workspace_skills(monkeypatch, tmp_pat
     skills_module._versions.clear()
 
     result = json.loads(
-        await install_learned_skill.ainvoke(
-            {
-                "name": "Skill aprendida",
-                "description": "quando usar",
-                "content": "passo a passo",
-            },
-            {"configurable": {"user_id": "u1"}},
+        await install_learned_skill(
+            name="Skill aprendida",
+            description="quando usar",
+            content="passo a passo",
+            ctx=ToolContext(user_id="u1"),
         )
     )
 
@@ -138,13 +133,11 @@ async def test_install_learned_skill_duplicate_returns_error_not_exception(
     skills_module.install_skill_from_content("u1", "Dup", "d", "c")
 
     result = json.loads(
-        await install_learned_skill.ainvoke(
-            {
-                "name": "Dup",
-                "description": "d2",
-                "content": "c2",
-            },
-            {"configurable": {"user_id": "u1"}},
+        await install_learned_skill(
+            name="Dup",
+            description="d2",
+            content="c2",
+            ctx=ToolContext(user_id="u1"),
         )
     )
 
@@ -192,13 +185,11 @@ async def test_install_learned_skill_mirrors_artifact_and_resolves_pending(
     )
 
     result = json.loads(
-        await install_learned_skill.ainvoke(
-            {
-                "name": "Skill espelhada",
-                "description": "quando usar",
-                "content": "passo a passo",
-            },
-            {"configurable": {"user_id": "u1", "thread_id": "t-mirror"}},
+        await install_learned_skill(
+            name="Skill espelhada",
+            description="quando usar",
+            content="passo a passo",
+            ctx=ToolContext(user_id="u1", thread_id="t-mirror"),
         )
     )
 
@@ -228,9 +219,9 @@ async def test_save_learned_fact_persists_via_save_memory(monkeypatch):
     )
 
     result = json.loads(
-        await save_learned_fact.ainvoke(
-            {"fact": "usuário prefere respostas curtas"},
-            {"configurable": {"user_id": "u1", "thread_id": "t1"}},
+        await save_learned_fact(
+            fact="usuário prefere respostas curtas",
+            ctx=ToolContext(user_id="u1", thread_id="t1"),
         )
     )
 
@@ -250,9 +241,9 @@ async def test_save_learned_fact_error_returns_status_error_not_raised(monkeypat
     monkeypatch.setattr("backend.tools.memory.save_memory", _boom_save_memory)
 
     result = json.loads(
-        await save_learned_fact.ainvoke(
-            {"fact": "fato qualquer"},
-            {"configurable": {"user_id": "u1", "thread_id": "t1"}},
+        await save_learned_fact(
+            fact="fato qualquer",
+            ctx=ToolContext(user_id="u1", thread_id="t1"),
         )
     )
 
@@ -280,9 +271,10 @@ async def test_apply_memory_consolidation_writes_section(monkeypatch, tmp_path):
     monkeypatch.setattr("backend.tools.learning._mirror_to_plan_tab", AsyncMock())
 
     result = json.loads(
-        await apply_memory_consolidation.ainvoke(
-            {"category": "decisions", "content": "Usar SQLite."},
-            {"configurable": {"user_id": "u1"}},
+        await apply_memory_consolidation(
+            category="decisions",
+            content="Usar SQLite.",
+            ctx=ToolContext(user_id="u1"),
         )
     )
 
@@ -301,9 +293,10 @@ async def test_apply_memory_consolidation_invalid_category_returns_error_not_rai
     monkeypatch.setattr(memory_consolidation, "memory_dir", lambda: tmp_path)
 
     result = json.loads(
-        await apply_memory_consolidation.ainvoke(
-            {"category": "not-a-real-category", "content": "x"},
-            {"configurable": {"user_id": "u1"}},
+        await apply_memory_consolidation(
+            category="not-a-real-category",
+            content="x",
+            ctx=ToolContext(user_id="u1"),
         )
     )
 
@@ -323,9 +316,10 @@ async def test_apply_memory_consolidation_unchanged_content_returns_unchanged(
     monkeypatch.setattr("backend.tools.learning._mirror_to_plan_tab", AsyncMock())
 
     result = json.loads(
-        await apply_memory_consolidation.ainvoke(
-            {"category": "gotchas", "content": "JWT expira rápido."},
-            {"configurable": {"user_id": "u1"}},
+        await apply_memory_consolidation(
+            category="gotchas",
+            content="JWT expira rápido.",
+            ctx=ToolContext(user_id="u1"),
         )
     )
 

@@ -37,6 +37,9 @@ from backend.tools import (
     git as _git_module,
 )
 from backend.tools import (
+    learning as _learning_module,
+)
+from backend.tools import (
     library as _library_module,
 )
 from backend.tools import (
@@ -77,12 +80,6 @@ from backend.tools.kanban import (
     kanban_update_status,
 )
 from backend.tools.langchain_bridge import as_langchain_tool
-from backend.tools.learning import (
-    apply_memory_consolidation,
-    install_learned_skill,
-    learn_from_session,
-    save_learned_fact,
-)
 from backend.tools.linear import (
     linear_create_issue,
     linear_list_issues,
@@ -160,6 +157,10 @@ git_worktree = _bridge("git_worktree")
 git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 git_discard = _bridge("git_discard")
+learn_from_session = _bridge("learn_from_session")
+install_learned_skill = _bridge("install_learned_skill")
+save_learned_fact = _bridge("save_learned_fact")
+apply_memory_consolidation = _bridge("apply_memory_consolidation")
 install_mcp_from_registry = _bridge("install_mcp_from_registry")
 install_skill_from_catalog = _bridge("install_skill_from_catalog")
 install_memory_bucket = _bridge("install_memory_bucket")

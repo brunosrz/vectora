@@ -3,8 +3,7 @@
 ``learn_from_session`` destila o transcript da thread atual em skills e
 fatos duráveis, mas NÃO persiste nada — só devolve a proposta pro agente
 apresentar ao usuário. ``install_learned_skill`` (skills) e
-``save_learned_fact`` (fatos) são quem persiste, ambas em
-``_REQUIRE_APPROVAL`` (``backend/services/middleware.py``) — pausam para
+``save_learned_fact`` (fatos) são quem persiste, ambas pausam para
 aprovação HITL antes de gravar, mesmo tratamento de
 ``terminal``/``file_write``. ``save_learned_fact`` reaproveita a escrita de
 ``save_memory`` (``metadata={"tag": "user_model"}``), sem duplicar o
@@ -18,27 +17,22 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Annotated
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
 
 from backend.services.learning import dedupe_skill_drafts, distill_transcript
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
 
-@tool(
-    extras={
-        "destructive": False,
-        "category": "memory",
-        "icon": "sparkles",
-    }
+@vtool(
+    extras=ToolExtras(
+        destructive=False,
+        category="memory",
+        icon="sparkles",
+    )
 )
-async def learn_from_session(
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def learn_from_session(ctx: ToolContext) -> str:
     """Analisa o transcript da thread atual e propõe skills reutilizáveis
     e fatos duráveis a aprender — não grava nada ainda.
 
@@ -49,13 +43,12 @@ async def learn_from_session(
     erro; não force a criação de uma skill genérica.
     """
     try:
-        configurable = (config or {}).get("configurable") or {}
-        thread_id = configurable.get("thread_id", "")
-        user_id = configurable.get("user_id", "local")
+        thread_id = ctx.thread_id
+        user_id = ctx.user_id or "local"
 
         if not thread_id:
             return json.dumps(
-                {"status": "error", "error": "thread_id ausente no config"}
+                {"status": "error", "error": "thread_id ausente no contexto"}
             )
 
         from backend.services import agent_factory
@@ -82,19 +75,19 @@ async def learn_from_session(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["skills"],
-        "destructive": True,
-        "category": "memory",
-        "icon": "sparkles",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["skills"],
+        destructive=True,
+        category="memory",
+        icon="sparkles",
+    )
 )
 async def install_learned_skill(
     name: str,
     description: str,
     content: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    ctx: ToolContext,
 ) -> str:
     """Grava uma skill proposta por ``learn_from_session`` como
     ``SKILL.md`` — pausa para aprovação do usuário antes de executar
@@ -106,26 +99,25 @@ async def install_learned_skill(
         content: Passo a passo em Markdown (corpo do SKILL.md).
     """
     try:
-        configurable = (config or {}).get("configurable") or {}
-        user_id = configurable.get("user_id", "local")
+        user_id = ctx.user_id or "local"
 
         from backend.workspace.skills import install_skill_from_content
 
         skill = install_skill_from_content(user_id, name, description, content)
         logger.info("learning: skill instalada id=%s user=%s", skill.id, user_id)
-        await _mirror_to_plan_tab("skill_learned", name, description, content, config)
-        await _resolve_remember_pending(config)
+        await _mirror_to_plan_tab("skill_learned", name, description, content, ctx)
+        await _resolve_remember_pending(ctx)
         return json.dumps({"status": "installed", "skill_id": skill.id})
     except Exception as exc:
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-async def _resolve_remember_pending(config: RunnableConfig | None) -> None:
+async def _resolve_remember_pending(ctx: ToolContext) -> None:
     """Limpa a proposta pendente do gatilho automático — instalar uma
     skill ou salvar um fato aprendido é o sinal de que a proposta foi
     resolvida, libera um novo gatilho automático a partir daqui."""
     try:
-        thread_id = str((config or {}).get("configurable", {}).get("thread_id", ""))
+        thread_id = ctx.thread_id
         if not thread_id:
             return
         from backend.api.handlers.threads import set_remember_pending
@@ -143,13 +135,12 @@ async def _mirror_to_plan_tab(
     title: str,
     description: str,
     content: str,
-    config: RunnableConfig | None,
+    ctx: ToolContext,
 ) -> None:
     """Espelha uma skill/fato aprovado como artifact — aparece na aba Plan
     em vez de sumir depois do diff de aprovação. Best-effort: falha aqui
     nunca desfaz a gravação já concluída (skill/fato já persistidos)."""
     try:
-        from backend.tools.context import ctx_from_config
         from backend.tools.fs import create_artifact
 
         body = f"{description}\n\n---\n\n{content}" if description else content
@@ -157,7 +148,7 @@ async def _mirror_to_plan_tab(
             artifact_type=artifact_type,
             title=title,
             content=body,
-            ctx=ctx_from_config(config),  # ty: ignore[invalid-argument-type]
+            ctx=ctx,
         )
     except Exception:
         logger.warning(
@@ -166,18 +157,15 @@ async def _mirror_to_plan_tab(
         )
 
 
-@tool(
-    extras={
-        "invalidates": ["memory"],
-        "destructive": True,
-        "category": "memory",
-        "icon": "sparkles",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["memory"],
+        destructive=True,
+        category="memory",
+        icon="sparkles",
+    )
 )
-async def save_learned_fact(
-    fact: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def save_learned_fact(fact: str, ctx: ToolContext) -> str:
     """Grava um fato durável proposto por ``learn_from_session`` na memória
     do usuário — pausa para aprovação antes de executar (mesmo tratamento
     HITL de ``install_learned_skill``). Distinto de ``save_memory`` direto
@@ -188,36 +176,35 @@ async def save_learned_fact(
         fact: O fato durável a lembrar, em uma frase.
     """
     try:
-        from backend.tools.context import ctx_from_config
         from backend.tools.memory import save_memory
 
         key = f"learned-fact-{abs(hash(fact)) % 10**8}"
         await save_memory(
             key=key,
             content=fact,
-            ctx=ctx_from_config(config),  # ty: ignore[invalid-argument-type]
+            ctx=ctx,
             metadata={"tag": "user_model", "source": "learn_from_session"},
         )
         logger.info("learning: fato aprendido salvo key=%s", key)
-        await _mirror_to_plan_tab("fact_learned", fact[:80], "", fact, config)
-        await _resolve_remember_pending(config)
+        await _mirror_to_plan_tab("fact_learned", fact[:80], "", fact, ctx)
+        await _resolve_remember_pending(ctx)
         return json.dumps({"status": "saved", "key": key})
     except Exception as exc:
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "invalidates": ["memory"],
-        "destructive": True,
-        "category": "memory",
-        "icon": "sparkles",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["memory"],
+        destructive=True,
+        category="memory",
+        icon="sparkles",
+    )
 )
 async def apply_memory_consolidation(
     category: str,
     content: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    ctx: ToolContext,
 ) -> str:
     """Grava uma seção de memória de longo prazo proposta por
     ``memory_consolidation.py`` (aba Plan, artifact
@@ -250,7 +237,7 @@ async def apply_memory_consolidation(
         changed = apply_consolidation_sections({category: content})
         logger.info("learning: consolidação aplicada categoria=%s", category)
         await _mirror_to_plan_tab(
-            "memory_consolidated", f"Memória: {category}", "", content, config
+            "memory_consolidated", f"Memória: {category}", "", content, ctx
         )
         return json.dumps(
             {"status": "applied" if changed else "unchanged", "category": category}
