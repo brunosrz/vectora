@@ -132,6 +132,7 @@ async def search_rag(request: Request, body: RagSearchBody) -> dict[str, Any]:
     """
     import json as _json
 
+    from backend.tools.context import ToolContext
     from backend.tools.rag import vector_search
 
     collections: list[str]
@@ -147,9 +148,10 @@ async def search_rag(request: Request, body: RagSearchBody) -> dict[str, Any]:
         return {"results": []}
 
     all_results: list[dict[str, Any]] = []
+    ctx = ToolContext(workspace_id=body.workspace_id or "")
     for collection in collections:
-        raw = await vector_search.ainvoke(
-            {"query": body.query, "collection": collection, "limit": body.limit}
+        raw = await vector_search(
+            ctx=ctx, query=body.query, collection=collection, limit=body.limit
         )
         try:
             parsed = _json.loads(raw)

@@ -40,6 +40,9 @@ from backend.tools import (
     library as _library_module,
 )
 from backend.tools import (
+    rag as _rag_module,
+)
+from backend.tools import (
     thinking as _thinking_module,
 )
 from backend.tools import (
@@ -99,7 +102,6 @@ from backend.tools.native import (
     time_parse,
 )
 from backend.tools.notion import notion_create_page, notion_read_page, notion_search
-from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
 from backend.tools.registry import TOOL_REGISTRY
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.terminal_sessions import close_terminal, list_terminals
@@ -231,6 +233,10 @@ web_search = _bridge("web_search")
 fetch_url = _bridge("fetch_url")
 web_crawl = _bridge("web_crawl")
 web_map = _bridge("web_map")
+embedding = _bridge("embedding")
+vector_search = _bridge("vector_search")
+ingest_docs = _bridge("ingest_docs")
+manage_retriever = _bridge("manage_retriever")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)

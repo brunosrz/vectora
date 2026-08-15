@@ -7,16 +7,15 @@ import json
 import logging
 import time
 from datetime import UTC, datetime
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
-from langchain.tools import tool
 from langchain_core.documents import Document as LCDoc
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
 
 from backend.embedding.queue import get_embedding_queue
 from backend.services.text import text_service
 from backend.settings import settings
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 try:
     import lancedb
@@ -164,13 +163,13 @@ def _build_reranker() -> Any:
     )
 
 
-@tool(
-    extras={
-        "render_hint": "queue_badge",
-        "category": "rag",
-        "destructive": False,
-        "icon": "layers",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="queue_badge",
+        category="rag",
+        destructive=False,
+        icon="layers",
+    )
 )
 async def embedding(
     text: str, collection: str = "articles", metadata: dict[str, Any] | None = None
@@ -359,19 +358,19 @@ def _reciprocal_rank_fusion(
     return fused
 
 
-@tool(
-    extras={
-        "render_hint": "search_results",
-        "category": "rag",
-        "destructive": False,
-        "icon": "database",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="search_results",
+        category="rag",
+        destructive=False,
+        icon="database",
+    )
 )
 async def vector_search(
+    ctx: ToolContext,
     query: str,
     collection: str | None = None,
     limit: int = 5,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Busca o banco de dados vetorial LanceDB por documentos similares.
 
@@ -403,13 +402,10 @@ async def vector_search(
                 {"status": "failed", "error": "no embedding provider configured"}
             )
 
-        workspace_id = (
-            (config.get("configurable") or {}).get("workspace_id")
-            if config is not None
-            else None
-        )
         collections = (
-            [collection] if collection else _resolve_search_collections(workspace_id)
+            [collection]
+            if collection
+            else _resolve_search_collections(ctx.workspace_id or None)
         )
 
         from backend.storage.factory import get_vector_store_backend
@@ -528,19 +524,19 @@ async def vector_search(
         return json.dumps({"status": "failed", "error": err or "Vector search failed"})
 
 
-@tool(
-    extras={
-        "render_hint": "queue_progress",
-        "category": "rag",
-        "destructive": False,
-        "icon": "upload",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="queue_progress",
+        category="rag",
+        destructive=False,
+        icon="upload",
+    )
 )
 async def ingest_docs(
+    ctx: ToolContext,
     directory_path: str,
     collection: str = "articles",
     glob_pattern: str = "**/*.py",
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Indexa um diretório inteiro de arquivos no banco vetorial (LanceDB).
 
@@ -567,14 +563,13 @@ async def ingest_docs(
         JSON com total_files, total_chunks, indexed (enfileirados), failed
     """
     from backend.services.ignore import load_ignore_spec, walk_files
-    from backend.tools.context import ctx_from_config
     from backend.tools.fs import _confine
 
     # `directory_path` vem direto do modelo (tool call) — usa a mesma defesa
     # forte de path traversal de `file_read`/`file_write`/etc, não a checagem
     # leve de `is_safe_file_path` (pensada pra paths vindos de UI interna,
     # não de input arbitrário de LLM).
-    path, err = _confine(directory_path, ctx_from_config(config))  # ty: ignore[invalid-argument-type]
+    path, err = _confine(directory_path, ctx)
     if path is None:
         return err
     if not path.is_dir():
@@ -636,27 +631,20 @@ async def ingest_docs(
         total_chunks += len(chunks)
 
         for chunk_text in chunks:
-            # workspace_id injetado no metadata para isolamento por projeto (B5)
-            _workspace_id = (
-                (config.get("configurable") or {}).get("workspace_id")
-                if config is not None
-                else None
-            )
+            # workspace_id injetado no metadata para isolamento por projeto
             chunk_metadata: dict[str, Any] = {
                 "source": str(file_path),
                 "source_dir": directory_path,
                 "ingested_at": datetime.now(UTC).isoformat(),
             }
-            if _workspace_id:
-                chunk_metadata["workspace_id"] = _workspace_id
+            if ctx.workspace_id:
+                chunk_metadata["workspace_id"] = ctx.workspace_id
 
             try:
-                res = await embedding.ainvoke(
-                    {
-                        "text": chunk_text,
-                        "collection": collection,
-                        "metadata": chunk_metadata,
-                    }
+                res = await embedding(
+                    text=chunk_text,
+                    collection=collection,
+                    metadata=chunk_metadata,
                 )
                 data = json.loads(res) if isinstance(res, str) else res
                 if isinstance(data, dict) and data.get("status") == "fire_and_forget":
@@ -712,13 +700,13 @@ async def ingest_docs(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "rag",
-        "destructive": True,
-        "icon": "settings",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="rag",
+        destructive=True,
+        icon="settings",
+    )
 )
 async def manage_retriever(
     action: Literal["list", "delete", "purge"],

@@ -27,6 +27,7 @@ from backend.settings import settings
 from backend.tools import browser as _browser_module
 from backend.tools import fs as _fs_module
 from backend.tools import git as _git_module
+from backend.tools import rag as _rag_module
 from backend.tools import web as _web_module
 from backend.tools.github import github_fetch_pr_diff, github_post_pr_comment
 from backend.tools.langchain_bridge import as_langchain_tool
@@ -42,12 +43,6 @@ from backend.tools.native import (
     regex_test,
     time_now,
     time_parse,
-)
-from backend.tools.rag import (
-    embedding,
-    ingest_docs,
-    manage_retriever,
-    vector_search,
 )
 from backend.tools.registry import TOOL_REGISTRY
 
@@ -76,6 +71,10 @@ git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 web_search = _bridge("web_search")
 fetch_url = _bridge("fetch_url")
+embedding = _bridge("embedding")
+vector_search = _bridge("vector_search")
+ingest_docs = _bridge("ingest_docs")
+manage_retriever = _bridge("manage_retriever")
 browser_navigate = _bridge("browser_navigate")
 browser_screenshot = _bridge("browser_screenshot")
 browser_click = _bridge("browser_click")

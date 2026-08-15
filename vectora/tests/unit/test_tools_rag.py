@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import json
-from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from langchain_core.runnables import RunnableConfig
+
+from backend.tools.context import ToolContext
 
 
 class TestVectorSearch:
@@ -51,12 +51,11 @@ class TestVectorSearch:
                     AsyncMock(return_value=mock_backend),
                 ),
             ):
-                result = await vector_search.ainvoke(
-                    {
-                        "query": "test query",
-                        "collection": "articles",
-                        "limit": 5,
-                    }
+                result = await vector_search(
+                    ctx=ToolContext(),
+                    query="test query",
+                    collection="articles",
+                    limit=5,
                 )
         data = json.loads(result)
         assert "results" in data
@@ -89,8 +88,8 @@ class TestVectorSearch:
                     AsyncMock(return_value=mock_backend),
                 ),
             ):
-                result = await vector_search.ainvoke(
-                    {"query": "test", "collection": "articles", "limit": 5}
+                result = await vector_search(
+                    ctx=ToolContext(), query="test", collection="articles", limit=5
                 )
         data = json.loads(result)
         assert data["status"] == "no_results"
@@ -101,8 +100,8 @@ class TestVectorSearch:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             with patch("backend.tools.rag.lancedb", None):
-                result = await vector_search.ainvoke(
-                    {"query": "test", "collection": "articles", "limit": 5}
+                result = await vector_search(
+                    ctx=ToolContext(), query="test", collection="articles", limit=5
                 )
         assert "missing" in result.lower() or isinstance(result, str)
 
@@ -116,8 +115,8 @@ class TestVectorSearch:
                 patch("backend.tools.rag.lancedb", MagicMock()),
                 patch("backend.storage.factory._build_lc_embeddings", lambda: None),
             ):
-                result = await vector_search.ainvoke(
-                    {"query": "test", "collection": "articles", "limit": 5}
+                result = await vector_search(
+                    ctx=ToolContext(), query="test", collection="articles", limit=5
                 )
         data = json.loads(result)
         assert data.get("status") in ("failed", "error")
@@ -230,8 +229,11 @@ class TestVectorSearchHybrid:
                     AsyncMock(return_value=mock_backend),
                 ),
             ):
-                result = await vector_search.ainvoke(
-                    {"query": "test query", "collection": "articles", "limit": 5}
+                result = await vector_search(
+                    ctx=ToolContext(),
+                    query="test query",
+                    collection="articles",
+                    limit=5,
                 )
 
         mock_backend.search_text.assert_awaited_once()
@@ -273,8 +275,11 @@ class TestVectorSearchHybrid:
                     AsyncMock(return_value=mock_backend),
                 ),
             ):
-                result = await vector_search.ainvoke(
-                    {"query": "test query", "collection": "articles", "limit": 5}
+                result = await vector_search(
+                    ctx=ToolContext(),
+                    query="test query",
+                    collection="articles",
+                    limit=5,
                 )
 
         mock_backend.search_text.assert_not_called()
@@ -353,9 +358,8 @@ class TestVectorSearchBucketFanout:
                     AsyncMock(return_value=mock_backend),
                 ),
             ):
-                result = await vector_search.ainvoke(
-                    {"query": "test", "limit": 5},
-                    config={"configurable": {"workspace_id": "ws1"}},
+                result = await vector_search(
+                    ctx=ToolContext(workspace_id="ws1"), query="test", limit=5
                 )
 
         data = json.loads(result)
@@ -395,9 +399,10 @@ class TestVectorSearchBucketFanout:
                     AsyncMock(return_value=mock_backend),
                 ),
             ):
-                result = await vector_search.ainvoke(
-                    {"query": "test", "limit": 5},
-                    config={"configurable": {"workspace_id": "ws-sem-buckets"}},
+                result = await vector_search(
+                    ctx=ToolContext(workspace_id="ws-sem-buckets"),
+                    query="test",
+                    limit=5,
                 )
 
         data = json.loads(result)
@@ -442,13 +447,11 @@ class TestVectorSearchBucketFanout:
                     AsyncMock(return_value=mock_backend),
                 ),
             ):
-                result = await vector_search.ainvoke(
-                    {
-                        "query": "test",
-                        "collection": "custom_collection",
-                        "limit": 5,
-                    },
-                    config={"configurable": {"workspace_id": "ws1"}},
+                result = await vector_search(
+                    ctx=ToolContext(workspace_id="ws1"),
+                    query="test",
+                    collection="custom_collection",
+                    limit=5,
                 )
 
         data = json.loads(result)
@@ -462,7 +465,7 @@ class TestEmbedding:
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.embedding_queue_enabled = False
-            result = await embedding.ainvoke({"text": "doc", "collection": "articles"})
+            result = await embedding(text="doc", collection="articles")
         data = json.loads(result)
         assert data["status"] == "error"
 
@@ -481,9 +484,7 @@ class TestEmbedding:
                 new_callable=AsyncMock,
                 return_value=mock_queue,
             ):
-                result = await embedding.ainvoke(
-                    {"text": "sample text", "collection": "articles"}
-                )
+                result = await embedding(text="sample text", collection="articles")
         data = json.loads(result)
         assert data["status"] == "fire_and_forget"
         assert data["queue_id"] == "queue-id-123"
@@ -501,9 +502,7 @@ class TestEmbedding:
                 new_callable=AsyncMock,
                 side_effect=Exception("DB connection failed"),
             ):
-                result = await embedding.ainvoke(
-                    {"text": "sample text", "collection": "articles"}
-                )
+                result = await embedding(text="sample text", collection="articles")
         data = json.loads(result)
         assert data["status"] == "error"
         assert "DB connection failed" in data["error"]
@@ -520,8 +519,8 @@ class TestIngestDocs:
                 "backend.tools.fs._confine",
                 return_value=(None, "Access denied: outside allowed directory"),
             ):
-                result = await ingest_docs.ainvoke(
-                    {"directory_path": "/etc", "collection": "articles"}
+                result = await ingest_docs(
+                    ctx=ToolContext(), directory_path="/etc", collection="articles"
                 )
         assert "denied" in result.lower() or "Access" in result
 
@@ -535,8 +534,10 @@ class TestIngestDocs:
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
             with patch("backend.tools.fs._confine", return_value=(not_dir, "")):
-                result = await ingest_docs.ainvoke(
-                    {"directory_path": str(not_dir), "collection": "articles"}
+                result = await ingest_docs(
+                    ctx=ToolContext(),
+                    directory_path=str(not_dir),
+                    collection="articles",
                 )
         assert "Not a directory" in result
 
@@ -550,12 +551,11 @@ class TestIngestDocs:
                 with patch(
                     "backend.services.ignore.load_ignore_spec", return_value=None
                 ):
-                    result = await ingest_docs.ainvoke(
-                        {
-                            "directory_path": str(tmp_path),
-                            "collection": "articles",
-                            "glob_pattern": "**/*.md",
-                        }
+                    result = await ingest_docs(
+                        ctx=ToolContext(),
+                        directory_path=str(tmp_path),
+                        collection="articles",
+                        glob_pattern="**/*.md",
                     )
         data = json.loads(result)
         assert data["status"] == "no_files"
@@ -575,16 +575,15 @@ class TestIngestDocs:
                         "backend.services.ignore.load_ignore_spec",
                         return_value=None,
                     ):
-                        with patch("backend.tools.rag.embedding") as mock_emb:
-                            mock_emb.ainvoke = AsyncMock(
-                                side_effect=Exception("embedding fail")
-                            )
-                            result = await ingest_docs.ainvoke(
-                                {
-                                    "directory_path": str(tmp_path),
-                                    "collection": "articles",
-                                    "glob_pattern": "**/*.md",
-                                }
+                        with patch(
+                            "backend.tools.rag.embedding",
+                            AsyncMock(side_effect=Exception("embedding fail")),
+                        ):
+                            result = await ingest_docs(
+                                ctx=ToolContext(),
+                                directory_path=str(tmp_path),
+                                collection="articles",
+                                glob_pattern="**/*.md",
                             )
         data = json.loads(result)
         assert data["status"] == "completed"
@@ -606,12 +605,11 @@ class TestIngestDocs:
                 ):
                     # All files are ignored → no_files result
                     with patch("backend.services.ignore.is_ignored", return_value=True):
-                        result = await ingest_docs.ainvoke(
-                            {
-                                "directory_path": str(tmp_path),
-                                "collection": "articles",
-                                "glob_pattern": "**/*.md",
-                            }
+                        result = await ingest_docs(
+                            ctx=ToolContext(),
+                            directory_path=str(tmp_path),
+                            collection="articles",
+                            glob_pattern="**/*.md",
                         )
         data = json.loads(result)
         assert data["status"] == "no_files"
@@ -643,18 +641,19 @@ class TestIngestDocs:
                     "backend.services.ignore.load_ignore_spec", return_value=None
                 ):
                     # Não mockamos is_ignored — usa a implementação real
-                    with patch("backend.tools.rag.embedding") as mock_emb:
-                        mock_emb.ainvoke = AsyncMock(
+                    with patch(
+                        "backend.tools.rag.embedding",
+                        AsyncMock(
                             return_value=json.dumps(
                                 {"status": "fire_and_forget", "queue_id": "q1"}
                             )
-                        )
-                        result = await ingest_docs.ainvoke(
-                            {
-                                "directory_path": str(tmp_path),
-                                "collection": "code",
-                                "glob_pattern": "**/*.py",
-                            }
+                        ),
+                    ):
+                        result = await ingest_docs(
+                            ctx=ToolContext(),
+                            directory_path=str(tmp_path),
+                            collection="code",
+                            glob_pattern="**/*.py",
                         )
         data = json.loads(result)
         # app.py deve ser indexado; __pycache__/module.py deve ser contado como ignorado
@@ -686,12 +685,11 @@ class TestIngestDocs:
                             "pathlib.Path.read_text",
                             side_effect=PermissionError("denied"),
                         ):
-                            result = await ingest_docs.ainvoke(
-                                {
-                                    "directory_path": str(tmp_path),
-                                    "collection": "articles",
-                                    "glob_pattern": "**/*.md",
-                                }
+                            result = await ingest_docs(
+                                ctx=ToolContext(),
+                                directory_path=str(tmp_path),
+                                collection="articles",
+                                glob_pattern="**/*.md",
                             )
         data = json.loads(result)
         assert data["status"] == "completed"
@@ -716,28 +714,31 @@ class TestIngestDocs:
                         "backend.services.ignore.load_ignore_spec",
                         return_value=None,
                     ):
-                        with patch("backend.tools.rag.embedding") as mock_emb:
-                            mock_emb.ainvoke = AsyncMock(return_value=mock_result)
-                            result = await ingest_docs.ainvoke(
-                                {
-                                    "directory_path": str(tmp_path),
-                                    "collection": "articles",
-                                    "glob_pattern": "**/*.md",
-                                }
+                        with patch(
+                            "backend.tools.rag.embedding",
+                            AsyncMock(return_value=mock_result),
+                        ):
+                            result = await ingest_docs(
+                                ctx=ToolContext(),
+                                directory_path=str(tmp_path),
+                                collection="articles",
+                                glob_pattern="**/*.md",
                             )
         data = json.loads(result)
         assert data["status"] == "completed"
         assert data["failed"] >= 1
 
     @pytest.mark.asyncio
-    async def test_uses_ainvoke_not_astream(self, tmp_path):
-        """Verifica o fix do bug: ingest_docs usa ainvoke, não astream."""
+    async def test_ingest_chama_embedding_diretamente(self, tmp_path):
+        """`ingest_docs` chama `embedding` como função async direta — sem
+        passar por adapter compatível com o motor de execução antigo."""
         from backend.tools.rag import ingest_docs
 
         md_file = tmp_path / "test.md"
         md_file.write_text("# Test\nConteúdo de teste para embedding.")
 
         mock_result = json.dumps({"status": "fire_and_forget", "queue_id": "q1"})
+        mock_emb = AsyncMock(return_value=mock_result)
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
@@ -748,27 +749,22 @@ class TestIngestDocs:
                         "backend.services.ignore.load_ignore_spec",
                         return_value=None,
                     ):
-                        with patch("backend.tools.rag.embedding") as mock_emb:
-                            mock_emb.ainvoke = AsyncMock(return_value=mock_result)
-                            mock_emb.astream = MagicMock(
-                                side_effect=AssertionError("astream foi chamado!")
-                            )
-                            result = await ingest_docs.ainvoke(
-                                {
-                                    "directory_path": str(tmp_path),
-                                    "collection": "articles",
-                                    "glob_pattern": "**/*.md",
-                                }
+                        with patch("backend.tools.rag.embedding", mock_emb):
+                            result = await ingest_docs(
+                                ctx=ToolContext(),
+                                directory_path=str(tmp_path),
+                                collection="articles",
+                                glob_pattern="**/*.md",
                             )
 
         data = json.loads(result)
         assert data["status"] == "completed"
-        assert mock_emb.ainvoke.called
+        assert mock_emb.called
 
     @pytest.mark.asyncio
     async def test_path_traversal_e_rejeitado_de_verdade(self, tmp_path, monkeypatch):
-        """Sprint 24: `directory_path` vem do modelo (tool call) — precisa
-        da mesma defesa forte que `file_read`/`file_write` já usam
+        """`directory_path` vem do modelo (tool call) — precisa da mesma
+        defesa forte que `file_read`/`file_write` já usam
         (`resolve_within_workspace`), não a checagem leve de
         `is_safe_file_path`. Sem mockar `_confine`: workspace real
         confinado a `tmp_path`, tenta escapar via `..` de verdade."""
@@ -788,18 +784,15 @@ class TestIngestDocs:
             "get",
             lambda wid: ws if wid == "testws" else None,
         )
-        config = cast("RunnableConfig", {"configurable": {"workspace_id": "testws"}})
 
         from backend.tools.rag import ingest_docs
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            result = await ingest_docs.ainvoke(
-                {
-                    "directory_path": "../../etc",
-                    "collection": "articles",
-                },
-                config=config,
+            result = await ingest_docs(
+                ctx=ToolContext(workspace_id="testws"),
+                directory_path="../../etc",
+                collection="articles",
             )
 
         assert "fora do workspace" in result.lower() or "error" in result.lower()
@@ -830,25 +823,24 @@ class TestIngestDocs:
             "get",
             lambda wid: ws if wid == "testws" else None,
         )
-        config = cast("RunnableConfig", {"configurable": {"workspace_id": "testws"}})
 
         from backend.tools.rag import ingest_docs
 
         with patch("backend.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            with patch("backend.tools.rag.embedding") as mock_emb:
-                mock_emb.ainvoke = AsyncMock(
+            with patch(
+                "backend.tools.rag.embedding",
+                AsyncMock(
                     return_value=json.dumps(
                         {"status": "fire_and_forget", "queue_id": "q1"}
                     )
-                )
-                result = await ingest_docs.ainvoke(
-                    {
-                        "directory_path": "docs",
-                        "collection": "articles",
-                        "glob_pattern": "**/*.md",
-                    },
-                    config=config,
+                ),
+            ):
+                result = await ingest_docs(
+                    ctx=ToolContext(workspace_id="testws"),
+                    directory_path="docs",
+                    collection="articles",
+                    glob_pattern="**/*.md",
                 )
 
         data = json.loads(result)
@@ -863,9 +855,7 @@ class TestManageRetriever:
     async def test_delete_without_source_errors_early(self):
         from backend.tools.rag import manage_retriever
 
-        result = await manage_retriever.ainvoke(
-            {"action": "delete", "collection": "web_cache"}
-        )
+        result = await manage_retriever(action="delete", collection="web_cache")
         data = json.loads(result)
         assert data["status"] == "error"
         assert "source" in data["error"]
@@ -879,9 +869,7 @@ class TestManageRetriever:
             "backend.storage.factory.get_vector_store_backend",
             AsyncMock(return_value=mock_backend),
         ):
-            result = await manage_retriever.ainvoke(
-                {"action": "purge", "collection": "web_cache"}
-            )
+            result = await manage_retriever(action="purge", collection="web_cache")
         data = json.loads(result)
         assert data["status"] == "purged"
         mock_backend.purge.assert_awaited_once_with("web_cache")
@@ -896,9 +884,7 @@ class TestManageRetriever:
             "backend.storage.factory.get_vector_store_backend",
             AsyncMock(return_value=mock_backend),
         ):
-            result = await manage_retriever.ainvoke(
-                {"action": "list", "collection": "ghost"}
-            )
+            result = await manage_retriever(action="list", collection="ghost")
         data = json.loads(result)
         assert data["status"] == "no_results"
 
@@ -940,9 +926,7 @@ class TestManageRetriever:
             "backend.storage.factory.get_vector_store_backend",
             AsyncMock(return_value=mock_backend),
         ):
-            result = await manage_retriever.ainvoke(
-                {"action": "list", "collection": "web_cache"}
-            )
+            result = await manage_retriever(action="list", collection="web_cache")
         data = json.loads(result)
         assert data["status"] == "success"
         assert data["count"] == 2
@@ -967,12 +951,10 @@ class TestManageRetriever:
             "backend.storage.factory.get_vector_store_backend",
             AsyncMock(return_value=mock_backend),
         ):
-            result = await manage_retriever.ainvoke(
-                {
-                    "action": "delete",
-                    "collection": "web_cache",
-                    "source": "godot-gameplay-systems",
-                }
+            result = await manage_retriever(
+                action="delete",
+                collection="web_cache",
+                source="godot-gameplay-systems",
             )
         data = json.loads(result)
         assert data["status"] == "deleted"
@@ -990,12 +972,8 @@ class TestManageRetriever:
             "backend.storage.factory.get_vector_store_backend",
             AsyncMock(return_value=mock_backend),
         ):
-            result = await manage_retriever.ainvoke(
-                {
-                    "action": "delete",
-                    "collection": "web_cache",
-                    "source": "inexistente",
-                }
+            result = await manage_retriever(
+                action="delete", collection="web_cache", source="inexistente"
             )
         data = json.loads(result)
         assert data["status"] == "no_match"

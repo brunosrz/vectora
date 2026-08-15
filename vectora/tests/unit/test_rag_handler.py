@@ -137,8 +137,8 @@ class TestRagSettingsEndpoints:
 
     @pytest.mark.asyncio
     async def test_get_openrouter_available_only_with_key_and_model(self, tmp_path):
-        """Sprint 24: openrouter só fica disponível com key E modelo de
-        rerank configurados — os dois, não só um (mesma checagem que
+        """openrouter só fica disponível com key E modelo de rerank
+        configurados — os dois, não só um (mesma checagem que
         `_build_openrouter_reranker` já faz antes de instanciar o client)."""
         from backend.api.handlers import rag as handler
         from backend.settings import settings
@@ -316,7 +316,6 @@ class TestRagSearch:
 
         from backend.api.handlers import rag as handler
         from backend.api.handlers.rag import RagSearchBody
-        from backend.tools.rag import vector_search
 
         raw = json.dumps(
             {
@@ -327,7 +326,7 @@ class TestRagSearch:
                 ],
             }
         )
-        with patch.object(vector_search, "coroutine", AsyncMock(return_value=raw)):
+        with patch("backend.tools.rag.vector_search", AsyncMock(return_value=raw)):
             out = await handler.search_rag(
                 _fake_request(),
                 RagSearchBody(query="oi", collection="articles", limit=5),
@@ -341,13 +340,16 @@ class TestRagSearch:
     async def test_search_without_collection_or_workspace_falls_back_to_articles(self):
         from backend.api.handlers import rag as handler
         from backend.api.handlers.rag import RagSearchBody
-        from backend.tools.rag import vector_search
 
         mocked = AsyncMock(return_value='{"status": "no_results", "results": []}')
-        with patch.object(vector_search, "coroutine", mocked):
+        with patch("backend.tools.rag.vector_search", mocked):
             out = await handler.search_rag(_fake_request(), RagSearchBody(query="oi"))
 
-        mocked.assert_awaited_once_with(query="oi", collection="articles", limit=5)
+        mocked.assert_awaited_once()
+        _, kwargs = mocked.call_args
+        assert kwargs["query"] == "oi"
+        assert kwargs["collection"] == "articles"
+        assert kwargs["limit"] == 5
         assert out["results"] == []
 
     @pytest.mark.asyncio
@@ -355,7 +357,6 @@ class TestRagSearch:
         """Edge — workspace sem nenhuma coleção indexada não deve chamar vector_search."""
         from backend.api.handlers import rag as handler
         from backend.api.handlers.rag import RagSearchBody
-        from backend.tools.rag import vector_search
 
         with (
             patch.object(
@@ -363,7 +364,7 @@ class TestRagSearch:
                 "get_workspace_rag_summary",
                 AsyncMock(return_value={"collections": []}),
             ),
-            patch.object(vector_search, "coroutine", AsyncMock()) as mocked,
+            patch("backend.tools.rag.vector_search", AsyncMock()) as mocked,
         ):
             out = await handler.search_rag(
                 _fake_request(), RagSearchBody(query="oi", workspace_id="ws-vazio")
