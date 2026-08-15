@@ -37,6 +37,9 @@ from backend.tools import (
     git as _git_module,
 )
 from backend.tools import (
+    homeassistant as _homeassistant_module,
+)
+from backend.tools import (
     learning as _learning_module,
 )
 from backend.tools import (
@@ -66,12 +69,6 @@ from backend.tools.gdrive import (
     google_drive_search,
 )
 from backend.tools.gmail import gmail_list, gmail_read
-from backend.tools.homeassistant import (
-    ha_call_service,
-    ha_get_state,
-    ha_list_entities,
-    ha_list_services,
-)
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.kanban import (
     kanban_create,
@@ -157,6 +154,10 @@ git_worktree = _bridge("git_worktree")
 git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 git_discard = _bridge("git_discard")
+ha_list_entities = _bridge("ha_list_entities")
+ha_get_state = _bridge("ha_get_state")
+ha_list_services = _bridge("ha_list_services")
+ha_call_service = _bridge("ha_call_service")
 learn_from_session = _bridge("learn_from_session")
 install_learned_skill = _bridge("install_learned_skill")
 save_learned_fact = _bridge("save_learned_fact")

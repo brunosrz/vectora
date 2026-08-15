@@ -6,7 +6,7 @@ restaurar do git. Por isso ela é a única das quatro em `_REQUIRE_APPROVAL`,
 e os testes travam isso nos dois sentidos — a de escrita dentro, as três de
 leitura fora (HITL em leitura é fricção sem ganho).
 
-Cada caminho feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
+Cada caminho feliz tem o par de erro/borda no mesmo teste.
 """
 
 from __future__ import annotations
@@ -50,9 +50,7 @@ class TestCredenciais:
             raise AssertionError("não deveria chamar o Home Assistant")
 
         saida = json.loads(
-            await ha.ha_list_entities.ainvoke(
-                {"domain": "", "http_client": _client(_nunca)}
-            )
+            await ha.ha_list_entities(domain="", http_client=_client(_nunca))
         )
 
         assert "error" in saida
@@ -67,9 +65,7 @@ class TestCredenciais:
             return httpx.Response(401, json={"message": "Unauthorized"})
 
         saida = json.loads(
-            await ha.ha_list_entities.ainvoke(
-                {"domain": "", "http_client": _client(_handler)}
-            )
+            await ha.ha_list_entities(domain="", http_client=_client(_handler))
         )
 
         assert "error" in saida
@@ -85,16 +81,12 @@ class TestListEntities:
             return httpx.Response(200, json=_ESTADOS)
 
         todas = json.loads(
-            await ha.ha_list_entities.ainvoke(
-                {"domain": "", "http_client": _client(_handler)}
-            )
+            await ha.ha_list_entities(domain="", http_client=_client(_handler))
         )
         assert len(todas["entities"]) == 2
 
         so_luz = json.loads(
-            await ha.ha_list_entities.ainvoke(
-                {"domain": "light", "http_client": _client(_handler)}
-            )
+            await ha.ha_list_entities(domain="light", http_client=_client(_handler))
         )
         assert [e["entity_id"] for e in so_luz["entities"]] == ["light.sala"]
 
@@ -108,9 +100,7 @@ class TestListEntities:
             return httpx.Response(200, json=_ESTADOS)
 
         saida = json.loads(
-            await ha.ha_list_entities.ainvoke(
-                {"domain": "climate", "http_client": _client(_handler)}
-            )
+            await ha.ha_list_entities(domain="climate", http_client=_client(_handler))
         )
 
         assert saida["entities"] == []
@@ -125,9 +115,7 @@ class TestGetState:
             return httpx.Response(200, json=_ESTADOS[0])
 
         saida = json.loads(
-            await ha.ha_get_state.ainvoke(
-                {"entity_id": "light.sala", "http_client": _client(_handler)}
-            )
+            await ha.ha_get_state(entity_id="light.sala", http_client=_client(_handler))
         )
 
         assert saida["state"] == "on"
@@ -140,8 +128,8 @@ class TestGetState:
             return httpx.Response(404, json={"message": "Entity not found"})
 
         saida = json.loads(
-            await ha.ha_get_state.ainvoke(
-                {"entity_id": "light.inexistente", "http_client": _client(_handler)}
+            await ha.ha_get_state(
+                entity_id="light.inexistente", http_client=_client(_handler)
             )
         )
 
@@ -161,9 +149,7 @@ class TestListServices:
             )
 
         saida = json.loads(
-            await ha.ha_list_services.ainvoke(
-                {"domain": "light", "http_client": _client(_handler)}
-            )
+            await ha.ha_list_services(domain="light", http_client=_client(_handler))
         )
 
         assert sorted(saida["services"]) == ["turn_off", "turn_on"]
@@ -177,9 +163,7 @@ class TestListServices:
             return httpx.Response(200, text="<html>login</html>")
 
         saida = json.loads(
-            await ha.ha_list_services.ainvoke(
-                {"domain": "light", "http_client": _client(_handler)}
-            )
+            await ha.ha_list_services(domain="light", http_client=_client(_handler))
         )
 
         assert "error" in saida
@@ -197,14 +181,12 @@ class TestCallService:
             return httpx.Response(200, json=[_ESTADOS[0]])
 
         saida = json.loads(
-            await ha.ha_call_service.ainvoke(
-                {
-                    "domain": "light",
-                    "service": "turn_on",
-                    "entity_id": "light.sala",
-                    "data": {"brightness": 120},
-                    "http_client": _client(_handler),
-                }
+            await ha.ha_call_service(
+                domain="light",
+                service="turn_on",
+                entity_id="light.sala",
+                data={"brightness": 120},
+                http_client=_client(_handler),
             )
         )
 
@@ -219,14 +201,12 @@ class TestCallService:
             return httpx.Response(400, json={"message": "Service not found"})
 
         saida = json.loads(
-            await ha.ha_call_service.ainvoke(
-                {
-                    "domain": "light",
-                    "service": "explodir",
-                    "entity_id": "light.sala",
-                    "data": {},
-                    "http_client": _client(_handler),
-                }
+            await ha.ha_call_service(
+                domain="light",
+                service="explodir",
+                entity_id="light.sala",
+                data={},
+                http_client=_client(_handler),
             )
         )
 

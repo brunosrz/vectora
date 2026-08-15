@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Annotated, Any
+from typing import Any
 
-from langchain_core.tools import InjectedToolArg, tool
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -88,10 +88,10 @@ async def ha_request(
             await client.aclose()
 
 
-@tool(extras={"render_hint": "table", "category": "smart_home", "icon": "home"})
+@vtool(extras=ToolExtras(render_hint="table", category="smart_home", icon="home"))
 async def ha_list_entities(
     domain: str = "",
-    http_client: Annotated[Any, InjectedToolArg] = None,
+    http_client: Any = None,
 ) -> str:
     """Lista as entidades do Home Assistant, com o estado atual de cada uma.
 
@@ -132,10 +132,10 @@ async def ha_list_entities(
         return _erro(str(exc))
 
 
-@tool(extras={"render_hint": "json", "category": "smart_home", "icon": "home"})
+@vtool(extras=ToolExtras(render_hint="json", category="smart_home", icon="home"))
 async def ha_get_state(
     entity_id: str,
-    http_client: Annotated[Any, InjectedToolArg] = None,
+    http_client: Any = None,
 ) -> str:
     """Estado atual de uma entidade específica do Home Assistant.
 
@@ -177,10 +177,10 @@ async def ha_get_state(
         return _erro(str(exc))
 
 
-@tool(extras={"render_hint": "table", "category": "smart_home", "icon": "home"})
+@vtool(extras=ToolExtras(render_hint="table", category="smart_home", icon="home"))
 async def ha_list_services(
     domain: str,
-    http_client: Annotated[Any, InjectedToolArg] = None,
+    http_client: Any = None,
 ) -> str:
     """Serviços disponíveis num domínio do Home Assistant.
 
@@ -218,20 +218,20 @@ async def ha_list_services(
         return _erro(str(exc))
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "smart_home",
-        "destructive": True,
-        "icon": "home",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="smart_home",
+        destructive=True,
+        icon="home",
+    )
 )
 async def ha_call_service(
     domain: str,
     service: str,
     entity_id: str = "",
     data: dict | None = None,
-    http_client: Annotated[Any, InjectedToolArg] = None,
+    http_client: Any = None,
 ) -> str:
     """Chama um serviço do Home Assistant — age nos dispositivos de verdade.
 
