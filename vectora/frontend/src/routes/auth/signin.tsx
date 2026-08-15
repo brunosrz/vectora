@@ -36,6 +36,22 @@ function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [ssoEnabled, setSsoEnabled] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/auth/oidc/status", { credentials: "include" })
+      .then((r) => r.json())
+      .then((d: { enabled?: boolean }) => {
+        if (!cancelled) setSsoEnabled(Boolean(d.enabled));
+      })
+      .catch(() => {
+        // Sem SSO configurado (ou erro de rede) — só o login local aparece.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Primeiro acesso (sem usuários) → wizard novo (/onboarding), nunca mais
   // direto pro signup antigo. Chegar em /auth/signin com a instância zerada
@@ -189,6 +205,24 @@ function SignInPage() {
             {loading ? m.auth_signin_submitting() : m.auth_signin_submit()}
           </button>
         </form>
+
+        {ssoEnabled && (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">
+                {m.auth_signin_sso_divider()}
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <a
+              href="/auth/oidc/login"
+              className="block w-full rounded-md border border-border px-4 py-2.5 text-center text-sm font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              {m.auth_signin_sso()}
+            </a>
+          </>
+        )}
       </div>
     </div>
   );

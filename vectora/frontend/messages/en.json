@@ -362,6 +362,8 @@
   "auth_signin_password_ph": "Your password",
   "auth_signin_submit": "Sign in",
   "auth_signin_submitting": "Signing in...",
+  "auth_signin_sso": "Sign in with SSO",
+  "auth_signin_sso_divider": "or",
   "auth_signin_password_required": "Enter your password.",
   "auth_signin_invalid_credentials": "Invalid credentials.",
   "auth_signin_invalid_data": "Invalid data.",

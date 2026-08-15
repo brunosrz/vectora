@@ -70,6 +70,30 @@ setting_field(
     secret=True,
 )
 
+setting_field(
+    "oidc_client_id",
+    category="integrations",
+    cli_flag="--oidc-client-id",
+    description="Client ID do provedor OIDC (SSO) configurado.",
+    adapter=EnvAdapter("OIDC_CLIENT_ID"),
+)
+setting_field(
+    "oidc_client_secret",
+    category="integrations",
+    cli_flag="--oidc-client-secret",
+    description="Client secret do provedor OIDC (SSO) configurado.",
+    adapter=EnvAdapter("OIDC_CLIENT_SECRET"),
+    secret=True,
+)
+setting_field(
+    "oidc_issuer_url",
+    category="integrations",
+    cli_flag="--oidc-issuer-url",
+    description="Issuer URL do provedor OIDC (SSO) — usado pra descoberta "
+    "via `.well-known/openid-configuration`.",
+    adapter=EnvAdapter("OIDC_ISSUER_URL"),
+)
+
 # ── connect — tokens de bot de mensageria (backend/services/env_keys.py::CONNECT_ENV_KEYS) ──
 
 setting_field(

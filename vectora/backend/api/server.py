@@ -50,6 +50,7 @@ from backend.api.handlers.memory import router as memory_router
 from backend.api.handlers.memory_library import router as memory_library_router
 from backend.api.handlers.models import router as models_router
 from backend.api.handlers.oauth import router as oauth_router
+from backend.api.handlers.oidc import router as oidc_router
 from backend.api.handlers.plugins import router as plugins_router
 from backend.api.handlers.provider_routing import router as provider_routing_router
 from backend.api.handlers.rag import router as rag_router
@@ -539,6 +540,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(memory_router)
     app.include_router(memory_library_router)
     app.include_router(oauth_router)
+    app.include_router(oidc_router)
     app.include_router(gateway_router)
     app.include_router(webhooks_router)
     app.include_router(admin_router)

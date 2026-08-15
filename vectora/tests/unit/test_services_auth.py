@@ -234,6 +234,50 @@ class TestSignup:
 
 
 # ---------------------------------------------------------------------------
+# provision_or_login_sso (Sprint 21 — SSO/OIDC)
+# ---------------------------------------------------------------------------
+
+
+class TestProvisionOrLoginSSO:
+    @pytest.mark.asyncio
+    async def test_usuario_novo_e_provisionado_como_root_primeiro_acesso(self):
+        from backend.rbac.auth import get_user_by_id, provision_or_login_sso
+
+        user, access_token, refresh_token = await provision_or_login_sso(
+            "dev@example.com", name="Dev SSO"
+        )
+
+        assert user.role == "root"
+        assert user.email == "dev@example.com"
+        assert access_token
+        assert refresh_token
+        assert await get_user_by_id(user.id) is not None
+
+    @pytest.mark.asyncio
+    async def test_usuario_existente_faz_login_sem_criar_conta_duplicada(self):
+        """Erro/borda inverso: a segunda chamada pro mesmo email nunca cria
+        um segundo usuário — sempre resolve pro mesmo `id`."""
+        from backend.rbac.auth import list_users, provision_or_login_sso
+
+        primeiro, _, _ = await provision_or_login_sso("dev@example.com")
+        segundo, access_token2, refresh_token2 = await provision_or_login_sso(
+            "dev@example.com"
+        )
+
+        assert segundo.id == primeiro.id
+        assert access_token2
+        assert refresh_token2
+        assert len(await list_users()) == 1
+
+    @pytest.mark.asyncio
+    async def test_email_e_normalizado_como_no_signup_local(self):
+        from backend.rbac.auth import provision_or_login_sso
+
+        user, _, _ = await provision_or_login_sso("Dev@Example.COM")
+        assert user.email == "dev@example.com"
+
+
+# ---------------------------------------------------------------------------
 # signin
 # ---------------------------------------------------------------------------
 

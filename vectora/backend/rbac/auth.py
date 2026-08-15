@@ -554,6 +554,55 @@ async def signin(email: str, password: str, *, ip: str = "") -> tuple[User, str,
     return user, access_token, refresh_token
 
 
+async def provision_or_login_sso(email: str, name: str = "") -> tuple[User, str, str]:
+    """Autentica via SSO/OIDC (`backend.rbac.oidc`) — sem senha, o IDP já
+    verificou a identidade. Usuário existente por `email` faz login direto;
+    inexistente é provisionado na hora (mesma regra de `signup`: primeiro
+    usuário vira root, username derivado do nome/email).
+
+    O `password_hash` do usuário provisionado é um segredo aleatório nunca
+    exposto nem usado — login local (email+senha) continua desabilitado
+    pra essa conta até uma troca de senha explícita via `change_password`.
+
+    Returns:
+        (user, access_token, refresh_token)
+    """
+    db = await _get_db()
+    email_norm = email.lower().strip()
+    async with db.execute("SELECT * FROM users WHERE email = ?", (email_norm,)) as cur:
+        row = await cur.fetchone()
+
+    if row is None:
+        user, access_token, refresh_token = await signup(
+            email_norm, secrets.token_hex(32), name=name
+        )
+        await _write_audit(db, user.id, "sso_provision", success=True)
+        return user, access_token, refresh_token
+
+    user_in_db = _row_to_user(row)
+    now = datetime.now(UTC).isoformat()
+    await db.execute(
+        "UPDATE users SET last_login_at = ? WHERE id = ?", (now, user_in_db.id)
+    )
+    await db.commit()
+
+    user = User(
+        id=user_in_db.id,
+        username=user_in_db.username,
+        email=user_in_db.email,
+        role=user_in_db.role,
+        name=user_in_db.name,
+        env_overrides=user_in_db.env_overrides,
+        created_at=user_in_db.created_at,
+        last_login_at=now,
+    )
+    access_token = create_access_token(user)
+    refresh_token = await _issue_refresh_token(db, user.id)
+
+    await _write_audit(db, user.id, "sso_signin", success=True)
+    return user, access_token, refresh_token
+
+
 async def refresh_tokens(refresh_token: str) -> tuple[User, str, str]:
     """Valida refresh token, emite novo par de tokens (rotação).
 
