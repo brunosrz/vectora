@@ -24,6 +24,7 @@ from backend.services.ignore import walk_files as _walk_files
 from backend.services.security import (
     is_safe_regex_pattern,
     is_safe_shell_command,
+    is_sensitive_path,
     resolve_within_workspace,
 )
 from backend.services.terminal_stream import emit_terminal_line
@@ -73,6 +74,12 @@ def _confine(path: str, config: RunnableConfig | None) -> tuple[Path | None, str
         return None, (
             f"Error: Path '{path}' fora do workspace '{root}'. "
             "O Vectora só pode acessar arquivos dentro da pasta confiável."
+        )
+    if is_sensitive_path(resolved):
+        return None, (
+            f"Error: Path '{path}' é um arquivo/diretório de credencial "
+            "sensível (chave SSH, credencial cloud, .env, .pem) — bloqueado "
+            "independentemente do sandbox estar ativo."
         )
     return resolved, ""
 

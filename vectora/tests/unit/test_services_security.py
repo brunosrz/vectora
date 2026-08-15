@@ -2,7 +2,45 @@
 
 from __future__ import annotations
 
-from backend.services.security import is_safe_file_path, is_safe_regex_pattern
+from pathlib import Path
+
+from backend.services.security import (
+    is_safe_file_path,
+    is_safe_regex_pattern,
+    is_sensitive_path,
+)
+
+
+class TestIsSensitivePath:
+    def test_arquivo_comum_nao_e_sensivel(self, tmp_path):
+        arquivo = tmp_path / "notas.txt"
+        arquivo.write_text("ola")
+        assert is_sensitive_path(arquivo) is False
+
+    def test_dentro_de_ssh_e_sensivel(self, tmp_path):
+        (tmp_path / ".ssh").mkdir()
+        arquivo = tmp_path / ".ssh" / "id_rsa"
+        assert is_sensitive_path(arquivo) is True
+
+    def test_dentro_de_aws_e_sensivel(self, tmp_path):
+        (tmp_path / ".aws").mkdir()
+        arquivo = tmp_path / ".aws" / "credentials"
+        assert is_sensitive_path(arquivo) is True
+
+    def test_arquivo_dotenv_e_sensivel(self, tmp_path):
+        arquivo = tmp_path / ".env"
+        assert is_sensitive_path(arquivo) is True
+
+    def test_arquivo_pem_e_sensivel(self, tmp_path):
+        arquivo = tmp_path / "chave.pem"
+        assert is_sensitive_path(arquivo) is True
+
+    def test_erro_ao_resolver_falha_fechado(self, monkeypatch):
+        def _resolve_falha(self):
+            raise OSError("path inválido")
+
+        monkeypatch.setattr(Path, "resolve", _resolve_falha)
+        assert is_sensitive_path(Path("qualquer")) is True
 
 
 class TestIsSafeFilePath:

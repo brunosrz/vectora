@@ -66,6 +66,20 @@ _INJECTION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             re.IGNORECASE,
         ),
     ),
+    (
+        "hidden HTML comment",
+        re.compile(r"<!--.*?-->", re.DOTALL),
+    ),
+    (
+        "invisible unicode character",
+        re.compile(
+            # zero-width space/joiner/non-joiner (U+200B-200D), BOM/zero-width
+            # no-break space (U+FEFF), bidi embedding/override/pop (U+202A-
+            # 202E) e bidi isolates (U+2066-2069) — usados pra esconder texto
+            # da revisão visual mantendo o conteúdo lido normalmente pelo LLM.
+            "[\u200b-\u200d\ufeff\u202a-\u202e\u2066-\u2069]"
+        ),
+    ),
 ]
 
 

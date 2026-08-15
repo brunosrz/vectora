@@ -80,6 +80,22 @@ class TestFileRead:
         result = file_read.invoke({"file_path": str(outside)}, config=trusted_ws)
         assert "fora do workspace" in result.lower() or "error" in result.lower()
 
+    def test_blocked_credencial_sensivel_mesmo_dentro_do_workspace(
+        self, tmp_path, trusted_ws
+    ):
+        """Chave SSH versionada por engano dentro do workspace confiável
+        continua bloqueada — segunda camada de defesa independente do
+        sandbox nativo estar ativo."""
+        from backend.tools.fs import file_read
+
+        ssh_dir = tmp_path / ".ssh"
+        ssh_dir.mkdir()
+        chave = ssh_dir / "id_rsa"
+        chave.write_text("chave-privada-fake", encoding="utf-8")
+        result = file_read.invoke({"file_path": str(chave)}, config=trusted_ws)
+        assert "sensível" in result.lower() or "error" in result.lower()
+        assert "chave-privada-fake" not in result
+
 
 # ---------------------------------------------------------------------------
 # file_write

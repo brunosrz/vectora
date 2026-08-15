@@ -44,6 +44,34 @@ def _has_rm_recursive_force(cmd: str) -> bool:
     return False
 
 
+#: Diretórios que nunca devem ser lidos/escritos por uma tool, mesmo que
+#: caiam dentro do workspace confiável (ex.: usuário versionou `.ssh/` por
+#: engano) — mesmas categorias do mask de sandbox nativo
+#: (`backend.sandbox.policy._DEFAULT_MASK`), mas checado independentemente
+#: dele: essa é a segunda camada de defesa que continua ativa mesmo quando
+#: o sandbox está desabilitado (ex. Windows sem WSL2, `DISABLED_POLICY`).
+_SENSITIVE_DIR_NAMES = frozenset(
+    {".ssh", ".aws", ".gnupg", ".kube", ".docker", ".azure"}
+)
+_SENSITIVE_FILE_SUFFIXES = (".pem",)
+_SENSITIVE_FILENAMES = frozenset({".env"})
+
+
+def is_sensitive_path(path: Path) -> bool:
+    """``True`` se ``path`` é um arquivo/diretório de credencial sensível
+    (chave SSH, credencial cloud, `.env`, `.pem`) — checagem fail-closed:
+    erro ao resolver o path conta como sensível."""
+    try:
+        resolved = path.resolve()
+    except OSError:
+        return True
+    if resolved.name in _SENSITIVE_FILENAMES:
+        return True
+    if resolved.suffix in _SENSITIVE_FILE_SUFFIXES:
+        return True
+    return any(part in _SENSITIVE_DIR_NAMES for part in resolved.parts)
+
+
 def resolve_within_workspace(path: str, workspace_root: str | Path) -> Path | None:
     """Resolve ``path`` garantindo que ele fique dentro de ``workspace_root``.
 
