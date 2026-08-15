@@ -136,51 +136,47 @@ class TestMemoryDelete:
 
 class TestMemorySharedStoreWithAgent:
     """Regressão: painel de configurações e memory tools do agente devem
-    compartilhar o mesmo BaseStore/namespace — antes, o handler HTTP escrevia
+    compartilhar o mesmo store/namespace — antes, o handler HTTP escrevia
     num MemoryStore SQLite à parte, nunca visto pelo agente (e vice-versa).
 
-    ``backend.tools.memory._get_store`` normalmente resolve o store via
-    ``langgraph.config.get_store()`` (contextvar setado pelo LangGraph durante
-    a execução do grafo) — aqui simulamos essa resolução apontando pro mesmo
-    ``InMemoryStore`` do fixture ``client``, que é exatamente a instância que
-    ``create_deep_agent(store=...)`` recebe em produção (ver
-    ``backend.services.agent_factory._ensure_infra``).
+    ``backend.tools.memory._get_store`` normalmente resolve o store injetado
+    no motor de execução em produção — aqui simulamos essa resolução
+    apontando pro mesmo ``InMemoryStore`` do fixture ``client``, que é
+    exatamente a instância que a infraestrutura do agente recebe em produção
+    (ver ``backend.services.agent_factory._ensure_infra``).
     """
 
     @pytest.mark.asyncio
     async def test_memory_saved_via_agent_tool_appears_in_api(
         self, client, store, monkeypatch
     ):
-        from langchain_core.runnables import RunnableConfig
-
+        from backend.tools.context import ToolContext
         from backend.tools.memory import save_memory
 
         monkeypatch.setattr("backend.tools.memory._get_store", lambda: store)
 
-        config: RunnableConfig = {"configurable": {"user_id": "local"}}
-        await save_memory.ainvoke(
-            {"key": "from_agent", "content": "salvo pelo agente"}, config=config
+        await save_memory(
+            ctx=ToolContext(user_id="local"),
+            key="from_agent",
+            content="salvo pelo agente",
         )
 
         resp = client.get("/memory/from_agent")
         assert resp.status_code == 200
         assert resp.json()["content"] == "salvo pelo agente"
 
-    def test_memory_created_via_api_is_visible_to_agent_tool(
+    @pytest.mark.asyncio
+    async def test_memory_created_via_api_is_visible_to_agent_tool(
         self, client, store, monkeypatch
     ):
-        import asyncio
-
-        from langchain_core.runnables import RunnableConfig
-
+        from backend.tools.context import ToolContext
         from backend.tools.memory import get_memory
 
         monkeypatch.setattr("backend.tools.memory._get_store", lambda: store)
 
         client.post("/memory", json={"key": "from_api", "content": "salvo pelo painel"})
 
-        config: RunnableConfig = {"configurable": {"user_id": "local"}}
-        out = asyncio.run(get_memory.ainvoke({"key": "from_api"}, config=config))
+        out = await get_memory(ctx=ToolContext(user_id="local"), key="from_api")
         assert '"status": "found"' in out
         assert "salvo pelo painel" in out
 

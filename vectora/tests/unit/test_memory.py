@@ -1,12 +1,12 @@
 """Tests — Per-User Memory isolation.
 
 Verifica:
-- _user_id_from_config retorna o user_id cru quando há user_id no configurable
+- _user_id_from_ctx retorna o user_id cru quando há user_id explícito no ctx
   (o prefixo de namespace vem de _memory_namespace, que envolve em
   ("user", <id>, "memories"))
 - fallback para workspace_<id> quando não há user_id mas há workspace
 - fallback para session_<thread_id> como último recurso
-- "local" quando não há nenhum identificador (config None / configurable vazio)
+- "local" quando não há nenhum identificador
 - endpoints REST existem e têm assinaturas corretas
 - ids distintos (user/workspace/session) não colidem
 """
@@ -14,92 +14,74 @@ Verifica:
 from __future__ import annotations
 
 import json
-from typing import Any
 
 import pytest
-from langchain_core.runnables import RunnableConfig
 from langgraph.store.memory import InMemoryStore
 
+from backend.tools.context import ToolContext
+
 # ---------------------------------------------------------------------------
-# N1 — _user_id_from_config prioridade
+# _user_id_from_ctx prioridade
 # ---------------------------------------------------------------------------
 
 
-class TestUserIdFromConfig:
-    """_user_id_from_config deve priorizar user_id autenticado."""
+class TestUserIdFromCtx:
+    """_user_id_from_ctx deve priorizar user_id autenticado."""
 
     def test_returns_user_namespace_when_user_id_present(self):
-        from backend.tools.memory import _user_id_from_config
+        from backend.tools.memory import _user_id_from_ctx
 
-        config: Any = {"configurable": {"user_id": "abc123", "thread_id": "t1"}}
-        result = _user_id_from_config(config)
+        ctx = ToolContext(user_id="abc123", thread_id="t1")
+        result = _user_id_from_ctx(ctx)
         assert result == "abc123"
 
     def test_returns_workspace_namespace_when_no_user_id(self):
-        from backend.tools.memory import _user_id_from_config
+        from backend.tools.memory import _user_id_from_ctx
 
-        config: Any = {"configurable": {"workspace_id": "ws1", "thread_id": "t1"}}
-        result = _user_id_from_config(config)
+        ctx = ToolContext(workspace_id="ws1", thread_id="t1")
+        result = _user_id_from_ctx(ctx)
         assert result == "workspace_ws1"
 
     def test_workspace_takes_precedence_over_thread_when_no_user(self):
-        from backend.tools.memory import _user_id_from_config
+        from backend.tools.memory import _user_id_from_ctx
 
-        config: Any = {
-            "configurable": {
-                "workspace_id": "ws1",
-                "thread_id": "t1",
-                # sem user_id
-            }
-        }
-        result = _user_id_from_config(config)
+        ctx = ToolContext(workspace_id="ws1", thread_id="t1")  # sem user_id
+        result = _user_id_from_ctx(ctx)
         assert result == "workspace_ws1"
 
     def test_user_id_takes_precedence_over_workspace(self):
         """user_id autenticado supera workspace quando ambos presentes."""
-        from backend.tools.memory import _user_id_from_config
+        from backend.tools.memory import _user_id_from_ctx
 
-        config: Any = {
-            "configurable": {
-                "user_id": "user_abc",
-                "workspace_id": "ws1",
-                "thread_id": "t1",
-            }
-        }
-        result = _user_id_from_config(config)
+        ctx = ToolContext(user_id="user_abc", workspace_id="ws1", thread_id="t1")
+        result = _user_id_from_ctx(ctx)
         assert result == "user_abc"
 
     def test_returns_session_namespace_when_only_thread_id(self):
-        from backend.tools.memory import _user_id_from_config
+        from backend.tools.memory import _user_id_from_ctx
 
-        config: Any = {"configurable": {"thread_id": "thread-xyz"}}
-        result = _user_id_from_config(config)
+        ctx = ToolContext(thread_id="thread-xyz")
+        result = _user_id_from_ctx(ctx)
         assert result == "session_thread-xyz"
 
-    def test_returns_default_when_config_is_none(self):
-        from backend.tools.memory import _user_id_from_config
+    def test_returns_default_when_ctx_is_bare(self):
+        from backend.tools.memory import _user_id_from_ctx
 
-        result = _user_id_from_config(None)
-        assert result == "local"
-
-    def test_returns_default_when_configurable_is_empty(self):
-        from backend.tools.memory import _user_id_from_config
-
-        result = _user_id_from_config({"configurable": {}})
+        result = _user_id_from_ctx(ToolContext())
         assert result == "local"
 
     def test_user_namespace_format(self):
         """Com user_id, o id retornado é o valor cru (sem prefixo); o prefixo
         de namespace ("user", <id>, "memories") vem de _memory_namespace."""
-        from backend.tools.memory import _memory_namespace, _user_id_from_config
+        from backend.tools.memory import _memory_namespace, _user_id_from_ctx
 
-        config: Any = {"configurable": {"user_id": "user-99"}}
-        assert _user_id_from_config(config) == "user-99"
-        assert _memory_namespace(config) == ("user", "user-99", "memories")
+        ctx = ToolContext(user_id="user-99")
+        assert _user_id_from_ctx(ctx) == "user-99"
+        assert _memory_namespace(ctx) == ("user", "user-99", "memories")
 
 
 # ---------------------------------------------------------------------------
-# N2 — handler REST de memória
+# handler REST de memória
 # ---------------------------------------------------------------------------
 
 
@@ -130,7 +112,7 @@ class TestMemoryHandlerExists:
 
 
 # ---------------------------------------------------------------------------
-# N3 — isolamento de namespaces
+# isolamento de namespaces
 # ---------------------------------------------------------------------------
 
 
@@ -138,40 +120,34 @@ class TestNamespaceIsolation:
     """Namespaces user:, workspace_, session_ são distintos e não se sobrepõem."""
 
     def test_user_namespace_not_equal_to_session_namespace(self):
-        from backend.tools.memory import _user_id_from_config
+        from backend.tools.memory import _user_id_from_ctx
 
-        user_config: Any = {"configurable": {"user_id": "u1", "thread_id": "t1"}}
-        session_config: Any = {"configurable": {"thread_id": "t1"}}
-
-        user_ns = _user_id_from_config(user_config)
-        session_ns = _user_id_from_config(session_config)
+        user_ns = _user_id_from_ctx(ToolContext(user_id="u1", thread_id="t1"))
+        session_ns = _user_id_from_ctx(ToolContext(thread_id="t1"))
 
         assert user_ns != session_ns
 
     def test_user_namespace_not_equal_to_workspace_namespace(self):
-        from backend.tools.memory import _user_id_from_config
+        from backend.tools.memory import _user_id_from_ctx
 
-        user_config: Any = {"configurable": {"user_id": "u1", "workspace_id": "ws1"}}
-        workspace_config: Any = {"configurable": {"workspace_id": "ws1"}}
-
-        user_ns = _user_id_from_config(user_config)
-        workspace_ns = _user_id_from_config(workspace_config)
+        user_ns = _user_id_from_ctx(ToolContext(user_id="u1", workspace_id="ws1"))
+        workspace_ns = _user_id_from_ctx(ToolContext(workspace_id="ws1"))
 
         assert user_ns != workspace_ns
 
     def test_different_users_have_different_namespaces(self):
-        from backend.tools.memory import _user_id_from_config
+        from backend.tools.memory import _user_id_from_ctx
 
-        config_a: Any = {"configurable": {"user_id": "alice"}}
-        config_b: Any = {"configurable": {"user_id": "bob"}}
+        ns_a = _user_id_from_ctx(ToolContext(user_id="alice"))
+        ns_b = _user_id_from_ctx(ToolContext(user_id="bob"))
 
-        assert _user_id_from_config(config_a) != _user_id_from_config(config_b)
+        assert ns_a != ns_b
 
 
 # ---------------------------------------------------------------------------
-# Sprint 16 WS3 — save_memory/get_memory com `category` (gotcha/decision/
-# preference/rule): campo opcional, persistido dentro do `value` já
-# existente no BaseStore — sem migração de schema.
+# save_memory/get_memory com `category` (gotcha/decision/preference/rule):
+# campo opcional, persistido dentro do `value` já existente no store — sem
+# migração de schema.
 # ---------------------------------------------------------------------------
 
 
@@ -186,13 +162,12 @@ class TestSaveMemoryCategory:
     async def test_category_e_persistida_e_volta_no_get(self, store):
         from backend.tools.memory import get_memory, save_memory
 
-        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
-        await save_memory.ainvoke(
-            {"key": "pref_lang", "content": "PT-BR", "category": "preference"},
-            config=config,
+        ctx = ToolContext(user_id="u1")
+        await save_memory(
+            ctx=ctx, key="pref_lang", content="PT-BR", category="preference"
         )
 
-        out = json.loads(await get_memory.ainvoke({"key": "pref_lang"}, config=config))
+        out = json.loads(await get_memory(ctx=ctx, key="pref_lang"))
 
         assert out["category"] == "preference"
 
@@ -201,54 +176,44 @@ class TestSaveMemoryCategory:
         parâmetro é opcional, não quebra nenhum caller atual."""
         from backend.tools.memory import get_memory, save_memory
 
-        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
-        await save_memory.ainvoke(
-            {"key": "sem_categoria", "content": "conteúdo qualquer"}, config=config
-        )
+        ctx = ToolContext(user_id="u1")
+        await save_memory(ctx=ctx, key="sem_categoria", content="conteúdo qualquer")
 
-        out = json.loads(
-            await get_memory.ainvoke({"key": "sem_categoria"}, config=config)
-        )
+        out = json.loads(await get_memory(ctx=ctx, key="sem_categoria"))
 
         assert out["category"] is None
 
     async def test_category_invalida_e_rejeitada_sem_persistir(self, store):
         """Erro/borda: categoria fora do conjunto válido não é aceita
-        silenciosamente. O `Literal["gotcha","decision","preference","rule"]`
-        vira schema Pydantic da tool (LangChain `@tool`) — a validação
-        acontece ANTES do corpo de `save_memory` rodar, então o erro chega
-        como `ValidationError` da própria camada de parsing da tool, não
-        como JSON `{"status":"failed"}` (esse é o caminho pra falha DENTRO
-        da execução, ex. store indisponível — ver teste de `store` abaixo)."""
-        from pydantic import ValidationError
+        silenciosamente. `save_memory` chamada via `TOOL_REGISTRY` (caminho
+        real de uma tool call do LLM) valida os argumentos contra o schema
+        Pydantic gerado por `vtool` a partir do
+        `Literal["gotcha","decision","preference","rule"]` ANTES do corpo da
+        função rodar — categoria inválida nunca chega a persistir, e a tool
+        devolve string de erro tipada (nunca propaga exceção)."""
+        from backend.tools.registry import TOOL_REGISTRY
 
-        from backend.tools.memory import save_memory
+        ctx = ToolContext(user_id="u1")
+        spec = TOOL_REGISTRY.get("save_memory")
+        assert spec is not None
 
-        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
-        with pytest.raises(ValidationError, match="category"):
-            await save_memory.ainvoke(
-                {
-                    "key": "categoria_ruim",
-                    "content": "x",
-                    "category": "nao_existe",
-                },
-                config=config,
-            )
+        result = await spec.ainvoke(
+            {"key": "categoria_ruim", "content": "x", "category": "nao_existe"},
+            ctx=ctx,
+        )
 
-        # Nada foi persistido — a chave nunca chega a existir no store.
+        assert "argumentos inválidos" in result
         item = await store.aget(("user", "u1", "memories"), "categoria_ruim")
         assert item is None
 
     async def test_listar_todas_inclui_category_de_cada_uma(self, store):
         from backend.tools.memory import get_memory, save_memory
 
-        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
-        await save_memory.ainvoke(
-            {"key": "a", "content": "x", "category": "gotcha"}, config=config
-        )
-        await save_memory.ainvoke({"key": "b", "content": "y"}, config=config)
+        ctx = ToolContext(user_id="u1")
+        await save_memory(ctx=ctx, key="a", content="x", category="gotcha")
+        await save_memory(ctx=ctx, key="b", content="y")
 
-        out = json.loads(await get_memory.ainvoke({}, config=config))
+        out = json.loads(await get_memory(ctx=ctx))
 
         by_key = {m["key"]: m["category"] for m in out["memories"]}
         assert by_key == {"a": "gotcha", "b": None}
@@ -256,15 +221,15 @@ class TestSaveMemoryCategory:
 
 class TestListFactContents:
     """`list_fact_contents` — acessor simples usado por `remember_trigger.py`
-    (fora do wrapper `@tool`, que exige `RunnableConfig`) pra buscar os
-    fatos já salvos de um usuário antes de propor duplicatas."""
+    (fora do wrapper `vtool`, que exige `ToolContext`) pra buscar os fatos já
+    salvos de um usuário antes de propor duplicatas."""
 
     async def test_retorna_conteudo_de_todos_os_fatos_do_usuario(self, store):
         from backend.tools.memory import list_fact_contents, save_memory
 
-        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
-        await save_memory.ainvoke({"key": "a", "content": "Fato A"}, config=config)
-        await save_memory.ainvoke({"key": "b", "content": "Fato B"}, config=config)
+        ctx = ToolContext(user_id="u1")
+        await save_memory(ctx=ctx, key="a", content="Fato A")
+        await save_memory(ctx=ctx, key="b", content="Fato B")
 
         result = await list_fact_contents("u1")
 

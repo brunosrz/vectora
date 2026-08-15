@@ -225,47 +225,44 @@ class TestFilesystemPermission:
 
 
 class TestMemoryToolsNamespace:
-    def test_user_id_from_config_authenticated(self):
+    def test_user_id_from_ctx_authenticated(self):
         """user_id autenticado deve ser retornado limpo."""
-        from langchain_core.runnables import RunnableConfig
+        from backend.tools.context import ToolContext
+        from backend.tools.memory import _user_id_from_ctx
 
-        from backend.tools.memory import _user_id_from_config
+        ctx = ToolContext(user_id="abc123")
+        assert _user_id_from_ctx(ctx) == "abc123"
 
-        config: RunnableConfig = {"configurable": {"user_id": "abc123"}}
-        assert _user_id_from_config(config) == "abc123"
-
-    def test_user_id_from_config_workspace(self):
+    def test_user_id_from_ctx_workspace(self):
         """workspace_id usado quando não há user_id."""
-        from langchain_core.runnables import RunnableConfig
+        from backend.tools.context import ToolContext
+        from backend.tools.memory import _user_id_from_ctx
 
-        from backend.tools.memory import _user_id_from_config
+        ctx = ToolContext(workspace_id="ws1")
+        assert _user_id_from_ctx(ctx) == "workspace_ws1"
 
-        config: RunnableConfig = {"configurable": {"workspace_id": "ws1"}}
-        assert _user_id_from_config(config) == "workspace_ws1"
-
-    def test_user_id_from_config_thread_fallback(self):
+    def test_user_id_from_ctx_thread_fallback(self):
         """thread_id como fallback."""
-        from langchain_core.runnables import RunnableConfig
+        from backend.tools.context import ToolContext
+        from backend.tools.memory import _user_id_from_ctx
 
-        from backend.tools.memory import _user_id_from_config
+        ctx = ToolContext(thread_id="t42")
+        assert _user_id_from_ctx(ctx) == "session_t42"
 
-        config: RunnableConfig = {"configurable": {"thread_id": "t42"}}
-        assert _user_id_from_config(config) == "session_t42"
+    def test_user_id_from_ctx_bare(self):
+        """ctx sem nenhum identificador retorna 'local'."""
+        from backend.tools.context import ToolContext
+        from backend.tools.memory import _user_id_from_ctx
 
-    def test_user_id_from_config_none(self):
-        """None retorna 'local'."""
-        from backend.tools.memory import _user_id_from_config
-
-        assert _user_id_from_config(None) == "local"
+        assert _user_id_from_ctx(ToolContext()) == "local"
 
     def test_memory_namespace_structure(self):
         """Namespace deve ser tupla 3-uple."""
-        from langchain_core.runnables import RunnableConfig
-
+        from backend.tools.context import ToolContext
         from backend.tools.memory import _memory_namespace
 
-        config: RunnableConfig = {"configurable": {"user_id": "u1"}}
-        ns = _memory_namespace(config)
+        ctx = ToolContext(user_id="u1")
+        ns = _memory_namespace(ctx)
         assert ns == ("user", "u1", "memories")
         assert isinstance(ns, tuple)
         assert len(ns) == 3

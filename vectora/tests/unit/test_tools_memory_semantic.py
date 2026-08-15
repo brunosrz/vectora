@@ -1,4 +1,4 @@
-"""Tests para o search_memory tool (busca semântica via LangGraph BaseStore)."""
+"""Tests para o search_memory tool (busca semântica via store persistente)."""
 
 from __future__ import annotations
 
@@ -7,15 +7,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-# ---------------------------------------------------------------------------
-# search_memory tool
-# ---------------------------------------------------------------------------
+from backend.tools.context import ToolContext
 
 
 class _FakeStoreItem:
-    """Item retornado pelo BaseStore.asearch — com .key, .value, .score.
+    """Item retornado pelo store.asearch — com .key, .value, .score.
 
-    O ``search_memory`` agora delega ao store do LangGraph (``_get_store()``);
+    ``search_memory`` delega ao store persistente injetado (``_get_store()``);
     a flag ``semantic`` é derivada de o item ter ``.score`` não-nulo (o store
     com índice vetorial retorna score; sem índice, score é None).
     """
@@ -32,16 +30,14 @@ class TestSearchMemoryTool:
         """Itens com score (store indexado) → semantic=True e score exposto."""
         from backend.tools.memory import search_memory
 
-        config = {"configurable": {"thread_id": "t1"}}
+        ctx = ToolContext(thread_id="t1")
         store = AsyncMock()
         store.asearch = AsyncMock(
             return_value=[_FakeStoreItem("k1", "resultado semântico", score=0.9)]
         )
 
         with patch("backend.tools.memory._get_store", return_value=store):
-            raw = await search_memory.ainvoke(
-                {"query": "jwt auth", "config": config, "limit": 5}
-            )
+            raw = await search_memory(ctx=ctx, query="jwt auth", limit=5)
 
         data = json.loads(raw)
         assert data["status"] == "success"
@@ -55,16 +51,14 @@ class TestSearchMemoryTool:
         """Itens sem score (store sem índice) → semantic=False, sem ranqueamento."""
         from backend.tools.memory import search_memory
 
-        config = {"configurable": {"thread_id": "t2"}}
+        ctx = ToolContext(thread_id="t2")
         store = AsyncMock()
         store.asearch = AsyncMock(
             return_value=[_FakeStoreItem("k1", "m1"), _FakeStoreItem("k2", "m2")]
         )
 
         with patch("backend.tools.memory._get_store", return_value=store):
-            raw = await search_memory.ainvoke(
-                {"query": "qualquer coisa", "config": config, "limit": 5}
-            )
+            raw = await search_memory(ctx=ctx, query="qualquer coisa", limit=5)
 
         data = json.loads(raw)
         assert data["status"] == "success"
@@ -76,14 +70,12 @@ class TestSearchMemoryTool:
         """Store vazio → success com count 0."""
         from backend.tools.memory import search_memory
 
-        config = {"configurable": {"thread_id": "t3"}}
+        ctx = ToolContext(thread_id="t3")
         store = AsyncMock()
         store.asearch = AsyncMock(return_value=[])
 
         with patch("backend.tools.memory._get_store", return_value=store):
-            raw = await search_memory.ainvoke(
-                {"query": "teste", "config": config, "limit": 5}
-            )
+            raw = await search_memory(ctx=ctx, query="teste", limit=5)
 
         data = json.loads(raw)
         assert data["status"] == "success"
@@ -94,15 +86,13 @@ class TestSearchMemoryTool:
         """Exceção ao obter o store retorna status failed com a mensagem."""
         from backend.tools.memory import search_memory
 
-        config = {"configurable": {"thread_id": "t4"}}
+        ctx = ToolContext(thread_id="t4")
 
         with patch(
             "backend.tools.memory._get_store",
             side_effect=Exception("db error"),
         ):
-            raw = await search_memory.ainvoke(
-                {"query": "teste", "config": config, "limit": 5}
-            )
+            raw = await search_memory(ctx=ctx, query="teste", limit=5)
 
         data = json.loads(raw)
         assert data["status"] == "failed"

@@ -27,12 +27,12 @@ from backend.settings import settings
 from backend.tools import browser as _browser_module
 from backend.tools import fs as _fs_module
 from backend.tools import git as _git_module
+from backend.tools import memory as _memory_module
 from backend.tools import rag as _rag_module
 from backend.tools import web as _web_module
 from backend.tools.github import github_fetch_pr_diff, github_post_pr_comment
 from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.mcp import call_mcp_tool
-from backend.tools.memory import delete_memory, get_memory, save_memory
 from backend.tools.native import (
     base64_decode,
     base64_encode,
@@ -75,6 +75,9 @@ embedding = _bridge("embedding")
 vector_search = _bridge("vector_search")
 ingest_docs = _bridge("ingest_docs")
 manage_retriever = _bridge("manage_retriever")
+save_memory = _bridge("save_memory")
+get_memory = _bridge("get_memory")
+delete_memory = _bridge("delete_memory")
 browser_navigate = _bridge("browser_navigate")
 browser_screenshot = _bridge("browser_screenshot")
 browser_click = _bridge("browser_click")

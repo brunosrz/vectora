@@ -40,6 +40,9 @@ from backend.tools import (
     library as _library_module,
 )
 from backend.tools import (
+    memory as _memory_module,
+)
+from backend.tools import (
     rag as _rag_module,
 )
 from backend.tools import (
@@ -89,7 +92,6 @@ from backend.tools.media import (
     generate_video,
     text_to_speech,
 )
-from backend.tools.memory import delete_memory, get_memory, save_memory, search_memory
 from backend.tools.native import (
     base64_decode,
     base64_encode,
@@ -237,6 +239,10 @@ embedding = _bridge("embedding")
 vector_search = _bridge("vector_search")
 ingest_docs = _bridge("ingest_docs")
 manage_retriever = _bridge("manage_retriever")
+save_memory = _bridge("save_memory")
+get_memory = _bridge("get_memory")
+delete_memory = _bridge("delete_memory")
+search_memory = _bridge("search_memory")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)

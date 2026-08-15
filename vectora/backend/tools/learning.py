@@ -188,16 +188,15 @@ async def save_learned_fact(
         fact: O fato durável a lembrar, em uma frase.
     """
     try:
+        from backend.tools.context import ctx_from_config
         from backend.tools.memory import save_memory
 
         key = f"learned-fact-{abs(hash(fact)) % 10**8}"
-        await save_memory.ainvoke(
-            {
-                "key": key,
-                "content": fact,
-                "config": config,
-                "metadata": {"tag": "user_model", "source": "learn_from_session"},
-            }
+        await save_memory(
+            key=key,
+            content=fact,
+            ctx=ctx_from_config(config),  # ty: ignore[invalid-argument-type]
+            metadata={"tag": "user_model", "source": "learn_from_session"},
         )
         logger.info("learning: fato aprendido salvo key=%s", key)
         await _mirror_to_plan_tab("fact_learned", fact[:80], "", fact, config)

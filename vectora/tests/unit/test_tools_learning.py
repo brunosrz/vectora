@@ -211,17 +211,16 @@ async def test_install_learned_skill_mirrors_artifact_and_resolves_pending(
 async def test_save_learned_fact_persists_via_save_memory(monkeypatch):
     save_memory_calls: list[dict] = []
 
-    class _FakeSaveMemory:
-        async def ainvoke(self, payload: dict) -> str:
-            save_memory_calls.append(payload)
-            return "ok"
+    async def _fake_save_memory(**kwargs: object) -> str:
+        save_memory_calls.append(kwargs)
+        return "ok"
 
     async def _fake_create_artifact(
         *, artifact_type: str, title: str, content: str, ctx: object
     ) -> str:
         return "{}"
 
-    monkeypatch.setattr("backend.tools.memory.save_memory", _FakeSaveMemory())
+    monkeypatch.setattr("backend.tools.memory.save_memory", _fake_save_memory)
     monkeypatch.setattr("backend.tools.fs.create_artifact", _fake_create_artifact)
     monkeypatch.setattr(
         "backend.api.handlers.threads.set_remember_pending",
@@ -245,11 +244,10 @@ async def test_save_learned_fact_persists_via_save_memory(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_save_learned_fact_error_returns_status_error_not_raised(monkeypatch):
-    class _BoomSaveMemory:
-        async def ainvoke(self, payload: dict) -> str:
-            raise RuntimeError("store indisponível")
+    async def _boom_save_memory(**kwargs: object) -> str:
+        raise RuntimeError("store indisponível")
 
-    monkeypatch.setattr("backend.tools.memory.save_memory", _BoomSaveMemory())
+    monkeypatch.setattr("backend.tools.memory.save_memory", _boom_save_memory)
 
     result = json.loads(
         await save_learned_fact.ainvoke(

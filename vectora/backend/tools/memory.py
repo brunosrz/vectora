@@ -1,7 +1,7 @@
 """Memory tools: persistência de memórias entre sessões.
 
-Usa ``langgraph.config.get_store()`` para acessar o LangGraph BaseStore
-injetado em ``create_deep_agent(store=...)``.
+Acessa o store persistente injetado no motor de execução via
+``_get_store()`` — mesmo store usado por ``backend.services.agent_factory``.
 
 As memórias são isoladas por usuário no namespace ``("user", <user_id>, "memories")``,
 garantindo isolamento entre usuários e compatibilidade com o StoreBackend do
@@ -15,17 +15,17 @@ import logging
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
-#: Categorias de fato (Sprint 16 WS3) — mesmo vocabulário usado por
-#: `backend/scheduling/memory_consolidation.py` (WS4) pra manter uma única
+#: Categorias de fato — mesmo vocabulário usado por
+#: `backend/scheduling/memory_consolidation.py` pra manter uma única
 #: taxonomia em todo o sistema de memória. Validado automaticamente pelo
-#: schema Pydantic que `@tool` gera a partir do type hint — valor fora do
+#: schema Pydantic que `vtool` gera a partir do type hint — valor fora do
 #: Literal nunca chega ao corpo da função (rejeitado na camada de parsing
-#: da tool, `ValidationError`, ver `tests/unit/test_memory.py`).
+#: da tool, ver `tests/unit/test_memory.py`).
 FactCategory = Literal["gotcha", "decision", "preference", "rule"]
 
 
@@ -34,32 +34,28 @@ FactCategory = Literal["gotcha", "decision", "preference", "rule"]
 # ---------------------------------------------------------------------------
 
 
-def _user_id_from_config(config: RunnableConfig | None) -> str:
-    """Extrai user_id limpo do contexto LangGraph.
+def _user_id_from_ctx(ctx: ToolContext) -> str:
+    """Extrai user_id limpo do contexto de execução.
 
     Retorna o user_id em formato simples (sem prefixo) para uso como
     componente do namespace do store. Prioridade:
-    1. user_id do configurable
+    1. user_id explícito (diferente do default "local")
     2. workspace_id (memórias seguem o projeto)
     3. thread_id (fallback por sessão)
     4. "local" (modo offline/anônimo)
     """
-    if config is None:
-        return "local"
-    configurable = config.get("configurable") or {}
-    user_id = configurable.get("user_id")
-    if user_id:
-        return str(user_id)
-    workspace_id = configurable.get("workspace_id")
-    if workspace_id:
-        return f"workspace_{workspace_id}"
-    thread_id = configurable.get("thread_id")
-    return f"session_{thread_id}" if thread_id else "local"
+    if ctx.user_id and ctx.user_id != "local":
+        return ctx.user_id
+    if ctx.workspace_id:
+        return f"workspace_{ctx.workspace_id}"
+    if ctx.thread_id:
+        return f"session_{ctx.thread_id}"
+    return "local"
 
 
-def _memory_namespace(config: RunnableConfig | None) -> tuple[str, ...]:
+def _memory_namespace(ctx: ToolContext) -> tuple[str, ...]:
     """Retorna o namespace do store para as memórias do usuário."""
-    user_id = _user_id_from_config(config)
+    user_id = _user_id_from_ctx(ctx)
     return ("user", user_id, "memories")
 
 
@@ -67,22 +63,20 @@ async def list_fact_contents(user_id: str) -> list[str]:
     """Conteúdo de todos os fatos salvos de um usuário — usado por
     `backend/services/remember_trigger.py` pra deduplicar propostas do
     Remember (`dedupe_fact_drafts`) antes de sugerir de novo um fato já
-    aprovado. Acessor direto (sem passar por `RunnableConfig`/`@tool`,
-    que o caller — fora do turno do agente — não tem)."""
+    aprovado. Acessor direto (sem passar por `ToolContext`/`vtool`, que o
+    caller — fora do turno do agente — não tem)."""
     store = _get_store()
-    ns = _memory_namespace({"configurable": {"user_id": user_id}})
+    ns = _memory_namespace(ToolContext(user_id=user_id))
     items = await store.asearch(ns)
     return [item.value.get("content", "") for item in items]
 
 
 def _get_store() -> Any:
-    """Obtém o LangGraph store do contexto atual.
-
-    Usa ``langgraph.config.get_store()`` que acessa o store via contextvar
-    (injetado pelo harness deepagents quando ``store=`` é passado ao grafo).
+    """Obtém o store persistente do contexto de execução atual, via
+    contextvar injetado pelo motor de execução ainda em produção.
 
     Raises:
-        RuntimeError: Se chamado fora de um grafo LangGraph com store configurado.
+        RuntimeError: Se chamado fora de uma execução com store configurado.
     """
     from langgraph.config import get_store
 
@@ -94,18 +88,18 @@ def _get_store() -> Any:
 # ---------------------------------------------------------------------------
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "memory",
-        "destructive": False,
-        "icon": "bookmark",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="memory",
+        destructive=False,
+        icon="bookmark",
+    )
 )
 async def save_memory(
+    ctx: ToolContext,
     key: str,
     content: str,
-    config: RunnableConfig,
     metadata: dict[str, Any] | None = None,
     ttl_days: int | None = None,
     category: FactCategory | None = None,
@@ -113,13 +107,12 @@ async def save_memory(
     """Salva uma memória persistente para uso em futuras conversas da mesma sessão.
 
     As memórias são isoladas por usuário para evitar poluição entre projetos distintos.
-    Armazenadas no LangGraph BaseStore com suporte a busca semântica via Cohere
+    Armazenadas no store persistente com suporte a busca semântica via Cohere
     quando configurado.
 
     Args:
         key: Chave única da memória (ex: 'user_preferences', 'project_context')
         content: Conteúdo da memória (string com informações a recordar)
-        config: Injetado automaticamente pelo LangGraph com user_id/workspace_id
         metadata: Metadados adicionais
         ttl_days: Dias até expiração (informativo — store básico não garante TTL)
         category: Categoria do fato (gotcha/decision/preference/rule) — opcional,
@@ -130,7 +123,7 @@ async def save_memory(
     """
     try:
         store = _get_store()
-        ns = _memory_namespace(config)
+        ns = _memory_namespace(ctx)
         now = datetime.now(UTC).isoformat()
 
         value: dict[str, Any] = {
@@ -166,21 +159,20 @@ async def save_memory(
         return json.dumps({"status": "failed", "error": str(exc), "key": key})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "memory",
-        "destructive": False,
-        "icon": "bookmark-check",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="memory",
+        destructive=False,
+        icon="bookmark-check",
+    )
 )
-async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
+async def get_memory(ctx: ToolContext, key: str | None = None) -> str:
     """Recupera memórias persistentes salvas.
 
     Retorna apenas memórias do namespace do usuário/workspace atual.
 
     Args:
-        config: Injetado automaticamente pelo LangGraph
         key: Chave específica. Se None, retorna todas as memórias do namespace.
 
     Returns:
@@ -188,7 +180,7 @@ async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
     """
     try:
         store = _get_store()
-        ns = _memory_namespace(config)
+        ns = _memory_namespace(ctx)
 
         if key is not None:
             item = await store.aget(ns, key)
@@ -235,24 +227,23 @@ async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
         return json.dumps({"status": "failed", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "search_results",
-        "category": "memory",
-        "destructive": False,
-        "icon": "search-check",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="search_results",
+        category="memory",
+        destructive=False,
+        icon="search-check",
+    )
 )
-async def search_memory(query: str, config: RunnableConfig, limit: int = 5) -> str:
+async def search_memory(ctx: ToolContext, query: str, limit: int = 5) -> str:
     """Busca semântica em memórias — encontra memórias relevantes por similaridade.
 
     Diferente de ``get_memory`` (busca por chave exata), ``search_memory`` usa
-    o índice vetorial do LangGraph BaseStore (Cohere embed quando configurado)
+    o índice vetorial do store persistente (Cohere embed quando configurado)
     para encontrar memórias semanticamente relacionadas à query.
 
     Args:
         query: Texto da busca semântica (ex: "preferências de código", "arquitetura")
-        config: Injetado automaticamente pelo LangGraph
         limit: Máximo de memórias a retornar (padrão: 5)
 
     Returns:
@@ -260,7 +251,7 @@ async def search_memory(query: str, config: RunnableConfig, limit: int = 5) -> s
     """
     try:
         store = _get_store()
-        ns = _memory_namespace(config)
+        ns = _memory_namespace(ctx)
 
         items = await store.asearch(ns, query=query, limit=limit)
         has_scores = any(getattr(item, "score", None) is not None for item in items)
@@ -295,27 +286,26 @@ async def search_memory(query: str, config: RunnableConfig, limit: int = 5) -> s
         return json.dumps({"status": "failed", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "memory",
-        "destructive": True,
-        "icon": "bookmark-x",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="memory",
+        destructive=True,
+        icon="bookmark-x",
+    )
 )
-async def delete_memory(key: str, config: RunnableConfig) -> str:
+async def delete_memory(ctx: ToolContext, key: str) -> str:
     """Deleta uma memória persistente do namespace do usuário.
 
     Args:
         key: Chave da memória a deletar
-        config: Injetado automaticamente pelo LangGraph
 
     Returns:
         JSON com status deleted/not_found/failed
     """
     try:
         store = _get_store()
-        ns = _memory_namespace(config)
+        ns = _memory_namespace(ctx)
 
         # Verifica se existe antes de deletar
         item = await store.aget(ns, key)

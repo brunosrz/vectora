@@ -227,7 +227,7 @@ class MemoryAdapter:
         content = str(item["content"])
         try:
             store = mem._get_store()
-        except Exception as exc:  # RuntimeError: fora de um grafo ativo
+        except Exception as exc:  # RuntimeError: fora de uma execução ativa
             import logging
 
             logging.getLogger(__name__).info(
@@ -238,9 +238,10 @@ class MemoryAdapter:
             return None
         import datetime
 
+        from backend.tools.context import ToolContext
         from backend.tools.memory import _memory_namespace
 
-        ns = _memory_namespace({"configurable": {"user_id": user_id}})
+        ns = _memory_namespace(ToolContext(user_id=user_id))
         value = {
             "key": key,
             "content": content,
