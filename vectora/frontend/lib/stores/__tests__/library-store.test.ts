@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it, beforeEach, vi } from "vitest";
-import { useLibraryStore } from "../library-store";
+import { skillTrustLevel, useLibraryStore } from "../library-store";
 
 function resetStore() {
   useLibraryStore.setState({
@@ -138,5 +138,38 @@ describe("library-store — Skills e Memory", () => {
 
     expect(useLibraryStore.getState().memoryItems).toHaveLength(1);
     expect((fetchMock as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
+  });
+});
+
+describe("library-store — skillTrustLevel", () => {
+  it("vectora_verified vence verified — sempre builtin quando os dois são true", () => {
+    expect(
+      skillTrustLevel({
+        id: "s1",
+        name: "s",
+        description: "",
+        source: "",
+        vectora_verified: true,
+        verified: true,
+      }),
+    ).toBe("builtin");
+  });
+
+  it("só verified (curadoria de admin, sem selo oficial) é 'verified'", () => {
+    expect(
+      skillTrustLevel({
+        id: "s2",
+        name: "s",
+        description: "",
+        source: "",
+        verified: true,
+      }),
+    ).toBe("verified");
+  });
+
+  it("erro/borda: sem nenhum dos dois campos (undefined) cai em community, nunca lança", () => {
+    expect(
+      skillTrustLevel({ id: "s3", name: "s", description: "", source: "" }),
+    ).toBe("community");
   });
 });

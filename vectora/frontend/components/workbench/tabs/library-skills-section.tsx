@@ -22,6 +22,7 @@ import {
   Upload,
 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,7 +37,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { SkillsTab } from "@/components/settings/environment/tabs/skills-tab";
 import { useLicenseStatus } from "@/lib/hooks/use-license-status";
 import { m } from "@/lib/paraglide/messages";
-import { useLibraryStore, type CatalogSkill } from "@/lib/stores/library-store";
+import {
+  skillTrustLevel,
+  useLibraryStore,
+  type CatalogSkill,
+} from "@/lib/stores/library-store";
+
+const TRUST_LABEL = {
+  builtin: m.library_skills_trust_builtin,
+  verified: m.library_skills_trust_verified,
+  community: m.library_skills_trust_community,
+} as const;
 
 async function publishSkill(payload: {
   source: string;
@@ -220,6 +231,20 @@ function CatalogCard({ skill }: { skill: CatalogSkill }) {
           <p className="text-xs text-muted-foreground truncate">
             {skill.description}
           </p>
+          <div className="pt-0.5">
+            <Badge
+              variant={
+                skillTrustLevel(skill) === "builtin"
+                  ? "default"
+                  : skillTrustLevel(skill) === "verified"
+                    ? "secondary"
+                    : "outline"
+              }
+              className="text-[10px] h-4 px-1.5 shrink-0"
+            >
+              {TRUST_LABEL[skillTrustLevel(skill)]()}
+            </Badge>
+          </div>
         </div>
         <Button
           variant={installed ? "outline" : "default"}

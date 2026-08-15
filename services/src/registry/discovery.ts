@@ -12,9 +12,13 @@
  * Skills: não existe hoje nenhum registry público equivalente (skills.sh,
  * cogitado inicialmente, exige um `VERCEL_OIDC_TOKEN` só emitido dentro do
  * runtime de deploy da própria Vercel — inacessível a um Worker de
- * terceiro, confirmado via `skills.sh/docs/api`). Alternativa: GitHub code
- * search por `filename:SKILL.md` (`GITHUB_TOKEN` opcional — sem ele, essa
- * metade do discovery fica desligada, não é erro).
+ * terceiro, confirmado via `skills.sh/docs/api`). Reavaliado em 2026-08-15:
+ * limitação continua real — a API segue exigindo OIDC federation do
+ * projeto Vercel (nenhuma alternativa de API key documentada ainda; existe
+ * pedido aberto da comunidade por chave própria, `vercel-labs/skills#1053`,
+ * sem resolução). Alternativa: GitHub code search por `filename:SKILL.md`
+ * (`GITHUB_TOKEN` opcional — sem ele, essa metade do discovery fica
+ * desligada, não é erro).
  *
  * As duas fontes são isoladas uma da outra (falha em uma nunca impede a
  * outra) e o upsert nunca sobrescreve uma linha `catalog_source='curated'`

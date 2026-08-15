@@ -21,7 +21,7 @@ vi.mock("@/components/settings/environment/tabs/skills-tab", () => ({
 }));
 
 import { SkillsSection } from "../library-skills-section";
-import { useLibraryStore } from "@/lib/stores/library-store";
+import { useLibraryStore, type CatalogSkill } from "@/lib/stores/library-store";
 
 afterEach(cleanup);
 
@@ -33,7 +33,7 @@ beforeEach(() => {
   });
 });
 
-const CATALOG = [
+const CATALOG: CatalogSkill[] = [
   {
     id: "pdf-extract",
     name: "PDF Extract",
@@ -132,6 +132,27 @@ describe("SkillsSection — Catálogo", () => {
     await waitFor(() => {
       expect(screen.getByText("No curated skills available yet.")).toBeTruthy();
     });
+  });
+
+  it("badge de trust level reflete vectora_verified/verified — Official/Verified/Community", async () => {
+    mockFetch({
+      entries: [
+        {
+          ...CATALOG[0],
+          id: "a",
+          name: "Skill Oficial",
+          vectora_verified: true,
+        },
+        { ...CATALOG[0], id: "b", name: "Skill Verificada", verified: true },
+        { ...CATALOG[0], id: "c", name: "Skill Comunidade" },
+      ],
+    });
+    render(<SkillsSection query="" onCountChange={() => {}} />);
+
+    await waitFor(() => screen.getByText("Skill Oficial"));
+    expect(screen.getByText("Official")).toBeTruthy();
+    expect(screen.getByText("Verified")).toBeTruthy();
+    expect(screen.getByText("Community")).toBeTruthy();
   });
 });
 
