@@ -2197,10 +2197,11 @@ async def pr_list(
     state: Annotated[str, Query()] = "open",
 ) -> PullRequestListResponse:
     """Lista PRs do repositório via ``gh pr list``."""
+    from backend.tools.context import ToolContext
     from backend.tools.gh import _gh_run, _resolve_cwd
 
-    cwd = _resolve_cwd(workspace_id, None)
-    result = _gh_run(
+    cwd = _resolve_cwd(workspace_id, ToolContext())
+    result = await _gh_run(
         [
             "pr",
             "list",
@@ -2245,11 +2246,12 @@ async def pr_create(
     workspace_id: str, body: PullRequestCreateRequest
 ) -> StatusResponse:
     """Cria um PR da branch atual via ``gh pr create``."""
+    from backend.tools.context import ToolContext
     from backend.tools.gh import _gh_run, _resolve_cwd
 
     if not body.title.strip():
         return StatusResponse(status="error", message="Título do PR é obrigatório.")
-    cwd = _resolve_cwd(workspace_id, None)
+    cwd = _resolve_cwd(workspace_id, ToolContext())
     args = [
         "pr",
         "create",
@@ -2262,7 +2264,7 @@ async def pr_create(
     ]
     if body.draft:
         args.append("--draft")
-    result = _gh_run(args, cwd=cwd)
+    result = await _gh_run(args, cwd=cwd)
     if result.get("status") == "ok":
         return StatusResponse(status="ok", message=result.get("output", ""))
     return StatusResponse(status="error", message=result.get("message", ""))

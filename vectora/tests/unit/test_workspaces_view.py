@@ -579,7 +579,7 @@ class TestGitLogPagination:
 class TestPrEndpoints:
     @pytest.mark.asyncio
     async def test_pr_list_unavailable_when_gh_fails(self, trusted_ws, monkeypatch):
-        from unittest.mock import MagicMock
+        from unittest.mock import AsyncMock
 
         import backend.tools.gh as gh_mod
         from backend.api.handlers import workspaces as ws_mod
@@ -589,7 +589,7 @@ class TestPrEndpoints:
         monkeypatch.setattr(
             gh_mod,
             "_gh_run",
-            MagicMock(return_value={"status": "error", "message": "gh not found"}),
+            AsyncMock(return_value={"status": "error", "message": "gh not found"}),
         )
         resp = await ws_mod.pr_list(workspace_id=wsid)
         assert resp.available is False

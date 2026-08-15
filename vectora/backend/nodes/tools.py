@@ -31,6 +31,9 @@ from backend.tools import (
     fs as _fs_module,
 )
 from backend.tools import (
+    gh as _gh_module,
+)
+from backend.tools import (
     git as _git_module,
 )
 from backend.tools import (
@@ -43,16 +46,6 @@ from backend.tools.gdrive import (
     google_drive_list,
     google_drive_read,
     google_drive_search,
-)
-from backend.tools.gh import (
-    gh_issue_comment,
-    gh_issue_create,
-    gh_issue_list,
-    gh_issue_view,
-    gh_pr_create,
-    gh_pr_list,
-    gh_pr_merge,
-    gh_pr_view,
 )
 from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.homeassistant import (
@@ -223,6 +216,14 @@ browser_compare_heap_snapshots = _bridge("browser_compare_heap_snapshots")
 browser_lighthouse_audit = _bridge("browser_lighthouse_audit")
 browser_screencast_start = _bridge("browser_screencast_start")
 browser_screencast_stop = _bridge("browser_screencast_stop")
+gh_pr_list = _bridge("gh_pr_list")
+gh_pr_create = _bridge("gh_pr_create")
+gh_pr_view = _bridge("gh_pr_view")
+gh_pr_merge = _bridge("gh_pr_merge")
+gh_issue_list = _bridge("gh_issue_list")
+gh_issue_create = _bridge("gh_issue_create")
+gh_issue_view = _bridge("gh_issue_view")
+gh_issue_comment = _bridge("gh_issue_comment")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)
@@ -370,7 +371,7 @@ NATIVE_TOOLS: list[BaseTool] = [
     http_request,
 ]
 
-#: Ferramentas git e GitHub CLI (G3)
+#: Ferramentas git e GitHub CLI
 GIT_TOOLS: list[BaseTool] = [
     git_status,
     git_log,

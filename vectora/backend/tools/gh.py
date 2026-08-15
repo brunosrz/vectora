@@ -4,7 +4,7 @@ Tools expostas: gh_pr_list, gh_pr_create, gh_pr_view, gh_pr_merge,
 gh_issue_list, gh_issue_create, gh_issue_view, gh_issue_comment.
 
 Todas as tools:
-- Executam o binário `gh` via subprocess (sem imports do SDK GitHub).
+- Executam o binário `gh` via subprocess assíncrono (sem imports do SDK GitHub).
 - Retornam JSON estruturado compatível com os render_hints declarados.
 - _gh_run() é o helper central: captura stdout/stderr e converte em dict.
 - Fallback gracioso quando `gh` não está no PATH.
@@ -14,14 +14,12 @@ Requisito de sistema: `gh` CLI instalado e autenticado (`gh auth login`).
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
-import subprocess  # nosec B404
-from typing import Annotated
 
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +29,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _gh_run(
+async def _gh_run(
     args: list[str],
     cwd: str | None = None,
     input_data: str | None = None,
@@ -44,63 +42,72 @@ def _gh_run(
     """
     cmd = ["gh", *args]
     try:
-        result = subprocess.run(  # noqa: S603  # nosec B603
-            cmd,
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
             cwd=cwd,
-            capture_output=True,
-            text=True,
-            input=input_data,
-            timeout=30,
-            check=False,
+            stdin=asyncio.subprocess.PIPE if input_data is not None else None,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
     except FileNotFoundError:
         return {
             "status": "error",
             "message": "gh not found in PATH — install the GitHub CLI: https://cli.github.com",
         }
-    except subprocess.TimeoutExpired:
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+    try:
+        stdout_b, stderr_b = await asyncio.wait_for(
+            proc.communicate(input_data.encode() if input_data is not None else None),
+            timeout=30,
+        )
+    except TimeoutError:
+        proc.kill()
+        await proc.wait()
         return {"status": "error", "message": "gh command timed out after 30s"}
     except Exception as exc:
         return {"status": "error", "message": str(exc)}
 
-    if result.returncode != 0:
+    stdout = stdout_b.decode(errors="replace").strip()
+    stderr = stderr_b.decode(errors="replace").strip()
+
+    if proc.returncode != 0:
         return {
             "status": "error",
-            "message": result.stderr.strip() or result.stdout.strip(),
-            "code": result.returncode,
+            "message": stderr or stdout,
+            "code": proc.returncode,
         }
 
-    return {"status": "ok", "output": result.stdout.strip()}
+    return {"status": "ok", "output": stdout}
 
 
-def _resolve_cwd(workspace_id: str | None, config: RunnableConfig | None) -> str | None:
+def _resolve_cwd(workspace_id: str | None, ctx: ToolContext) -> str | None:
     """Resolve workspace → cwd para passar ao subprocess gh."""
     from backend.workspace.workspace import workspace_registry
 
-    wid = workspace_id
-    if wid is None and config is not None:
-        wid = (config.get("configurable") or {}).get("workspace_id")
+    wid = workspace_id or ctx.workspace_id or None
     ws = workspace_registry.get(wid) if wid else workspace_registry.get_or_create()
     return ws.cwd if ws else None
 
 
 # ---------------------------------------------------------------------------
-# @tool wrappers
+# Tools nativas
 # ---------------------------------------------------------------------------
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "git",
-        "destructive": False,
-        "icon": "git-pull-request",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="git",
+        destructive=False,
+        icon="git-pull-request",
+    )
 )
 async def gh_pr_list(
+    ctx: ToolContext,
     state: str = "open",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Lista pull requests do repositório.
 
@@ -108,8 +115,8 @@ async def gh_pr_list(
         state: "open" | "closed" | "merged" | "all" (default: "open").
         workspace_id: ID do workspace.
     """
-    cwd = _resolve_cwd(workspace_id, config)
-    result = _gh_run(
+    cwd = _resolve_cwd(workspace_id, ctx)
+    result = await _gh_run(
         [
             "pr",
             "list",
@@ -129,21 +136,21 @@ async def gh_pr_list(
         return json.dumps({"status": "ok", "output": result["output"]})
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "git-pull-request",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="git-pull-request",
+    )
 )
 async def gh_pr_create(
+    ctx: ToolContext,
     title: str = "",
     body: str = "",
     base: str = "main",
     draft: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria um pull request a partir da branch atual.
 
@@ -154,28 +161,28 @@ async def gh_pr_create(
         draft: Se True, cria como rascunho.
         workspace_id: ID do workspace.
     """
-    cwd = _resolve_cwd(workspace_id, config)
+    cwd = _resolve_cwd(workspace_id, ctx)
     if not title:
         return json.dumps({"status": "error", "message": "Título do PR é obrigatório."})
     args = ["pr", "create", "--title", title, "--body", body, "--base", base]
     if draft:
         args.append("--draft")
-    result = _gh_run(args, cwd=cwd)
+    result = await _gh_run(args, cwd=cwd)
     return json.dumps(result)
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "git-pull-request",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="git-pull-request",
+    )
 )
 async def gh_pr_view(
+    ctx: ToolContext,
     pr_number: int = 0,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Exibe detalhes de um pull request.
 
@@ -183,10 +190,10 @@ async def gh_pr_view(
         pr_number: Número do PR.
         workspace_id: ID do workspace.
     """
-    cwd = _resolve_cwd(workspace_id, config)
+    cwd = _resolve_cwd(workspace_id, ctx)
     if not pr_number:
         return json.dumps({"status": "error", "message": "Número do PR é obrigatório."})
-    result = _gh_run(
+    result = await _gh_run(
         [
             "pr",
             "view",
@@ -205,19 +212,19 @@ async def gh_pr_view(
         return json.dumps({"status": "ok", "output": result["output"]})
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": True,
-        "icon": "git-merge",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=True,
+        icon="git-merge",
+    )
 )
 async def gh_pr_merge(
+    ctx: ToolContext,
     pr_number: int = 0,
     method: str = "squash",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Faz merge de um pull request.
 
@@ -228,26 +235,28 @@ async def gh_pr_merge(
         method: "squash" | "merge" | "rebase" (default: "squash").
         workspace_id: ID do workspace.
     """
-    cwd = _resolve_cwd(workspace_id, config)
+    cwd = _resolve_cwd(workspace_id, ctx)
     if not pr_number:
         return json.dumps({"status": "error", "message": "Número do PR é obrigatório."})
-    result = _gh_run(["pr", "merge", str(pr_number), f"--{method}", "--auto"], cwd=cwd)
+    result = await _gh_run(
+        ["pr", "merge", str(pr_number), f"--{method}", "--auto"], cwd=cwd
+    )
     return json.dumps(result)
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "git",
-        "destructive": False,
-        "icon": "circle-dot",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="git",
+        destructive=False,
+        icon="circle-dot",
+    )
 )
 async def gh_issue_list(
+    ctx: ToolContext,
     state: str = "open",
     labels: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Lista issues do repositório.
 
@@ -256,7 +265,7 @@ async def gh_issue_list(
         labels: Labels separadas por vírgula (ex: "bug,enhancement").
         workspace_id: ID do workspace.
     """
-    cwd = _resolve_cwd(workspace_id, config)
+    cwd = _resolve_cwd(workspace_id, ctx)
     args = [
         "issue",
         "list",
@@ -267,7 +276,7 @@ async def gh_issue_list(
     ]
     if labels:
         args += ["--label", labels]
-    result = _gh_run(args, cwd=cwd)
+    result = await _gh_run(args, cwd=cwd)
     if result["status"] != "ok":
         return json.dumps(result)
     try:
@@ -277,20 +286,20 @@ async def gh_issue_list(
         return json.dumps({"status": "ok", "output": result["output"]})
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "circle-plus",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="circle-plus",
+    )
 )
 async def gh_issue_create(
+    ctx: ToolContext,
     title: str = "",
     body: str = "",
     labels: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria uma issue no repositório.
 
@@ -300,7 +309,7 @@ async def gh_issue_create(
         labels: Labels separadas por vírgula.
         workspace_id: ID do workspace.
     """
-    cwd = _resolve_cwd(workspace_id, config)
+    cwd = _resolve_cwd(workspace_id, ctx)
     if not title:
         return json.dumps(
             {"status": "error", "message": "Título da issue é obrigatório."}
@@ -308,22 +317,22 @@ async def gh_issue_create(
     args = ["issue", "create", "--title", title, "--body", body]
     if labels:
         args += ["--label", labels]
-    result = _gh_run(args, cwd=cwd)
+    result = await _gh_run(args, cwd=cwd)
     return json.dumps(result)
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "circle-dot",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="circle-dot",
+    )
 )
 async def gh_issue_view(
+    ctx: ToolContext,
     issue_number: int = 0,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Exibe detalhes de uma issue.
 
@@ -331,12 +340,12 @@ async def gh_issue_view(
         issue_number: Número da issue.
         workspace_id: ID do workspace.
     """
-    cwd = _resolve_cwd(workspace_id, config)
+    cwd = _resolve_cwd(workspace_id, ctx)
     if not issue_number:
         return json.dumps(
             {"status": "error", "message": "Número da issue é obrigatório."}
         )
-    result = _gh_run(
+    result = await _gh_run(
         [
             "issue",
             "view",
@@ -355,19 +364,19 @@ async def gh_issue_view(
         return json.dumps({"status": "ok", "output": result["output"]})
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "git",
-        "destructive": False,
-        "icon": "message-circle",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="git",
+        destructive=False,
+        icon="message-circle",
+    )
 )
 async def gh_issue_comment(
+    ctx: ToolContext,
     issue_number: int = 0,
     body: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Adiciona um comentário a uma issue.
 
@@ -376,7 +385,7 @@ async def gh_issue_comment(
         body: Texto do comentário (suporta Markdown).
         workspace_id: ID do workspace.
     """
-    cwd = _resolve_cwd(workspace_id, config)
+    cwd = _resolve_cwd(workspace_id, ctx)
     if not issue_number:
         return json.dumps(
             {"status": "error", "message": "Número da issue é obrigatório."}
@@ -385,20 +394,7 @@ async def gh_issue_comment(
         return json.dumps(
             {"status": "error", "message": "Corpo do comentário é obrigatório."}
         )
-    result = _gh_run(["issue", "comment", str(issue_number), "--body", body], cwd=cwd)
+    result = await _gh_run(
+        ["issue", "comment", str(issue_number), "--body", body], cwd=cwd
+    )
     return json.dumps(result)
-
-
-# Sincroniza .extras → .metadata para compatibilidade com testes e endpoint GetTools
-for _t in (
-    gh_pr_list,
-    gh_pr_create,
-    gh_pr_view,
-    gh_pr_merge,
-    gh_issue_list,
-    gh_issue_create,
-    gh_issue_view,
-    gh_issue_comment,
-):
-    if _t.extras:
-        _t.metadata = _t.extras

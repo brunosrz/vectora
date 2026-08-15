@@ -383,24 +383,30 @@ class TestGitStashImpl:
 
 class TestGhToolsMetadata:
     def test_gh_pr_list_metadata(self) -> None:
-        from backend.tools.gh import gh_pr_list
+        import backend.tools.gh
+        from backend.tools.registry import TOOL_REGISTRY
 
-        extras = gh_pr_list.metadata or {}
-        assert extras.get("render_hint") == "table"
-        assert extras.get("category") == "git"
+        spec = TOOL_REGISTRY.get("gh_pr_list")
+        assert spec is not None
+        assert spec.extras.render_hint == "table"
+        assert spec.extras.category == "git"
 
     def test_gh_pr_create_is_destructive(self) -> None:
-        from backend.tools.gh import gh_pr_create
+        import backend.tools.gh
+        from backend.tools.registry import TOOL_REGISTRY
 
-        extras = gh_pr_create.metadata or {}
+        spec = TOOL_REGISTRY.get("gh_pr_create")
+        assert spec is not None
         # PR create não é destrutivo por padrão (não apaga código)
-        assert extras.get("category") == "git"
+        assert spec.extras.category == "git"
 
     def test_gh_issue_list_metadata(self) -> None:
-        from backend.tools.gh import gh_issue_list
+        import backend.tools.gh
+        from backend.tools.registry import TOOL_REGISTRY
 
-        extras = gh_issue_list.metadata or {}
-        assert extras.get("render_hint") == "table"
+        spec = TOOL_REGISTRY.get("gh_issue_list")
+        assert spec is not None
+        assert spec.extras.render_hint == "table"
 
     @pytest.mark.asyncio
     async def test_gh_pr_list_graceful_without_gh(self, tmp_path: Path) -> None:
@@ -411,7 +417,7 @@ class TestGhToolsMetadata:
         from backend.tools.gh import _gh_run
 
         with patch.dict(os.environ, {"PATH": ""}):
-            result = _gh_run(["pr", "list"], cwd=str(tmp_path))
+            result = await _gh_run(["pr", "list"], cwd=str(tmp_path))
 
         assert result["status"] == "error"
         assert (
