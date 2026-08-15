@@ -12,6 +12,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from backend.tools import (
+    computer_use as _computer_use_module,
+)
+from backend.tools import (
+    context_graph as _context_graph_module,
+)
+from backend.tools import (
+    thinking as _thinking_module,
+)
 from backend.tools.background import (
     approve_task_action,
     create_background_task,
@@ -61,16 +70,6 @@ from backend.tools.browser_devtools import (
     browser_start_trace,
     browser_stop_trace,
     browser_take_heap_snapshot,
-)
-from backend.tools.computer_use import computer_use
-from backend.tools.context_graph import (
-    build_knowledge_graph,
-    graph_affected,
-    graph_cancel_build,
-    graph_explain,
-    graph_path,
-    graph_query,
-    graph_update,
 )
 from backend.tools.fs import (
     create_artifact,
@@ -130,6 +129,7 @@ from backend.tools.homeassistant import (
 )
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.kanban import kanban_create, kanban_list, kanban_update_status
+from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.learning import (
     apply_memory_consolidation,
     install_learned_skill,
@@ -176,9 +176,9 @@ from backend.tools.native import (
 )
 from backend.tools.notion import notion_create_page, notion_read_page, notion_search
 from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
+from backend.tools.registry import TOOL_REGISTRY
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.terminal_sessions import close_terminal, list_terminals
-from backend.tools.thinking import sequential_thinking
 from backend.tools.web import fetch_url, web_crawl, web_map, web_search
 from backend.tools.workspace import (
     bucket_summary,
@@ -189,6 +189,28 @@ from backend.tools.workspace import (
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
+
+
+def _bridge(name: str) -> BaseTool:
+    """Resolve `name` no TOOL_REGISTRY nativo e envolve como BaseTool pro
+    grafo LangGraph atual — tools já migradas pro `@vtool` entram nas
+    listas deste módulo por aqui em vez de import direto."""
+    spec = TOOL_REGISTRY.get(name)
+    if spec is None:
+        msg = f"tool nativa '{name}' não registrada — módulo não importado?"
+        raise RuntimeError(msg)
+    return as_langchain_tool(spec)
+
+
+sequential_thinking = _bridge("sequential_thinking")
+computer_use = _bridge("computer_use")
+build_knowledge_graph = _bridge("build_knowledge_graph")
+graph_update = _bridge("graph_update")
+graph_cancel_build = _bridge("graph_cancel_build")
+graph_query = _bridge("graph_query")
+graph_explain = _bridge("graph_explain")
+graph_path = _bridge("graph_path")
+graph_affected = _bridge("graph_affected")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)

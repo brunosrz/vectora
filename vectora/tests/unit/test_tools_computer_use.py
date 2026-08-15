@@ -11,6 +11,9 @@ os dois testados nos dois sentidos:
   a tool recusa antes de tocar no mouse/teclado — fail-closed.
 
 Cada caminho feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
+
+Tool nativa (`@vtool`) — chamada como função async direta com
+`ctx: ToolContext`, sem `.invoke({...})` do LangChain.
 """
 
 from __future__ import annotations
@@ -18,40 +21,36 @@ from __future__ import annotations
 import json
 
 import pytest
-from langchain_core.runnables import RunnableConfig
 
 from backend.tools import computer_use as cu
+from backend.tools.context import ToolContext
 
 
-def _cfg(workspace_id: str = "ws1") -> RunnableConfig:
-    return {"configurable": {"workspace_id": workspace_id, "thread_id": "t-cu"}}
+def _ctx(workspace_id: str = "ws1") -> ToolContext:
+    return ToolContext(workspace_id=workspace_id, thread_id="t-cu")
 
 
 class TestOptIn:
-    def test_sem_secao_computer_use_recusa_sem_tocar_na_tela(self, monkeypatch):
+    async def test_sem_secao_computer_use_recusa_sem_tocar_na_tela(self, monkeypatch):
         """Erro/borda: workspace sem `[computer_use]` — fail-closed, a tool
         nem chega perto do mouse/teclado."""
         chamou = {"screenshot": False}
         monkeypatch.setattr(cu, "_computer_use_enabled", lambda _workspace_id: False)
         monkeypatch.setattr(
-            cu, "_take_screenshot", lambda: chamou.__setitem__("screenshot", True)
+            cu, "_take_screenshot_sync", lambda: chamou.__setitem__("screenshot", True)
         )
 
-        saida = json.loads(
-            cu.computer_use.invoke({"action": "screenshot", "config": _cfg()})
-        )
+        saida = json.loads(await cu.computer_use(action="screenshot", ctx=_ctx()))
 
         assert "error" in saida
         assert "computer_use" in saida["error"]
         assert chamou["screenshot"] is False
 
-    def test_com_secao_habilitada_a_tool_executa(self, monkeypatch):
+    async def test_com_secao_habilitada_a_tool_executa(self, monkeypatch):
         monkeypatch.setattr(cu, "_computer_use_enabled", lambda _workspace_id: True)
-        monkeypatch.setattr(cu, "_take_screenshot", lambda: b"\x89PNG\r\n")
+        monkeypatch.setattr(cu, "_take_screenshot_sync", lambda: b"\x89PNG\r\n")
 
-        saida = json.loads(
-            cu.computer_use.invoke({"action": "screenshot", "config": _cfg()})
-        )
+        saida = json.loads(await cu.computer_use(action="screenshot", ctx=_ctx()))
 
         assert "error" not in saida
         assert saida["action"] == "screenshot"
@@ -84,26 +83,24 @@ class TestAcoes:
     def _habilitado(self, monkeypatch):
         monkeypatch.setattr(cu, "_computer_use_enabled", lambda _workspace_id: True)
 
-    def test_screenshot_devolve_path_do_arquivo_gerado(self, monkeypatch, tmp_path):
-        monkeypatch.setattr(cu, "_take_screenshot", lambda: b"\x89PNG\r\nfake")
+    async def test_screenshot_devolve_path_do_arquivo_gerado(
+        self, monkeypatch, tmp_path
+    ):
+        monkeypatch.setattr(cu, "_take_screenshot_sync", lambda: b"\x89PNG\r\nfake")
         monkeypatch.setattr(cu, "_media_dir", lambda _s: tmp_path / "media")
 
-        saida = json.loads(
-            cu.computer_use.invoke({"action": "screenshot", "config": _cfg()})
-        )
+        saida = json.loads(await cu.computer_use(action="screenshot", ctx=_ctx()))
 
         assert saida["path"].endswith(".png")
 
-    def test_click_exige_coordenadas_e_falha_de_biblioteca_vira_erro_tipado(
+    async def test_click_exige_coordenadas_e_falha_de_biblioteca_vira_erro_tipado(
         self, monkeypatch
     ):
         chamadas = []
-        monkeypatch.setattr(cu, "_click", lambda x, y: chamadas.append((x, y)))
+        monkeypatch.setattr(cu, "_click_sync", lambda x, y: chamadas.append((x, y)))
 
         saida = json.loads(
-            cu.computer_use.invoke(
-                {"action": "click", "x": 100, "y": 200, "config": _cfg()}
-            )
+            await cu.computer_use(action="click", x=100, y=200, ctx=_ctx())
         )
         assert saida["action"] == "click"
         assert chamadas == [(100, 200)]
@@ -112,53 +109,41 @@ class TestAcoes:
         # biblioteca, que aceitaria None e clicaria na posição atual do
         # mouse sem o usuário ter pedido isso.
         chamadas.clear()
-        sem_coords = json.loads(
-            cu.computer_use.invoke({"action": "click", "config": _cfg()})
-        )
+        sem_coords = json.loads(await cu.computer_use(action="click", ctx=_ctx()))
         assert "error" in sem_coords
         assert chamadas == []
 
-    def test_type_text_digita_e_texto_vazio_e_recusado(self, monkeypatch):
+    async def test_type_text_digita_e_texto_vazio_e_recusado(self, monkeypatch):
         digitado = []
-        monkeypatch.setattr(cu, "_type_text", digitado.append)
+        monkeypatch.setattr(cu, "_type_text_sync", digitado.append)
 
         saida = json.loads(
-            cu.computer_use.invoke(
-                {"action": "type_text", "text": "oi", "config": _cfg()}
-            )
+            await cu.computer_use(action="type_text", text="oi", ctx=_ctx())
         )
         assert saida["action"] == "type_text"
         assert digitado == ["oi"]
 
         digitado.clear()
         vazio = json.loads(
-            cu.computer_use.invoke(
-                {"action": "type_text", "text": "", "config": _cfg()}
-            )
+            await cu.computer_use(action="type_text", text="", ctx=_ctx())
         )
         assert "error" in vazio
         assert digitado == []
 
-    def test_falha_da_biblioteca_de_automacao_nunca_propaga(self, monkeypatch):
+    async def test_falha_da_biblioteca_de_automacao_nunca_propaga(self, monkeypatch):
         """Regra 11: tool defensiva — exceção vira observação pro LLM, o
         grafo não cai."""
 
         def _explode(_x, _y):
             raise RuntimeError("X11 display não encontrado")
 
-        monkeypatch.setattr(cu, "_click", _explode)
+        monkeypatch.setattr(cu, "_click_sync", _explode)
 
-        saida = json.loads(
-            cu.computer_use.invoke(
-                {"action": "click", "x": 1, "y": 1, "config": _cfg()}
-            )
-        )
+        saida = json.loads(await cu.computer_use(action="click", x=1, y=1, ctx=_ctx()))
         assert "X11 display" in saida["error"]
 
-    def test_acao_desconhecida_e_recusada(self):
-        saida = json.loads(
-            cu.computer_use.invoke({"action": "explodir_tudo", "config": _cfg()})
-        )
+    async def test_acao_desconhecida_e_recusada(self):
+        saida = json.loads(await cu.computer_use(action="explodir_tudo", ctx=_ctx()))
         assert "error" in saida
 
 

@@ -14,20 +14,22 @@ proteções que nenhuma outra tool tem:
 
 A biblioteca de automação é ``pyautogui-next`` (fork mantido do PyAutoGUI
 original, mesmo import ``pyautogui`` — o original está sem release desde
-2022).
+2022). As chamadas de `pyautogui` são síncronas/bloqueantes (I/O de tela) —
+rodadas via `asyncio.to_thread` pra nunca travar o event loop (CLAUDE.md
+regra 10).
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any
 from uuid import uuid4
 
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg, tool
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +48,7 @@ def _computer_use_enabled_for_cwd(cwd: str) -> bool:
 
 
 def _computer_use_enabled(workspace_id: str) -> bool:
-    """Resolve o opt-in a partir do `workspace_id` do config da tool.
+    """Resolve o opt-in a partir do `workspace_id` do contexto da tool.
 
     Fail-closed: workspace desconhecida ou qualquer erro ao resolver o
     `cwd` volta `False` — nunca assume habilitado por omissão."""
@@ -71,7 +73,7 @@ def _media_dir(session_id: str) -> Path:
     )
 
 
-def _take_screenshot() -> bytes:
+def _take_screenshot_sync() -> bytes:
     import io
 
     import pyautogui
@@ -81,46 +83,32 @@ def _take_screenshot() -> bytes:
     return buffer.getvalue()
 
 
-def _click(x: int, y: int) -> None:
+def _click_sync(x: int, y: int) -> None:
     import pyautogui
 
     pyautogui.click(x=x, y=y)
 
 
-def _type_text(text: str) -> None:
+def _type_text_sync(text: str) -> None:
     import pyautogui
 
     pyautogui.typewrite(text)
 
 
-def _session_id(config: RunnableConfig | None) -> str:
-    return (
-        str((config.get("configurable") or {}).get("thread_id", "")) if config else ""
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="computer_use",
+        destructive=True,
+        icon="monitor",
     )
-
-
-def _workspace_id(config: RunnableConfig | None) -> str:
-    return (
-        str((config.get("configurable") or {}).get("workspace_id", ""))
-        if config
-        else ""
-    )
-
-
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "computer_use",
-        "destructive": True,
-        "icon": "monitor",
-    }
 )
-def computer_use(
+async def computer_use(
     action: str,
+    ctx: ToolContext,
     x: int | None = None,
     y: int | None = None,
     text: str = "",
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Controla mouse/teclado da tela do desktop — `screenshot`, `click`, `type_text`.
 
@@ -139,9 +127,8 @@ def computer_use(
     Returns:
         JSON com o resultado da ação, ou com `error`.
     """
-    workspace_id = _workspace_id(config)
     try:
-        if not _computer_use_enabled(workspace_id):
+        if not _computer_use_enabled(ctx.workspace_id):
             return json.dumps(
                 {
                     "error": (
@@ -159,8 +146,8 @@ def computer_use(
             )
 
         if action == "screenshot":
-            data = _take_screenshot()
-            directory = _media_dir(_session_id(config))
+            data = await asyncio.to_thread(_take_screenshot_sync)
+            directory = _media_dir(ctx.thread_id)
             directory.mkdir(parents=True, exist_ok=True)
             path = (
                 directory / f"{datetime.now(UTC):%Y%m%d-%H%M%S}-{uuid4().hex[:8]}.png"
@@ -173,22 +160,17 @@ def computer_use(
         if action == "click":
             if x is None or y is None:
                 return json.dumps({"error": "click exige x e y"}, ensure_ascii=False)
-            _click(x, y)
+            await asyncio.to_thread(_click_sync, x, y)
             return json.dumps({"action": "click", "x": x, "y": y}, ensure_ascii=False)
 
         if not text:
             return json.dumps(
                 {"error": "type_text exige texto não vazio"}, ensure_ascii=False
             )
-        _type_text(text)
+        await asyncio.to_thread(_type_text_sync, text)
         return json.dumps({"action": "type_text"}, ensure_ascii=False)
     except Exception as exc:
         logger.exception("computer_use: falha", extra={"action": action})
         return json.dumps(
             {"error": f"falha em computer_use: {exc}"}, ensure_ascii=False
         )
-
-
-COMPUTER_USE_TOOLS: list[Any] = [computer_use]
-
-__all__ = ["COMPUTER_USE_TOOLS", "computer_use"]

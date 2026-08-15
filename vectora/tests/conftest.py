@@ -126,16 +126,32 @@ def _isolate_native_tool_registry() -> Generator[None]:
     vários testes definem tools locais via ``@vtool`` com o mesmo nome (ex.
     ``buscar``, repetido em test_*_chat_client.py e test_engine_conversation_
     loop.py). Sem isolamento, rodar a suíte inteira num processo só colide
-    ("tool já registrada") mesmo com cada teste passando isolado. Snapshot +
-    restore em vez de ``clear()`` — preserva qualquer tool que um módulo de
-    produção venha a registrar de verdade no import (hoje nenhum, mas não
-    assume isso pra sempre)."""
+    ("tool já registrada") mesmo com cada teste passando isolado.
+
+    Não é um snapshot+restore ingênuo: várias tools de produção (`backend.
+    tools.context_graph`, etc.) só são importadas — e portanto só registradas
+    via `@vtool`, que roda no import — dentro do corpo de algum teste
+    (import local, padrão comum no repo), não na coleção. Restaurar cegamente
+    pro snapshot pré-teste apagaria esse registro de produção genuíno assim
+    que o primeiro teste que o importa terminasse — o próximo teste que
+    dependesse dele (ex. `backend.nodes.tools`, que resolve pelo nome no
+    TOOL_REGISTRY) quebraria com "tool não registrada", mesmo a tool sendo
+    real e o módulo já estar em `sys.modules`.
+
+    Discriminador: uma tool definida DENTRO de um teste (`@vtool` no corpo
+    de uma função de teste) tem `__qualname__` contendo `.<locals>.` — só
+    essas são removidas no teardown. Tool de módulo de produção (top-level,
+    sem `<locals>` no qualname) fica registrada pro resto da sessão, como
+    qualquer singleton de import real."""
     from backend.tools.registry import TOOL_REGISTRY
 
-    snapshot = dict(TOOL_REGISTRY._tools)
+    snapshot_names = set(TOOL_REGISTRY._tools)
     yield
-    TOOL_REGISTRY._tools.clear()
-    TOOL_REGISTRY._tools.update(snapshot)
+    for name in set(TOOL_REGISTRY._tools) - snapshot_names:
+        spec = TOOL_REGISTRY._tools.get(name)
+        qualname = getattr(spec.handler, "__qualname__", "") if spec else ""
+        if "<locals>" in qualname:
+            TOOL_REGISTRY._tools.pop(name, None)
 
 
 @pytest.fixture

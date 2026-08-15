@@ -12,22 +12,19 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Annotated
 
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
 
-@tool(
-    extras={
-        "render_hint": "thinking_step",
-        "category": "reasoning",
-        "destructive": False,
-        "icon": "brain",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="thinking_step",
+        category="reasoning",
+        destructive=False,
+        icon="brain",
+    )
 )
 async def sequential_thinking(
     thought: str,
@@ -38,7 +35,6 @@ async def sequential_thinking(
     branch_from_thought: int | None = None,
     branch_id: str | None = None,
     next_thought_needed: bool = True,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Registra um passo de raciocínio sequencial antes de agir.
 

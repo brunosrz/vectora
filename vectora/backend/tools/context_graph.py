@@ -12,20 +12,11 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Annotated
 
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
-
-
-def _active_workspace_id(config: RunnableConfig | None) -> str | None:
-    if config is None:
-        return None
-    cfg = config.get("configurable", {})
-    return cfg.get("workspace_id") or cfg.get("active_workspace_id")
 
 
 def _load_graph_data(workspace_id: str) -> tuple[dict | None, str | None]:
@@ -44,9 +35,9 @@ def _load_graph_data(workspace_id: str) -> tuple[dict | None, str | None]:
         return None, f"Falha ao ler graph.json: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras())
 async def build_knowledge_graph(
-    config: Annotated[RunnableConfig, InjectedToolArg],
+    ctx: ToolContext,
     model: str = "",
     mode: str = "semantic",
 ) -> str:
@@ -63,13 +54,12 @@ async def build_knowledge_graph(
         Resumo do grafo com contagem de nós/arestas, god nodes e próximos passos.
     """
     try:
-        workspace_id = _active_workspace_id(config)
-        if not workspace_id:
+        if not ctx.workspace_id:
             return "Erro: nenhum workspace ativo. Abra um workspace primeiro."
 
         from backend.context_graph.pipeline import build_workspace_graph
 
-        result = await build_workspace_graph(workspace_id, model=model, mode=mode)
+        result = await build_workspace_graph(ctx.workspace_id, model=model, mode=mode)
         if result.error:
             return f"Erro no build do grafo: {result.error}"
 
@@ -91,11 +81,8 @@ async def build_knowledge_graph(
         return f"Erro ao construir o grafo: {exc}"
 
 
-@tool
-async def graph_update(
-    config: Annotated[RunnableConfig, InjectedToolArg],
-    model: str = "",
-) -> str:
+@vtool(extras=ToolExtras())
+async def graph_update(ctx: ToolContext, model: str = "") -> str:
     """Atualiza o grafo de contexto incrementalmente (só arquivos novos/modificados).
 
     Mais rápido que build_knowledge_graph para workspaces grandes porque compara
@@ -108,14 +95,13 @@ async def graph_update(
         Resumo: nós/arestas no grafo atualizado e god nodes.
     """
     try:
-        workspace_id = _active_workspace_id(config)
-        if not workspace_id:
+        if not ctx.workspace_id:
             return "Erro: nenhum workspace ativo. Abra um workspace primeiro."
 
         from backend.context_graph.pipeline import build_workspace_graph
 
         result = await build_workspace_graph(
-            workspace_id, model=model, mode="semantic", update=True
+            ctx.workspace_id, model=model, mode="semantic", update=True
         )
         if result.error:
             return f"Erro na atualização do grafo: {result.error}"
@@ -132,17 +118,15 @@ async def graph_update(
         return f"Erro ao atualizar o grafo: {exc}"
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "workspace",
-        "destructive": True,
-        "icon": "square-x",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="workspace",
+        destructive=True,
+        icon="square-x",
+    )
 )
-async def graph_cancel_build(
-    config: Annotated[RunnableConfig, InjectedToolArg],
-) -> str:
+async def graph_cancel_build(ctx: ToolContext) -> str:
     """Cancela um build (ou update) do Context Graph em andamento, disparado
     via ``POST /workspaces/{id}/context-graph/build`` (REST, ex.: pelo
     usuário na aba Context Graph).
@@ -156,18 +140,17 @@ async def graph_cancel_build(
         em andamento neste workspace.
     """
     try:
-        workspace_id = _active_workspace_id(config)
-        if not workspace_id:
+        if not ctx.workspace_id:
             return "Erro: nenhum workspace ativo. Abra um workspace primeiro."
 
         from backend.api.handlers.context_graph import _active_builds, _graph_dir
 
-        task = _active_builds.pop(workspace_id, None)
+        task = _active_builds.pop(ctx.workspace_id, None)
         if task is None or task.done():
             return "Nenhum build em andamento neste workspace."
         task.cancel()
 
-        d = _graph_dir(workspace_id)
+        d = _graph_dir(ctx.workspace_id)
         if d is not None:
             status_file = d / "build_status.json"
             if status_file.exists():
@@ -179,12 +162,8 @@ async def graph_cancel_build(
         return f"Erro ao cancelar o build: {exc}"
 
 
-@tool
-async def graph_query(
-    question: str,
-    config: Annotated[RunnableConfig, InjectedToolArg],
-    top_k: int = 10,
-) -> str:
+@vtool(extras=ToolExtras())
+async def graph_query(question: str, ctx: ToolContext, top_k: int = 10) -> str:
     """Consulta o grafo de contexto por pergunta livre.
 
     Retorna nós relevantes e sua vizinhança, consumindo muito menos tokens do
@@ -199,11 +178,10 @@ async def graph_query(
         Nós encontrados com seus tipos, labels e arestas de conexão, em texto.
     """
     try:
-        workspace_id = _active_workspace_id(config)
-        if not workspace_id:
+        if not ctx.workspace_id:
             return "Erro: nenhum workspace ativo."
 
-        data, err = _load_graph_data(workspace_id)
+        data, err = _load_graph_data(ctx.workspace_id)
         if err or data is None:
             return err or "Erro: grafo de contexto não disponível."
 
@@ -233,11 +211,8 @@ async def graph_query(
         return f"Erro na consulta do grafo: {exc}"
 
 
-@tool
-async def graph_explain(
-    node_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg],
-) -> str:
+@vtool(extras=ToolExtras())
+async def graph_explain(node_id: str, ctx: ToolContext) -> str:
     """Explica um nó do grafo de contexto mostrando sua vizinhança e conexões.
 
     Args:
@@ -247,11 +222,10 @@ async def graph_explain(
         Tipo, vizinhos e relações do nó, com o suficiente para entender seu papel.
     """
     try:
-        workspace_id = _active_workspace_id(config)
-        if not workspace_id:
+        if not ctx.workspace_id:
             return "Erro: nenhum workspace ativo."
 
-        data, err = _load_graph_data(workspace_id)
+        data, err = _load_graph_data(ctx.workspace_id)
         if err or data is None:
             return err or "Erro: grafo de contexto não disponível."
 
@@ -283,12 +257,8 @@ async def graph_explain(
         return f"Erro ao explicar nó: {exc}"
 
 
-@tool
-async def graph_path(
-    source: str,
-    target: str,
-    config: Annotated[RunnableConfig, InjectedToolArg],
-) -> str:
+@vtool(extras=ToolExtras())
+async def graph_path(source: str, target: str, ctx: ToolContext) -> str:
     """Encontra o caminho mais curto entre dois nós no grafo de contexto.
 
     Args:
@@ -299,11 +269,10 @@ async def graph_path(
         Sequência de nós que conectam source a target, ou mensagem de erro se não existe.
     """
     try:
-        workspace_id = _active_workspace_id(config)
-        if not workspace_id:
+        if not ctx.workspace_id:
             return "Erro: nenhum workspace ativo."
 
-        data, err = _load_graph_data(workspace_id)
+        data, err = _load_graph_data(ctx.workspace_id)
         if err or data is None:
             return err or "Erro: grafo de contexto não disponível."
 
@@ -334,12 +303,8 @@ async def graph_path(
         return f"Erro ao buscar caminho: {exc}"
 
 
-@tool
-async def graph_affected(
-    node_query: str,
-    config: Annotated[RunnableConfig, InjectedToolArg],
-    depth: int = 2,
-) -> str:
+@vtool(extras=ToolExtras())
+async def graph_affected(node_query: str, ctx: ToolContext, depth: int = 2) -> str:
     """Encontra todos os componentes afetados se o nó consultado mudar.
 
     Percorre as arestas de dependência (calls, imports, inherits, etc.) no grafo
@@ -354,11 +319,10 @@ async def graph_affected(
         Lista de componentes afetados com relação e localização no código.
     """
     try:
-        workspace_id = _active_workspace_id(config)
-        if not workspace_id:
+        if not ctx.workspace_id:
             return "Erro: nenhum workspace ativo."
 
-        data, err = _load_graph_data(workspace_id)
+        data, err = _load_graph_data(ctx.workspace_id)
         if err or data is None:
             return err or "Erro: grafo de contexto não disponível."
 
