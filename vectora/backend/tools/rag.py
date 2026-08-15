@@ -567,15 +567,14 @@ async def ingest_docs(
         JSON com total_files, total_chunks, indexed (enfileirados), failed
     """
     from backend.services.ignore import load_ignore_spec, walk_files
+    from backend.tools.context import ctx_from_config
     from backend.tools.fs import _confine
 
-    # `directory_path` vem direto do modelo (tool call) — a mesma defesa
-    # forte de path traversal usada por `file_read`/`file_write`/etc, não
-    # a checagem leve de `is_safe_file_path` (pensada pra paths vindos de
-    # UI interna, não de input arbitrário de LLM). Achado da auditoria de
-    # segurança registrada no plano: `ingest_docs` era a única tool de
-    # escrita que ainda confiava só na checagem leve.
-    path, err = _confine(directory_path, config)
+    # `directory_path` vem direto do modelo (tool call) — usa a mesma defesa
+    # forte de path traversal de `file_read`/`file_write`/etc, não a checagem
+    # leve de `is_safe_file_path` (pensada pra paths vindos de UI interna,
+    # não de input arbitrário de LLM).
+    path, err = _confine(directory_path, ctx_from_config(config))  # ty: ignore[invalid-argument-type]
     if path is None:
         return err
     if not path.is_dir():

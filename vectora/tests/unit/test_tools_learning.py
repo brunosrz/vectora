@@ -167,12 +167,20 @@ async def test_install_learned_skill_mirrors_artifact_and_resolves_pending(
 
     create_artifact_calls: list[dict] = []
 
-    class _FakeCreateArtifact:
-        def invoke(self, payload: dict) -> str:
-            create_artifact_calls.append(payload)
-            return "{}"
+    async def _fake_create_artifact(
+        *, artifact_type: str, title: str, content: str, ctx: object
+    ) -> str:
+        create_artifact_calls.append(
+            {
+                "artifact_type": artifact_type,
+                "title": title,
+                "content": content,
+                "ctx": ctx,
+            }
+        )
+        return "{}"
 
-    monkeypatch.setattr("backend.tools.fs.create_artifact", _FakeCreateArtifact())
+    monkeypatch.setattr("backend.tools.fs.create_artifact", _fake_create_artifact)
     resolve_calls: list[str] = []
 
     async def _fake_set_pending(thread_id: str, pending: bool) -> None:
@@ -208,12 +216,13 @@ async def test_save_learned_fact_persists_via_save_memory(monkeypatch):
             save_memory_calls.append(payload)
             return "ok"
 
-    class _FakeCreateArtifact:
-        def invoke(self, payload: dict) -> str:
-            return "{}"
+    async def _fake_create_artifact(
+        *, artifact_type: str, title: str, content: str, ctx: object
+    ) -> str:
+        return "{}"
 
     monkeypatch.setattr("backend.tools.memory.save_memory", _FakeSaveMemory())
-    monkeypatch.setattr("backend.tools.fs.create_artifact", _FakeCreateArtifact())
+    monkeypatch.setattr("backend.tools.fs.create_artifact", _fake_create_artifact)
     monkeypatch.setattr(
         "backend.api.handlers.threads.set_remember_pending",
         AsyncMock(),
@@ -263,10 +272,14 @@ async def test_apply_memory_consolidation_writes_section(monkeypatch, tmp_path):
     from backend.scheduling import memory_consolidation
 
     monkeypatch.setattr(memory_consolidation, "memory_dir", lambda: tmp_path)
-    monkeypatch.setattr("backend.tools.fs.create_artifact", lambda payload: "{}")
-    monkeypatch.setattr(
-        "backend.tools.learning._mirror_to_plan_tab", lambda *a, **k: None
-    )
+
+    async def _fake_create_artifact(
+        *, artifact_type: str, title: str, content: str, ctx: object
+    ) -> str:
+        return "{}"
+
+    monkeypatch.setattr("backend.tools.fs.create_artifact", _fake_create_artifact)
+    monkeypatch.setattr("backend.tools.learning._mirror_to_plan_tab", AsyncMock())
 
     result = json.loads(
         await apply_memory_consolidation.ainvoke(
@@ -309,9 +322,7 @@ async def test_apply_memory_consolidation_unchanged_content_returns_unchanged(
 
     (tmp_path / "gotchas.md").write_text("JWT expira rápido.", encoding="utf-8")
     monkeypatch.setattr(memory_consolidation, "memory_dir", lambda: tmp_path)
-    monkeypatch.setattr(
-        "backend.tools.learning._mirror_to_plan_tab", lambda *a, **k: None
-    )
+    monkeypatch.setattr("backend.tools.learning._mirror_to_plan_tab", AsyncMock())
 
     result = json.loads(
         await apply_memory_consolidation.ainvoke(

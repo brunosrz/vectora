@@ -238,6 +238,7 @@ async def _propose_consolidation(thread_id: str, sections: dict[str, str]) -> No
     recente do usuário — mesmo padrão do Remember (`remember_trigger.py`):
     fica visível na aba Plan, só é persistida quando o usuário aprova via
     `apply_memory_consolidation`."""
+    from backend.tools.context import ToolContext
     from backend.tools.fs import create_artifact
 
     lines = ["# Proposta de consolidação de memória", ""]
@@ -255,13 +256,11 @@ async def _propose_consolidation(thread_id: str, sections: dict[str, str]) -> No
     )
     body = "\n".join(lines)
 
-    create_artifact.invoke(
-        {
-            "artifact_type": "memory_consolidation_proposal",
-            "title": "Proposta de consolidação de memória",
-            "content": body,
-            "config": {"configurable": {"thread_id": thread_id}},
-        }
+    await create_artifact(
+        artifact_type="memory_consolidation_proposal",
+        title="Proposta de consolidação de memória",
+        content=body,
+        ctx=ToolContext(thread_id=thread_id),
     )
 
 

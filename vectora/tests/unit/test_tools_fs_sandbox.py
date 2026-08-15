@@ -10,6 +10,7 @@ import pytest
 
 from backend.sandbox.workspace_jail import WorkerSpawnError
 from backend.tools import fs as fs_mod
+from backend.tools.context import ctx_from_config
 from backend.vtypes import Workspace
 
 
@@ -48,7 +49,7 @@ class _FakeWorker:
 
 
 class TestFileWriteSandboxed:
-    def test_routes_through_jail_worker_when_enabled(
+    async def test_routes_through_jail_worker_when_enabled(
         self, tmp_path, trusted_ws, monkeypatch
     ):
         _write_sandbox_toml(tmp_path)
@@ -57,8 +58,8 @@ class TestFileWriteSandboxed:
             fs_mod.jail_manager, "get_or_spawn", AsyncMock(return_value=worker)
         )
 
-        result = fs_mod.file_write.invoke(
-            {"file_path": "out.txt", "content": "olá jail"}, config=trusted_ws
+        result = await fs_mod.file_write(
+            file_path="out.txt", content="olá jail", ctx=ctx_from_config(trusted_ws)
         )
 
         assert "[OK]" in result
@@ -72,15 +73,15 @@ class TestFileWriteSandboxed:
         # é responsabilidade do processo jailado, não do backend.
         assert not (tmp_path / "out.txt").exists()
 
-    def test_without_sandbox_config_writes_directly(self, tmp_path, trusted_ws):
-        result = fs_mod.file_write.invoke(
-            {"file_path": "out.txt", "content": "sem jail"}, config=trusted_ws
+    async def test_without_sandbox_config_writes_directly(self, tmp_path, trusted_ws):
+        result = await fs_mod.file_write(
+            file_path="out.txt", content="sem jail", ctx=ctx_from_config(trusted_ws)
         )
 
         assert "[OK]" in result
         assert (tmp_path / "out.txt").read_text(encoding="utf-8") == "sem jail"
 
-    def test_worker_spawn_error_returns_clear_message_not_exception(
+    async def test_worker_spawn_error_returns_clear_message_not_exception(
         self, tmp_path, trusted_ws, monkeypatch
     ):
         _write_sandbox_toml(tmp_path)
@@ -90,8 +91,8 @@ class TestFileWriteSandboxed:
             AsyncMock(side_effect=WorkerSpawnError("bwrap não está instalado")),
         )
 
-        result = fs_mod.file_write.invoke(
-            {"file_path": "out.txt", "content": "x"}, config=trusted_ws
+        result = await fs_mod.file_write(
+            file_path="out.txt", content="x", ctx=ctx_from_config(trusted_ws)
         )
 
         assert result.startswith("Error:")
@@ -100,7 +101,7 @@ class TestFileWriteSandboxed:
 
 
 class TestFileEditSandboxed:
-    def test_edit_reads_and_writes_through_worker(
+    async def test_edit_reads_and_writes_through_worker(
         self, tmp_path, trusted_ws, monkeypatch
     ):
         _write_sandbox_toml(tmp_path)
@@ -114,9 +115,11 @@ class TestFileEditSandboxed:
             fs_mod.jail_manager, "get_or_spawn", AsyncMock(return_value=worker)
         )
 
-        result = fs_mod.file_edit.invoke(
-            {"file_path": "f.txt", "old_text": "mundo", "new_text": "jail"},
-            config=trusted_ws,
+        result = await fs_mod.file_edit(
+            file_path="f.txt",
+            old_text="mundo",
+            new_text="jail",
+            ctx=ctx_from_config(trusted_ws),
         )
 
         assert "[OK]" in result
@@ -127,7 +130,7 @@ class TestFileEditSandboxed:
         )
         assert not (tmp_path / "f.txt").exists()
 
-    def test_edit_creates_file_when_missing_and_old_text_empty(
+    async def test_edit_creates_file_when_missing_and_old_text_empty(
         self, tmp_path, trusted_ws, monkeypatch
     ):
         _write_sandbox_toml(tmp_path)
@@ -141,9 +144,11 @@ class TestFileEditSandboxed:
             fs_mod.jail_manager, "get_or_spawn", AsyncMock(return_value=worker)
         )
 
-        result = fs_mod.file_edit.invoke(
-            {"file_path": "novo.txt", "old_text": "", "new_text": "conteúdo novo"},
-            config=trusted_ws,
+        result = await fs_mod.file_edit(
+            file_path="novo.txt",
+            old_text="",
+            new_text="conteúdo novo",
+            ctx=ctx_from_config(trusted_ws),
         )
 
         assert "created" in result.lower()
@@ -152,7 +157,7 @@ class TestFileEditSandboxed:
             {"path": str(tmp_path / "novo.txt"), "content": "conteúdo novo"},
         )
 
-    def test_edit_missing_file_and_old_text_not_empty_returns_error(
+    async def test_edit_missing_file_and_old_text_not_empty_returns_error(
         self, tmp_path, trusted_ws, monkeypatch
     ):
         _write_sandbox_toml(tmp_path)
@@ -161,9 +166,11 @@ class TestFileEditSandboxed:
             fs_mod.jail_manager, "get_or_spawn", AsyncMock(return_value=worker)
         )
 
-        result = fs_mod.file_edit.invoke(
-            {"file_path": "sumido.txt", "old_text": "algo", "new_text": "outro"},
-            config=trusted_ws,
+        result = await fs_mod.file_edit(
+            file_path="sumido.txt",
+            old_text="algo",
+            new_text="outro",
+            ctx=ctx_from_config(trusted_ws),
         )
 
         assert result == "Error: Text not found in file"
@@ -180,8 +187,8 @@ class TestTerminalSandboxed:
             fs_mod.jail_manager, "get_or_spawn", AsyncMock(return_value=worker)
         )
 
-        result = await fs_mod.terminal.ainvoke(
-            {"command": "echo ok"}, config=trusted_ws
+        result = await fs_mod.terminal(
+            command="echo ok", ctx=ctx_from_config(trusted_ws)
         )
 
         assert result.strip() == "ok"
@@ -198,8 +205,8 @@ class TestTerminalSandboxed:
             AsyncMock(side_effect=WorkerSpawnError("bwrap não está instalado")),
         )
 
-        result = await fs_mod.terminal.ainvoke(
-            {"command": "echo ok"}, config=trusted_ws
+        result = await fs_mod.terminal(
+            command="echo ok", ctx=ctx_from_config(trusted_ws)
         )
 
         assert result.startswith("Error:")
@@ -218,8 +225,8 @@ class TestTerminalSandboxed:
         monkeypatch.setattr(
             fs_mod.jail_manager, "get_or_spawn", AsyncMock(return_value=worker)
         )
-        await fs_mod.terminal.ainvoke({"command": "echo ok"}, config=trusted_ws)
+        await fs_mod.terminal(command="echo ok", ctx=ctx_from_config(trusted_ws))
 
-        result = await fs_mod.terminal.ainvoke({"stdin_input": "y"}, config=trusted_ws)
+        result = await fs_mod.terminal(stdin_input="y", ctx=ctx_from_config(trusted_ws))
 
         assert "não há comando pendente" in result

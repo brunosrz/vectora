@@ -87,12 +87,20 @@ async def test_multiple_of_n_without_pending_distills_and_writes_proposal(
     )
     artifact_calls: list[dict] = []
 
-    class _FakeCreateArtifact:
-        def invoke(self, payload: dict) -> str:
-            artifact_calls.append(payload)
-            return "{}"
+    async def _fake_create_artifact(
+        *, artifact_type: str, title: str, content: str, ctx: object
+    ) -> str:
+        artifact_calls.append(
+            {
+                "artifact_type": artifact_type,
+                "title": title,
+                "content": content,
+                "ctx": ctx,
+            }
+        )
+        return "{}"
 
-    monkeypatch.setattr("backend.tools.fs.create_artifact", _FakeCreateArtifact())
+    monkeypatch.setattr("backend.tools.fs.create_artifact", _fake_create_artifact)
 
     await maybe_trigger_remember("t1", "u1")
 
@@ -160,9 +168,9 @@ async def test_empty_transcript_returns_without_distilling(monkeypatch, _no_pend
 
 @pytest.mark.asyncio
 async def test_fato_ja_salvo_nao_e_proposto_de_novo(monkeypatch, _no_pending):
-    """Regressão (Sprint 16 WS3): um fato já aprovado/salvo em sessão
-    anterior não pode voltar a ser proposto pelo Remember — sem o dedup,
-    o mesmo fato reaparece a cada N turnos indefinidamente."""
+    """Regressão: um fato já aprovado/salvo em sessão anterior não pode
+    voltar a ser proposto pelo Remember — sem o dedup, o mesmo fato
+    reaparece a cada N turnos indefinidamente."""
     monkeypatch.setattr(
         "backend.api.handlers.threads.increment_remember_turn_count",
         AsyncMock(return_value=REMEMBER_TRIGGER_EVERY_N_TURNS),
@@ -194,12 +202,20 @@ async def test_fato_ja_salvo_nao_e_proposto_de_novo(monkeypatch, _no_pending):
     )
     artifact_calls: list[dict] = []
 
-    class _FakeCreateArtifact:
-        def invoke(self, payload: dict) -> str:
-            artifact_calls.append(payload)
-            return "{}"
+    async def _fake_create_artifact(
+        *, artifact_type: str, title: str, content: str, ctx: object
+    ) -> str:
+        artifact_calls.append(
+            {
+                "artifact_type": artifact_type,
+                "title": title,
+                "content": content,
+                "ctx": ctx,
+            }
+        )
+        return "{}"
 
-    monkeypatch.setattr("backend.tools.fs.create_artifact", _FakeCreateArtifact())
+    monkeypatch.setattr("backend.tools.fs.create_artifact", _fake_create_artifact)
 
     await maybe_trigger_remember("t1", "u1")
 

@@ -92,6 +92,7 @@ async def maybe_trigger_remember(thread_id: str, user_id: str) -> None:
 async def _write_proposal_artifact(
     thread_id: str, skills: list, facts: list[str]
 ) -> None:
+    from backend.tools.context import ToolContext
     from backend.tools.fs import create_artifact
 
     lines = ["# Proposta automática do Remember", ""]
@@ -110,11 +111,9 @@ async def _write_proposal_artifact(
     )
     content = "\n".join(lines)
 
-    create_artifact.invoke(
-        {
-            "artifact_type": "remember_proposal",
-            "title": "Proposta do Remember",
-            "content": content,
-            "config": {"configurable": {"thread_id": thread_id}},
-        }
+    await create_artifact(
+        artifact_type="remember_proposal",
+        title="Proposta do Remember",
+        content=content,
+        ctx=ToolContext(thread_id=thread_id),
     )

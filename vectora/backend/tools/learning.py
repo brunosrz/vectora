@@ -113,7 +113,7 @@ async def install_learned_skill(
 
         skill = install_skill_from_content(user_id, name, description, content)
         logger.info("learning: skill instalada id=%s user=%s", skill.id, user_id)
-        _mirror_to_plan_tab("skill_learned", name, description, content, config)
+        await _mirror_to_plan_tab("skill_learned", name, description, content, config)
         await _resolve_remember_pending(config)
         return json.dumps({"status": "installed", "skill_id": skill.id})
     except Exception as exc:
@@ -138,7 +138,7 @@ async def _resolve_remember_pending(config: RunnableConfig | None) -> None:
         )
 
 
-def _mirror_to_plan_tab(
+async def _mirror_to_plan_tab(
     artifact_type: str,
     title: str,
     description: str,
@@ -149,16 +149,15 @@ def _mirror_to_plan_tab(
     em vez de sumir depois do diff de aprovação. Best-effort: falha aqui
     nunca desfaz a gravação já concluída (skill/fato já persistidos)."""
     try:
+        from backend.tools.context import ctx_from_config
         from backend.tools.fs import create_artifact
 
         body = f"{description}\n\n---\n\n{content}" if description else content
-        create_artifact.invoke(
-            {
-                "artifact_type": artifact_type,
-                "title": title,
-                "content": body,
-                "config": config,
-            }
+        await create_artifact(
+            artifact_type=artifact_type,
+            title=title,
+            content=body,
+            ctx=ctx_from_config(config),  # ty: ignore[invalid-argument-type]
         )
     except Exception:
         logger.warning(
@@ -201,7 +200,7 @@ async def save_learned_fact(
             }
         )
         logger.info("learning: fato aprendido salvo key=%s", key)
-        _mirror_to_plan_tab("fact_learned", fact[:80], "", fact, config)
+        await _mirror_to_plan_tab("fact_learned", fact[:80], "", fact, config)
         await _resolve_remember_pending(config)
         return json.dumps({"status": "saved", "key": key})
     except Exception as exc:
@@ -251,7 +250,7 @@ async def apply_memory_consolidation(
 
         changed = apply_consolidation_sections({category: content})
         logger.info("learning: consolidação aplicada categoria=%s", category)
-        _mirror_to_plan_tab(
+        await _mirror_to_plan_tab(
             "memory_consolidated", f"Memória: {category}", "", content, config
         )
         return json.dumps(

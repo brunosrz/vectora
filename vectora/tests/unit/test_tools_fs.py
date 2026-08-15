@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import cast
 from unittest.mock import patch
 
 import pytest
-from langchain_core.runnables import RunnableConfig
 
+from backend.tools.context import ctx_from_config
 from backend.vtypes import Workspace
 
 # ---------------------------------------------------------------------------
@@ -21,7 +20,7 @@ from backend.vtypes import Workspace
 def trusted_ws(tmp_path, monkeypatch):
     """Workspace confiável apontando para tmp_path + config para as tools.
 
-    As tools de fs confinam toda operação ao workspace ativo (Q4). Os testes
+    As tools de fs confinam toda operação ao workspace ativo. Os testes
     registram um workspace confiável em tmp_path e passam seu id no config para
     que leituras/escritas ocorram dentro da pasta de teste.
     """
@@ -57,30 +56,32 @@ def trusted_ws(tmp_path, monkeypatch):
 
 
 class TestFileRead:
-    def test_reads_existing_file(self, tmp_path, trusted_ws):
+    async def test_reads_existing_file(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_read
 
         f = tmp_path / "hello.txt"
         f.write_text("conteudo do arquivo", encoding="utf-8")
-        result = file_read.invoke({"file_path": str(f)}, config=trusted_ws)
+        result = await file_read(file_path=str(f), ctx=ctx_from_config(trusted_ws))
         assert result == "conteudo do arquivo"
 
-    def test_file_not_found(self, tmp_path, trusted_ws):
+    async def test_file_not_found(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_read
 
-        result = file_read.invoke(
-            {"file_path": str(tmp_path / "nao_existe.txt")}, config=trusted_ws
+        result = await file_read(
+            file_path=str(tmp_path / "nao_existe.txt"), ctx=ctx_from_config(trusted_ws)
         )
         assert "not found" in result.lower() or "error" in result.lower()
 
-    def test_blocked_path(self, tmp_path, trusted_ws):
+    async def test_blocked_path(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_read
 
         outside = tmp_path.parent / "fora_do_workspace.txt"
-        result = file_read.invoke({"file_path": str(outside)}, config=trusted_ws)
+        result = await file_read(
+            file_path=str(outside), ctx=ctx_from_config(trusted_ws)
+        )
         assert "fora do workspace" in result.lower() or "error" in result.lower()
 
-    def test_blocked_credencial_sensivel_mesmo_dentro_do_workspace(
+    async def test_blocked_credencial_sensivel_mesmo_dentro_do_workspace(
         self, tmp_path, trusted_ws
     ):
         """Chave SSH versionada por engano dentro do workspace confiável
@@ -92,7 +93,7 @@ class TestFileRead:
         ssh_dir.mkdir()
         chave = ssh_dir / "id_rsa"
         chave.write_text("chave-privada-fake", encoding="utf-8")
-        result = file_read.invoke({"file_path": str(chave)}, config=trusted_ws)
+        result = await file_read(file_path=str(chave), ctx=ctx_from_config(trusted_ws))
         assert "sensível" in result.lower() or "error" in result.lower()
         assert "chave-privada-fake" not in result
 
@@ -103,43 +104,45 @@ class TestFileRead:
 
 
 class TestFileWrite:
-    def test_creates_new_file(self, tmp_path, trusted_ws):
+    async def test_creates_new_file(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_write
 
         dest = tmp_path / "novo.txt"
-        result = file_write.invoke(
-            {"file_path": str(dest), "content": "ola mundo"}, config=trusted_ws
+        result = await file_write(
+            file_path=str(dest), content="ola mundo", ctx=ctx_from_config(trusted_ws)
         )
         assert "ok" in result.lower() or "written" in result.lower()
         assert dest.read_text(encoding="utf-8") == "ola mundo"
 
-    def test_overwrites_existing_file(self, tmp_path, trusted_ws):
+    async def test_overwrites_existing_file(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_write
 
         dest = tmp_path / "existente.txt"
         dest.write_text("velho", encoding="utf-8")
-        file_write.invoke(
-            {"file_path": str(dest), "content": "novo"}, config=trusted_ws
+        await file_write(
+            file_path=str(dest), content="novo", ctx=ctx_from_config(trusted_ws)
         )
         assert dest.read_text(encoding="utf-8") == "novo"
 
-    def test_creates_parent_dirs(self, tmp_path, trusted_ws):
+    async def test_creates_parent_dirs(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_write
 
         dest = tmp_path / "sub" / "dir" / "arquivo.txt"
-        file_write.invoke({"file_path": str(dest), "content": "x"}, config=trusted_ws)
+        await file_write(
+            file_path=str(dest), content="x", ctx=ctx_from_config(trusted_ws)
+        )
         assert dest.exists()
 
-    def test_blocked_path(self, tmp_path, trusted_ws):
+    async def test_blocked_path(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_write
 
         outside = tmp_path.parent / "evil.txt"
-        result = file_write.invoke(
-            {"file_path": str(outside), "content": "x"}, config=trusted_ws
+        result = await file_write(
+            file_path=str(outside), content="x", ctx=ctx_from_config(trusted_ws)
         )
         assert "fora do workspace" in result.lower() or "error" in result.lower()
 
-    def test_requires_trust(self, tmp_path, monkeypatch):
+    async def test_requires_trust(self, tmp_path, monkeypatch):
         from backend.tools.fs import file_write
         from backend.workspace import workspace as ws_mod
 
@@ -159,9 +162,10 @@ class TestFileWrite:
             ws_mod.workspace_registry, "get_or_create", lambda cwd=None: untrusted
         )
         cfg = {"configurable": {"workspace_id": "untrusted"}}
-        result = file_write.invoke(
-            {"file_path": str(tmp_path / "x.txt"), "content": "x"},
-            config=cfg,  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        result = await file_write(
+            file_path=str(tmp_path / "x.txt"),
+            content="x",
+            ctx=ctx_from_config(cfg),
         )
         assert "confi" in result.lower()  # "não é confiável" / "confiança"
 
@@ -172,53 +176,57 @@ class TestFileWrite:
 
 
 class TestFileEdit:
-    def test_replaces_text(self, tmp_path, trusted_ws):
+    async def test_replaces_text(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_edit
 
         f = tmp_path / "code.py"
         f.write_text("foo = 1\nbar = 2\n", encoding="utf-8")
-        result = file_edit.invoke(
-            {"file_path": str(f), "old_text": "foo = 1", "new_text": "foo = 99"},
-            config=trusted_ws,
+        result = await file_edit(
+            file_path=str(f),
+            old_text="foo = 1",
+            new_text="foo = 99",
+            ctx=ctx_from_config(trusted_ws),
         )
         assert "ok" in result.lower()
         assert "foo = 99" in f.read_text(encoding="utf-8")
 
-    def test_replace_all(self, tmp_path, trusted_ws):
+    async def test_replace_all(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_edit
 
         f = tmp_path / "rep.txt"
         f.write_text("a a a", encoding="utf-8")
-        file_edit.invoke(
-            {
-                "file_path": str(f),
-                "old_text": "a",
-                "new_text": "b",
-                "replace_all": True,
-            },
-            config=trusted_ws,
+        await file_edit(
+            file_path=str(f),
+            old_text="a",
+            new_text="b",
+            replace_all=True,
+            ctx=ctx_from_config(trusted_ws),
         )
         assert f.read_text(encoding="utf-8") == "b b b"
 
-    def test_creates_file_when_old_text_empty(self, tmp_path, trusted_ws):
+    async def test_creates_file_when_old_text_empty(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_edit
 
         dest = tmp_path / "new.txt"
-        result = file_edit.invoke(
-            {"file_path": str(dest), "old_text": "", "new_text": "criado"},
-            config=trusted_ws,
+        result = await file_edit(
+            file_path=str(dest),
+            old_text="",
+            new_text="criado",
+            ctx=ctx_from_config(trusted_ws),
         )
         assert "ok" in result.lower() or "created" in result.lower()
         assert dest.read_text(encoding="utf-8") == "criado"
 
-    def test_text_not_found(self, tmp_path, trusted_ws):
+    async def test_text_not_found(self, tmp_path, trusted_ws):
         from backend.tools.fs import file_edit
 
         f = tmp_path / "f.txt"
         f.write_text("abc", encoding="utf-8")
-        result = file_edit.invoke(
-            {"file_path": str(f), "old_text": "xyz", "new_text": "nope"},
-            config=trusted_ws,
+        result = await file_edit(
+            file_path=str(f),
+            old_text="xyz",
+            new_text="nope",
+            ctx=ctx_from_config(trusted_ws),
         )
         assert "not found" in result.lower() or "error" in result.lower()
 
@@ -229,32 +237,34 @@ class TestFileEdit:
 
 
 class TestGrep:
-    def test_finds_pattern_in_file(self, tmp_path, trusted_ws):
+    async def test_finds_pattern_in_file(self, tmp_path, trusted_ws):
         from backend.tools.fs import grep
 
         f = tmp_path / "backend.py"
         f.write_text("def foo():\n    pass\n", encoding="utf-8")
-        result = grep.invoke(
-            {"pattern": "def foo", "path": str(tmp_path)}, config=trusted_ws
+        result = await grep(
+            pattern="def foo", path=str(tmp_path), ctx=ctx_from_config(trusted_ws)
         )
         assert "def foo" in result
 
-    def test_no_match_returns_message(self, tmp_path, trusted_ws):
+    async def test_no_match_returns_message(self, tmp_path, trusted_ws):
         from backend.tools.fs import grep
 
         f = tmp_path / "empty.py"
         f.write_text("nothing here", encoding="utf-8")
-        result = grep.invoke(
-            {"pattern": "xyz_not_present", "path": str(tmp_path)}, config=trusted_ws
+        result = await grep(
+            pattern="xyz_not_present",
+            path=str(tmp_path),
+            ctx=ctx_from_config(trusted_ws),
         )
         assert "no matches" in result.lower()
 
-    def test_invalid_pattern(self, trusted_ws):
+    async def test_invalid_pattern(self, trusted_ws):
         from backend.tools.fs import grep
 
         with patch("backend.tools.fs.is_safe_regex_pattern", return_value=False):
-            result = grep.invoke(
-                {"pattern": "[invalid", "path": "."}, config=trusted_ws
+            result = await grep(
+                pattern="[invalid", path=".", ctx=ctx_from_config(trusted_ws)
             )
         assert "invalid" in result.lower() or "error" in result.lower()
 
@@ -265,30 +275,32 @@ class TestGrep:
 
 
 class TestListDir:
-    def test_lists_files(self, tmp_path, trusted_ws):
+    async def test_lists_files(self, tmp_path, trusted_ws):
         from backend.tools.fs import list_dir
 
         (tmp_path / "a.txt").write_text("x")
         (tmp_path / "b.txt").write_text("y")
-        result = list_dir.invoke({"path": str(tmp_path)}, config=trusted_ws)
+        result = await list_dir(path=str(tmp_path), ctx=ctx_from_config(trusted_ws))
         assert "a.txt" in result
         assert "b.txt" in result
 
-    def test_recursive(self, tmp_path, trusted_ws):
+    async def test_recursive(self, tmp_path, trusted_ws):
         from backend.tools.fs import list_dir
 
         sub = tmp_path / "sub"
         sub.mkdir()
         (sub / "deep.txt").write_text("z")
-        result = list_dir.invoke(
-            {"path": str(tmp_path), "recursive": True}, config=trusted_ws
+        result = await list_dir(
+            path=str(tmp_path), recursive=True, ctx=ctx_from_config(trusted_ws)
         )
         assert "deep.txt" in result
 
-    def test_nonexistent_dir(self, tmp_path, trusted_ws):
+    async def test_nonexistent_dir(self, tmp_path, trusted_ws):
         from backend.tools.fs import list_dir
 
-        result = list_dir.invoke({"path": str(tmp_path / "nope")}, config=trusted_ws)
+        result = await list_dir(
+            path=str(tmp_path / "nope"), ctx=ctx_from_config(trusted_ws)
+        )
         assert "not found" in result.lower() or "error" in result.lower()
 
 
@@ -297,25 +309,22 @@ class TestListDir:
 # ---------------------------------------------------------------------------
 
 
-def _cfg(thread_id: str) -> RunnableConfig:
-    """RunnableConfig mínimo — thread_id vem do config (injetado pelo
-    LangGraph em produção via configurable["thread_id"]), nunca de um
-    kwarg que dependeria do modelo "lembrar" de passar o ID certo."""
-    return cast("RunnableConfig", {"configurable": {"thread_id": thread_id}})
+def _cfg(thread_id: str) -> dict:
+    """Config mínimo — thread_id vem de configurable["thread_id"], nunca de
+    um kwarg que dependeria do modelo "lembrar" de passar o ID certo."""
+    return {"configurable": {"thread_id": thread_id}}
 
 
 class TestCreateArtifact:
-    def test_creates_file_and_returns_json(self, tmp_path, monkeypatch):
+    async def test_creates_file_and_returns_json(self, tmp_path, monkeypatch):
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "plan",
-                "title": "Plano de Implementacao Auth",
-                "content": "# Auth\n\nPasso 1: definir schema\nPasso 2: implementar JWT",
-            },
-            config=_cfg("042731"),
+        result = await create_artifact(
+            artifact_type="plan",
+            title="Plano de Implementacao Auth",
+            content="# Auth\n\nPasso 1: definir schema\nPasso 2: implementar JWT",
+            ctx=ctx_from_config(_cfg("042731")),
         )
         data = json.loads(result)
         assert "path" in data
@@ -326,17 +335,15 @@ class TestCreateArtifact:
         content = Path(data["path"]).read_text(encoding="utf-8")
         assert "Auth" in content
 
-    def test_saved_under_session_dir(self, tmp_path, monkeypatch):
+    async def test_saved_under_session_dir(self, tmp_path, monkeypatch):
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "spec",
-                "title": "API de Pagamentos",
-                "content": "Spec content",
-            },
-            config=_cfg("000001"),
+        result = await create_artifact(
+            artifact_type="spec",
+            title="API de Pagamentos",
+            content="Spec content",
+            ctx=ctx_from_config(_cfg("000001")),
         )
         data = json.loads(result)
         artifact_path = Path(data["path"])
@@ -344,7 +351,7 @@ class TestCreateArtifact:
         assert "000001" in str(artifact_path)
         assert artifact_path.suffix == ".md"
 
-    def test_same_title_rewrites_current_and_keeps_previous_as_history(
+    async def test_same_title_rewrites_current_and_keeps_previous_as_history(
         self, tmp_path, monkeypatch
     ):
         """Versionamento: salvar de novo com o MESMO título mantém o path
@@ -356,23 +363,19 @@ class TestCreateArtifact:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         cfg = _cfg("999999")
         r1 = json.loads(
-            create_artifact.invoke(
-                {
-                    "artifact_type": "guide",
-                    "title": "Guia de Setup do Ambiente de Deploy",
-                    "content": "versão 1",
-                },
-                config=cfg,
+            await create_artifact(
+                artifact_type="guide",
+                title="Guia de Setup do Ambiente de Deploy",
+                content="versão 1",
+                ctx=ctx_from_config(cfg),
             )
         )
         r2 = json.loads(
-            create_artifact.invoke(
-                {
-                    "artifact_type": "guide",
-                    "title": "Guia de Setup do Ambiente de Deploy",
-                    "content": "versão 2",
-                },
-                config=cfg,
+            await create_artifact(
+                artifact_type="guide",
+                title="Guia de Setup do Ambiente de Deploy",
+                content="versão 2",
+                ctx=ctx_from_config(cfg),
             )
         )
         assert r1["path"] == r2["path"]  # path da versão atual é estável
@@ -383,7 +386,7 @@ class TestCreateArtifact:
         assert history.exists()
         assert history.read_text(encoding="utf-8") == "versão 1"
 
-    def test_third_write_rotates_history_without_losing_the_first(
+    async def test_third_write_rotates_history_without_losing_the_first(
         self, tmp_path, monkeypatch
     ):
         from backend.tools.fs import create_artifact
@@ -394,9 +397,21 @@ class TestCreateArtifact:
             "artifact_type": "spec",
             "title": "Especificação da API de Pagamentos v2",
         }
-        r1 = json.loads(create_artifact.invoke({**kwargs, "content": "v1"}, config=cfg))
-        json.loads(create_artifact.invoke({**kwargs, "content": "v2"}, config=cfg))
-        r3 = json.loads(create_artifact.invoke({**kwargs, "content": "v3"}, config=cfg))
+        r1 = json.loads(
+            await create_artifact(
+                **{**kwargs, "content": "v1"}, ctx=ctx_from_config(cfg)
+            )
+        )
+        json.loads(
+            await create_artifact(
+                **{**kwargs, "content": "v2"}, ctx=ctx_from_config(cfg)
+            )
+        )
+        r3 = json.loads(
+            await create_artifact(
+                **{**kwargs, "content": "v3"}, ctx=ctx_from_config(cfg)
+            )
+        )
 
         current = Path(r3["path"])
         assert current.read_text(encoding="utf-8") == "v3"
@@ -406,20 +421,20 @@ class TestCreateArtifact:
         assert h2.read_text(encoding="utf-8") == "v2"
         assert r1["path"] == str(current)  # 1ª chamada já grava no path final
 
-    def test_writes_artifact_type_sidecar_read_by_api(self, tmp_path, monkeypatch):
+    async def test_writes_artifact_type_sidecar_read_by_api(
+        self, tmp_path, monkeypatch
+    ):
         """A API (handlers/artifacts.py) lê `{slug}.artifact_type` pra
         colorir/iconizar a Plan tab por tipo — precisa existir ao lado do
         .md da versão atual."""
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "architecture",
-                "title": "Decisão de Arquitetura do Cache Distribuído",
-                "content": "conteudo",
-            },
-            config=_cfg("side-1"),
+        result = await create_artifact(
+            artifact_type="architecture",
+            title="Decisão de Arquitetura do Cache Distribuído",
+            content="conteudo",
+            ctx=ctx_from_config(_cfg("side-1")),
         )
         data = json.loads(result)
         current = Path(data["path"])
@@ -427,38 +442,40 @@ class TestCreateArtifact:
         assert sidecar.exists()
         assert sidecar.read_text(encoding="utf-8") == "architecture"
 
-    def test_generic_title_rejected(self, tmp_path, monkeypatch):
+    async def test_generic_title_rejected(self, tmp_path, monkeypatch):
         """Erro/borda: título só com o nome do tipo ('Plano') é rejeitado —
         viraria plan.md sem dizer do que trata (bug real observado ao vivo:
         artifact criado sem título descritivo)."""
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {"artifact_type": "plan", "title": "Plano", "content": "conteudo"},
-            config=_cfg("gen-1"),
+        result = await create_artifact(
+            artifact_type="plan",
+            title="Plano",
+            content="conteudo",
+            ctx=ctx_from_config(_cfg("gen-1")),
         )
         data = json.loads(result)
         assert "error" in data
         assert not (tmp_path / ".vectora").exists()  # nada foi escrito
 
-    def test_descriptive_title_still_accepted(self, tmp_path, monkeypatch):
+    async def test_descriptive_title_still_accepted(self, tmp_path, monkeypatch):
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "plan",
-                "title": "Plano de Implementação do Jogo da Cobrinha em Godot 4.7",
-                "content": "conteudo",
-            },
-            config=_cfg("gen-2"),
+        result = await create_artifact(
+            artifact_type="plan",
+            title="Plano de Implementação do Jogo da Cobrinha em Godot 4.7",
+            content="conteudo",
+            ctx=ctx_from_config(_cfg("gen-2")),
         )
         data = json.loads(result)
         assert "error" not in data
         assert Path(data["path"]).exists()
 
-    def test_mirrors_current_version_to_active_workspace(self, tmp_path, monkeypatch):
+    async def test_mirrors_current_version_to_active_workspace(
+        self, tmp_path, monkeypatch
+    ):
         """Com workspace_id no config, a versão atual é espelhada em
         <workspace>/.vectora/{tipo}s/{slug}.md — sem histórico, sempre a
         última versão, visível direto no projeto (não só em ~/.vectora)."""
@@ -483,17 +500,12 @@ class TestCreateArtifact:
             "get",
             lambda wid: ws if wid == "testws" else None,
         )
-        cfg = cast(
-            "RunnableConfig",
-            {"configurable": {"thread_id": "t1", "workspace_id": "testws"}},
-        )
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "plan",
-                "title": "Plano de Implementação do Jogo da Cobrinha em Godot 4.7",
-                "content": "conteudo do plano",
-            },
-            config=cfg,
+        cfg = {"configurable": {"thread_id": "t1", "workspace_id": "testws"}}
+        result = await create_artifact(
+            artifact_type="plan",
+            title="Plano de Implementação do Jogo da Cobrinha em Godot 4.7",
+            content="conteudo do plano",
+            ctx=ctx_from_config(cfg),
         )
         data = json.loads(result)
         assert "error" not in data
@@ -502,7 +514,7 @@ class TestCreateArtifact:
         assert mirror.exists()
         assert mirror.read_text(encoding="utf-8") == "conteudo do plano"
 
-    def test_sem_workspace_id_nao_resolve_workspace_default(
+    async def test_sem_workspace_id_nao_resolve_workspace_default(
         self, tmp_path, monkeypatch
     ):
         """Erro/borda: sem workspace_id explícito, nunca chama
@@ -517,79 +529,69 @@ class TestCreateArtifact:
             raise AssertionError("não deveria resolver workspace sem workspace_id")
 
         monkeypatch.setattr(ws_mod.workspace_registry, "get_or_create", _boom)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "plan",
-                "title": "Plano de Migração do Banco de Dados Legado",
-                "content": "conteudo",
-            },
-            config=_cfg("sem-ws"),
+        result = await create_artifact(
+            artifact_type="plan",
+            title="Plano de Migração do Banco de Dados Legado",
+            content="conteudo",
+            ctx=ctx_from_config(_cfg("sem-ws")),
         )
         data = json.loads(result)
         assert "error" not in data
 
-    def test_invalid_type_returns_error(self, tmp_path, monkeypatch):
+    async def test_invalid_type_returns_error(self, tmp_path, monkeypatch):
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "invalid_type",
-                "title": "Titulo",
-                "content": "Conteudo",
-            },
-            config=_cfg("000000"),
+        result = await create_artifact(
+            artifact_type="invalid_type",
+            title="Titulo",
+            content="Conteudo",
+            ctx=ctx_from_config(_cfg("000000")),
         )
         data = json.loads(result)
         assert "error" in data
 
-    def test_empty_title_returns_error(self, tmp_path, monkeypatch):
+    async def test_empty_title_returns_error(self, tmp_path, monkeypatch):
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "plan",
-                "title": "   ",
-                "content": "Conteudo",
-            },
-            config=_cfg("000000"),
+        result = await create_artifact(
+            artifact_type="plan",
+            title="   ",
+            content="Conteudo",
+            ctx=ctx_from_config(_cfg("000000")),
         )
         data = json.loads(result)
         assert "error" in data
 
-    def test_empty_content_returns_error(self, tmp_path, monkeypatch):
+    async def test_empty_content_returns_error(self, tmp_path, monkeypatch):
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "plan",
-                "title": "Titulo valido",
-                "content": "",
-            },
-            config=_cfg("000000"),
+        result = await create_artifact(
+            artifact_type="plan",
+            title="Titulo valido",
+            content="",
+            ctx=ctx_from_config(_cfg("000000")),
         )
         data = json.loads(result)
         assert "error" in data
 
-    def test_all_valid_types_accepted(self, tmp_path, monkeypatch):
+    async def test_all_valid_types_accepted(self, tmp_path, monkeypatch):
         from backend.tools.fs import _VALID_ARTIFACT_TYPES, create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         for artifact_type in _VALID_ARTIFACT_TYPES:
-            result = create_artifact.invoke(
-                {
-                    "artifact_type": artifact_type,
-                    "title": f"Teste {artifact_type}",
-                    "content": "Conteudo de teste",
-                },
-                config=_cfg("000000"),
+            result = await create_artifact(
+                artifact_type=artifact_type,
+                title=f"Teste {artifact_type}",
+                content="Conteudo de teste",
+                ctx=ctx_from_config(_cfg("000000")),
             )
             data = json.loads(result)
             assert "error" not in data, f"tipo '{artifact_type}' falhou: {data}"
 
-    def test_missing_thread_id_returns_error_instead_of_silent_default(
+    async def test_missing_thread_id_returns_error_instead_of_silent_default(
         self, tmp_path, monkeypatch
     ):
         """Regressão: session_id="000000" como default oculto fazia o artifact
@@ -602,13 +604,11 @@ class TestCreateArtifact:
         from backend.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        result = create_artifact.invoke(
-            {
-                "artifact_type": "overview",
-                "title": "Visao Geral",
-                "content": "Conteudo",
-            },
-            config={"configurable": {}},
+        result = await create_artifact(
+            artifact_type="overview",
+            title="Visao Geral",
+            content="Conteudo",
+            ctx=ctx_from_config({"configurable": {}}),
         )
         data = json.loads(result)
         assert "error" in data
@@ -658,7 +658,7 @@ class TestArtifactSlug:
 
 
 class TestPostWriteHooksAndAutoCommit:
-    def test_file_write_runs_post_write_hook(self, tmp_path, trusted_ws):
+    async def test_file_write_runs_post_write_hook(self, tmp_path, trusted_ws):
         """[hooks] post_file_write roda com {file} substituído pelo path real."""
         from backend.tools.fs import file_write
 
@@ -669,25 +669,31 @@ class TestPostWriteHooksAndAutoCommit:
         )
 
         dest = tmp_path / "novo.txt"
-        file_write.invoke({"file_path": str(dest), "content": "ola"}, config=trusted_ws)
+        await file_write(
+            file_path=str(dest), content="ola", ctx=ctx_from_config(trusted_ws)
+        )
 
         marker_file = Path(str(dest) + ".marker")
         assert marker_file.exists()
 
-    def test_file_write_without_config_does_not_run_hooks(self, tmp_path, trusted_ws):
+    async def test_file_write_without_config_does_not_run_hooks(
+        self, tmp_path, trusted_ws
+    ):
         """Sem vectora.toml (ou sem seções configuradas), nenhum hook roda — edge."""
         from backend.tools.fs import file_write
 
         dest = tmp_path / "sem-config.txt"
-        result = file_write.invoke(
-            {"file_path": str(dest), "content": "ola"}, config=trusted_ws
+        result = await file_write(
+            file_path=str(dest), content="ola", ctx=ctx_from_config(trusted_ws)
         )
         assert "ok" in result.lower() or "written" in result.lower()
 
-    def test_hook_not_approved_does_not_run_and_warns(self, tmp_path, monkeypatch):
+    async def test_hook_not_approved_does_not_run_and_warns(
+        self, tmp_path, monkeypatch
+    ):
         """Workspace confiável mas sem aprovação de hooks — hook NÃO roda, e a
-        resposta da tool avisa o motivo (regra 12: efeito de shell arbitrário
-        vindo de vectora.toml não herda a confiança de leitura/escrita)."""
+        resposta da tool avisa o motivo: efeito de shell arbitrário vindo de
+        vectora.toml não herda a confiança de leitura/escrita."""
         from backend.tools.fs import file_write
         from backend.workspace import workspace as ws_mod
 
@@ -704,9 +710,7 @@ class TestPostWriteHooksAndAutoCommit:
             "get",
             lambda wid: ws if wid == "testws-noapprove" else None,
         )
-        config = cast(
-            "RunnableConfig", {"configurable": {"workspace_id": "testws-noapprove"}}
-        )
+        config = {"configurable": {"workspace_id": "testws-noapprove"}}
 
         (tmp_path / "vectora.toml").write_text(
             "[hooks]\npost_file_write = [\"python -c \\\"open(r'{file}' + '.marker', 'w').close()\\\"\"]\n",
@@ -714,15 +718,15 @@ class TestPostWriteHooksAndAutoCommit:
         )
 
         dest = tmp_path / "novo.txt"
-        result = file_write.invoke(
-            {"file_path": str(dest), "content": "ola"}, config=config
+        result = await file_write(
+            file_path=str(dest), content="ola", ctx=ctx_from_config(config)
         )
 
         marker_file = Path(str(dest) + ".marker")
         assert not marker_file.exists()
         assert "aprovad" in result.lower()
 
-    def test_hook_approved_after_approve_hooks_runs(self, tmp_path, monkeypatch):
+    async def test_hook_approved_after_approve_hooks_runs(self, tmp_path, monkeypatch):
         """Depois de WorkspaceRegistry.approve_hooks(...), o hook passa a rodar."""
         from backend.tools.fs import file_write
         from backend.workspace.workspace import WorkspaceRegistry
@@ -743,9 +747,10 @@ class TestPostWriteHooksAndAutoCommit:
         )
 
         dest = proj / "novo.txt"
-        file_write.invoke(
-            {"file_path": str(dest), "content": "ola"},
-            config={"configurable": {"workspace_id": ws.id}},
+        await file_write(
+            file_path=str(dest),
+            content="ola",
+            ctx=ctx_from_config({"configurable": {"workspace_id": ws.id}}),
         )
 
         marker_file = Path(str(dest) + ".marker")
@@ -767,7 +772,7 @@ class TestPostWriteHooksAndAutoCommit:
         # não há shell no meio, é só substring dentro de um argv item.
         assert "rm" not in argv
 
-    def test_file_edit_auto_commit_creates_git_commit(self, tmp_path, trusted_ws):
+    async def test_file_edit_auto_commit_creates_git_commit(self, tmp_path, trusted_ws):
         """agent.auto_commit=true faz file_edit gerar um commit git automático."""
         import git
 
@@ -786,20 +791,18 @@ class TestPostWriteHooksAndAutoCommit:
             "[agent]\nauto_commit = true\n", encoding="utf-8"
         )
 
-        file_edit.invoke(
-            {
-                "file_path": str(target),
-                "old_text": "x = 1",
-                "new_text": "x = 2",
-            },
-            config=trusted_ws,
+        await file_edit(
+            file_path=str(target),
+            old_text="x = 1",
+            new_text="x = 2",
+            ctx=ctx_from_config(trusted_ws),
         )
 
         latest = next(repo.iter_commits())
         assert "arquivo.py" in str(latest.message)
         assert repo.is_dirty() is False
 
-    def test_file_edit_auto_commit_disabled_by_default_leaves_changes_uncommitted(
+    async def test_file_edit_auto_commit_disabled_by_default_leaves_changes_uncommitted(
         self, tmp_path, trusted_ws
     ):
         """Edge — sem auto_commit=true (default), a edição NÃO vira commit."""
@@ -816,13 +819,11 @@ class TestPostWriteHooksAndAutoCommit:
         repo.index.add(["arquivo.py"])
         repo.index.commit("initial")
 
-        file_edit.invoke(
-            {
-                "file_path": str(target),
-                "old_text": "x = 1",
-                "new_text": "x = 2",
-            },
-            config=trusted_ws,
+        await file_edit(
+            file_path=str(target),
+            old_text="x = 1",
+            new_text="x = 2",
+            ctx=ctx_from_config(trusted_ws),
         )
 
         assert repo.is_dirty() is True

@@ -19,6 +19,9 @@ from backend.tools import (
     context_graph as _context_graph_module,
 )
 from backend.tools import (
+    fs as _fs_module,
+)
+from backend.tools import (
     thinking as _thinking_module,
 )
 from backend.tools.background import (
@@ -70,15 +73,6 @@ from backend.tools.browser_devtools import (
     browser_start_trace,
     browser_stop_trace,
     browser_take_heap_snapshot,
-)
-from backend.tools.fs import (
-    create_artifact,
-    file_edit,
-    file_read,
-    file_write,
-    grep,
-    list_dir,
-    terminal,
 )
 from backend.tools.gdrive import (
     google_drive_list,
@@ -197,9 +191,10 @@ if TYPE_CHECKING:
 
 
 def _bridge(name: str) -> BaseTool:
-    """Resolve `name` no TOOL_REGISTRY nativo e envolve como BaseTool pro
-    grafo LangGraph atual — tools já migradas pro `@vtool` entram nas
-    listas deste módulo por aqui em vez de import direto."""
+    """Resolve `name` no TOOL_REGISTRY nativo e envolve num adapter
+    compatível com o motor de execução ainda em produção — tools já
+    migradas pro `@vtool` entram nas listas deste módulo por aqui em vez
+    de import direto."""
     spec = TOOL_REGISTRY.get(name)
     if spec is None:
         msg = f"tool nativa '{name}' não registrada — módulo não importado?"
@@ -216,6 +211,13 @@ graph_query = _bridge("graph_query")
 graph_explain = _bridge("graph_explain")
 graph_path = _bridge("graph_path")
 graph_affected = _bridge("graph_affected")
+file_read = _bridge("file_read")
+file_edit = _bridge("file_edit")
+file_write = _bridge("file_write")
+grep = _bridge("grep")
+list_dir = _bridge("list_dir")
+terminal = _bridge("terminal")
+create_artifact = _bridge("create_artifact")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)

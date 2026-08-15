@@ -1,4 +1,13 @@
-"""Filesystem tools: leitura, escrita, edição de arquivos, grep, listagem, terminal e artifacts."""
+"""Filesystem tools: leitura, escrita, edição de arquivos, grep, listagem, terminal e artifacts.
+
+Tools nativas (``@vtool``) — chamadas como função async direta com
+``ctx: ToolContext``, sem ``.invoke({...})``/``.ainvoke({...})`` do
+LangChain. Toda I/O bloqueante de arquivo (``file_read``/``file_write``/
+``file_edit``/``grep``/``list_dir``) roda via ``asyncio.to_thread``, nunca
+bloqueando o event loop.
+"""
+
+from __future__ import annotations
 
 import asyncio
 import json
@@ -9,11 +18,7 @@ import shlex
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from typing import Any
 
 from backend.sandbox.policy import SandboxPolicy, parse_policy
 from backend.sandbox.workspace_jail import WorkerSpawnError, jail_manager
@@ -28,6 +33,8 @@ from backend.services.security import (
     resolve_within_workspace,
 )
 from backend.services.terminal_stream import emit_terminal_line
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 from backend.vtypes.documents import VALID_ARTIFACT_TYPES
 
 logger = logging.getLogger(__name__)
@@ -38,37 +45,30 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _active_workspace(config: RunnableConfig | None) -> Any:
-    """Resolve o Workspace ativo a partir do config (workspace_id)."""
+def _active_workspace(ctx: ToolContext) -> Any:
+    """Resolve o Workspace ativo a partir do ctx (workspace_id)."""
     from backend.workspace.workspace import workspace_registry
 
-    wid = None
-    if config is not None:
-        wid = (config.get("configurable") or {}).get("workspace_id")
-    if wid:
-        ws = workspace_registry.get(wid)
+    if ctx.workspace_id:
+        ws = workspace_registry.get(ctx.workspace_id)
         if ws is not None:
             return ws
     return workspace_registry.get_or_create()
 
 
-def _workspace_root(config: RunnableConfig | None) -> tuple[Path, Any]:
-    """Retorna (root, workspace). Honra a worktree associada à thread, se houver."""
-    ws = _active_workspace(config)
-    worktree_path = None
-    if config is not None:
-        worktree_path = (config.get("configurable") or {}).get("worktree_path")
-    root = Path(worktree_path) if worktree_path else Path(ws.cwd)
-    return root, ws
+def _workspace_root(ctx: ToolContext) -> tuple[Path, Any]:
+    """Retorna (root, workspace) do workspace ativo."""
+    ws = _active_workspace(ctx)
+    return Path(ws.cwd), ws
 
 
-def _confine(path: str, config: RunnableConfig | None) -> tuple[Path | None, str]:
+def _confine(path: str, ctx: ToolContext) -> tuple[Path | None, str]:
     """Resolve ``path`` dentro do workspace ativo.
 
     Retorna (resolved_path, "") em sucesso ou (None, error_message) se o path
     escapar do workspace.
     """
-    root, _ws = _workspace_root(config)
+    root, _ws = _workspace_root(ctx)
     resolved = resolve_within_workspace(path, root)
     if resolved is None:
         return None, (
@@ -84,9 +84,9 @@ def _confine(path: str, config: RunnableConfig | None) -> tuple[Path | None, str
     return resolved, ""
 
 
-def _require_trust(config: RunnableConfig | None) -> str:
+def _require_trust(ctx: ToolContext) -> str:
     """Retorna mensagem de erro se o workspace ativo não for confiável, senão ""."""
-    _, ws = _workspace_root(config)
+    _, ws = _workspace_root(ctx)
     if not getattr(ws, "trusted", False):
         return (
             f"Error: Workspace '{ws.name}' não é confiável. Confirme a confiança "
@@ -95,15 +95,10 @@ def _require_trust(config: RunnableConfig | None) -> str:
     return ""
 
 
-def _require_local(config: RunnableConfig | None) -> str:
-    """Rejeita workspaces remotos para tools de filesystem síncronas.
-
-    Tools sync (`file_read`, `file_write`, `file_edit`, `grep`, `list`)
-    fazem I/O direto via ``Path()`` e não passam pelo ``TransportBackend``
-    async. Quando o workspace é SSH ou Codespace, retornamos uma mensagem
-    clara orientando o uso da tool `terminal`, que já suporta transporte remoto.
-    """
-    _, ws = _workspace_root(config)
+def _require_local(ctx: ToolContext) -> str:
+    """Rejeita workspaces remotos para tools de filesystem que fazem I/O
+    direto via ``Path()`` (sem transporte remoto)."""
+    _, ws = _workspace_root(ctx)
     transport = str(getattr(ws, "transport", "local"))
     if transport != "local":
         return (
@@ -114,40 +109,15 @@ def _require_local(config: RunnableConfig | None) -> str:
     return ""
 
 
-def _jail_request_sync(
-    op: str,
-    root: Path,
-    workspace_id: str,
-    policy: SandboxPolicy,
-    **kwargs: Any,
-) -> dict[str, Any]:
-    """Ponte síncrona pro worker jailado da workspace (`backend.sandbox.
-    workspace_jail`) — `file_write`/`file_edit` são tools síncronas, sem
-    event loop próprio na thread onde rodam (mesmo padrão de
-    `_run_hooks_and_autocommit`: `asyncio.run` abre um loop novo só pra
-    essa chamada). Levanta `WorkerSpawnError` se o worker não puder nascer
-    (bwrap ausente/sem permissão) — nunca cai silenciosamente pra I/O
-    direto quando o sandbox está habilitado."""
-
-    async def _do() -> dict[str, Any]:
-        worker = await jail_manager.get_or_spawn(workspace_id, str(root), policy)
-        return await worker.request(op, **kwargs)
-
-    return asyncio.run(_do())
-
-
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "filesystem",
-        "destructive": False,
-        "icon": "file-text",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="filesystem",
+        destructive=False,
+        icon="file-text",
+    )
 )
-def file_read(
-    file_path: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def file_read(file_path: str, ctx: ToolContext) -> str:
     """Lê conteúdo completo de um arquivo de texto.
 
     Args:
@@ -156,15 +126,15 @@ def file_read(
     Returns:
         Conteúdo do arquivo como string
     """
-    if remote_err := _require_local(config):
+    if remote_err := _require_local(ctx):
         return remote_err
-    resolved, err = _confine(file_path, config)
+    resolved, err = _confine(file_path, ctx)
     if resolved is None:
         logger.warning("file_read blocked by scope check", extra={"path": file_path})
         return err
 
     try:
-        content = resolved.read_text(encoding="utf-8")
+        content = await asyncio.to_thread(resolved.read_text, encoding="utf-8")
         logger.info(
             "file_read completed", extra={"path": file_path, "size": len(content)}
         )
@@ -185,93 +155,81 @@ def _build_hook_argv(cmd_template: str, path: Path) -> list[str]:
     return [tok.replace("{file}", str(path)) for tok in tokens]
 
 
-async def _run_hooks_and_autocommit_async(
-    path: Path, root: Path, cfg: Any, ws: Any
-) -> str:
+async def _run_hooks_and_autocommit(path: Path, root: Path, ws: Any) -> str:
     """Roda hooks ``post_file_write`` + auto-commit opcional (``vectora.toml``).
 
-    Retorna uma nota pro LLM/usuário quando hooks estão configurados mas
-    ainda não aprovados (nunca executados sem aprovação explícita —
-    diferente de `trusted`, que só cobre leitura/escrita de arquivo, não
-    comando de shell arbitrário vindo do repositório).
-    """
-    note = ""
-    if cfg.hooks.post_file_write:
-        if not getattr(ws, "hooks_approved", False):
-            note = (
-                "Nota: este workspace tem hooks [hooks].post_file_write "
-                "configurados em vectora.toml, mas eles ainda não foram "
-                "aprovados — não foram executados. Aprove em Configurações > "
-                "Workspace para habilitar lint/format automático pós-escrita."
-            )
-        else:
-            workspace_id = str(getattr(ws, "id", root))
-            policy = parse_policy(root / "vectora.toml")
-            for cmd_template in cfg.hooks.post_file_write:
-                argv = _build_hook_argv(cmd_template, path)
-                if policy.enabled:
-                    worker = await jail_manager.get_or_spawn(
-                        workspace_id, str(root), policy
-                    )
-                    resp = await worker.request("exec", command=argv)
-                    exit_code = resp.get("exit_code")
-                else:
-                    proc = await asyncio.create_subprocess_exec(
-                        *argv,
-                        cwd=str(root),
-                        stdout=asyncio.subprocess.DEVNULL,
-                        stderr=asyncio.subprocess.DEVNULL,
-                    )
-                    await proc.wait()
-                    exit_code = proc.returncode
-                logger.info(
-                    "post_file_write_hook_executed",
-                    extra={"command": cmd_template, "exit_code": exit_code},
-                )
-
-    if cfg.agent.auto_commit:
-        rel = path.relative_to(root) if path.is_relative_to(root) else path
-        add = await asyncio.create_subprocess_exec(
-            "git",
-            "add",
-            str(path),
-            cwd=str(root),
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-        await add.wait()
-        commit = await asyncio.create_subprocess_exec(
-            "git",
-            "commit",
-            "-m",
-            f"auto: update {rel}",
-            cwd=str(root),
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-        await commit.wait()
-        logger.info("auto_commit_executed", extra={"path": str(rel)})
-
-    return note
-
-
-def _run_hooks_and_autocommit(path: Path, config: RunnableConfig | None) -> str:
-    """Dispara hooks/auto-commit pós-escrita — nunca propaga falha pra tool.
-
-    ``file_write``/``file_edit`` são tools síncronas (rodam via
-    ``asyncio.to_thread`` no worker do LangGraph, sem event loop próprio
-    nessa thread) — ``asyncio.run`` aqui abre um loop novo só pra essa
-    chamada, isolado do loop principal do servidor. Retorna uma nota
-    (string vazia se nada a reportar) pra tool anexar à própria resposta.
+    Nunca propaga falha pra tool que chamou — retorna uma nota (string
+    vazia se nada a reportar) pra anexar à própria resposta. Pausa para
+    aprovação quando hooks estão configurados mas ainda não aprovados
+    (nunca executados sem aprovação explícita — diferente de `trusted`,
+    que só cobre leitura/escrita de arquivo, não comando de shell
+    arbitrário vindo do repositório).
     """
     try:
         from backend.workspace.workspace_config import load_workspace_config
 
-        root, ws = _workspace_root(config)
-        cfg = load_workspace_config(root)
+        cfg = await asyncio.to_thread(load_workspace_config, root)
         if cfg is None or (not cfg.hooks.post_file_write and not cfg.agent.auto_commit):
             return ""
-        return asyncio.run(_run_hooks_and_autocommit_async(path, root, cfg, ws)) or ""
+
+        note = ""
+        if cfg.hooks.post_file_write:
+            if not getattr(ws, "hooks_approved", False):
+                note = (
+                    "Nota: este workspace tem hooks [hooks].post_file_write "
+                    "configurados em vectora.toml, mas eles ainda não foram "
+                    "aprovados — não foram executados. Aprove em Configurações > "
+                    "Workspace para habilitar lint/format automático pós-escrita."
+                )
+            else:
+                workspace_id = str(getattr(ws, "id", root))
+                policy = parse_policy(root / "vectora.toml")
+                for cmd_template in cfg.hooks.post_file_write:
+                    argv = _build_hook_argv(cmd_template, path)
+                    if policy.enabled:
+                        worker = await jail_manager.get_or_spawn(
+                            workspace_id, str(root), policy
+                        )
+                        resp = await worker.request("exec", command=argv)
+                        exit_code = resp.get("exit_code")
+                    else:
+                        proc = await asyncio.create_subprocess_exec(
+                            *argv,
+                            cwd=str(root),
+                            stdout=asyncio.subprocess.DEVNULL,
+                            stderr=asyncio.subprocess.DEVNULL,
+                        )
+                        await proc.wait()
+                        exit_code = proc.returncode
+                    logger.info(
+                        "post_file_write_hook_executed",
+                        extra={"command": cmd_template, "exit_code": exit_code},
+                    )
+
+        if cfg.agent.auto_commit:
+            rel = path.relative_to(root) if path.is_relative_to(root) else path
+            add = await asyncio.create_subprocess_exec(
+                "git",
+                "add",
+                str(path),
+                cwd=str(root),
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            await add.wait()
+            commit = await asyncio.create_subprocess_exec(
+                "git",
+                "commit",
+                "-m",
+                f"auto: update {rel}",
+                cwd=str(root),
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            await commit.wait()
+            logger.info("auto_commit_executed", extra={"path": str(rel)})
+
+        return note
     except Exception:
         logger.warning(
             "post_write_hooks_failed", extra={"path": str(path)}, exc_info=True
@@ -279,21 +237,21 @@ def _run_hooks_and_autocommit(path: Path, config: RunnableConfig | None) -> str:
         return ""
 
 
-@tool(
-    extras={
-        "render_hint": "diff",
-        "category": "filesystem",
-        "destructive": True,
-        "icon": "file-edit",
-        "invalidates": ["files", "diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="diff",
+        category="filesystem",
+        destructive=True,
+        icon="file-edit",
+        invalidates=["files", "diff"],
+    )
 )
-def file_edit(
+async def file_edit(
     file_path: str,
     old_text: str,
     new_text: str,
+    ctx: ToolContext,
     replace_all: bool = False,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Edita arquivo substituindo texto.
 
@@ -306,54 +264,48 @@ def file_edit(
     Returns:
         Confirmação da edição
     """
-    if remote_err := _require_local(config):
+    if remote_err := _require_local(ctx):
         return remote_err
-    trust_err = _require_trust(config)
+    trust_err = _require_trust(ctx)
     if trust_err:
         return trust_err
 
-    resolved, err = _confine(file_path, config)
+    resolved, err = _confine(file_path, ctx)
     if resolved is None:
         logger.warning("file_edit blocked by scope check", extra={"path": file_path})
         return err
 
-    root, ws = _workspace_root(config)
+    root, ws = _workspace_root(ctx)
     policy = parse_policy(root / "vectora.toml")
     workspace_id = str(getattr(ws, "id", root))
 
     try:
         path = resolved
-
+        worker = None
         if policy.enabled:
-            read_resp = _jail_request_sync(
-                "read_file", root, workspace_id, policy, path=str(path)
-            )
+            worker = await jail_manager.get_or_spawn(workspace_id, str(root), policy)
+            read_resp = await worker.request("read_file", path=str(path))
             if "error" in read_resp:
                 if old_text != "":
                     return "Error: Text not found in file"
-                write_resp = _jail_request_sync(
-                    "write_file",
-                    root,
-                    workspace_id,
-                    policy,
-                    path=str(path),
-                    content=new_text,
+                write_resp = await worker.request(
+                    "write_file", path=str(path), content=new_text
                 )
                 if "error" in write_resp:
                     return f"Error: {write_resp['error']}"
                 logger.info("file_edit created new file", extra={"path": file_path})
-                note = _run_hooks_and_autocommit(path, config)
+                note = await _run_hooks_and_autocommit(path, root, ws)
                 return f"[OK] File created: {file_path}" + (f"\n{note}" if note else "")
             content = read_resp["content"]
         else:
             # Cria arquivo novo quando old_text="" e arquivo não existe
             if old_text == "" and not path.exists():
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(new_text, encoding="utf-8")
+                await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
+                await asyncio.to_thread(path.write_text, new_text, encoding="utf-8")
                 logger.info("file_edit created new file", extra={"path": file_path})
-                note = _run_hooks_and_autocommit(path, config)
+                note = await _run_hooks_and_autocommit(path, root, ws)
                 return f"[OK] File created: {file_path}" + (f"\n{note}" if note else "")
-            content = path.read_text(encoding="utf-8")
+            content = await asyncio.to_thread(path.read_text, encoding="utf-8")
 
         if old_text and old_text not in content:
             return "Error: Text not found in file"
@@ -364,26 +316,21 @@ def file_edit(
             else content.replace(old_text, new_text, 1)
         )
 
-        if policy.enabled:
-            write_resp = _jail_request_sync(
-                "write_file",
-                root,
-                workspace_id,
-                policy,
-                path=str(path),
-                content=new_content,
+        if policy.enabled and worker is not None:
+            write_resp = await worker.request(
+                "write_file", path=str(path), content=new_content
             )
             if "error" in write_resp:
                 return f"Error: {write_resp['error']}"
         else:
-            path.write_text(new_content, encoding="utf-8")
+            await asyncio.to_thread(path.write_text, new_content, encoding="utf-8")
 
         count = content.count(old_text) if replace_all else 1
         logger.info(
             "file_edit completed",
             extra={"path": file_path, "occurrences": count, "replace_all": replace_all},
         )
-        note = _run_hooks_and_autocommit(path, config)
+        note = await _run_hooks_and_autocommit(path, root, ws)
         return (
             f"[OK] File edited successfully ({count} occurrence{'s' if count != 1 else ''} replaced)"
             + (f"\n{note}" if note else "")
@@ -396,20 +343,16 @@ def file_edit(
         return "Error editing file. Check logs."
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "filesystem",
-        "destructive": True,
-        "icon": "file-plus",
-        "invalidates": ["files", "diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="filesystem",
+        destructive=True,
+        icon="file-plus",
+        invalidates=["files", "diff"],
+    )
 )
-def file_write(
-    file_path: str,
-    content: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def file_write(file_path: str, content: str, ctx: ToolContext) -> str:
     """Cria ou sobrescreve completamente um arquivo com o conteúdo fornecido.
 
     Use para criar novos arquivos ou substituir o conteúdo completo de um existente.
@@ -422,43 +365,39 @@ def file_write(
     Returns:
         Confirmação com caminho e tamanho em bytes
     """
-    if remote_err := _require_local(config):
+    if remote_err := _require_local(ctx):
         return remote_err
-    trust_err = _require_trust(config)
+    trust_err = _require_trust(ctx)
     if trust_err:
         return trust_err
 
-    resolved, err = _confine(file_path, config)
+    resolved, err = _confine(file_path, ctx)
     if resolved is None:
         logger.warning("file_write blocked by scope check", extra={"path": file_path})
         return err
 
-    root, ws = _workspace_root(config)
+    root, ws = _workspace_root(ctx)
     policy = parse_policy(root / "vectora.toml")
 
     try:
         path = resolved
         if policy.enabled:
-            resp = _jail_request_sync(
-                "write_file",
-                root,
-                str(getattr(ws, "id", root)),
-                policy,
-                path=str(path),
-                content=content,
+            worker = await jail_manager.get_or_spawn(
+                str(getattr(ws, "id", root)), str(root), policy
             )
+            resp = await worker.request("write_file", path=str(path), content=content)
             if "error" in resp:
                 return f"Error: {resp['error']}"
             size = len(content.encode("utf-8"))
         else:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8")
+            await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
+            await asyncio.to_thread(path.write_text, content, encoding="utf-8")
             size = path.stat().st_size
 
         logger.info(
             "file_write completed", extra={"path": file_path, "size_bytes": size}
         )
-        note = _run_hooks_and_autocommit(path, config)
+        note = await _run_hooks_and_autocommit(path, root, ws)
         return f"[OK] File written: {file_path} ({size} bytes)" + (
             f"\n{note}" if note else ""
         )
@@ -470,19 +409,43 @@ def file_write(
         return "Error writing file. Check logs."
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "filesystem",
-        "destructive": False,
-        "icon": "search",
-    }
+def _grep_sync(pattern: str, search_path: Path) -> list[str]:
+    results: list[str] = []
+    base_dir = search_path if search_path.is_dir() else search_path.parent
+    spec = _load_ignore_spec(base_dir)
+
+    # iter_files poda node_modules/.venv/etc. durante o walk — rglob("*")
+    # puro varria essas árvores inteiras antes de filtrar.
+    files = (
+        [search_path]
+        if search_path.is_file()
+        else _iter_files(search_path, "**/*", spec)
+    )
+
+    for file_path in files:
+        if not file_path.is_file():
+            continue
+        if _is_ignored(file_path, base_dir, spec):
+            continue
+        try:
+            content = file_path.read_text(encoding="utf-8", errors="ignore")
+            for line_num, line in enumerate(content.split("\n"), 1):
+                if re.search(pattern, line):
+                    results.append(f"{file_path}:{line_num}: {line}")
+        except Exception:
+            pass
+    return results
+
+
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="filesystem",
+        destructive=False,
+        icon="search",
+    )
 )
-def grep(
-    pattern: str,
-    path: str = ".",
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def grep(pattern: str, ctx: ToolContext, path: str = ".") -> str:
     """Busca padrão em arquivos usando regex.
 
     Args:
@@ -492,42 +455,17 @@ def grep(
     Returns:
         Linhas que correspondem ao padrão (arquivo:linha: conteúdo)
     """
-    if remote_err := _require_local(config):
+    if remote_err := _require_local(ctx):
         return remote_err
     if not is_safe_regex_pattern(pattern):
         return "Error: Invalid or unsafe regex pattern"
 
-    resolved, err = _confine(path, config)
+    resolved, err = _confine(path, ctx)
     if resolved is None:
         return err
 
     try:
-        results = []
-        search_path = resolved
-        base_dir = search_path if search_path.is_dir() else search_path.parent
-        spec = _load_ignore_spec(base_dir)
-
-        # iter_files poda node_modules/.venv/etc. durante o walk — rglob("*")
-        # puro varria essas árvores inteiras antes de filtrar.
-        files = (
-            [search_path]
-            if search_path.is_file()
-            else _iter_files(search_path, "**/*", spec)
-        )
-
-        for file_path in files:
-            if not file_path.is_file():
-                continue
-            if _is_ignored(file_path, base_dir, spec):
-                continue
-            try:
-                content = file_path.read_text(encoding="utf-8", errors="ignore")
-                for line_num, line in enumerate(content.split("\n"), 1):
-                    if re.search(pattern, line):
-                        results.append(f"{file_path}:{line_num}: {line}")
-            except Exception:
-                pass
-
+        results = await asyncio.to_thread(_grep_sync, pattern, resolved)
         logger.info(
             "grep completed",
             extra={"pattern": pattern, "path": path, "matches": len(results)},
@@ -538,19 +476,36 @@ def grep(
         return "Error during grep. Check logs."
 
 
-@tool(
-    extras={
-        "render_hint": "table",
-        "category": "filesystem",
-        "destructive": False,
-        "icon": "folder",
-    }
+def _list_dir_sync(dir_path: Path, recursive: bool) -> list[str]:
+    spec = _load_ignore_spec(dir_path)
+    items: list[str] = []
+    if recursive:
+        # walk_files poda node_modules/.venv/etc. durante o walk;
+        # include_dirs=True mantém os diretórios não podados na listagem.
+        entries, _ = _walk_files(dir_path, "**/*", spec, include_dirs=True)
+        for item in entries:
+            rel_path = item.relative_to(dir_path)
+            prefix = "[DIR]" if item.is_dir() else "[FILE]"
+            items.append(f"{prefix} {rel_path}")
+    else:
+        for item in sorted(dir_path.iterdir()):
+            if _is_ignored(item, dir_path, spec):
+                continue
+            prefix = "[DIR]" if item.is_dir() else "[FILE]"
+            items.append(f"{prefix} {item.name}")
+    return items
+
+
+@vtool(
+    extras=ToolExtras(
+        render_hint="table",
+        category="filesystem",
+        destructive=False,
+        icon="folder",
+    )
 )
-def list_dir(
-    path: str = ".",
-    *,
-    recursive: bool = False,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+async def list_dir(
+    ctx: ToolContext, path: str = ".", *, recursive: bool = False
 ) -> str:
     """Lista arquivos em um diretório.
 
@@ -561,9 +516,9 @@ def list_dir(
     Returns:
         Lista de arquivos e pastas com prefixo [DIR] ou [FILE]
     """
-    if remote_err := _require_local(config):
+    if remote_err := _require_local(ctx):
         return remote_err
-    resolved, err = _confine(path, config)
+    resolved, err = _confine(path, ctx)
     if resolved is None:
         return err
 
@@ -575,22 +530,7 @@ def list_dir(
         if not dir_path.is_dir():
             return f"Error: '{path}' is not a directory"
 
-        spec = _load_ignore_spec(dir_path)
-        items = []
-        if recursive:
-            # walk_files poda node_modules/.venv/etc. durante o walk;
-            # include_dirs=True mantém os diretórios não podados na listagem.
-            entries, _ = _walk_files(dir_path, "**/*", spec, include_dirs=True)
-            for item in entries:
-                rel_path = item.relative_to(dir_path)
-                prefix = "[DIR]" if item.is_dir() else "[FILE]"
-                items.append(f"{prefix} {rel_path}")
-        else:
-            for item in sorted(dir_path.iterdir()):
-                if _is_ignored(item, dir_path, spec):
-                    continue
-                prefix = "[DIR]" if item.is_dir() else "[FILE]"
-                items.append(f"{prefix} {item.name}")
+        items = await asyncio.to_thread(_list_dir_sync, dir_path, recursive)
 
         logger.info(
             "list_dir completed",
@@ -695,19 +635,17 @@ async def _drain_terminal_output(
     return None
 
 
-@tool(
-    extras={
-        "render_hint": "terminal_output",
-        "category": "filesystem",
-        "destructive": True,
-        "icon": "terminal",
-        "invalidates": ["files", "diff"],
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="terminal_output",
+        category="filesystem",
+        destructive=True,
+        icon="terminal",
+        invalidates=["files", "diff"],
+    )
 )
 async def terminal(
-    command: str = "",
-    stdin_input: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    ctx: ToolContext, command: str = "", stdin_input: str | None = None
 ) -> str:
     """Executa um comando shell de forma assíncrona (não bloqueia o event loop).
 
@@ -726,13 +664,11 @@ async def terminal(
     Returns:
         Saída do comando (stdout + stderr) ou mensagem de erro se bloqueado
     """
-    trust_err = _require_trust(config)
+    trust_err = _require_trust(ctx)
     if trust_err:
         return trust_err
 
-    thread_id = (
-        str((config.get("configurable") or {}).get("thread_id", "")) if config else ""
-    )
+    thread_id = ctx.thread_id or ""
     pending = _pending_terminal.get(thread_id) if thread_id else None
 
     if stdin_input is not None:
@@ -782,18 +718,18 @@ async def terminal(
             "and fork bombs are not permitted."
         )
 
-    root, _ws = _workspace_root(config)
+    root, ws = _workspace_root(ctx)
 
     # Workspace remoto (SSH ou Codespace): delega via transport.
     # O streaming linha-a-linha e o stdin interativo não são suportados
     # nesse caminho; o output volta inteiro depois que o comando termina.
-    transport = str(getattr(_ws, "transport", "local"))
+    transport = str(getattr(ws, "transport", "local"))
     if transport != "local":
         from backend.transport import get_transport
 
-        backend = get_transport(_ws)
-        cwd_remote = getattr(_ws, "remote_path", None) or str(root)
-        result = await backend.run(
+        backend_transport = get_transport(ws)
+        cwd_remote = getattr(ws, "remote_path", None) or str(root)
+        result = await backend_transport.run(
             ["sh", "-c", command],
             cwd=cwd_remote,
             timeout=30.0,
@@ -820,7 +756,7 @@ async def terminal(
         # topo desta função. Stdin interativo dentro do jail não é suportado.
         try:
             worker = await jail_manager.get_or_spawn(
-                str(getattr(_ws, "id", root)), str(root), policy
+                str(getattr(ws, "id", root)), str(root), policy
             )
             resp = await worker.request("exec", command=["sh", "-c", command])
         except WorkerSpawnError as exc:
@@ -837,6 +773,7 @@ async def terminal(
         )
         return output or f"Command executed with exit code {resp.get('exit_code')}"
 
+    proc: asyncio.subprocess.Process | None = None
     try:
         # asyncio.create_subprocess_shell não bloqueia o event loop
         # permitindo que o UI (Rich panels) e outras tarefas continuem rodando.
@@ -957,23 +894,20 @@ def _write_artifact_type_sidecar(
 
 
 def _mirror_artifact_to_workspace(
-    config: RunnableConfig | None, artifact_type: str, slug: str, content: str
+    ctx: ToolContext, artifact_type: str, slug: str, content: str
 ) -> None:
     """Espelha a versão atual do artifact dentro do workspace ativo
     (``<workspace_root>/.vectora/{type}s/{slug}.md``) — sempre a última
     versão, sem histórico (o histórico imutável vive só em
     ``~/.vectora/artifacts/``). Só espelha quando a sessão tem um
-    ``workspace_id`` explícito no config — sem isso, não força a criação de
+    ``workspace_id`` explícito no ctx — sem isso, não força a criação de
     um workspace default só pra gravar o espelho. Best-effort: falha aqui
     nunca derruba a criação do artifact.
     """
-    workspace_id = (
-        (config.get("configurable") or {}).get("workspace_id") if config else None
-    )
-    if not workspace_id:
+    if not ctx.workspace_id:
         return
     try:
-        root, _ws = _workspace_root(config)
+        root, _ws = _workspace_root(ctx)
         mirror_dir = root / ".vectora" / f"{artifact_type}s"
         mirror_dir.mkdir(parents=True, exist_ok=True)
         (mirror_dir / f"{slug}.md").write_text(content, encoding="utf-8")
@@ -981,37 +915,27 @@ def _mirror_artifact_to_workspace(
         logger.exception("create_artifact: falha ao espelhar '%s' no workspace", slug)
 
 
-# ---------------------------------------------------------------------------
-# Tool
-# ---------------------------------------------------------------------------
+def _create_artifact_sync(
+    ctx: ToolContext, artifact_type: str, slug: str, session_id: str, content: str
+) -> Path:
+    artifact_dir = Path.home() / ".vectora" / "artifacts" / session_id
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    path = _rotate_artifact_history(artifact_dir, slug, content)
+    _write_artifact_type_sidecar(artifact_dir, slug, artifact_type)
+    _mirror_artifact_to_workspace(ctx, artifact_type, slug, content)
+    return path
 
 
-def _thread_id(config: RunnableConfig | None) -> str:
-    """Extrai o thread_id real do RunnableConfig injetado pelo LangGraph.
-
-    Nunca confiar no modelo pra "lembrar" de passar o ID certo — o system
-    prompt é montado por workspace (cacheado), não por thread, então o
-    thread_id real nunca aparece literalmente no texto do prompt. Ler do
-    config elimina a classe inteira de erro "salvou no artifact errado".
-    """
-    return (
-        str((config.get("configurable") or {}).get("thread_id", "")) if config else ""
+@vtool(
+    extras=ToolExtras(
+        render_hint="artifact",
+        category="artifacts",
+        destructive=False,
+        icon="file-code",
     )
-
-
-@tool(
-    extras={
-        "render_hint": "artifact",
-        "category": "artifacts",
-        "destructive": False,
-        "icon": "file-code",
-    }
 )
-def create_artifact(
-    artifact_type: str,
-    title: str,
-    content: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+async def create_artifact(
+    artifact_type: str, title: str, content: str, ctx: ToolContext
 ) -> str:
     """Cria e persiste um artifact estruturado em ~/.vectora/artifacts/{session_id}/{slug}.md.
 
@@ -1059,7 +983,7 @@ def create_artifact(
     if not content or not content.strip():
         return json.dumps({"error": "content não pode ser vazio"})
 
-    session_id = _thread_id(config)
+    session_id = ctx.thread_id
     if not session_id:
         return json.dumps(
             {"error": "Sessão não identificada — não foi possível salvar o artifact."}
@@ -1077,14 +1001,16 @@ def create_artifact(
             }
         )
 
-    artifact_dir = Path.home() / ".vectora" / "artifacts" / session_id
-
     try:
-        artifact_dir.mkdir(parents=True, exist_ok=True)
         stripped_content = content.strip()
-        path = _rotate_artifact_history(artifact_dir, slug, stripped_content)
-        _write_artifact_type_sidecar(artifact_dir, slug, artifact_type)
-        _mirror_artifact_to_workspace(config, artifact_type, slug, stripped_content)
+        path = await asyncio.to_thread(
+            _create_artifact_sync,
+            ctx,
+            artifact_type,
+            slug,
+            session_id,
+            stripped_content,
+        )
 
         created_at = datetime.now(UTC).isoformat()
         logger.info(
