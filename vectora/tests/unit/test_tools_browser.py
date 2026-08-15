@@ -14,13 +14,13 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from langchain_core.runnables import RunnableConfig
 
 from backend.tools import browser as browser_tools
+from backend.tools.context import ToolContext
 
 
-def _config(workspace_id: str = "ws1") -> RunnableConfig:
-    return RunnableConfig(configurable={"workspace_id": workspace_id})
+def _ctx(workspace_id: str = "ws1") -> ToolContext:
+    return ToolContext(workspace_id=workspace_id)
 
 
 class _FakePage:
@@ -51,9 +51,7 @@ def fake_page(monkeypatch):
 @pytest.mark.asyncio
 async def test_browser_navigate_navega_para_url_http(monkeypatch, fake_page):
     """URL http/https é aceita e navega a página persistente do workspace."""
-    result = await browser_tools.browser_navigate.ainvoke(
-        {"url": "https://example.com"}, config=_config()
-    )
+    result = await browser_tools.browser_navigate(url="https://example.com", ctx=_ctx())
 
     assert result.startswith("[OK]")
     assert "https://example.com" in result
@@ -66,9 +64,7 @@ async def test_browser_navigate_navega_para_url_http(monkeypatch, fake_page):
 async def test_browser_navigate_recusa_esquema_nao_http(monkeypatch, fake_page):
     """Erro/borda: file:// e outros esquemas não http(s) são recusados antes
     de qualquer tentativa de navegação."""
-    result = await browser_tools.browser_navigate.ainvoke(
-        {"url": "file:///etc/passwd"}, config=_config()
-    )
+    result = await browser_tools.browser_navigate(url="file:///etc/passwd", ctx=_ctx())
 
     assert result.startswith("Error:")
     assert "esquema" in result.lower()
@@ -78,9 +74,7 @@ async def test_browser_navigate_recusa_esquema_nao_http(monkeypatch, fake_page):
 @pytest.mark.asyncio
 async def test_browser_navigate_javascript_scheme_recusado(monkeypatch, fake_page):
     """Erro/borda: `javascript:` (injeção via URL) também é recusado."""
-    result = await browser_tools.browser_navigate.ainvoke(
-        {"url": "javascript:alert(1)"}, config=_config()
-    )
+    result = await browser_tools.browser_navigate(url="javascript:alert(1)", ctx=_ctx())
 
     assert result.startswith("Error:")
     fake_page.goto.assert_not_called()
@@ -94,8 +88,8 @@ async def test_browser_navigate_falha_de_rede_devolve_erro_claro(
     erro estruturada, nunca exceção crua."""
     fake_page.goto = AsyncMock(side_effect=RuntimeError("net::ERR_NAME_NOT_RESOLVED"))
 
-    result = await browser_tools.browser_navigate.ainvoke(
-        {"url": "https://dominio-que-nao-existe-xyz.test"}, config=_config()
+    result = await browser_tools.browser_navigate(
+        url="https://dominio-que-nao-existe-xyz.test", ctx=_ctx()
     )
 
     assert result.startswith("Error:")
@@ -112,7 +106,7 @@ async def test_browser_screenshot_returns_data_url_when_preview_running(
         AsyncMock(return_value="http://localhost:5173"),
     )
 
-    result = await browser_tools.browser_screenshot.ainvoke({}, config=_config())
+    result = await browser_tools.browser_screenshot(ctx=_ctx())
 
     assert result.startswith("data:image/png;base64,")
     fake_page.goto.assert_awaited_once_with(
@@ -127,7 +121,7 @@ async def test_browser_screenshot_returns_error_when_no_preview_running(monkeypa
         browser_tools, "resolve_dev_server_url", AsyncMock(return_value=None)
     )
 
-    result = await browser_tools.browser_screenshot.ainvoke({}, config=_config())
+    result = await browser_tools.browser_screenshot(ctx=_ctx())
 
     assert result.startswith("Error:")
     assert "browser_navigate" in result.lower()
@@ -142,16 +136,12 @@ async def test_browser_click_success_and_selector_not_found(monkeypatch, fake_pa
         AsyncMock(return_value="http://localhost:5173"),
     )
 
-    ok = await browser_tools.browser_click.ainvoke(
-        {"selector": "#submit"}, config=_config()
-    )
+    ok = await browser_tools.browser_click(selector="#submit", ctx=_ctx())
     assert "OK" in ok
     assert "#submit" in ok
 
     fake_page.click.side_effect = TimeoutError("not found")
-    err = await browser_tools.browser_click.ainvoke(
-        {"selector": "#ghost"}, config=_config()
-    )
+    err = await browser_tools.browser_click(selector="#ghost", ctx=_ctx())
     assert err.startswith("Error:")
     assert "#ghost" in err
 
@@ -166,8 +156,8 @@ async def test_browser_fill_writes_value_and_rejects_missing_field(
         AsyncMock(return_value="http://localhost:5173"),
     )
 
-    ok = await browser_tools.browser_fill.ainvoke(
-        {"selector": "input[name=email]", "value": "a@b.com"}, config=_config()
+    ok = await browser_tools.browser_fill(
+        selector="input[name=email]", value="a@b.com", ctx=_ctx()
     )
     assert "OK" in ok
     fake_page.fill.assert_awaited_once_with(
@@ -175,9 +165,7 @@ async def test_browser_fill_writes_value_and_rejects_missing_field(
     )
 
     fake_page.fill.side_effect = TimeoutError("missing")
-    err = await browser_tools.browser_fill.ainvoke(
-        {"selector": "#missing", "value": "x"}, config=_config()
-    )
+    err = await browser_tools.browser_fill(selector="#missing", value="x", ctx=_ctx())
     assert err.startswith("Error:")
 
 
@@ -193,12 +181,10 @@ async def test_browser_click_e_fill_sem_selector_nem_uid_retornam_erro(
         AsyncMock(return_value="http://localhost:5173"),
     )
 
-    click_err = await browser_tools.browser_click.ainvoke({}, config=_config())
+    click_err = await browser_tools.browser_click(ctx=_ctx())
     assert click_err.startswith("Error:")
 
-    fill_err = await browser_tools.browser_fill.ainvoke(
-        {"value": "x"}, config=_config()
-    )
+    fill_err = await browser_tools.browser_fill(value="x", ctx=_ctx())
     assert fill_err.startswith("Error:")
 
 
@@ -220,7 +206,7 @@ async def test_browser_click_por_uid_clica_no_centro_do_box_model(
         browser_tools, "resolve_uid_center", AsyncMock(return_value=(10.0, 20.0))
     )
 
-    result = await browser_tools.browser_click.ainvoke({"uid": "102"}, config=_config())
+    result = await browser_tools.browser_click(uid="102", ctx=_ctx())
 
     assert result.startswith("[OK]")
     assert "uid=102" in result
@@ -244,7 +230,7 @@ async def test_browser_click_por_uid_nao_encontrado_retorna_erro(
         browser_tools, "resolve_uid_center", AsyncMock(return_value=None)
     )
 
-    result = await browser_tools.browser_click.ainvoke({"uid": "999"}, config=_config())
+    result = await browser_tools.browser_click(uid="999", ctx=_ctx())
 
     assert result.startswith("Error:")
     assert "999" in result
@@ -263,9 +249,7 @@ async def test_browser_click_por_uid_nao_numerico_retorna_erro(monkeypatch, fake
     resolve_mock = AsyncMock()
     monkeypatch.setattr(browser_tools, "resolve_uid_center", resolve_mock)
 
-    result = await browser_tools.browser_click.ainvoke(
-        {"uid": "not-a-number"}, config=_config()
-    )
+    result = await browser_tools.browser_click(uid="not-a-number", ctx=_ctx())
 
     assert result.startswith("Error:")
     resolve_mock.assert_not_awaited()
@@ -283,9 +267,7 @@ async def test_browser_fill_por_uid_preenche_via_cdp(monkeypatch, fake_page):
     set_value_mock = AsyncMock(return_value=True)
     monkeypatch.setattr(browser_tools, "set_value_by_uid", set_value_mock)
 
-    result = await browser_tools.browser_fill.ainvoke(
-        {"uid": "103", "value": "a@b.com"}, config=_config()
-    )
+    result = await browser_tools.browser_fill(uid="103", value="a@b.com", ctx=_ctx())
 
     assert result.startswith("[OK]")
     set_value_mock.assert_awaited_once_with(tab.cdp, 103, "a@b.com")
@@ -304,9 +286,7 @@ async def test_browser_fill_por_uid_falha_retorna_erro(monkeypatch, fake_page):
         browser_tools, "set_value_by_uid", AsyncMock(return_value=False)
     )
 
-    result = await browser_tools.browser_fill.ainvoke(
-        {"uid": "103", "value": "x"}, config=_config()
-    )
+    result = await browser_tools.browser_fill(uid="103", value="x", ctx=_ctx())
 
     assert result.startswith("Error:")
 
@@ -321,13 +301,11 @@ async def test_browser_read_dom_returns_text_and_empty_on_missing_selector(
         AsyncMock(return_value="http://localhost:5173"),
     )
 
-    text = await browser_tools.browser_read_dom.ainvoke({}, config=_config())
+    text = await browser_tools.browser_read_dom(ctx=_ctx())
     assert text == "Olá mundo"
 
     fake_page.inner_text.side_effect = TimeoutError("missing")
-    err = await browser_tools.browser_read_dom.ainvoke(
-        {"selector": "#nao-existe"}, config=_config()
-    )
+    err = await browser_tools.browser_read_dom(selector="#nao-existe", ctx=_ctx())
     assert err.startswith("Error:")
     assert "#nao-existe" in err
 
@@ -342,14 +320,10 @@ async def test_browser_scroll_accepts_down_up_and_rejects_invalid_direction(
         AsyncMock(return_value="http://localhost:5173"),
     )
 
-    ok = await browser_tools.browser_scroll.ainvoke(
-        {"direction": "down"}, config=_config()
-    )
+    ok = await browser_tools.browser_scroll(direction="down", ctx=_ctx())
     assert "OK" in ok
 
-    err = await browser_tools.browser_scroll.ainvoke(
-        {"direction": "sideways"}, config=_config()
-    )
+    err = await browser_tools.browser_scroll(direction="sideways", ctx=_ctx())
     assert err.startswith("Error:")
 
 
@@ -447,7 +421,7 @@ class TestPreviewStartStopRestartTools:
             ),
         )
 
-        result = await browser_tools.browser_start.ainvoke({}, config=_config())
+        result = await browser_tools.browser_start(ctx=_ctx())
 
         assert '"status": "ok"' in result
         assert "rodando" in result
@@ -466,7 +440,7 @@ class TestPreviewStartStopRestartTools:
         http_start = AsyncMock()
         monkeypatch.setattr(ws_mod, "browser_start", http_start)
 
-        result = await browser_tools.browser_start.ainvoke({}, config=_config())
+        result = await browser_tools.browser_start(ctx=_ctx())
 
         assert result.startswith("Error:")
         http_start.assert_not_awaited()
@@ -486,7 +460,7 @@ class TestPreviewStartStopRestartTools:
             ),
         )
 
-        result = await browser_tools.browser_stop.ainvoke({}, config=_config())
+        result = await browser_tools.browser_stop(ctx=_ctx())
 
         assert '"status": "ok"' in result
         assert "parado" in result
@@ -511,7 +485,7 @@ class TestPreviewStartStopRestartTools:
         monkeypatch.setattr(ws_mod, "browser_stop", _fake_stop)
         monkeypatch.setattr(ws_mod, "browser_start", _fake_start)
 
-        result = await browser_tools.browser_restart.ainvoke({}, config=_config())
+        result = await browser_tools.browser_restart(ctx=_ctx())
 
         assert calls == ["stop", "start"]
         assert '"status": "ok"' in result
@@ -534,7 +508,7 @@ class TestPreviewLogsTool:
             ),
         )
 
-        result = await browser_tools.browser_logs.ainvoke({}, config=_config())
+        result = await browser_tools.browser_logs(ctx=_ctx())
 
         assert result == "compiling...\nready"
 
@@ -553,7 +527,7 @@ class TestPreviewLogsTool:
             AsyncMock(return_value=ws_mod.BrowserLogsResponse(lines=[])),
         )
 
-        result = await browser_tools.browser_logs.ainvoke({}, config=_config())
+        result = await browser_tools.browser_logs(ctx=_ctx())
 
         assert result != ""
         assert "web" in result
@@ -565,8 +539,8 @@ class TestBrowserWaitFor:
     async def test_estado_invalido_retorna_erro_sem_chamar_playwright(
         self, monkeypatch, fake_page
     ):
-        result = await browser_tools.browser_wait_for.ainvoke(
-            {"selector": "#x", "state": "invalido"}, config=_config()
+        result = await browser_tools.browser_wait_for(
+            selector="#x", state="invalido", ctx=_ctx()
         )
 
         assert result.startswith("Error:")
@@ -580,9 +554,8 @@ class TestBrowserWaitFor:
             AsyncMock(return_value="http://localhost:5173"),
         )
 
-        result = await browser_tools.browser_wait_for.ainvoke(
-            {"selector": "#ready", "state": "visible", "timeout_ms": 2000},
-            config=_config(),
+        result = await browser_tools.browser_wait_for(
+            selector="#ready", state="visible", timeout_ms=2000, ctx=_ctx()
         )
 
         assert result.startswith("[OK]")
@@ -601,8 +574,8 @@ class TestBrowserWaitFor:
         )
         fake_page.wait_for_selector.side_effect = TimeoutError("timeout")
 
-        result = await browser_tools.browser_wait_for.ainvoke(
-            {"selector": "#nunca-aparece"}, config=_config()
+        result = await browser_tools.browser_wait_for(
+            selector="#nunca-aparece", ctx=_ctx()
         )
 
         assert result.startswith("Error:")
@@ -618,9 +591,8 @@ class TestBrowserDrag:
             AsyncMock(return_value="http://localhost:5173"),
         )
 
-        result = await browser_tools.browser_drag.ainvoke(
-            {"source_selector": "#card-1", "target_selector": "#column-done"},
-            config=_config(),
+        result = await browser_tools.browser_drag(
+            source_selector="#card-1", target_selector="#column-done", ctx=_ctx()
         )
 
         assert result.startswith("[OK]")
@@ -637,9 +609,8 @@ class TestBrowserDrag:
         )
         fake_page.drag_and_drop.side_effect = TimeoutError("not found")
 
-        result = await browser_tools.browser_drag.ainvoke(
-            {"source_selector": "#ghost", "target_selector": "#target"},
-            config=_config(),
+        result = await browser_tools.browser_drag(
+            source_selector="#ghost", target_selector="#target", ctx=_ctx()
         )
 
         assert result.startswith("Error:")
@@ -650,12 +621,10 @@ class TestBrowserUploadFile:
     async def test_arquivo_inexistente_no_host_retorna_erro_sem_chamar_playwright(
         self, monkeypatch, fake_page, tmp_path
     ):
-        result = await browser_tools.browser_upload_file.ainvoke(
-            {
-                "selector": "input[type=file]",
-                "file_path": str(tmp_path / "nao-existe.png"),
-            },
-            config=_config(),
+        result = await browser_tools.browser_upload_file(
+            selector="input[type=file]",
+            file_path=str(tmp_path / "nao-existe.png"),
+            ctx=_ctx(),
         )
 
         assert result.startswith("Error:")
@@ -673,8 +642,8 @@ class TestBrowserUploadFile:
         f = tmp_path / "avatar.png"
         f.write_bytes(b"fake-png")
 
-        result = await browser_tools.browser_upload_file.ainvoke(
-            {"selector": "input[type=file]", "file_path": str(f)}, config=_config()
+        result = await browser_tools.browser_upload_file(
+            selector="input[type=file]", file_path=str(f), ctx=_ctx()
         )
 
         assert result.startswith("[OK]")
@@ -692,9 +661,7 @@ class TestBrowserFillForm:
             AsyncMock(return_value="http://localhost:5173"),
         )
 
-        result = await browser_tools.browser_fill_form.ainvoke(
-            {"fields": {}}, config=_config()
-        )
+        result = await browser_tools.browser_fill_form(fields={}, ctx=_ctx())
 
         import json as _json
 
@@ -713,8 +680,8 @@ class TestBrowserFillForm:
         import json as _json
 
         result = _json.loads(
-            await browser_tools.browser_fill_form.ainvoke(
-                {"fields": {"#name": "Bruno", "#email": "b@x.com"}}, config=_config()
+            await browser_tools.browser_fill_form(
+                fields={"#name": "Bruno", "#email": "b@x.com"}, ctx=_ctx()
             )
         )
 
@@ -740,8 +707,8 @@ class TestBrowserFillForm:
         import json as _json
 
         result = _json.loads(
-            await browser_tools.browser_fill_form.ainvoke(
-                {"fields": {"#ok": "x", "#missing": "y"}}, config=_config()
+            await browser_tools.browser_fill_form(
+                fields={"#ok": "x", "#missing": "y"}, ctx=_ctx()
             )
         )
 
@@ -763,8 +730,8 @@ class TestBrowserFillForm:
         import json as _json
 
         result = _json.loads(
-            await browser_tools.browser_fill_form.ainvoke(
-                {"fields": {"#a": "1", "#b": "2"}}, config=_config()
+            await browser_tools.browser_fill_form(
+                fields={"#a": "1", "#b": "2"}, ctx=_ctx()
             )
         )
 

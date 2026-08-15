@@ -13,6 +13,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from backend.tools import (
+    browser as _browser_module,
+)
+from backend.tools import (
     browser_devtools as _browser_devtools_module,
 )
 from backend.tools import (
@@ -41,22 +44,6 @@ from backend.tools.background import (
     schedule_subagent_task,
     schedule_task,
     toggle_background_task,
-)
-from backend.tools.browser import (
-    browser_click,
-    browser_drag,
-    browser_fill,
-    browser_fill_form,
-    browser_logs,
-    browser_navigate,
-    browser_read_dom,
-    browser_restart,
-    browser_screenshot,
-    browser_scroll,
-    browser_start,
-    browser_stop,
-    browser_upload_file,
-    browser_wait_for,
 )
 from backend.tools.gdrive import (
     google_drive_list,
@@ -200,6 +187,20 @@ git_worktree = _bridge("git_worktree")
 git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 git_discard = _bridge("git_discard")
+browser_navigate = _bridge("browser_navigate")
+browser_screenshot = _bridge("browser_screenshot")
+browser_click = _bridge("browser_click")
+browser_scroll = _bridge("browser_scroll")
+browser_fill = _bridge("browser_fill")
+browser_read_dom = _bridge("browser_read_dom")
+browser_wait_for = _bridge("browser_wait_for")
+browser_drag = _bridge("browser_drag")
+browser_upload_file = _bridge("browser_upload_file")
+browser_fill_form = _bridge("browser_fill_form")
+browser_start = _bridge("browser_start")
+browser_stop = _bridge("browser_stop")
+browser_restart = _bridge("browser_restart")
+browser_logs = _bridge("browser_logs")
 browser_list_tabs = _bridge("browser_list_tabs")
 browser_new_tab = _bridge("browser_new_tab")
 browser_close_tab = _bridge("browser_close_tab")

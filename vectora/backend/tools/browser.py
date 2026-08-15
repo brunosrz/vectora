@@ -16,12 +16,8 @@ import base64
 import json
 import logging
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Any
 from urllib.parse import urlparse
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
 
 from backend.browser.dev_server import resolve_dev_server_url
 from backend.browser.session import (
@@ -31,6 +27,8 @@ from backend.browser.session import (
     resolve_uid_center,
     set_value_by_uid,
 )
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -43,15 +41,7 @@ _NO_PAGE_ERROR = (
 _ALLOWED_SCHEMES = ("http", "https")
 
 
-def _workspace_id(config: RunnableConfig | None) -> str:
-    return (
-        str((config.get("configurable") or {}).get("workspace_id", ""))
-        if config
-        else ""
-    )
-
-
-async def _resolve_page(config: RunnableConfig | None) -> tuple[Any, str]:
+async def _resolve_page(ctx: ToolContext) -> tuple[Any, str]:
     """Retorna (page, "") em sucesso, ou (None, error) se não houver página
     resolvível — nem já navegada, nem dev server ativo do workspace.
 
@@ -59,7 +49,7 @@ async def _resolve_page(config: RunnableConfig | None) -> tuple[Any, str]:
     algo pra mostrar nele — uma sessão existente (navegação anterior via
     `browser_navigate`) ou um dev server confirmado — nunca à toa.
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = ctx.workspace_id
     session_key = workspace_id or "default"
     if has_browser_session(session_key):
         page = await get_browser_page(session_key)
@@ -79,18 +69,15 @@ async def _resolve_page(config: RunnableConfig | None) -> tuple[Any, str]:
     return page, ""
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": False,
-        "icon": "globe",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=False,
+        icon="globe",
+    )
 )
-async def browser_navigate(
-    url: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_navigate(url: str, ctx: ToolContext) -> str:
     """Navega a página do browser do workspace pra qualquer URL http(s) —
     site externo (Google, GitHub, docs, ...) ou dev server local, sem
     depender de nenhum servidor já rodando.
@@ -108,9 +95,8 @@ async def browser_navigate(
             f"Error: esquema {scheme!r} não permitido — só http:// e "
             "https:// são aceitos pra navegação."
         )
-    workspace_id = _workspace_id(config)
     try:
-        page = await get_browser_page(workspace_id or "default")
+        page = await get_browser_page(ctx.workspace_id or "default")
         await page.goto(url, wait_until="domcontentloaded", timeout=15000)
         return f"[OK] Navegado para {page.url}"
     except Exception:
@@ -118,23 +104,21 @@ async def browser_navigate(
         return f"Error: falha ao navegar para {url!r}. Veja logs."
 
 
-@tool(
-    extras={
-        "render_hint": "image",
-        "category": "browser",
-        "destructive": False,
-        "icon": "camera",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="image",
+        category="browser",
+        destructive=False,
+        icon="camera",
+    )
 )
-async def browser_screenshot(
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_screenshot(ctx: ToolContext) -> str:
     """Tira um screenshot da página atual do browser (base64 PNG, data URL).
 
     Returns:
         Data URL `data:image/png;base64,...` ou mensagem de erro.
     """
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     try:
@@ -146,18 +130,18 @@ async def browser_screenshot(
         return "Error: falha ao capturar screenshot. Veja logs."
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": False,
-        "icon": "mouse-pointer-click",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=False,
+        icon="mouse-pointer-click",
+    )
 )
 async def browser_click(
+    ctx: ToolContext,
     selector: str | None = None,
     uid: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Clica no elemento da página atual — por seletor CSS ou por `uid` (de
     `browser_snapshot`, mais confiável em markup sem classe/id estável).
@@ -172,12 +156,11 @@ async def browser_click(
         Confirmação ou mensagem de erro (elemento não encontrado, nem
         `selector` nem `uid` informados, etc.)
     """
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     if uid is not None:
-        workspace_id = _workspace_id(config)
-        tab = get_tab_state(workspace_id)
+        tab = get_tab_state(ctx.workspace_id)
         if tab is None:
             return _NO_PAGE_ERROR
         center = await resolve_uid_center(tab.cdp, int(uid)) if uid.isdigit() else None
@@ -202,18 +185,18 @@ async def browser_click(
         return f"Error: não foi possível clicar em '{selector}' (elemento não encontrado ou não clicável)."
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": False,
-        "icon": "scroll",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=False,
+        icon="scroll",
+    )
 )
 async def browser_scroll(
+    ctx: ToolContext,
     direction: str = "down",
     amount: int = 600,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Rola a página atual do browser.
 
@@ -224,7 +207,7 @@ async def browser_scroll(
     Returns:
         Confirmação ou mensagem de erro.
     """
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     if direction not in ("down", "up"):
@@ -238,19 +221,19 @@ async def browser_scroll(
         return "Error: falha ao rolar a página. Veja logs."
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": True,
-        "icon": "keyboard",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=True,
+        icon="keyboard",
+    )
 )
 async def browser_fill(
     value: str,
+    ctx: ToolContext,
     selector: str | None = None,
     uid: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Preenche um campo da página atual (input/textarea) — por seletor CSS
     ou por `uid` (de `browser_snapshot`).
@@ -263,12 +246,11 @@ async def browser_fill(
     Returns:
         Confirmação ou mensagem de erro.
     """
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     if uid is not None:
-        workspace_id = _workspace_id(config)
-        tab = get_tab_state(workspace_id)
+        tab = get_tab_state(ctx.workspace_id)
         if tab is None:
             return _NO_PAGE_ERROR
         ok = (
@@ -292,18 +274,15 @@ async def browser_fill(
         )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "browser",
-        "destructive": False,
-        "icon": "file-text",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="browser",
+        destructive=False,
+        icon="file-text",
+    )
 )
-async def browser_read_dom(
-    selector: str = "body",
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_read_dom(ctx: ToolContext, selector: str = "body") -> str:
     """Lê o texto visível da página atual (não o HTML cru).
 
     Args:
@@ -312,7 +291,7 @@ async def browser_read_dom(
     Returns:
         Texto visível do elemento, ou mensagem de erro se o seletor não existir.
     """
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     try:
@@ -326,19 +305,19 @@ async def browser_read_dom(
 _WAIT_FOR_STATES = ("visible", "hidden", "attached", "detached")
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": False,
-        "icon": "clock",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=False,
+        icon="clock",
+    )
 )
 async def browser_wait_for(
     selector: str,
+    ctx: ToolContext,
     state: str = "visible",
     timeout_ms: int = 5000,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Espera até o elemento atingir o estado indicado antes de continuar —
     use antes de clicar/ler algo que pode não estar pronto ainda (ex.:
@@ -354,7 +333,7 @@ async def browser_wait_for(
     """
     if state not in _WAIT_FOR_STATES:
         return f"Error: `state` deve ser um de {_WAIT_FOR_STATES}."
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     try:
@@ -370,18 +349,18 @@ async def browser_wait_for(
         )
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": True,
-        "icon": "move",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=True,
+        icon="move",
+    )
 )
 async def browser_drag(
     source_selector: str,
     target_selector: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    ctx: ToolContext,
 ) -> str:
     """Arrasta o elemento `source_selector` e solta sobre `target_selector`
     (drag and drop) — útil pra reordenar listas, mover cards de kanban, etc.
@@ -393,7 +372,7 @@ async def browser_drag(
     Returns:
         Confirmação ou mensagem de erro.
     """
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     try:
@@ -410,18 +389,18 @@ async def browser_drag(
         )
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": True,
-        "icon": "upload",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=True,
+        icon="upload",
+    )
 )
 async def browser_upload_file(
     selector: str,
     file_path: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    ctx: ToolContext,
 ) -> str:
     """Define o arquivo de um `<input type=file>` — sempre um caminho local
     do host (nunca simula clique/upload via UI de sistema, que não existe
@@ -435,7 +414,7 @@ async def browser_upload_file(
         Confirmação ou erro (arquivo inexistente, elemento não é input de
         arquivo, etc.)
     """
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     if not Path(file_path).is_file():
@@ -451,18 +430,15 @@ async def browser_upload_file(
         )
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": True,
-        "icon": "keyboard",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=True,
+        icon="keyboard",
+    )
 )
-async def browser_fill_form(
-    fields: dict[str, str],
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_fill_form(fields: dict[str, str], ctx: ToolContext) -> str:
     """Preenche múltiplos campos da página atual numa só chamada — cada
     chave de `fields` é um seletor CSS, cada valor o texto a preencher.
     Continua pros campos seguintes mesmo se um falhar (reporta por campo,
@@ -475,7 +451,7 @@ async def browser_fill_form(
         JSON `{"status": "ok"|"partial"|"error", "results": {seletor:
         "ok"|"error: ..."}}`.
     """
-    page, err = await _resolve_page(config)
+    page, err = await _resolve_page(ctx)
     if page is None:
         return err
     if not fields:
@@ -538,18 +514,15 @@ async def _resolve_dev_server_name(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "play",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="play",
+    )
 )
-async def browser_start(
-    name: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_start(ctx: ToolContext, name: str | None = None) -> str:
     """Inicia o dev server do workspace ativo (mesmo efeito que o usuário
     clicar em "play" na aba Browser).
 
@@ -566,7 +539,7 @@ async def browser_start(
     from backend.api.handlers.workspaces import BrowserStartRequest
     from backend.api.handlers.workspaces import browser_start as _http_browser_start
 
-    workspace_id = _workspace_id(config)
+    workspace_id = ctx.workspace_id
     resolved_name, err = await _resolve_dev_server_name(workspace_id, name)
     if resolved_name is None:
         return err
@@ -576,18 +549,15 @@ async def browser_start(
     return json.dumps({"status": result.status, "message": result.message})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "square",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="square",
+    )
 )
-async def browser_stop(
-    name: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_stop(ctx: ToolContext, name: str | None = None) -> str:
     """Para o dev server do workspace ativo.
 
     Args:
@@ -600,7 +570,7 @@ async def browser_stop(
     from backend.api.handlers.workspaces import BrowserStopRequest
     from backend.api.handlers.workspaces import browser_stop as _http_browser_stop
 
-    workspace_id = _workspace_id(config)
+    workspace_id = ctx.workspace_id
     resolved_name, err = await _resolve_dev_server_name(workspace_id, name)
     if resolved_name is None:
         return err
@@ -610,18 +580,15 @@ async def browser_stop(
     return json.dumps({"status": result.status, "message": result.message})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "refresh-cw",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="refresh-cw",
+    )
 )
-async def browser_restart(
-    name: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_restart(ctx: ToolContext, name: str | None = None) -> str:
     """Reinicia o dev server (para se estiver rodando, depois inicia de
     novo) — útil depois de corrigir a causa de uma falha (ex.: rodar
     `bun install`) pra confirmar que resolveu.
@@ -638,7 +605,7 @@ async def browser_restart(
     from backend.api.handlers.workspaces import browser_start as _http_browser_start
     from backend.api.handlers.workspaces import browser_stop as _http_browser_stop
 
-    workspace_id = _workspace_id(config)
+    workspace_id = ctx.workspace_id
     resolved_name, err = await _resolve_dev_server_name(workspace_id, name)
     if resolved_name is None:
         return err
@@ -649,18 +616,16 @@ async def browser_restart(
     return json.dumps({"status": result.status, "message": result.message})
 
 
-@tool(
-    extras={
-        "render_hint": "terminal_output",
-        "category": "browser",
-        "destructive": False,
-        "icon": "terminal",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="terminal_output",
+        category="browser",
+        destructive=False,
+        icon="terminal",
+    )
 )
 async def browser_logs(
-    name: str | None = None,
-    lines: int = 100,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    ctx: ToolContext, name: str | None = None, lines: int = 100
 ) -> str:
     """Lê as últimas linhas de stdout/stderr do dev server — inclusive
     depois dele ter travado/morrido (o histórico não é apagado ao parar).
@@ -679,7 +644,7 @@ async def browser_logs(
     """
     from backend.api.handlers.workspaces import browser_logs as _http_browser_logs
 
-    workspace_id = _workspace_id(config)
+    workspace_id = ctx.workspace_id
     resolved_name, err = await _resolve_dev_server_name(workspace_id, name)
     if resolved_name is None:
         return err
