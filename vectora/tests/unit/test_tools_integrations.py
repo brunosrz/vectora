@@ -118,7 +118,7 @@ class TestGmailTools:
         from backend.tools.gmail import gmail_list
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await gmail_list.ainvoke({"query": ""})
+            result = await gmail_list(query="")
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
     @pytest.mark.asyncio
@@ -130,7 +130,7 @@ class TestGmailTools:
             patch.dict("os.environ", {"GOOGLE_ACCESS_TOKEN": "tok"}),
             patch("httpx.AsyncClient", return_value=_mock_http_client([empty])),
         ):
-            result = await gmail_list.ainvoke({"query": ""})
+            result = await gmail_list(query="")
         assert "nenhum" in result.lower()
 
     @pytest.mark.asyncio
@@ -138,7 +138,7 @@ class TestGmailTools:
         from backend.tools.gmail import gmail_read
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await gmail_read.ainvoke({"message_id": "123"})
+            result = await gmail_read(message_id="123")
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
 

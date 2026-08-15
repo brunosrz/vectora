@@ -40,6 +40,9 @@ from backend.tools import (
     git as _git_module,
 )
 from backend.tools import (
+    gmail as _gmail_module,
+)
+from backend.tools import (
     homeassistant as _homeassistant_module,
 )
 from backend.tools import (
@@ -84,7 +87,6 @@ from backend.tools import (
 from backend.tools import (
     workspace as _workspace_module,
 )
-from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.mcp import call_mcp_tool
 from backend.tools.native import (
@@ -225,6 +227,8 @@ browser_screencast_start = _bridge("browser_screencast_start")
 browser_screencast_stop = _bridge("browser_screencast_stop")
 list_terminals = _bridge("list_terminals")
 close_terminal = _bridge("close_terminal")
+gmail_list = _bridge("gmail_list")
+gmail_read = _bridge("gmail_read")
 slack_send = _bridge("slack_send")
 slack_list_channels = _bridge("slack_list_channels")
 slack_read = _bridge("slack_read")

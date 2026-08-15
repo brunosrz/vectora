@@ -9,7 +9,7 @@ import base64
 import logging
 import os
 
-from langchain.tools import tool
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def _extract_text(payload: dict) -> str:
     return ""
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="mail"))
 async def gmail_list(query: str = "", max_results: int = 10) -> str:
     """Lista emails do Gmail com filtros opcionais.
 
@@ -109,7 +109,7 @@ async def gmail_list(query: str = "", max_results: int = 10) -> str:
         return f"Erro ao listar Gmail: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="file-text"))
 async def gmail_read(message_id: str) -> str:
     """Lê o conteúdo completo de um email do Gmail.
 
