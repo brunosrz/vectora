@@ -13,13 +13,11 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Annotated, Any
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from typing import Any
 
 from backend.scheduling import background_tasks, kanban
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -82,11 +80,11 @@ def _parse_decomposition(raw_text: str) -> list[dict[str, Any]]:
     return nos
 
 
-@tool(extras={"destructive": False, "category": "workspace", "icon": "trello"})
+@vtool(extras=ToolExtras(destructive=False, category="workspace", icon="trello"))
 async def kanban_list(
+    ctx: ToolContext,
     status: str | None = None,
     agent_profile_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Lista os cards do board Kanban desta sessão, com filtro opcional.
 
@@ -115,11 +113,10 @@ async def kanban_list(
                 }
             )
 
-        configurable = (config or {}).get("configurable") or {}
-        session_id = configurable.get("thread_id", "")
+        session_id = ctx.thread_id
         if not session_id:
             return json.dumps(
-                {"status": "error", "error": "session_id ausente no config"}
+                {"status": "error", "error": "session_id ausente no contexto"}
             )
 
         tasks = await background_tasks.list_tasks(session_id)
@@ -146,20 +143,20 @@ async def kanban_list(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": True,
-        "category": "workspace",
-        "icon": "plus-square",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=True,
+        category="workspace",
+        icon="plus-square",
+    )
 )
 async def kanban_create(
+    ctx: ToolContext,
     name: str,
     instruction: str,
     kind: str = "subagent",
     agent_profile_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria um card novo no board Kanban, pronto pra rodar sob demanda.
 
@@ -186,13 +183,12 @@ async def kanban_create(
                 {"status": "error", "error": "instruction não pode ser vazia"}
             )
 
-        configurable = (config or {}).get("configurable") or {}
-        session_id = configurable.get("thread_id", "")
-        user_id = configurable.get("user_id", "")
-        workspace_id = configurable.get("workspace_id")
+        session_id = ctx.thread_id
+        user_id = ctx.user_id
+        workspace_id = ctx.workspace_id or None
         if not session_id:
             return json.dumps(
-                {"status": "error", "error": "session_id ausente no config"}
+                {"status": "error", "error": "session_id ausente no contexto"}
             )
 
         task = await background_tasks.create_task(
@@ -215,13 +211,13 @@ async def kanban_create(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": True,
-        "category": "workspace",
-        "icon": "move",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=True,
+        category="workspace",
+        icon="move",
+    )
 )
 async def kanban_update_status(
     task_id: str,
@@ -272,17 +268,17 @@ async def kanban_update_status(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": True,
-        "category": "workspace",
-        "icon": "git-branch",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=True,
+        category="workspace",
+        icon="git-branch",
+    )
 )
 async def kanban_decompose(
+    ctx: ToolContext,
     task_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Decompõe um card em `triage` num grafo de subtasks com dependências.
 
@@ -325,8 +321,7 @@ async def kanban_decompose(
         from backend.llm.fallback_chat_client import FallbackChatClient
         from backend.vtypes.message import ContentBlock, MessageRole, VMessage
 
-        configurable = (config or {}).get("configurable") or {}
-        model_id = configurable.get("model", "")
+        model_id = ctx.model
 
         llm = FallbackChatClient(primary_model_id=model_id)
         resposta = await llm.agenerate(

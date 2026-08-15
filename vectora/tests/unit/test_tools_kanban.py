@@ -3,7 +3,7 @@
 `kanban_create`/`kanban_update_status` mutam `vectora_background_tasks` via
 `backend.scheduling.background_tasks`/`backend.scheduling.kanban` — nunca por
 SQL direto. `kanban_list` é só leitura. Cada caminho feliz tem o par de
-erro/borda no mesmo teste (CLAUDE.md §18).
+erro/borda no mesmo teste.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ import pytest
 import backend
 from backend.scheduling import background_tasks as bg
 from backend.scheduling import kanban
+from backend.tools.context import ToolContext
 from backend.vtypes.message import ContentBlock, MessageRole, VMessage
 
 
@@ -60,11 +61,8 @@ async def db(tmp_path, monkeypatch):
     return db_path
 
 
-def _cfg(session_id: str = "s1", user_id: str = "u1") -> Any:
-    """RunnableConfig — passado como 2º posicional de `.ainvoke()`, não no
-    dict de argumentos: `config` é `InjectedToolArg`, o LangChain o injeta
-    a partir daí, não do input da tool."""
-    return {"configurable": {"thread_id": session_id, "user_id": user_id}}
+def _ctx(session_id: str = "s1", user_id: str = "u1") -> ToolContext:
+    return ToolContext(thread_id=session_id, user_id=user_id)
 
 
 class TestKanbanCreate:
@@ -73,12 +71,10 @@ class TestKanbanCreate:
         from backend.tools.kanban import kanban_create
 
         out = json.loads(
-            await kanban_create.ainvoke(
-                {
-                    "name": "Revisar PR #42",
-                    "instruction": "Revise o PR e comente achados.",
-                },
-                _cfg(),
+            await kanban_create(
+                ctx=_ctx(),
+                name="Revisar PR #42",
+                instruction="Revise o PR e comente achados.",
             )
         )
         assert out["status"] == "created"
@@ -96,14 +92,12 @@ class TestKanbanCreate:
         from backend.tools.kanban import kanban_create
 
         out_nome = json.loads(
-            await kanban_create.ainvoke(
-                {"name": "  ", "instruction": "faça algo"}, _cfg()
-            )
+            await kanban_create(ctx=_ctx(), name="  ", instruction="faça algo")
         )
         assert out_nome["status"] == "error"
 
         out_instrucao = json.loads(
-            await kanban_create.ainvoke({"name": "card", "instruction": "  "}, _cfg())
+            await kanban_create(ctx=_ctx(), name="card", instruction="  ")
         )
         assert out_instrucao["status"] == "error"
 
@@ -116,15 +110,11 @@ class TestKanbanUpdateStatus:
         from backend.tools.kanban import kanban_create, kanban_update_status
 
         created = json.loads(
-            await kanban_create.ainvoke(
-                {"name": "card", "instruction": "faça algo"}, _cfg()
-            )
+            await kanban_create(ctx=_ctx(), name="card", instruction="faça algo")
         )
         task_id = created["task_id"]
 
-        out = json.loads(
-            await kanban_update_status.ainvoke({"task_id": task_id, "status": "review"})
-        )
+        out = json.loads(await kanban_update_status(task_id=task_id, status="review"))
         assert out["result"] == "ok"
 
         estado = await kanban.get_task_status(task_id)
@@ -138,16 +128,12 @@ class TestKanbanUpdateStatus:
         from backend.tools.kanban import kanban_create, kanban_update_status
 
         created = json.loads(
-            await kanban_create.ainvoke(
-                {"name": "card", "instruction": "faça algo"}, _cfg()
-            )
+            await kanban_create(ctx=_ctx(), name="card", instruction="faça algo")
         )
         task_id = created["task_id"]
 
         out = json.loads(
-            await kanban_update_status.ainvoke(
-                {"task_id": task_id, "status": "em-analise"}
-            )
+            await kanban_update_status(task_id=task_id, status="em-analise")
         )
         assert out["status"] == "error"
         assert "em-analise" in out["error"]
@@ -161,20 +147,16 @@ class TestKanbanUpdateStatus:
         from backend.tools.kanban import kanban_create, kanban_update_status
 
         created = json.loads(
-            await kanban_create.ainvoke(
-                {"name": "card", "instruction": "faça algo"}, _cfg()
-            )
+            await kanban_create(ctx=_ctx(), name="card", instruction="faça algo")
         )
         task_id = created["task_id"]
 
         out = json.loads(
-            await kanban_update_status.ainvoke(
-                {
-                    "task_id": task_id,
-                    "status": "blocked",
-                    "block_kind": "capability",
-                    "block_reason": "falta ferramenta X",
-                }
+            await kanban_update_status(
+                task_id=task_id,
+                status="blocked",
+                block_kind="capability",
+                block_reason="falta ferramenta X",
             )
         )
         assert out["result"] == "ok"
@@ -189,14 +171,10 @@ class TestKanbanList:
     async def test_lista_cards_reais_da_sessao(self, db):
         from backend.tools.kanban import kanban_create, kanban_list
 
-        await kanban_create.ainvoke(
-            {"name": "card 1", "instruction": "faça algo"}, _cfg()
-        )
-        await kanban_create.ainvoke(
-            {"name": "card 2", "instruction": "faça outra coisa"}, _cfg()
-        )
+        await kanban_create(ctx=_ctx(), name="card 1", instruction="faça algo")
+        await kanban_create(ctx=_ctx(), name="card 2", instruction="faça outra coisa")
 
-        out = json.loads(await kanban_list.ainvoke({}, _cfg()))
+        out = json.loads(await kanban_list(ctx=_ctx()))
         assert out["status"] == "ok"
         assert {c["name"] for c in out["cards"]} == {"card 1", "card 2"}
 
@@ -206,7 +184,7 @@ class TestKanbanList:
         simplesmente vem vazia."""
         from backend.tools.kanban import kanban_list
 
-        out = json.loads(await kanban_list.ainvoke({}, _cfg("sessao-nova")))
+        out = json.loads(await kanban_list(ctx=_ctx("sessao-nova")))
         assert out["status"] == "ok"
         assert out["cards"] == []
 
@@ -219,18 +197,12 @@ class TestKanbanList:
         )
 
         created = json.loads(
-            await kanban_create.ainvoke(
-                {"name": "card review", "instruction": "faça algo"}, _cfg()
-            )
+            await kanban_create(ctx=_ctx(), name="card review", instruction="faça algo")
         )
-        await kanban_create.ainvoke(
-            {"name": "card ready", "instruction": "faça algo"}, _cfg()
-        )
-        await kanban_update_status.ainvoke(
-            {"task_id": created["task_id"], "status": "review"}
-        )
+        await kanban_create(ctx=_ctx(), name="card ready", instruction="faça algo")
+        await kanban_update_status(task_id=created["task_id"], status="review")
 
-        out = json.loads(await kanban_list.ainvoke({"status": "review"}, _cfg()))
+        out = json.loads(await kanban_list(ctx=_ctx(), status="review"))
         assert [c["name"] for c in out["cards"]] == ["card review"]
 
 
@@ -240,12 +212,10 @@ class TestKanbanDecompose:
         from backend.tools.kanban import kanban_create, kanban_decompose
 
         created = json.loads(
-            await kanban_create.ainvoke(
-                {
-                    "name": "Migrar auth",
-                    "instruction": "Migre o módulo de auth pra OIDC",
-                },
-                _cfg(),
+            await kanban_create(
+                ctx=_ctx(),
+                name="Migrar auth",
+                instruction="Migre o módulo de auth pra OIDC",
             )
         )
         task_id = created["task_id"]
@@ -270,9 +240,7 @@ class TestKanbanDecompose:
             "backend.llm.fallback_chat_client.FallbackChatClient.agenerate",
             fake_agenerate,
         ):
-            out = json.loads(
-                await kanban_decompose.ainvoke({"task_id": task_id}, _cfg())
-            )
+            out = json.loads(await kanban_decompose(ctx=_ctx(), task_id=task_id))
 
         assert out["status"] == "ok"
         assert out["decomposed"] is True
@@ -298,9 +266,7 @@ class TestKanbanDecompose:
         from backend.tools.kanban import kanban_create, kanban_decompose
 
         created = json.loads(
-            await kanban_create.ainvoke(
-                {"name": "card", "instruction": "faça algo"}, _cfg()
-            )
+            await kanban_create(ctx=_ctx(), name="card", instruction="faça algo")
         )
         task_id = created["task_id"]
         await kanban.set_status(task_id, "triage")
@@ -310,9 +276,7 @@ class TestKanbanDecompose:
             "backend.llm.fallback_chat_client.FallbackChatClient.agenerate",
             fake_agenerate,
         ):
-            out = json.loads(
-                await kanban_decompose.ainvoke({"task_id": task_id}, _cfg())
-            )
+            out = json.loads(await kanban_decompose(ctx=_ctx(), task_id=task_id))
 
         assert out["status"] == "ok"
         assert out["decomposed"] is False
@@ -331,9 +295,7 @@ class TestKanbanDecompose:
         from backend.tools.kanban import kanban_create, kanban_decompose
 
         created = json.loads(
-            await kanban_create.ainvoke(
-                {"name": "card", "instruction": "faça algo"}, _cfg()
-            )
+            await kanban_create(ctx=_ctx(), name="card", instruction="faça algo")
         )
         task_id = created["task_id"]
         await kanban.set_status(task_id, "triage")
@@ -349,9 +311,7 @@ class TestKanbanDecompose:
             "backend.llm.fallback_chat_client.FallbackChatClient.agenerate",
             fake_agenerate,
         ):
-            out = json.loads(
-                await kanban_decompose.ainvoke({"task_id": task_id}, _cfg())
-            )
+            out = json.loads(await kanban_decompose(ctx=_ctx(), task_id=task_id))
 
         assert out["decomposed"] is True
         assert len(out["children"]) == 2
@@ -364,9 +324,7 @@ class TestKanbanDecompose:
         from backend.tools.kanban import kanban_create, kanban_decompose
 
         created = json.loads(
-            await kanban_create.ainvoke(
-                {"name": "card", "instruction": "faça algo"}, _cfg()
-            )
+            await kanban_create(ctx=_ctx(), name="card", instruction="faça algo")
         )
         task_id = created["task_id"]
 
@@ -377,9 +335,7 @@ class TestKanbanDecompose:
             "backend.llm.fallback_chat_client.FallbackChatClient.agenerate",
             fake_agenerate,
         ):
-            out = json.loads(
-                await kanban_decompose.ainvoke({"task_id": task_id}, _cfg())
-            )
+            out = json.loads(await kanban_decompose(ctx=_ctx(), task_id=task_id))
 
         assert out["status"] == "error"
         assert "triage" in out["error"]

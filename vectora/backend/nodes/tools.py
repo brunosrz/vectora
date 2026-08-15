@@ -40,6 +40,9 @@ from backend.tools import (
     homeassistant as _homeassistant_module,
 )
 from backend.tools import (
+    kanban as _kanban_module,
+)
+from backend.tools import (
     learning as _learning_module,
 )
 from backend.tools import (
@@ -70,12 +73,6 @@ from backend.tools.gdrive import (
 )
 from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
-from backend.tools.kanban import (
-    kanban_create,
-    kanban_decompose,
-    kanban_list,
-    kanban_update_status,
-)
 from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.linear import (
     linear_create_issue,
@@ -154,6 +151,10 @@ git_worktree = _bridge("git_worktree")
 git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 git_discard = _bridge("git_discard")
+kanban_list = _bridge("kanban_list")
+kanban_create = _bridge("kanban_create")
+kanban_update_status = _bridge("kanban_update_status")
+kanban_decompose = _bridge("kanban_decompose")
 ha_list_entities = _bridge("ha_list_entities")
 ha_get_state = _bridge("ha_get_state")
 ha_list_services = _bridge("ha_list_services")
