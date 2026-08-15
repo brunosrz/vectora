@@ -28,11 +28,13 @@ vocabulário nativo.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
+from backend.engine.guardrails import LoopCapConfig, TurnBudget
 from backend.engine.stream_events import (
+    ErrorSignal,
     HitlRequested,
     MessageBreak,
     MessageChunk,
@@ -40,6 +42,12 @@ from backend.engine.stream_events import (
 )
 from backend.engine.tool_batch import execute_tool_batch
 from backend.vtypes.message import ContentBlock, MessageRole, ToolCall, VMessage
+
+_REPEATED_CALL_THRESHOLD = 3
+"""Quantas chamadas idênticas seguidas (mesma tool, mesmos args) disparam o
+aviso de possível loop preso — inspirado na detecção de repetição do
+hermes-agent (`agent/tool_guardrails.py`), sem a classificação
+idempotente/mutante dele: aqui é só sinal, o LLM/HITL decide o resto."""
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -59,6 +67,11 @@ class LoopConfig:
     max_iterations: int = 50
     temperature: float | None = None
     max_tokens: int | None = None
+    loop_caps: LoopCapConfig = field(default_factory=LoopCapConfig)
+    """Tetos de volume por turno (`backend/engine/guardrails.py`) —
+    distintos de `max_iterations` (teto de voltas do loop): aqui é volume
+    de tool calls/subagentes/AITL, não repetição nem número de idas e
+    vindas ao chat client."""
 
 
 @dataclass(slots=True)
@@ -66,12 +79,19 @@ class LoopResult:
     """Resultado de uma chamada a `run_conversation`."""
 
     stopped_reason: str
-    """`"stop"` | `"max_iterations"` | `"interrupted"`."""
+    """`"stop"` | `"max_iterations"` | `"interrupted"` | `"loop_cap_exceeded"`."""
     final_message: VMessage | None = None
 
 
 async def _noop_event(_event: object) -> None:
     return None
+
+
+def _call_signature(tool_call: ToolCall) -> tuple[str, str]:
+    """Assinatura estável de uma tool call — nome + args normalizados
+    (chaves ordenadas), usada só pra detectar repetição, nunca pra
+    execução."""
+    return (tool_call.name, json.dumps(tool_call.args, sort_keys=True))
 
 
 def _resolve_tool_calls(acumulado: dict[int, dict[str, Any]]) -> list[ToolCall]:
@@ -112,6 +132,9 @@ async def run_conversation(
     emit = on_event or _noop_event
     tools = tool_registry.all()
     parent_id = await session_store.get_branch_head_id(thread_id)
+    assinaturas_anteriores: frozenset[tuple[str, str]] | None = None
+    repeticoes_seguidas = 0
+    turn_budget = TurnBudget(config=config.loop_caps)
 
     for _iteracao in range(config.max_iterations):
         historico = await session_store.get_history(thread_id)
@@ -162,6 +185,25 @@ async def run_conversation(
         if not tool_calls:
             return LoopResult(stopped_reason="stop", final_message=assistant_msg)
 
+        assinaturas_atual = frozenset(_call_signature(tc) for tc in tool_calls)
+        if assinaturas_atual == assinaturas_anteriores:
+            repeticoes_seguidas += 1
+        else:
+            repeticoes_seguidas = 1
+        assinaturas_anteriores = assinaturas_atual
+        if repeticoes_seguidas == _REPEATED_CALL_THRESHOLD:
+            nomes = ", ".join(sorted({tc.name for tc in tool_calls}))
+            await emit(
+                ErrorSignal(
+                    code="TOOL_CALL_REPEATED",
+                    message=(
+                        f"Mesma tool call ({nomes}) repetida "
+                        f"{_REPEATED_CALL_THRESHOLD}x seguidas com argumentos "
+                        "idênticos — possível loop preso."
+                    ),
+                )
+            )
+
         if should_require_approval is not None:
             pendente = next(
                 (
@@ -194,7 +236,7 @@ async def run_conversation(
                 )
 
         resultados = await execute_tool_batch(
-            tool_calls, tool_registry=tool_registry, ctx=ctx
+            tool_calls, tool_registry=tool_registry, ctx=ctx, turn_budget=turn_budget
         )
         for resultado in resultados:
             parent_id = await session_store.append_message(
@@ -208,4 +250,24 @@ async def run_conversation(
                 )
             )
 
+        if turn_budget.exceeded is not None:
+            await emit(
+                ErrorSignal(
+                    code="LOOP_CAP_EXCEEDED",
+                    message=(
+                        f"Teto de guardrail do turno excedido "
+                        f"({turn_budget.exceeded}) — turno encerrado."
+                    ),
+                )
+            )
+            return LoopResult(
+                stopped_reason="loop_cap_exceeded", final_message=assistant_msg
+            )
+
+    await emit(
+        ErrorSignal(
+            code="RECURSION_LIMIT",
+            message=f"Limite de {config.max_iterations} iterações atingido.",
+        )
+    )
     return LoopResult(stopped_reason="max_iterations")

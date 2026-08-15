@@ -22,8 +22,10 @@ from backend.testing.message_factory import (
     make_tool_result,
     make_user_message,
 )
+from backend.testing.mocks import FakeChatClient, text_chunk, text_response
 
 __all__ = [
+    "FakeChatClient",
     "assert_last_message_is_ai",
     "assert_message_contains_text",
     "assert_tool_called",
@@ -34,4 +36,6 @@ __all__ = [
     "make_tool_result",
     "make_user_message",
     "temp_db",
+    "text_chunk",
+    "text_response",
 ]

@@ -9,8 +9,10 @@ from __future__ import annotations
 import pytest
 
 from backend.engine.conversation_loop import LoopConfig, run_conversation
+from backend.engine.guardrails import LoopCapConfig
 from backend.engine.stream_events import (
     EngineEvent,
+    ErrorSignal,
     HitlRequested,
     MessageBreak,
     MessageChunk,
@@ -116,6 +118,10 @@ class TestMaxIterations:
 
         turno = [_tool_call_chunk(index=0, id="call_1", name="loop_tool", args="{}")]
         client = _ScriptedChatClient([turno, turno, turno])
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
 
         resultado = await run_conversation(
             session_store=session_store,
@@ -124,10 +130,92 @@ class TestMaxIterations:
             ctx=ctx,
             thread_id="thread-1",
             config=LoopConfig(max_iterations=3),
+            on_event=on_event,
         )
 
         assert resultado.stopped_reason == "max_iterations"
         assert client.chamadas == 3
+        sinais = [e for e in eventos if isinstance(e, ErrorSignal)]
+        assert any(e.code == "RECURSION_LIMIT" for e in sinais)
+
+
+class TestGuardrailDeRepeticao:
+    async def test_chamadas_identicas_disparam_aviso_diferentes_nao(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras())
+        async def buscar(query: str, ctx: ToolContext) -> str:
+            """busca algo.
+            Args:
+                query: termo de busca
+            """
+            return "resultado"
+
+        registry = ToolRegistry()
+        _register(registry, "buscar")
+
+        # Caminho feliz: 3 chamadas seguidas com args idênticos disparam o aviso.
+        turno_repetido = [
+            _tool_call_chunk(index=0, id="call_1", name="buscar", args='{"query":"x"}')
+        ]
+        client = _ScriptedChatClient(
+            [turno_repetido, turno_repetido, turno_repetido, [_texto_chunk("fim")]]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+        sinais = [e for e in eventos if isinstance(e, ErrorSignal)]
+        assert any(e.code == "TOOL_CALL_REPEATED" for e in sinais)
+
+        # Borda: mesma tool, args diferentes a cada chamada — nunca dispara.
+        await session_store.create_session("thread-2", user_id="alice")
+        client2 = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0, id="c1", name="buscar", args='{"query":"a"}'
+                    )
+                ],
+                [
+                    _tool_call_chunk(
+                        index=0, id="c2", name="buscar", args='{"query":"b"}'
+                    )
+                ],
+                [
+                    _tool_call_chunk(
+                        index=0, id="c3", name="buscar", args='{"query":"c"}'
+                    )
+                ],
+                [_texto_chunk("fim")],
+            ]
+        )
+        eventos2: list[EngineEvent] = []
+
+        async def on_event2(event: EngineEvent) -> None:
+            eventos2.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client2,
+            tool_registry=registry,
+            ctx=ToolContext(user_id="alice", thread_id="thread-2"),
+            thread_id="thread-2",
+            config=LoopConfig(),
+            on_event=on_event2,
+        )
+        sinais2 = [e for e in eventos2 if isinstance(e, ErrorSignal)]
+        assert not any(e.code == "TOOL_CALL_REPEATED" for e in sinais2)
 
 
 class TestToolCallsSequenciais:
@@ -325,7 +413,7 @@ class TestEmissaoDeEventos:
 
     async def test_tool_result_emitido_apos_execucao(self, session_store, ctx):
         @vtool(extras=ToolExtras())
-        async def somar(a: int, b: int, ctx: ToolContext) -> str:
+        async def adicionar(a: int, b: int, ctx: ToolContext) -> str:
             """soma dois números.
             Args:
                 a: primeiro
@@ -334,13 +422,13 @@ class TestEmissaoDeEventos:
             return str(a + b)
 
         registry = ToolRegistry()
-        _register(registry, "somar")
+        _register(registry, "adicionar")
 
         client = _ScriptedChatClient(
             [
                 [
                     _tool_call_chunk(
-                        index=0, id="call_1", name="somar", args='{"a":1,"b":2}'
+                        index=0, id="call_1", name="adicionar", args='{"a":1,"b":2}'
                     )
                 ],
                 [_texto_chunk("pronto")],
@@ -403,3 +491,87 @@ class TestEmissaoDeEventos:
         assert hitl_eventos[0].tool_name == "escrever"
         assert hitl_eventos[0].args_json == "{}"
         assert hitl_eventos[0].interrupt_id  # gerado, não vazio
+
+
+class TestLoopCapGuardrail:
+    async def test_estoura_teto_de_tool_calls_encerra_turno_sem_esgotar_max_iterations(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras())
+        async def contar(n: int, ctx: ToolContext) -> str:
+            """conta.
+            Args:
+                n: número
+            """
+            return "ok"
+
+        registry = ToolRegistry()
+        _register(registry, "contar")
+
+        # 5 turnos chamando a tool com args diferentes (não repetidos —
+        # não confunde com o guardrail de repetição), mas o teto de volume
+        # do turno é 2: a 3ª chamada já deveria encerrar o loop.
+        turnos = [
+            [_tool_call_chunk(index=0, id=f"c{i}", name="contar", args=f'{{"n":{i}}}')]
+            for i in range(5)
+        ]
+        client = _ScriptedChatClient(turnos)
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        resultado = await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(
+                max_iterations=50,
+                loop_caps=LoopCapConfig(max_tool_calls_per_turn=2),
+            ),
+            on_event=on_event,
+        )
+
+        assert resultado.stopped_reason == "loop_cap_exceeded"
+        # Encerrou muito antes de esgotar as 50 iterações permitidas.
+        assert client.chamadas < 5
+        sinais = [e for e in eventos if isinstance(e, ErrorSignal)]
+        assert any(e.code == "LOOP_CAP_EXCEEDED" for e in sinais)
+
+    async def test_dentro_do_teto_nunca_dispara_o_guardrail(self, session_store, ctx):
+        @vtool(extras=ToolExtras())
+        async def contar2(n: int, ctx: ToolContext) -> str:
+            """conta.
+            Args:
+                n: número
+            """
+            return "ok"
+
+        registry = ToolRegistry()
+        _register(registry, "contar2")
+
+        turnos = [
+            [_tool_call_chunk(index=0, id=f"c{i}", name="contar2", args=f'{{"n":{i}}}')]
+            for i in range(2)
+        ] + [[_texto_chunk("fim")]]
+        client = _ScriptedChatClient(turnos)
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        resultado = await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(loop_caps=LoopCapConfig(max_tool_calls_per_turn=10)),
+            on_event=on_event,
+        )
+
+        assert resultado.stopped_reason == "stop"
+        sinais = [e for e in eventos if isinstance(e, ErrorSignal)]
+        assert not any(e.code == "LOOP_CAP_EXCEEDED" for e in sinais)

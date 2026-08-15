@@ -17,15 +17,40 @@ from typing import TYPE_CHECKING
 from backend.vtypes.message import ContentBlock, MessageRole, VMessage
 
 if TYPE_CHECKING:
+    from backend.engine.guardrails import TurnBudget
     from backend.tools.context import ToolContext
     from backend.tools.registry import ToolRegistry
     from backend.vtypes.message import ToolCall
 
 
 async def _run_one(
-    tool_call: ToolCall, *, tool_registry: ToolRegistry, ctx: ToolContext
+    tool_call: ToolCall,
+    *,
+    tool_registry: ToolRegistry,
+    ctx: ToolContext,
+    turn_budget: TurnBudget | None,
 ) -> VMessage:
     spec = tool_registry.get(tool_call.name)
+
+    if turn_budget is not None:
+        estourado = turn_budget.record_tool_call(spec)
+        if estourado is not None:
+            return VMessage(
+                role=MessageRole.TOOL,
+                content=[
+                    ContentBlock(
+                        kind="text",
+                        text=(
+                            f"Error: teto de guardrail do turno excedido "
+                            f"({estourado}) — tool '{tool_call.name}' não executada."
+                        ),
+                    )
+                ],
+                tool_call_id=tool_call.id,
+                name=tool_call.name,
+                is_error=True,
+            )
+
     if spec is None:
         texto = f"Error: tool '{tool_call.name}' não encontrada no registry"
         is_error = True
@@ -42,11 +67,21 @@ async def _run_one(
 
 
 async def execute_tool_batch(
-    tool_calls: list[ToolCall], *, tool_registry: ToolRegistry, ctx: ToolContext
+    tool_calls: list[ToolCall],
+    *,
+    tool_registry: ToolRegistry,
+    ctx: ToolContext,
+    turn_budget: TurnBudget | None = None,
 ) -> list[VMessage]:
     """Executa todas as `tool_calls` do turno, na ordem em que aparecem no
     resultado — paralelo se nenhuma é destrutiva, sequencial (mas ainda
-    assim todas executadas) se qualquer uma é."""
+    assim todas executadas) se qualquer uma é.
+
+    Com `turn_budget`, cada chamada é registrada contra o teto do turno
+    (`backend/engine/guardrails.py::TurnBudget`) antes de rodar — a
+    primeira chamada que estourar o teto vira erro sem executar a tool, e
+    `turn_budget.exceeded` fica setado (travado) pro chamador checar depois
+    do lote inteiro e decidir parar o loop."""
     algum_destrutivo = any(
         (spec := tool_registry.get(tc.name)) is not None and spec.extras.destructive
         for tc in tool_calls
@@ -54,12 +89,19 @@ async def execute_tool_batch(
 
     if algum_destrutivo:
         return [
-            await _run_one(tc, tool_registry=tool_registry, ctx=ctx)
+            await _run_one(
+                tc, tool_registry=tool_registry, ctx=ctx, turn_budget=turn_budget
+            )
             for tc in tool_calls
         ]
 
     return list(
         await asyncio.gather(
-            *(_run_one(tc, tool_registry=tool_registry, ctx=ctx) for tc in tool_calls)
+            *(
+                _run_one(
+                    tc, tool_registry=tool_registry, ctx=ctx, turn_budget=turn_budget
+                )
+                for tc in tool_calls
+            )
         )
     )

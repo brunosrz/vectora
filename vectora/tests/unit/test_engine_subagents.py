@@ -11,6 +11,7 @@ import asyncio
 
 import pytest
 
+from backend.engine.guardrails import LoopCapConfig, TurnBudget
 from backend.engine.stream_events import SubagentOutput
 from backend.engine.subagents import (
     SubagentSpec,
@@ -229,3 +230,49 @@ class TestSpawnSubagentBackground:
         assert isinstance(task, asyncio.Task)
         resultado = await task
         assert resultado == "resultado em background"
+
+
+class TestTurnBudgetDoTurnoPai:
+    async def test_spawn_recusado_quando_teto_do_turno_pai_ja_estourou(
+        self, session_store, ctx
+    ):
+        """`turn_budget` é o mesmo objeto do turno do agente pai — se já
+        estourou (por qualquer dimensão), o spawn é recusado sem gastar
+        nenhum recurso: nenhuma sessão criada, nenhuma chamada ao chat
+        client."""
+        budget = TurnBudget(config=LoopCapConfig(max_subagent_spawns_per_turn=0))
+        client = _ScriptedChatClient([[_texto_chunk("nunca deveria rodar")]])
+
+        resultado = await run_subagent(
+            _spec(),
+            "faça algo",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+            turn_budget=budget,
+        )
+
+        assert "não foi disparado" in resultado
+        assert client.chamadas == 0
+        assert budget.subagent_spawns == 0
+
+    async def test_spawn_dentro_do_teto_incrementa_o_budget_do_pai(
+        self, session_store, ctx
+    ):
+        budget = TurnBudget(config=LoopCapConfig(max_subagent_spawns_per_turn=2))
+        client = _ScriptedChatClient([[_texto_chunk("ok")]])
+
+        resultado = await run_subagent(
+            _spec(),
+            "faça algo",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+            turn_budget=budget,
+        )
+
+        assert resultado == "ok"
+        assert budget.subagent_spawns == 1
+        assert budget.exceeded is None

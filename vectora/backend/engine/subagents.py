@@ -39,6 +39,7 @@ from backend.vtypes.message import MessageRole, text_message
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from backend.engine.guardrails import TurnBudget
     from backend.engine.stream_events import EventSink
     from backend.llm.base import ChatClient
     from backend.persistence.native.session_store import SessionStore
@@ -76,11 +77,26 @@ async def run_subagent(
         [str, ToolContext, dict[str, Any], list[VMessage]], bool
     ]
     | None = None,
+    turn_budget: TurnBudget | None = None,
 ) -> str:
     """Roda `spec` até completar (ou pausar em HITL) e devolve o texto
     final — instância nova e isolada do motor, sessão própria com
     `parent_thread_id` gravado (rastreabilidade), sem herdar o histórico do
-    chamador."""
+    chamador.
+
+    `turn_budget`, quando fornecido, é o mesmo objeto do turno do agente
+    pai (`backend/engine/guardrails.py::TurnBudget`) — o spawn é registrado
+    contra o teto `max_subagent_spawns_per_turn` do turno pai antes de
+    qualquer sessão ser criada; teto excedido recusa o spawn sem gastar
+    nenhum recurso."""
+    if turn_budget is not None:
+        estourado = turn_budget.record_subagent_spawn()
+        if estourado is not None:
+            return (
+                f"Error: teto de guardrail do turno excedido ({estourado}) — "
+                f"subagente '{spec.name}' não foi disparado."
+            )
+
     thread_id = _sub_thread_id(parent_thread_id, spec.name)
     await session_store.create_session(
         thread_id,
