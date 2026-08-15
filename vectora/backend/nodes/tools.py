@@ -73,6 +73,9 @@ from backend.tools import (
     slack as _slack_module,
 )
 from backend.tools import (
+    terminal_sessions as _terminal_sessions_module,
+)
+from backend.tools import (
     thinking as _thinking_module,
 )
 from backend.tools import (
@@ -96,7 +99,6 @@ from backend.tools.native import (
     time_parse,
 )
 from backend.tools.registry import TOOL_REGISTRY
-from backend.tools.terminal_sessions import close_terminal, list_terminals
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
@@ -221,6 +223,8 @@ browser_compare_heap_snapshots = _bridge("browser_compare_heap_snapshots")
 browser_lighthouse_audit = _bridge("browser_lighthouse_audit")
 browser_screencast_start = _bridge("browser_screencast_start")
 browser_screencast_stop = _bridge("browser_screencast_stop")
+list_terminals = _bridge("list_terminals")
+close_terminal = _bridge("close_terminal")
 slack_send = _bridge("slack_send")
 slack_list_channels = _bridge("slack_list_channels")
 slack_read = _bridge("slack_read")

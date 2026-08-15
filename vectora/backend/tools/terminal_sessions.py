@@ -8,32 +8,25 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Annotated
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
 
 from backend.services.pty_registry import pty_registry
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "filesystem",
-        "destructive": False,
-        "icon": "terminal",
-    }
-)
-async def list_terminals(
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
-    """Lista os terminais PTY abertos manualmente pelo usuário nesta sessão."""
-    thread_id = (
-        str((config.get("configurable") or {}).get("thread_id", "")) if config else ""
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="filesystem",
+        destructive=False,
+        icon="terminal",
     )
+)
+async def list_terminals(ctx: ToolContext) -> str:
+    """Lista os terminais PTY abertos manualmente pelo usuário nesta sessão."""
+    thread_id = ctx.thread_id
     sessions = (
         pty_registry.list_for_thread(thread_id)
         if thread_id
@@ -54,13 +47,13 @@ async def list_terminals(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "filesystem",
-        "destructive": True,
-        "icon": "terminal",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="filesystem",
+        destructive=True,
+        icon="terminal",
+    )
 )
 async def close_terminal(terminal_id: str) -> str:
     """Encerra um terminal PTY aberto manualmente pelo usuário, pelo id."""
@@ -72,9 +65,5 @@ async def close_terminal(terminal_id: str) -> str:
         )
     return json.dumps({"status": "closed", "terminal_id": terminal_id})
 
-
-for _t in (list_terminals, close_terminal):
-    if _t.extras:
-        _t.metadata = _t.extras
 
 __all__ = ["close_terminal", "list_terminals"]

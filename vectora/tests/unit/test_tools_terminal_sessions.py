@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from backend.services.pty_registry import pty_registry
+from backend.tools.context import ToolContext
 from backend.tools.terminal_sessions import close_terminal, list_terminals
 
 
@@ -37,9 +38,7 @@ class TestListTerminals:
         pty_registry.add(_fake_session("t1", "thr-1", "ws-1"))
         pty_registry.add(_fake_session("t2", "thr-2", "ws-1"))
 
-        result = await list_terminals.ainvoke(
-            {}, config={"configurable": {"thread_id": "thr-1"}}
-        )
+        result = await list_terminals(ctx=ToolContext(thread_id="thr-1"))
         data = json.loads(result)
         assert [t["terminal_id"] for t in data["terminals"]] == ["t1"]
 
@@ -48,13 +47,13 @@ class TestListTerminals:
         pty_registry.add(_fake_session("t1", "thr-1", "ws-1"))
         pty_registry.add(_fake_session("t2", "thr-2", "ws-1"))
 
-        result = await list_terminals.ainvoke({})
+        result = await list_terminals(ctx=ToolContext())
         data = json.loads(result)
         assert {t["terminal_id"] for t in data["terminals"]} == {"t1", "t2"}
 
     @pytest.mark.asyncio
     async def test_sem_terminais_retorna_lista_vazia_sem_erro(self) -> None:
-        result = await list_terminals.ainvoke({})
+        result = await list_terminals(ctx=ToolContext())
         data = json.loads(result)
         assert data["terminals"] == []
 
@@ -66,19 +65,19 @@ class TestCloseTerminal:
         session.close = lambda: None
         pty_registry.add(session)
 
-        result = await close_terminal.ainvoke({"terminal_id": "t1"})
+        result = await close_terminal(terminal_id="t1")
         data = json.loads(result)
         assert data == {"status": "closed", "terminal_id": "t1"}
         assert pty_registry.get("t1") is None
 
     @pytest.mark.asyncio
     async def test_terminal_inexistente_retorna_erro_claro(self) -> None:
-        result = await close_terminal.ainvoke({"terminal_id": "nao-existe"})
+        result = await close_terminal(terminal_id="nao-existe")
         data = json.loads(result)
         assert data["status"] == "error"
 
     @pytest.mark.asyncio
     async def test_terminal_id_vazio_retorna_erro(self) -> None:
-        result = await close_terminal.ainvoke({"terminal_id": ""})
+        result = await close_terminal(terminal_id="")
         data = json.loads(result)
         assert data["status"] == "error"
