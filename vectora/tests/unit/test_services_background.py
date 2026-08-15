@@ -1037,17 +1037,12 @@ async def test_orchestrator_tools_list_status_result(db, monkeypatch):
     tipado, não exceção (§11)."""
     import json as _json
 
-    # Hermético: invocar tools via .ainvoke dispara callbacks do LangChain que
-    # sondam o ambiente via `git describe` (langsmith) — desligado aqui para não
-    # depender do git ambiente nem da ordem do suite.
-    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
-    monkeypatch.setenv("LANGSMITH_TRACING", "false")
-
     from backend.tools.background import (
         get_task_result,
         get_task_status,
         list_background_tasks,
     )
+    from backend.tools.context import ToolContext
 
     task = await bg.create_task(
         session_id="sess-tools",
@@ -1063,51 +1058,39 @@ async def test_orchestrator_tools_list_status_result(db, monkeypatch):
     await bg._insert_run(run_id, task, "sess-tools", "manual")
     await bg._finish_run(run_id, "done", "3 itens processados")
 
-    from langchain_core.runnables import RunnableConfig
+    ctx = ToolContext(thread_id="sess-tools", user_id="u")
 
-    cfg: RunnableConfig = {"configurable": {"thread_id": "sess-tools", "user_id": "u"}}
-
-    listed = _json.loads(await list_background_tasks.ainvoke({}, config=cfg))
+    listed = _json.loads(await list_background_tasks(ctx=ctx))
     assert listed["status"] == "ok"
     assert len(listed["tasks"]) == 1
     assert listed["tasks"][0]["task_id"] == task.id
     assert listed["tasks"][0]["last_run"]["status"] == "done"
 
-    status = _json.loads(
-        await get_task_status.ainvoke({"task_id": task.id}, config=cfg)
-    )
+    status = _json.loads(await get_task_status(task_id=task.id, ctx=ctx))
     assert status["status"] == "ok"
     assert any(r["run_id"] == run_id for r in status["runs"])
 
-    result = _json.loads(await get_task_result.ainvoke({"run_id": run_id}, config=cfg))
+    result = _json.loads(await get_task_result(run_id=run_id, ctx=ctx))
     assert result["status"] == "ok"
     assert result["summary"] == "3 itens processados"
 
     # Erro/borda: ids inexistentes → erro tipado.
-    bad_status = _json.loads(
-        await get_task_status.ainvoke({"task_id": "nope"}, config=cfg)
-    )
+    bad_status = _json.loads(await get_task_status(task_id="nope", ctx=ctx))
     assert bad_status["status"] == "error"
-    bad_result = _json.loads(
-        await get_task_result.ainvoke({"run_id": "nope"}, config=cfg)
-    )
+    bad_result = _json.loads(await get_task_result(run_id="nope", ctx=ctx))
     assert bad_result["status"] == "error"
 
 
 async def test_list_background_tasks_sem_session_id_e_task_sem_run(db, monkeypatch):
-    """Erro/borda: config sem thread_id → erro tipado (sem exceção). Task que
+    """Erro/borda: contexto sem thread_id → erro tipado (sem exceção). Task que
     nunca rodou aparece com last_run=None (não quebra o dict de latest_by_task)."""
     import json as _json
 
-    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
-    monkeypatch.setenv("LANGSMITH_TRACING", "false")
-
-    from langchain_core.runnables import RunnableConfig
-
     from backend.tools.background import list_background_tasks
+    from backend.tools.context import ToolContext
 
-    sem_thread: RunnableConfig = {"configurable": {"user_id": "u"}}
-    out_sem = _json.loads(await list_background_tasks.ainvoke({}, config=sem_thread))
+    sem_thread = ToolContext(user_id="u")
+    out_sem = _json.loads(await list_background_tasks(ctx=sem_thread))
     assert out_sem["status"] == "error"
 
     await bg.create_task(
@@ -1119,8 +1102,8 @@ async def test_list_background_tasks_sem_session_id_e_task_sem_run(db, monkeypat
         trigger_type="manual",
         trigger_config={},
     )
-    cfg: RunnableConfig = {"configurable": {"thread_id": "sess-no-run", "user_id": "u"}}
-    out = _json.loads(await list_background_tasks.ainvoke({}, config=cfg))
+    ctx = ToolContext(thread_id="sess-no-run", user_id="u")
+    out = _json.loads(await list_background_tasks(ctx=ctx))
     assert out["status"] == "ok"
     assert len(out["tasks"]) == 1
     assert out["tasks"][0]["last_run"] is None
@@ -1137,12 +1120,8 @@ async def test_cancel_and_approve_task_action(db, monkeypatch):
     run já concluída → None / erro tipado."""
     import json as _json
 
-    from langchain_core.runnables import RunnableConfig
-
     from backend.tools.background import approve_task_action
-
-    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
-    monkeypatch.setenv("LANGSMITH_TRACING", "false")
+    from backend.tools.context import ToolContext
 
     task = await bg.create_task(
         session_id="sess-cancel",
@@ -1157,11 +1136,9 @@ async def test_cancel_and_approve_task_action(db, monkeypatch):
     await bg._insert_run(run_id, task, "sess-cancel", "manual")
     await bg._mark_run_awaiting(run_id, "aguardando terminal")
 
-    cfg: RunnableConfig = {"configurable": {"thread_id": "sess-cancel", "user_id": "u"}}
+    ctx = ToolContext(thread_id="sess-cancel", user_id="u")
     out = _json.loads(
-        await approve_task_action.ainvoke(
-            {"run_id": run_id, "decision": "cancel"}, config=cfg
-        )
+        await approve_task_action(run_id=run_id, decision="cancel", ctx=ctx)
     )
     assert out["status"] == "ok"
     assert out["run_status"] == "cancelled"
@@ -1173,9 +1150,7 @@ async def test_cancel_and_approve_task_action(db, monkeypatch):
     # Erro/borda: cancelar de novo (já não está pendente) → None / erro tipado.
     assert await bg.cancel_background_run(run_id) is None
     out2 = _json.loads(
-        await approve_task_action.ainvoke(
-            {"run_id": run_id, "decision": "cancel"}, config=cfg
-        )
+        await approve_task_action(run_id=run_id, decision="cancel", ctx=ctx)
     )
     assert out2["status"] == "error"
 
@@ -1185,12 +1160,8 @@ async def test_approve_task_action_approve_reject_edit(db, monkeypatch):
     (só 'cancel' tinha cobertura via tool até aqui)."""
     import json as _json
 
-    from langchain_core.runnables import RunnableConfig
-
     from backend.tools.background import approve_task_action
-
-    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
-    monkeypatch.setenv("LANGSMITH_TRACING", "false")
+    from backend.tools.context import ToolContext
 
     task = await bg.create_task(
         session_id="sess-approve-tool",
@@ -1201,9 +1172,7 @@ async def test_approve_task_action_approve_reject_edit(db, monkeypatch):
         trigger_type="manual",
         trigger_config={"permission_mode": "ask"},
     )
-    cfg: RunnableConfig = {
-        "configurable": {"thread_id": "sess-approve-tool", "user_id": "u"}
-    }
+    ctx = ToolContext(thread_id="sess-approve-tool", user_id="u")
 
     run_approve = "run-tool-approve"
     await bg._insert_run(run_approve, task, "sess-approve-tool", "manual")
@@ -1211,9 +1180,7 @@ async def test_approve_task_action_approve_reject_edit(db, monkeypatch):
     agent = _SeqAgent([{"messages": [{"content": "ok"}]}])
     _patch_agent(monkeypatch, agent)
     out_approve = _json.loads(
-        await approve_task_action.ainvoke(
-            {"run_id": run_approve, "decision": "approve"}, config=cfg
-        )
+        await approve_task_action(run_id=run_approve, decision="approve", ctx=ctx)
     )
     assert out_approve == {"status": "ok", "run_status": "done"}
 
@@ -1223,9 +1190,7 @@ async def test_approve_task_action_approve_reject_edit(db, monkeypatch):
     agent2 = _SeqAgent([{"messages": [{"content": "recusado"}]}])
     _patch_agent(monkeypatch, agent2)
     out_reject = _json.loads(
-        await approve_task_action.ainvoke(
-            {"run_id": run_reject, "decision": "reject"}, config=cfg
-        )
+        await approve_task_action(run_id=run_reject, decision="reject", ctx=ctx)
     )
     assert out_reject == {"status": "ok", "run_status": "done"}
     assert agent2.calls[0]["input"].resume == {"action": "reject"}
@@ -1236,8 +1201,8 @@ async def test_approve_task_action_approve_reject_edit(db, monkeypatch):
     agent3 = _SeqAgent([{"messages": [{"content": "editado"}]}])
     _patch_agent(monkeypatch, agent3)
     out_edit = _json.loads(
-        await approve_task_action.ainvoke(
-            {"run_id": run_edit, "decision": 'edit:{"path": "x"}'}, config=cfg
+        await approve_task_action(
+            run_id=run_edit, decision='edit:{"path": "x"}', ctx=ctx
         )
     )
     assert out_edit == {"status": "ok", "run_status": "done"}

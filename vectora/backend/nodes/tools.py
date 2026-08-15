@@ -13,6 +13,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from backend.tools import (
+    background as _background_module,
+)
+from backend.tools import (
     browser as _browser_module,
 )
 from backend.tools import (
@@ -35,18 +38,6 @@ from backend.tools import (
 )
 from backend.tools import (
     thinking as _thinking_module,
-)
-from backend.tools.background import (
-    approve_task_action,
-    create_background_task,
-    delete_background_task,
-    get_task_result,
-    get_task_status,
-    list_background_tasks,
-    run_background_task_now,
-    schedule_subagent_task,
-    schedule_task,
-    toggle_background_task,
 )
 from backend.tools.gdrive import (
     google_drive_list,
@@ -188,6 +179,16 @@ save_mcp_env_var = _bridge("save_mcp_env_var")
 list_mcp_catalog = _bridge("list_mcp_catalog")
 list_skills_catalog = _bridge("list_skills_catalog")
 list_memory_bucket_catalog = _bridge("list_memory_bucket_catalog")
+create_background_task = _bridge("create_background_task")
+schedule_task = _bridge("schedule_task")
+schedule_subagent_task = _bridge("schedule_subagent_task")
+list_background_tasks = _bridge("list_background_tasks")
+get_task_status = _bridge("get_task_status")
+get_task_result = _bridge("get_task_result")
+approve_task_action = _bridge("approve_task_action")
+toggle_background_task = _bridge("toggle_background_task")
+delete_background_task = _bridge("delete_background_task")
+run_background_task_now = _bridge("run_background_task_now")
 browser_navigate = _bridge("browser_navigate")
 browser_screenshot = _bridge("browser_screenshot")
 browser_click = _bridge("browser_click")

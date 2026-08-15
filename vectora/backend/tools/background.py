@@ -11,15 +11,13 @@ import hashlib
 import hmac
 import json
 import logging
-from typing import Annotated, Any
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from typing import Any
 
 from backend.scheduling import background_tasks
 from backend.scheduling.nl_schedule import parse_natural_schedule, parse_one_shot_delay
 from backend.scheduling.subagent_runner import SUBAGENT_TYPES
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -64,21 +62,21 @@ async def _find_task_by_correlation_id(
     return None
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": False,
-        "category": "workspace",
-        "icon": "clock",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=False,
+        category="workspace",
+        icon="clock",
+    )
 )
 async def create_background_task(
     name: str,
     instruction: str,
     kind: str,
     trigger_type: str,
+    ctx: ToolContext,
     trigger_config: dict[str, Any] | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria uma tarefa em segundo plano para esta sessão.
 
@@ -92,9 +90,8 @@ async def create_background_task(
         trigger_config: Config do trigger (ex: {"cron_expr": "0 9 * * *"})
     """
     try:
-        configurable = (config or {}).get("configurable") or {}
-        session_id = configurable.get("thread_id", "")
-        user_id = configurable.get("user_id", "")
+        session_id = ctx.thread_id
+        user_id = ctx.user_id
 
         if not session_id:
             return json.dumps(
@@ -119,19 +116,19 @@ async def create_background_task(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": False,
-        "category": "workspace",
-        "icon": "calendar-clock",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=False,
+        category="workspace",
+        icon="calendar-clock",
+    )
 )
 async def schedule_task(
     name: str,
     instruction: str,
     when: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    ctx: ToolContext,
 ) -> str:
     """Agenda uma tarefa recorrente a partir de uma descrição em linguagem
     natural do horário (ex.: "todo dia às 9h", "toda sexta-feira às 18h",
@@ -166,9 +163,8 @@ async def schedule_task(
         )
 
     try:
-        configurable = (config or {}).get("configurable") or {}
-        session_id = configurable.get("thread_id", "")
-        user_id = configurable.get("user_id", "")
+        session_id = ctx.thread_id
+        user_id = ctx.user_id
         if not session_id:
             return json.dumps(
                 {"status": "error", "error": "session_id ausente no config"}
@@ -199,20 +195,20 @@ async def schedule_task(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": False,
-        "category": "workspace",
-        "icon": "bot",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=False,
+        category="workspace",
+        icon="bot",
+    )
 )
 async def schedule_subagent_task(
     subagent_type: str,
     description: str,
     when: str,
+    ctx: ToolContext,
     correlation_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Agenda uma SOUL ESPECÍFICA do catálogo — não o agente principal
     completo — pra rodar sozinha numa hora futura, a partir de uma descrição
@@ -264,10 +260,9 @@ async def schedule_subagent_task(
         )
 
     try:
-        configurable = (config or {}).get("configurable") or {}
-        session_id = configurable.get("thread_id", "")
-        user_id = configurable.get("user_id", "")
-        workspace_id = configurable.get("workspace_id")
+        session_id = ctx.thread_id
+        user_id = ctx.user_id
+        workspace_id = ctx.workspace_id or None
         if not session_id:
             return json.dumps(
                 {"status": "error", "error": "session_id ausente no config"}
@@ -318,10 +313,8 @@ async def schedule_subagent_task(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(extras={"destructive": False, "category": "workspace", "icon": "list"})
-async def list_background_tasks(
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+@vtool(extras=ToolExtras(destructive=False, category="workspace", icon="list"))
+async def list_background_tasks(ctx: ToolContext) -> str:
     """Lista as tarefas em segundo plano desta sessão e o status da última run.
 
     Use para saber o que está rodando/agendado antes de responder ao usuário
@@ -333,8 +326,7 @@ async def list_background_tasks(
         da execução mais recente (``last_run``), quando houver.
     """
     try:
-        configurable = (config or {}).get("configurable") or {}
-        session_id = configurable.get("thread_id", "")
+        session_id = ctx.thread_id
         if not session_id:
             return json.dumps({"status": "error", "error": "session_id ausente"})
 
@@ -371,11 +363,11 @@ async def list_background_tasks(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(extras={"destructive": False, "category": "workspace", "icon": "info"})
+@vtool(extras=ToolExtras(destructive=False, category="workspace", icon="info"))
 async def get_task_status(
     task_id: str,
+    ctx: ToolContext,
     capability_token: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Status de uma tarefa específica + suas execuções recentes.
 
@@ -427,18 +419,18 @@ async def get_task_status(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": True,
-        "category": "workspace",
-        "icon": "check",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=True,
+        category="workspace",
+        icon="check",
+    )
 )
 async def approve_task_action(
     run_id: str,
+    ctx: ToolContext,
     decision: str = "approve",
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Intervém numa run de background pausada aguardando aprovação (HITL).
 
@@ -469,13 +461,13 @@ async def approve_task_action(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": False,
-        "category": "workspace",
-        "icon": "power",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=False,
+        category="workspace",
+        icon="power",
+    )
 )
 async def toggle_background_task(task_id: str, enabled: bool) -> str:
     """Liga ou desliga uma tarefa em segundo plano já existente, sem apagá-la.
@@ -497,13 +489,13 @@ async def toggle_background_task(task_id: str, enabled: bool) -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": True,
-        "category": "workspace",
-        "icon": "trash-2",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=True,
+        category="workspace",
+        icon="trash-2",
+    )
 )
 async def delete_background_task(task_id: str) -> str:
     """Remove uma tarefa em segundo plano permanentemente.
@@ -522,13 +514,13 @@ async def delete_background_task(task_id: str) -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(
-    extras={
-        "invalidates": ["tasks"],
-        "destructive": False,
-        "category": "workspace",
-        "icon": "play",
-    }
+@vtool(
+    extras=ToolExtras(
+        invalidates=["tasks"],
+        destructive=False,
+        category="workspace",
+        icon="play",
+    )
 )
 async def run_background_task_now(task_id: str) -> str:
     """Dispara a execução imediata de uma tarefa agendada, sem esperar o
@@ -555,11 +547,11 @@ async def run_background_task_now(task_id: str) -> str:
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(extras={"destructive": False, "category": "workspace", "icon": "file-text"})
+@vtool(extras=ToolExtras(destructive=False, category="workspace", icon="file-text"))
 async def get_task_result(
     run_id: str,
+    ctx: ToolContext,
     capability_token: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Resultado (resumo) de uma execução específica de tarefa.
 
