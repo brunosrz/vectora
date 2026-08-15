@@ -331,7 +331,7 @@ class TestNotionTools:
         from backend.tools.notion import notion_search
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await notion_search.ainvoke({"query": "teste"})
+            result = await notion_search(query="teste")
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
     @pytest.mark.asyncio
@@ -359,7 +359,7 @@ class TestNotionTools:
             patch.dict("os.environ", {"NOTION_API_KEY": "secret_xxx"}),
             patch("httpx.AsyncClient", return_value=ctx),
         ):
-            result = await notion_search.ainvoke({"query": "página"})
+            result = await notion_search(query="página")
         assert "Minha Página" in result
 
     @pytest.mark.asyncio
@@ -367,7 +367,7 @@ class TestNotionTools:
         from backend.tools.notion import notion_read_page
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await notion_read_page.ainvoke({"page_id": "abc"})
+            result = await notion_read_page(page_id="abc")
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
     @pytest.mark.asyncio
@@ -375,5 +375,5 @@ class TestNotionTools:
         from backend.tools.notion import notion_create_page
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await notion_create_page.ainvoke({"parent_id": "db", "title": "x"})
+            result = await notion_create_page(parent_id="db", title="x")
         assert "não configurado" in result.lower() or "erro" in result.lower()

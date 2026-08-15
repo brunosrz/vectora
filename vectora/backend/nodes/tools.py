@@ -55,6 +55,9 @@ from backend.tools import (
     memory as _memory_module,
 )
 from backend.tools import (
+    notion as _notion_module,
+)
+from backend.tools import (
     rag as _rag_module,
 )
 from backend.tools import (
@@ -94,7 +97,6 @@ from backend.tools.native import (
     time_now,
     time_parse,
 )
-from backend.tools.notion import notion_create_page, notion_read_page, notion_search
 from backend.tools.registry import TOOL_REGISTRY
 from backend.tools.terminal_sessions import close_terminal, list_terminals
 
@@ -224,6 +226,9 @@ browser_screencast_stop = _bridge("browser_screencast_stop")
 slack_send = _bridge("slack_send")
 slack_list_channels = _bridge("slack_list_channels")
 slack_read = _bridge("slack_read")
+notion_search = _bridge("notion_search")
+notion_read_page = _bridge("notion_read_page")
+notion_create_page = _bridge("notion_create_page")
 gh_pr_list = _bridge("gh_pr_list")
 gh_pr_create = _bridge("gh_pr_create")
 gh_pr_view = _bridge("gh_pr_view")

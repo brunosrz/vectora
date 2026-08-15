@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import os
 
-from langchain.tools import tool
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def _rich_text_content(blocks: list[dict]) -> str:
     return "\n".join(parts)
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="search"))
 async def notion_search(query: str, limit: int = 10) -> str:
     """Busca páginas e databases no Notion.
 
@@ -80,7 +80,7 @@ async def notion_search(query: str, limit: int = 10) -> str:
         return f"Erro ao buscar no Notion: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="file-text"))
 async def notion_read_page(page_id: str) -> str:
     """Lê o conteúdo de uma página do Notion.
 
@@ -118,7 +118,7 @@ async def notion_read_page(page_id: str) -> str:
         return f"Erro ao ler página Notion: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=True, category="integrations", icon="plus-square"))
 async def notion_create_page(parent_id: str, title: str, content: str = "") -> str:
     """Cria uma nova página no Notion.
 
