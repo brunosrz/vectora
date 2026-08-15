@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import os
 
-from langchain.tools import tool
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def _headers() -> dict[str, str]:
     return {"Authorization": key, "Content-Type": "application/json"}
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="list"))
 async def linear_list_issues(
     team_key: str = "", state: str = "", limit: int = 20
 ) -> str:
@@ -69,7 +69,7 @@ async def linear_list_issues(
         return f"Erro ao listar issues Linear: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=True, category="integrations", icon="plus-circle"))
 async def linear_create_issue(
     title: str, team_key: str, description: str = "", priority: int = 0
 ) -> str:
@@ -122,7 +122,7 @@ async def linear_create_issue(
         return f"Erro ao criar issue Linear: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=True, category="integrations", icon="edit"))
 async def linear_update_issue(
     issue_id: str, state_name: str = "", assignee_id: str = ""
 ) -> str:

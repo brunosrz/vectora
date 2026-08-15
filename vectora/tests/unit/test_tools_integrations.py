@@ -216,7 +216,7 @@ class TestLinearTools:
         from backend.tools.linear import linear_list_issues
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await linear_list_issues.ainvoke({})
+            result = await linear_list_issues()
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
     @pytest.mark.asyncio
@@ -248,7 +248,7 @@ class TestLinearTools:
             patch.dict("os.environ", {"LINEAR_API_KEY": "lin_api_xxx"}),
             patch("httpx.AsyncClient", return_value=ctx),
         ):
-            result = await linear_list_issues.ainvoke({})
+            result = await linear_list_issues()
         assert "ENG-1" in result
         assert "Fix login" in result
 
@@ -257,9 +257,7 @@ class TestLinearTools:
         from backend.tools.linear import linear_create_issue
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await linear_create_issue.ainvoke(
-                {"title": "teste", "team_key": "ENG"}
-            )
+            result = await linear_create_issue(title="teste", team_key="ENG")
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
 

@@ -49,6 +49,9 @@ from backend.tools import (
     library as _library_module,
 )
 from backend.tools import (
+    linear as _linear_module,
+)
+from backend.tools import (
     media as _media_module,
 )
 from backend.tools import (
@@ -80,11 +83,6 @@ from backend.tools.gdrive import (
 from backend.tools.gmail import gmail_list, gmail_read
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.langchain_bridge import as_langchain_tool
-from backend.tools.linear import (
-    linear_create_issue,
-    linear_list_issues,
-    linear_update_issue,
-)
 from backend.tools.mcp import call_mcp_tool
 from backend.tools.native import (
     base64_decode,
@@ -229,6 +227,9 @@ slack_read = _bridge("slack_read")
 notion_search = _bridge("notion_search")
 notion_read_page = _bridge("notion_read_page")
 notion_create_page = _bridge("notion_create_page")
+linear_list_issues = _bridge("linear_list_issues")
+linear_create_issue = _bridge("linear_create_issue")
+linear_update_issue = _bridge("linear_update_issue")
 gh_pr_list = _bridge("gh_pr_list")
 gh_pr_create = _bridge("gh_pr_create")
 gh_pr_view = _bridge("gh_pr_view")
