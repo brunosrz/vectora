@@ -111,11 +111,38 @@ def _is_public_route(path: str) -> bool:
     return any(path.startswith(p) for p in _PUBLIC_PREFIXES)
 
 
+async def _extract_service_token_user(token: str) -> Any:
+    """Autentica via token de serviço (`vst_...`, `backend.rbac.
+    token_auth`) — credencial de máquina, alternativa ao JWT de login
+    humano. Devolve um `User` sintético (`id="service:<token_id>"`,
+    `role="member"`) ou `None` se o token for inválido/revogado."""
+    from backend.rbac import token_auth
+    from backend.rbac.auth import User, _get_db
+
+    db = await _get_db()
+    service_token = await token_auth.verify_service_token(db, token)
+    if service_token is None:
+        return None
+
+    from datetime import UTC, datetime
+
+    return User(
+        id=f"service:{service_token.id}",
+        username=f"service-{service_token.name}",
+        email="",
+        role="member",
+        name=service_token.name,
+        env_overrides={},
+        created_at=datetime.now(UTC).isoformat(),
+    )
+
+
 async def _extract_user(request: Request) -> Any:
-    """Tenta extrair e validar o usuário do token JWT.
+    """Tenta extrair e validar o usuário do token JWT — ou de um token de
+    serviço (`vst_` prefix, `backend.rbac.token_auth`), quando presente.
 
     Aceita:
-    1. Header ``Authorization: Bearer <token>``
+    1. Header ``Authorization: Bearer <token>`` (JWT humano ou `vst_...`)
     2. Cookie ``vectora_access``
 
     Retorna User ou None.
@@ -131,6 +158,9 @@ async def _extract_user(request: Request) -> Any:
         token = auth_header[7:].strip()
     elif "vectora_access" in request.cookies:
         token = request.cookies["vectora_access"]
+
+    if token and token.startswith("vst_"):
+        return await _extract_service_token_user(token)
 
     user: Any = None
     if token:

@@ -1267,3 +1267,69 @@ async def update_storage_config(request: Request) -> dict:
 
     logger.info("admin: storage config atualizado por %s: %s", user.id, list(updated))
     return {"status": "updated", **updated}
+
+
+# ---------------------------------------------------------------------------
+# Tokens de serviço (máquina-a-máquina) — backend.rbac.token_auth
+# ---------------------------------------------------------------------------
+
+
+class CreateServiceTokenBody(BaseModel):
+    name: str
+    scopes: list[str] = []
+
+
+@router.post("/service-tokens")
+async def create_service_token_endpoint(
+    request: Request, body: CreateServiceTokenBody
+) -> dict:
+    """Cria um token de serviço. Apenas root — credencial de máquina tem o
+    mesmo peso de criar um usuário novo. O token cru só aparece nesta
+    resposta, nunca mais é recuperável."""
+    user = _get_user(request)
+    require_root(user)
+
+    from backend.rbac import token_auth
+    from backend.rbac.auth import _get_db
+
+    db = await _get_db()
+    token_obj, raw_token = await token_auth.create_service_token(
+        db, body.name, body.scopes, created_by=user.id
+    )
+    logger.info("admin: service token '%s' criado por %s", body.name, user.id)
+    return {"token": token_obj.model_dump(), "raw_token": raw_token}
+
+
+@router.get("/service-tokens")
+async def list_service_tokens_endpoint(request: Request) -> dict:
+    """Lista tokens de serviço (revogados inclusos) — nunca o token cru."""
+    user = _get_user(request)
+    require_root(user)
+
+    from backend.rbac import token_auth
+    from backend.rbac.auth import _get_db
+
+    db = await _get_db()
+    tokens = await token_auth.list_service_tokens(db)
+    return {"tokens": [t.model_dump() for t in tokens]}
+
+
+@router.delete("/service-tokens/{token_id}")
+async def revoke_service_token_endpoint(request: Request, token_id: str) -> dict:
+    """Revoga um token de serviço. Idempotente — revogar duas vezes não é
+    erro, só a segunda chamada devolve `revoked: false`."""
+    user = _get_user(request)
+    require_root(user)
+
+    from backend.rbac import token_auth
+    from backend.rbac.auth import _get_db
+
+    db = await _get_db()
+    revoked = await token_auth.revoke_service_token(db, token_id)
+    logger.info(
+        "admin: service token '%s' revogado por %s (revoked=%s)",
+        token_id,
+        user.id,
+        revoked,
+    )
+    return {"revoked": revoked}

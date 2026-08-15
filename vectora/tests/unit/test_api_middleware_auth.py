@@ -289,3 +289,36 @@ class TestAuthMiddlewareIntegration:
         # O TestClient mantém cookies automaticamente após set_cookie
         r_me = auth_client.get("/auth/me")
         assert r_me.status_code == 200
+
+    def test_private_route_with_valid_service_token_passes(self, auth_client):
+        """Erro/borda (feliz + inválido no mesmo teste, Sprint 24): um
+        token de serviço válido (`vst_...`) autentica como um JWT normal
+        autenticaria; revogado é rejeitado com 401, igual a um JWT
+        inválido."""
+        import asyncio
+
+        import backend.rbac.auth as auth_mod
+        from backend.rbac import token_auth
+
+        async def _criar_token():
+            db = await auth_mod._get_db()
+            return await token_auth.create_service_token(db, "ci-bot", ["*"])
+
+        _, raw_token = asyncio.run(_criar_token())
+
+        r = auth_client.get(
+            "/auth/me", headers={"Authorization": f"Bearer {raw_token}"}
+        )
+        assert r.status_code == 200
+        assert r.json()["id"].startswith("service:")
+
+        async def _revogar(token_id: str):
+            db = await auth_mod._get_db()
+            await token_auth.revoke_service_token(db, token_id)
+
+        token_obj, raw_token_2 = asyncio.run(_criar_token())
+        asyncio.run(_revogar(token_obj.id))
+        r_revogado = auth_client.get(
+            "/auth/me", headers={"Authorization": f"Bearer {raw_token_2}"}
+        )
+        assert r_revogado.status_code == 401

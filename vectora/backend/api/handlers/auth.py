@@ -28,6 +28,8 @@ from backend.api.schemas import (
     EnvOverrideRequest,
     HasUsersResponse,
     InviteValidationResponse,
+    PasswordResetConfirmBody,
+    PasswordResetRequestBody,
     RefreshRequest,
     SetupLocalRequest,
     SetupLocalResponse,
@@ -447,6 +449,33 @@ async def get_ws_token(request: Request) -> dict:
     if not token:
         raise HTTPException(status_code=401, detail="Sem token disponível.")
     return {"token": token}
+
+
+@router.post("/password-reset/request")
+async def password_reset_request_endpoint(body: PasswordResetRequestBody) -> dict:
+    """Gera um token de recuperação de senha, se o email existir.
+
+    Resposta sempre `{"ok": True}` independente do email existir ou não —
+    nunca revela por HTTP se uma conta existe (evita enumeração). O token
+    de verdade só é gravado no audit log/passado adiante por quem chama
+    `request_password_reset` internamente (envio de email fica fora desta
+    sprint — sem infra de email transacional configurada; ver docstring
+    de `auth_svc.request_password_reset`)."""
+    from backend.rbac import auth as auth_svc
+
+    await auth_svc.request_password_reset(body.email)
+    return {"ok": True}
+
+
+@router.post("/password-reset/confirm")
+async def password_reset_confirm_endpoint(body: PasswordResetConfirmBody) -> dict:
+    from backend.rbac import auth as auth_svc
+
+    try:
+        await auth_svc.confirm_password_reset(body.token, body.new_password)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"ok": True}
 
 
 @router.post("/change-password")

@@ -537,3 +537,77 @@ class TestTimezoneEndpoint:
         assert "America/Sao_Paulo" in out["available"]
         assert "UTC" in out["available"]
         assert len(out["available"]) > 100
+
+
+class TestServiceTokenEndpoints:
+    """POST/GET/DELETE /admin/service-tokens — apenas root (Sprint 24)."""
+
+    @pytest.fixture(autouse=True)
+    async def _isolate_db(self, tmp_path, monkeypatch):
+        import aiosqlite
+
+        import backend.rbac.auth as auth_mod
+
+        auth_mod._db_conn = None
+        db_file = str(tmp_path / "admin_service_tokens.db")
+
+        async def _patched_get_db():
+            if auth_mod._db_conn is not None:
+                return auth_mod._db_conn
+            conn = await aiosqlite.connect(db_file)
+            conn.row_factory = aiosqlite.Row
+            await auth_mod._ensure_schema(conn)
+            auth_mod._db_conn = conn
+            return conn
+
+        monkeypatch.setattr(auth_mod, "_get_db", _patched_get_db)
+        yield
+        if auth_mod._db_conn is not None:
+            await auth_mod._db_conn.close()
+            auth_mod._db_conn = None
+
+    def _req(self, role: str = "root") -> Any:
+        class _Req:
+            state = type(
+                "S", (), {"user": type("U", (), {"role": role, "id": "root-1"})()}
+            )()
+
+        return _Req()
+
+    async def test_root_cria_lista_e_revoga_token(self):
+        from backend.api.handlers import admin
+
+        criado = await admin.create_service_token_endpoint(
+            self._req(), admin.CreateServiceTokenBody(name="ci-bot", scopes=["*"])
+        )
+        assert criado["raw_token"].startswith("vst_")
+        token_id = criado["token"]["id"]
+
+        listado = await admin.list_service_tokens_endpoint(self._req())
+        assert any(t["id"] == token_id for t in listado["tokens"])
+
+        revogado = await admin.revoke_service_token_endpoint(self._req(), token_id)
+        assert revogado == {"revoked": True}
+        # Erro/borda: revogar de novo não é erro, só devolve False.
+        revogado_de_novo = await admin.revoke_service_token_endpoint(
+            self._req(), token_id
+        )
+        assert revogado_de_novo == {"revoked": False}
+
+    async def test_role_nao_root_e_negada_com_403(self):
+        """Erro/borda: admin (não-root) não pode criar/listar/revogar
+        tokens de serviço — mesmo peso de criar um usuário novo."""
+        from fastapi import HTTPException
+
+        from backend.api.handlers import admin
+
+        with pytest.raises(HTTPException) as exc:
+            await admin.create_service_token_endpoint(
+                self._req(role="admin"),
+                admin.CreateServiceTokenBody(name="x", scopes=[]),
+            )
+        assert exc.value.status_code == 403
+
+        with pytest.raises(HTTPException) as exc:
+            await admin.list_service_tokens_endpoint(self._req(role="admin"))
+        assert exc.value.status_code == 403

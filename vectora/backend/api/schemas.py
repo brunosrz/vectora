@@ -701,6 +701,15 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
+class PasswordResetRequestBody(BaseModel):
+    email: str
+
+
+class PasswordResetConfirmBody(BaseModel):
+    token: str
+    new_password: str
+
+
 class UserResponse(BaseModel):
     id: str
     username: str = ""

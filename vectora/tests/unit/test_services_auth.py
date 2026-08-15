@@ -698,3 +698,147 @@ class TestInvites:
         # Sem usuários ainda: a role do convite é ignorada, o 1º vira root
         user, _, _ = await signup("first@example.com", "senhasegura1234", role="viewer")
         assert user.role == "root"
+
+
+# ---------------------------------------------------------------------------
+# _write_audit — redação de campos sensíveis (Sprint 24)
+# ---------------------------------------------------------------------------
+
+
+class TestAuditRedaction:
+    @pytest.mark.asyncio
+    async def test_campo_comum_passa_intacto(self):
+        import json
+
+        from backend.rbac.auth import _get_db, _write_audit
+
+        db = await _get_db()
+        await _write_audit(db, "u1", "test_action", metadata={"ip": "1.2.3.4"})
+
+        async with db.execute(
+            "SELECT metadata_json FROM audit WHERE action = ?", ("test_action",)
+        ) as cur:
+            row = await cur.fetchone()
+        assert json.loads(row["metadata_json"]) == {"ip": "1.2.3.4"}
+
+    @pytest.mark.asyncio
+    async def test_campo_sensivel_sempre_redigido_mesmo_tentando_gravar(self):
+        """Erro/borda: qualquer chave da denylist (case-insensitive) nunca
+        chega ao banco com o valor real, mesmo que um call-site futuro
+        passe por engano."""
+        import json
+
+        from backend.rbac.auth import _get_db, _write_audit
+
+        db = await _get_db()
+        await _write_audit(
+            db,
+            "u1",
+            "test_action_sensivel",
+            metadata={
+                "password": "senha-real-123",
+                "Token": "segredo-abc",
+                "ip": "1.2.3.4",
+            },
+        )
+
+        async with db.execute(
+            "SELECT metadata_json FROM audit WHERE action = ?",
+            ("test_action_sensivel",),
+        ) as cur:
+            row = await cur.fetchone()
+        salvo = json.loads(row["metadata_json"])
+        assert salvo["password"] == "[REDACTED]"
+        assert salvo["Token"] == "[REDACTED]"
+        assert salvo["ip"] == "1.2.3.4"
+
+
+# ---------------------------------------------------------------------------
+# request_password_reset / confirm_password_reset (Sprint 24)
+# ---------------------------------------------------------------------------
+
+
+class TestPasswordReset:
+    @pytest.mark.asyncio
+    async def test_fluxo_completo_feliz(self):
+        from backend.rbac.auth import (
+            confirm_password_reset,
+            request_password_reset,
+            signin,
+            signup,
+        )
+
+        await signup("reset@example.com", "senhaoriginal123")
+
+        token = await request_password_reset("reset@example.com")
+        assert token is not None
+
+        await confirm_password_reset(token, "senhanovasegura456")
+
+        # Senha antiga não funciona mais; a nova sim.
+        with pytest.raises(ValueError, match="Credenciais inválidas"):
+            await signin("reset@example.com", "senhaoriginal123")
+        user, _, _ = await signin("reset@example.com", "senhanovasegura456")
+        assert user.email == "reset@example.com"
+
+    @pytest.mark.asyncio
+    async def test_email_inexistente_nao_lanca_e_devolve_none(self):
+        """Erro/borda: email que não existe nunca revela isso via exceção
+        — devolve None silenciosamente (evita enumeração de conta)."""
+        from backend.rbac.auth import request_password_reset
+
+        assert await request_password_reset("nao-existe@example.com") is None
+
+    @pytest.mark.asyncio
+    async def test_token_invalido_expirado_ou_reusado_e_rejeitado(self):
+        """Erro/borda: token desconhecido, e um token real usado duas
+        vezes — os dois levantam ValueError, nunca aplicam a senha."""
+        from backend.rbac.auth import (
+            confirm_password_reset,
+            request_password_reset,
+            signup,
+        )
+
+        with pytest.raises(ValueError, match="inválido"):
+            await confirm_password_reset("token-que-nao-existe", "senhanova12345")
+
+        await signup("reuso@example.com", "senhaoriginal123")
+        token = await request_password_reset("reuso@example.com")
+        assert token is not None
+
+        await confirm_password_reset(token, "primeiratrocasegura1")
+        with pytest.raises(ValueError, match="inválido"):
+            await confirm_password_reset(token, "segundatrocasegura2")
+
+    @pytest.mark.asyncio
+    async def test_senha_curta_e_rejeitada(self):
+        from backend.rbac.auth import (
+            confirm_password_reset,
+            request_password_reset,
+            signup,
+        )
+
+        await signup("curta@example.com", "senhaoriginal123")
+        token = await request_password_reset("curta@example.com")
+        assert token is not None
+
+        with pytest.raises(ValueError, match="mínimo 8"):
+            await confirm_password_reset(token, "curta")
+
+    @pytest.mark.asyncio
+    async def test_reset_revoga_refresh_tokens_existentes(self):
+        from backend.rbac.auth import (
+            confirm_password_reset,
+            refresh_tokens,
+            request_password_reset,
+            signup,
+        )
+
+        _, _, refresh = await signup("revoga@example.com", "senhaoriginal123")
+
+        token = await request_password_reset("revoga@example.com")
+        assert token is not None
+        await confirm_password_reset(token, "senhanovasegura456")
+
+        with pytest.raises(ValueError):
+            await refresh_tokens(refresh)

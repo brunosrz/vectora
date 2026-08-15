@@ -487,6 +487,63 @@ class TestChangePasswordEndpoint:
         assert r.status_code == 401
 
 
+class TestPasswordResetEndpoints:
+    def test_fluxo_completo_via_http(self, client):
+        r_signup = client.post(
+            "/auth/signup",
+            json={
+                "email": "http-reset@test.com",
+                "password": "senhaoriginal123",
+            },
+        )
+        assert r_signup.status_code in (200, 403)
+        if r_signup.status_code == 403:
+            pytest.skip("signup público bloqueado neste estado do client compartilhado")
+
+        r_request = client.post(
+            "/auth/password-reset/request", json={"email": "http-reset@test.com"}
+        )
+        assert r_request.status_code == 200
+        assert r_request.json() == {"ok": True}
+
+        import asyncio
+
+        from backend.rbac import auth as auth_mod
+
+        token = asyncio.run(auth_mod.request_password_reset("http-reset@test.com"))
+        assert token is not None
+
+        r_confirm = client.post(
+            "/auth/password-reset/confirm",
+            json={"token": token, "new_password": "senhanovasegura456"},
+        )
+        assert r_confirm.status_code == 200
+        assert r_confirm.json() == {"ok": True}
+
+        r_signin = client.post(
+            "/auth/signin",
+            json={"email": "http-reset@test.com", "password": "senhanovasegura456"},
+        )
+        assert r_signin.status_code == 200
+
+    def test_email_inexistente_devolve_200_sem_revelar_nada(self, client):
+        """Erro/borda: mesmo resposta 200 pra email que não existe — evita
+        enumeração de conta via diferença de status HTTP."""
+        r = client.post(
+            "/auth/password-reset/request",
+            json={"email": "nunca-existiu@test.com"},
+        )
+        assert r.status_code == 200
+        assert r.json() == {"ok": True}
+
+    def test_token_invalido_devolve_400(self, client):
+        r = client.post(
+            "/auth/password-reset/confirm",
+            json={"token": "token-que-nao-existe", "new_password": "senhanova12345"},
+        )
+        assert r.status_code == 400
+
+
 # ---------------------------------------------------------------------------
 # Env overrides
 # ---------------------------------------------------------------------------

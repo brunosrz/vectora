@@ -274,6 +274,24 @@ async def _ensure_schema(db: Any) -> None:
             used_at     TEXT,
             created_at  TEXT    NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS service_tokens (
+            id          TEXT    PRIMARY KEY,
+            name        TEXT    NOT NULL,
+            token_hash  TEXT    NOT NULL UNIQUE,
+            scopes_json TEXT    NOT NULL DEFAULT '[]',
+            created_by  TEXT,
+            created_at  TEXT    NOT NULL,
+            revoked_at  TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS password_resets (
+            token_hash  TEXT    PRIMARY KEY,
+            user_id     TEXT    NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            expires_at  TEXT    NOT NULL,
+            used_at     TEXT,
+            created_at  TEXT    NOT NULL
+        );
     """)
     # Migrations idempotentes: ALTER TABLE para colunas adicionadas após o
     # release inicial. SQLite não tem "ADD COLUMN IF NOT EXISTS", então
@@ -739,6 +757,82 @@ async def change_password(user_id: str, old_password: str, new_password: str) ->
     await _write_audit(db, user_id, "change_password", success=True)
 
 
+#: TTL do token de reset de senha — bem mais curto que convite (24h): a
+#: janela de exposição de "alguém com acesso ao email pode entrar" deve
+#: ser mínima.
+_PASSWORD_RESET_TTL_HOURS = 1
+
+
+async def request_password_reset(email: str) -> str | None:
+    """Gera um token de reset de senha pro usuário com esse email.
+
+    Retorna o token cru (só pra quem chama poder enviar por email — o
+    handler REST nunca devolve isso na resposta HTTP, evita side-channel
+    de enumeração de conta) ou `None` se o email não corresponde a
+    nenhum usuário. Mesmo padrão de `create_invite` — token opaco, só o
+    hash SHA-256 persistido.
+    """
+    db = await _get_db()
+    async with db.execute(
+        "SELECT id FROM users WHERE email = ?", (email.lower().strip(),)
+    ) as cur:
+        row = await cur.fetchone()
+    if row is None:
+        return None
+
+    token = secrets.token_hex(32)
+    now = datetime.now(UTC)
+    expires_at = (now + timedelta(hours=_PASSWORD_RESET_TTL_HOURS)).isoformat()
+    await db.execute(
+        """INSERT INTO password_resets (token_hash, user_id, expires_at, created_at)
+           VALUES (?, ?, ?, ?)""",
+        (_hash_token(token), row["id"], expires_at, now.isoformat()),
+    )
+    await db.commit()
+    await _write_audit(db, row["id"], "password_reset_request", success=True)
+    return token
+
+
+async def confirm_password_reset(token: str, new_password: str) -> None:
+    """Consome um token de reset de senha e define a nova senha.
+
+    Raises:
+        ValueError: token inexistente, já usado, expirado, ou senha nova
+            inválida (< 8 caracteres) — mesmas mensagens/regra de
+            `change_password`, sem exigir a senha atual (o token já prova
+            posse do email).
+    """
+    if len(new_password) < 8:
+        raise ValueError("Nova senha deve ter no mínimo 8 caracteres.")
+
+    db = await _get_db()
+    now_str = datetime.now(UTC).isoformat()
+    async with db.execute(
+        "SELECT * FROM password_resets WHERE token_hash = ?", (_hash_token(token),)
+    ) as cur:
+        row = await cur.fetchone()
+
+    if row is None or row["used_at"] is not None or row["expires_at"] < now_str:
+        raise ValueError("Token de recuperação inválido, já usado ou expirado.")
+
+    new_hash = hash_password(new_password)
+    await db.execute(
+        "UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, row["user_id"])
+    )
+    await db.execute(
+        "UPDATE password_resets SET used_at = ? WHERE token_hash = ?",
+        (now_str, _hash_token(token)),
+    )
+    # Mesma cautela de change_password: reset de senha revoga todas as
+    # sessões existentes — se a conta foi comprometida, o reset também
+    # encerra o acesso do invasor.
+    await db.execute(
+        "UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?", (row["user_id"],)
+    )
+    await db.commit()
+    await _write_audit(db, row["user_id"], "password_reset_confirm", success=True)
+
+
 # ---------------------------------------------------------------------------
 # Env overrides por usuário (C10)
 # ---------------------------------------------------------------------------
@@ -1001,6 +1095,35 @@ async def _issue_refresh_token(db: Any, user_id: str) -> str:
     return token
 
 
+#: Nomes de campo nunca serializados em `metadata_json`, comparados
+#: case-insensitive — mesmo padrão de `_REDACTED_FIELDS` do Hermes
+#: (`hermes_cli/dashboard_auth/audit.py`). Nenhum call-site atual de
+#: `_write_audit` passa esses campos hoje (confirmado por grep antes desta
+#: mudança) — a rede de segurança é contra um call-site futuro que passe
+#: por engano, não um vazamento já existente.
+_REDACTED_METADATA_FIELDS = frozenset(
+    {
+        "password",
+        "token",
+        "access_token",
+        "refresh_token",
+        "secret",
+        "cookie",
+        "authorization",
+    }
+)
+
+
+def _redact_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
+    """Substitui por `"[REDACTED]"` qualquer chave de `metadata` cujo nome
+    (case-insensitive) bata com `_REDACTED_METADATA_FIELDS` — nunca deixa o
+    valor real chegar ao audit log persistido."""
+    return {
+        k: ("[REDACTED]" if k.lower() in _REDACTED_METADATA_FIELDS else v)
+        for k, v in metadata.items()
+    }
+
+
 async def _write_audit(
     db: Any,
     user_id: str | None,
@@ -1029,7 +1152,7 @@ async def _write_audit(
                 datetime.now(UTC).isoformat(),
                 ip,
                 1 if success else 0,
-                json.dumps(metadata or {}),
+                json.dumps(_redact_metadata(metadata or {})),
             ),
         )
         await db.commit()
