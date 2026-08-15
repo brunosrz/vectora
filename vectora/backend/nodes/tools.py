@@ -58,6 +58,9 @@ from backend.tools import (
     rag as _rag_module,
 )
 from backend.tools import (
+    slack as _slack_module,
+)
+from backend.tools import (
     thinking as _thinking_module,
 )
 from backend.tools import (
@@ -93,7 +96,6 @@ from backend.tools.native import (
 )
 from backend.tools.notion import notion_create_page, notion_read_page, notion_search
 from backend.tools.registry import TOOL_REGISTRY
-from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.terminal_sessions import close_terminal, list_terminals
 
 if TYPE_CHECKING:
@@ -219,6 +221,9 @@ browser_compare_heap_snapshots = _bridge("browser_compare_heap_snapshots")
 browser_lighthouse_audit = _bridge("browser_lighthouse_audit")
 browser_screencast_start = _bridge("browser_screencast_start")
 browser_screencast_stop = _bridge("browser_screencast_stop")
+slack_send = _bridge("slack_send")
+slack_list_channels = _bridge("slack_list_channels")
+slack_read = _bridge("slack_read")
 gh_pr_list = _bridge("gh_pr_list")
 gh_pr_create = _bridge("gh_pr_create")
 gh_pr_view = _bridge("gh_pr_view")

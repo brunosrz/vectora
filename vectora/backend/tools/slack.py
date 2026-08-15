@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import os
 
-from langchain.tools import tool
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def _token() -> str:
     return tok
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=True, category="integrations", icon="send"))
 async def slack_send(channel: str, message: str) -> str:
     """Envia uma mensagem para um canal do Slack.
 
@@ -54,7 +54,7 @@ async def slack_send(channel: str, message: str) -> str:
         return f"Erro ao enviar para Slack: {exc}"
 
 
-@tool
+@vtool(extras=ToolExtras(destructive=False, category="integrations", icon="hash"))
 async def slack_list_channels(limit: int = 20) -> str:
     """Lista canais públicos do Slack.
 
@@ -87,7 +87,9 @@ async def slack_list_channels(limit: int = 20) -> str:
         return f"Erro ao listar canais: {exc}"
 
 
-@tool
+@vtool(
+    extras=ToolExtras(destructive=False, category="integrations", icon="message-square")
+)
 async def slack_read(channel: str, limit: int = 20) -> str:
     """Lê mensagens recentes de um canal do Slack.
 

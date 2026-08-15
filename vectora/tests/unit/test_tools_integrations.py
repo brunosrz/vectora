@@ -153,7 +153,7 @@ class TestSlackTools:
         from backend.tools.slack import slack_send
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await slack_send.ainvoke({"channel": "#geral", "message": "oi"})
+            result = await slack_send(channel="#geral", message="oi")
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
     @pytest.mark.asyncio
@@ -169,7 +169,7 @@ class TestSlackTools:
             patch.dict("os.environ", {"SLACK_BOT_TOKEN": "xoxb"}),
             patch("httpx.AsyncClient", return_value=ctx),
         ):
-            result = await slack_send.ainvoke({"channel": "#geral", "message": "teste"})
+            result = await slack_send(channel="#geral", message="teste")
         assert "enviada" in result.lower()
 
     @pytest.mark.asyncio
@@ -185,9 +185,7 @@ class TestSlackTools:
             patch.dict("os.environ", {"SLACK_BOT_TOKEN": "xoxb"}),
             patch("httpx.AsyncClient", return_value=ctx),
         ):
-            result = await slack_send.ainvoke(
-                {"channel": "#inexistente", "message": "x"}
-            )
+            result = await slack_send(channel="#inexistente", message="x")
         assert "channel_not_found" in result
 
     @pytest.mark.asyncio
@@ -195,7 +193,7 @@ class TestSlackTools:
         from backend.tools.slack import slack_list_channels
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await slack_list_channels.ainvoke({})
+            result = await slack_list_channels()
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
     @pytest.mark.asyncio
@@ -203,7 +201,7 @@ class TestSlackTools:
         from backend.tools.slack import slack_read
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await slack_read.ainvoke({"channel": "C123"})
+            result = await slack_read(channel="C123")
         assert "não configurado" in result.lower() or "erro" in result.lower()
 
 
