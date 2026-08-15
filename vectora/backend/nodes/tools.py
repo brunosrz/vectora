@@ -13,6 +13,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from backend.tools import (
+    browser_devtools as _browser_devtools_module,
+)
+from backend.tools import (
     computer_use as _computer_use_module,
 )
 from backend.tools import (
@@ -54,28 +57,6 @@ from backend.tools.browser import (
     browser_stop,
     browser_upload_file,
     browser_wait_for,
-)
-from backend.tools.browser_devtools import (
-    browser_analyze_trace,
-    browser_clear_console,
-    browser_close_tab,
-    browser_compare_heap_snapshots,
-    browser_emulate,
-    browser_evaluate,
-    browser_get_network_request,
-    browser_lighthouse_audit,
-    browser_list_console_messages,
-    browser_list_network_requests,
-    browser_list_tabs,
-    browser_new_tab,
-    browser_screencast_start,
-    browser_screencast_stop,
-    browser_select_tab,
-    browser_set_dialog_policy,
-    browser_snapshot,
-    browser_start_trace,
-    browser_stop_trace,
-    browser_take_heap_snapshot,
 )
 from backend.tools.gdrive import (
     google_drive_list,
@@ -219,6 +200,26 @@ git_worktree = _bridge("git_worktree")
 git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 git_discard = _bridge("git_discard")
+browser_list_tabs = _bridge("browser_list_tabs")
+browser_new_tab = _bridge("browser_new_tab")
+browser_close_tab = _bridge("browser_close_tab")
+browser_select_tab = _bridge("browser_select_tab")
+browser_list_console_messages = _bridge("browser_list_console_messages")
+browser_clear_console = _bridge("browser_clear_console")
+browser_list_network_requests = _bridge("browser_list_network_requests")
+browser_get_network_request = _bridge("browser_get_network_request")
+browser_snapshot = _bridge("browser_snapshot")
+browser_evaluate = _bridge("browser_evaluate")
+browser_set_dialog_policy = _bridge("browser_set_dialog_policy")
+browser_emulate = _bridge("browser_emulate")
+browser_start_trace = _bridge("browser_start_trace")
+browser_stop_trace = _bridge("browser_stop_trace")
+browser_analyze_trace = _bridge("browser_analyze_trace")
+browser_take_heap_snapshot = _bridge("browser_take_heap_snapshot")
+browser_compare_heap_snapshots = _bridge("browser_compare_heap_snapshots")
+browser_lighthouse_audit = _bridge("browser_lighthouse_audit")
+browser_screencast_start = _bridge("browser_screencast_start")
+browser_screencast_stop = _bridge("browser_screencast_stop")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)

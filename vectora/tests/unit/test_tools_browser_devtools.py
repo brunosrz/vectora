@@ -12,13 +12,13 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from langchain_core.runnables import RunnableConfig
 
 from backend.tools import browser_devtools as bd
+from backend.tools.context import ToolContext
 
 
-def _config(workspace_id: str = "ws1") -> RunnableConfig:
-    return RunnableConfig(configurable={"workspace_id": workspace_id})
+def _ctx(workspace_id: str = "ws1") -> ToolContext:
+    return ToolContext(workspace_id=workspace_id)
 
 
 # ---------------------------------------------------------------------------
@@ -39,7 +39,7 @@ async def test_browser_list_tabs_retorna_abas_da_sessao(monkeypatch):
         ),
     )
 
-    result = json.loads(await bd.browser_list_tabs.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_list_tabs(ctx=_ctx()))
 
     assert len(result["tabs"]) == 2
     assert result["tabs"][0]["active"] is True
@@ -49,11 +49,7 @@ async def test_browser_list_tabs_retorna_abas_da_sessao(monkeypatch):
 async def test_browser_new_tab_cria_aba_e_retorna_id(monkeypatch):
     monkeypatch.setattr(bd, "new_tab", AsyncMock(return_value="tab-abc"))
 
-    result = json.loads(
-        await bd.browser_new_tab.ainvoke(
-            {"url": "https://example.com"}, config=_config()
-        )
-    )
+    result = json.loads(await bd.browser_new_tab(url="https://example.com", ctx=_ctx()))
 
     assert result == {"status": "ok", "tab_id": "tab-abc"}
 
@@ -64,7 +60,7 @@ async def test_browser_new_tab_falha_devolve_erro_tipado(monkeypatch):
         bd, "new_tab", AsyncMock(side_effect=RuntimeError("chromium crashed"))
     )
 
-    result = json.loads(await bd.browser_new_tab.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_new_tab(ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -73,9 +69,7 @@ async def test_browser_new_tab_falha_devolve_erro_tipado(monkeypatch):
 async def test_browser_close_tab_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "has_browser_session", lambda _wid: False)
 
-    result = json.loads(
-        await bd.browser_close_tab.ainvoke({"tab_id": "t1"}, config=_config())
-    )
+    result = json.loads(await bd.browser_close_tab(tab_id="t1", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -85,9 +79,7 @@ async def test_browser_close_tab_id_inexistente_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "has_browser_session", lambda _wid: True)
     monkeypatch.setattr(bd, "close_tab", AsyncMock(return_value=False))
 
-    result = json.loads(
-        await bd.browser_close_tab.ainvoke({"tab_id": "nao-existe"}, config=_config())
-    )
+    result = json.loads(await bd.browser_close_tab(tab_id="nao-existe", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -97,9 +89,7 @@ async def test_browser_close_tab_sucesso(monkeypatch):
     monkeypatch.setattr(bd, "has_browser_session", lambda _wid: True)
     monkeypatch.setattr(bd, "close_tab", AsyncMock(return_value=True))
 
-    result = json.loads(
-        await bd.browser_close_tab.ainvoke({"tab_id": "t1"}, config=_config())
-    )
+    result = json.loads(await bd.browser_close_tab(tab_id="t1", ctx=_ctx()))
 
     assert result == {"status": "ok", "tab_id": "t1"}
 
@@ -109,9 +99,7 @@ async def test_browser_select_tab_troca_aba_ativa(monkeypatch):
     monkeypatch.setattr(bd, "has_browser_session", lambda _wid: True)
     monkeypatch.setattr(bd, "select_tab", AsyncMock(return_value=True))
 
-    result = json.loads(
-        await bd.browser_select_tab.ainvoke({"tab_id": "t2"}, config=_config())
-    )
+    result = json.loads(await bd.browser_select_tab(tab_id="t2", ctx=_ctx()))
 
     assert result == {"status": "ok", "tab_id": "t2"}
 
@@ -121,9 +109,7 @@ async def test_browser_select_tab_inexistente_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "has_browser_session", lambda _wid: True)
     monkeypatch.setattr(bd, "select_tab", AsyncMock(return_value=False))
 
-    result = json.loads(
-        await bd.browser_select_tab.ainvoke({"tab_id": "nao-existe"}, config=_config())
-    )
+    result = json.loads(await bd.browser_select_tab(tab_id="nao-existe", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -145,9 +131,7 @@ async def test_browser_list_console_messages_respeita_limit(monkeypatch):
     messages = [{"type": "log", "text": f"msg {i}"} for i in range(5)]
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: _fake_tab(messages))
 
-    result = json.loads(
-        await bd.browser_list_console_messages.ainvoke({"limit": 2}, config=_config())
-    )
+    result = json.loads(await bd.browser_list_console_messages(limit=2, ctx=_ctx()))
 
     assert len(result["messages"]) == 2
     assert result["messages"][-1]["text"] == "msg 4"
@@ -157,9 +141,7 @@ async def test_browser_list_console_messages_respeita_limit(monkeypatch):
 async def test_browser_list_console_messages_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
 
-    result = json.loads(
-        await bd.browser_list_console_messages.ainvoke({}, config=_config())
-    )
+    result = json.loads(await bd.browser_list_console_messages(ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -169,7 +151,7 @@ async def test_browser_clear_console_limpa_buffer(monkeypatch):
     tab = _fake_tab(console=[{"type": "log", "text": "x"}])
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
-    result = json.loads(await bd.browser_clear_console.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_clear_console(ctx=_ctx()))
 
     assert result == {"status": "ok"}
     assert tab.console_log == []
@@ -191,9 +173,7 @@ async def test_browser_list_network_requests_filtra_por_resource_type(monkeypatc
     )
 
     result = json.loads(
-        await bd.browser_list_network_requests.ainvoke(
-            {"resource_type": "xhr"}, config=_config()
-        )
+        await bd.browser_list_network_requests(resource_type="xhr", ctx=_ctx())
     )
 
     assert len(result["requests"]) == 1
@@ -210,9 +190,7 @@ async def test_browser_list_network_requests_sem_filtro_lista_todas(monkeypatch)
         bd, "get_tab_state", lambda _wid, _tid: _fake_tab(network=entries)
     )
 
-    result = json.loads(
-        await bd.browser_list_network_requests.ainvoke({}, config=_config())
-    )
+    result = json.loads(await bd.browser_list_network_requests(ctx=_ctx()))
 
     assert len(result["requests"]) == 2
 
@@ -225,9 +203,7 @@ async def test_browser_get_network_request_encontrada(monkeypatch):
     )
 
     result = json.loads(
-        await bd.browser_get_network_request.ainvoke(
-            {"request_id": "r1"}, config=_config()
-        )
+        await bd.browser_get_network_request(request_id="r1", ctx=_ctx())
     )
 
     assert result == entries[0]
@@ -238,9 +214,7 @@ async def test_browser_get_network_request_nao_encontrada_retorna_erro(monkeypat
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: _fake_tab(network=[]))
 
     result = json.loads(
-        await bd.browser_get_network_request.ainvoke(
-            {"request_id": "nao-existe"}, config=_config()
-        )
+        await bd.browser_get_network_request(request_id="nao-existe", ctx=_ctx())
     )
 
     assert result["status"] == "error"
@@ -267,9 +241,7 @@ async def test_browser_evaluate_retorna_resultado_serializado(monkeypatch):
         bd, "get_tab_state", lambda _wid, _tid: _fake_tab_with_page(evaluate_result=42)
     )
 
-    result = json.loads(
-        await bd.browser_evaluate.ainvoke({"script": "1 + 41"}, config=_config())
-    )
+    result = json.loads(await bd.browser_evaluate(script="1 + 41", ctx=_ctx()))
 
     assert result == {"status": "ok", "result": 42}
 
@@ -278,9 +250,7 @@ async def test_browser_evaluate_retorna_resultado_serializado(monkeypatch):
 async def test_browser_evaluate_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
 
-    result = json.loads(
-        await bd.browser_evaluate.ainvoke({"script": "1"}, config=_config())
-    )
+    result = json.loads(await bd.browser_evaluate(script="1", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -295,9 +265,7 @@ async def test_browser_evaluate_erro_de_script_nao_propaga(monkeypatch):
         ),
     )
 
-    result = json.loads(
-        await bd.browser_evaluate.ainvoke({"script": "{{{"}, config=_config())
-    )
+    result = json.loads(await bd.browser_evaluate(script="{{{", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -309,11 +277,7 @@ async def test_browser_evaluate_erro_de_script_nao_propaga(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_browser_set_dialog_policy_action_invalida_retorna_erro():
-    result = json.loads(
-        await bd.browser_set_dialog_policy.ainvoke(
-            {"action": "close"}, config=_config()
-        )
-    )
+    result = json.loads(await bd.browser_set_dialog_policy(action="close", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -322,11 +286,7 @@ async def test_browser_set_dialog_policy_action_invalida_retorna_erro():
 async def test_browser_set_dialog_policy_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "set_dialog_policy", lambda *a, **k: False)
 
-    result = json.loads(
-        await bd.browser_set_dialog_policy.ainvoke(
-            {"action": "accept"}, config=_config()
-        )
-    )
+    result = json.loads(await bd.browser_set_dialog_policy(action="accept", ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -343,8 +303,8 @@ async def test_browser_set_dialog_policy_sucesso(monkeypatch):
     )
 
     result = json.loads(
-        await bd.browser_set_dialog_policy.ainvoke(
-            {"action": "accept", "prompt_text": "ok"}, config=_config()
+        await bd.browser_set_dialog_policy(
+            action="accept", prompt_text="ok", ctx=_ctx()
         )
     )
 
@@ -368,9 +328,7 @@ async def test_browser_emulate_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
 
     result = json.loads(
-        await bd.browser_emulate.ainvoke(
-            {"viewport_width": 375, "viewport_height": 812}, config=_config()
-        )
+        await bd.browser_emulate(viewport_width=375, viewport_height=812, ctx=_ctx())
     )
 
     assert result["status"] == "error"
@@ -382,9 +340,7 @@ async def test_browser_emulate_aplica_viewport(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
     result = json.loads(
-        await bd.browser_emulate.ainvoke(
-            {"viewport_width": 375, "viewport_height": 812}, config=_config()
-        )
+        await bd.browser_emulate(viewport_width=375, viewport_height=812, ctx=_ctx())
     )
 
     assert result == {"status": "ok", "applied": ["viewport"]}
@@ -396,9 +352,7 @@ async def test_browser_emulate_aplica_cpu_throttle_via_cdp(monkeypatch):
     tab = _fake_tab_for_emulate()
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
-    result = json.loads(
-        await bd.browser_emulate.ainvoke({"cpu_throttle": 4}, config=_config())
-    )
+    result = json.loads(await bd.browser_emulate(cpu_throttle=4, ctx=_ctx()))
 
     assert result == {"status": "ok", "applied": ["cpu_throttle"]}
     tab.cdp.send.assert_awaited_once_with("Emulation.setCPUThrottlingRate", {"rate": 4})
@@ -410,9 +364,7 @@ async def test_browser_emulate_network_throttle_invalido_retorna_erro(monkeypatc
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
     result = json.loads(
-        await bd.browser_emulate.ainvoke(
-            {"network_throttle": "not-a-profile"}, config=_config()
-        )
+        await bd.browser_emulate(network_throttle="not-a-profile", ctx=_ctx())
     )
 
     assert result["status"] == "error"
@@ -424,9 +376,7 @@ async def test_browser_emulate_network_throttle_valido_chama_cdp(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
     result = json.loads(
-        await bd.browser_emulate.ainvoke(
-            {"network_throttle": "slow-3g"}, config=_config()
-        )
+        await bd.browser_emulate(network_throttle="slow-3g", ctx=_ctx())
     )
 
     assert result == {"status": "ok", "applied": ["network_throttle"]}
@@ -439,7 +389,7 @@ async def test_browser_emulate_sem_parametros_nao_aplica_nada(monkeypatch):
     tab = _fake_tab_for_emulate()
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
-    result = json.loads(await bd.browser_emulate.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_emulate(ctx=_ctx()))
 
     assert result == {"status": "ok", "applied": []}
     tab.page.set_viewport_size.assert_not_awaited()
@@ -478,7 +428,7 @@ def _fake_tab_for_trace():
 async def test_browser_start_trace_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
 
-    result = json.loads(await bd.browser_start_trace.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_start_trace(ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -488,14 +438,14 @@ async def test_browser_start_trace_ja_em_andamento_retorna_erro(monkeypatch):
     tab = _fake_tab_for_trace()
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
-    first = json.loads(await bd.browser_start_trace.ainvoke({}, config=_config()))
-    second = json.loads(await bd.browser_start_trace.ainvoke({}, config=_config()))
+    first = json.loads(await bd.browser_start_trace(ctx=_ctx()))
+    second = json.loads(await bd.browser_start_trace(ctx=_ctx()))
 
     assert first["status"] == "ok"
     assert second["status"] == "error"
 
     # limpa o estado global pra não vazar entre testes
-    await bd.browser_stop_trace.ainvoke({}, config=_config())
+    await bd.browser_stop_trace(ctx=_ctx())
 
 
 @pytest.mark.asyncio
@@ -503,7 +453,7 @@ async def test_stop_trace_sem_start_retorna_erro(monkeypatch):
     tab = _fake_tab_for_trace()
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
-    result = json.loads(await bd.browser_stop_trace.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_stop_trace(ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -518,13 +468,13 @@ async def test_start_e_stop_trace_resume_eventos_coletados(monkeypatch, tmp_path
         SimpleNamespace(get=lambda _id: ws),
     )
 
-    await bd.browser_start_trace.ainvoke({}, config=_config())
+    await bd.browser_start_trace(ctx=_ctx())
     tab.cdp.emit(
         "Tracing.dataCollected",
         {"value": [{"cat": "toplevel", "name": "a"}, {"cat": "toplevel", "name": "b"}]},
     )
 
-    result = json.loads(await bd.browser_stop_trace.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_stop_trace(ctx=_ctx()))
 
     assert result["status"] == "ok"
     assert result["summary"]["event_count"] == 2
@@ -602,9 +552,7 @@ def _fake_tab_for_heap(snapshot: dict):
 async def test_browser_take_heap_snapshot_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
 
-    result = json.loads(
-        await bd.browser_take_heap_snapshot.ainvoke({}, config=_config())
-    )
+    result = json.loads(await bd.browser_take_heap_snapshot(ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -621,9 +569,7 @@ async def test_browser_take_heap_snapshot_resume_top_construtores(
         SimpleNamespace(get=lambda _id: ws),
     )
 
-    result = json.loads(
-        await bd.browser_take_heap_snapshot.ainvoke({}, config=_config())
-    )
+    result = json.loads(await bd.browser_take_heap_snapshot(ctx=_ctx()))
 
     assert result["status"] == "ok"
     top = {c["constructor"]: c for c in result["top_constructors"]}
@@ -656,9 +602,7 @@ async def test_browser_lighthouse_audit_npx_ausente_retorna_erro_tipado(monkeypa
     )
 
     result = json.loads(
-        await bd.browser_lighthouse_audit.ainvoke(
-            {"url": "http://localhost:3000"}, config=_config()
-        )
+        await bd.browser_lighthouse_audit(url="http://localhost:3000", ctx=_ctx())
     )
 
     assert result["status"] == "error"
@@ -693,9 +637,7 @@ async def test_browser_lighthouse_audit_parseia_scores_e_oportunidades(monkeypat
     )
 
     result = json.loads(
-        await bd.browser_lighthouse_audit.ainvoke(
-            {"url": "http://localhost:3000"}, config=_config()
-        )
+        await bd.browser_lighthouse_audit(url="http://localhost:3000", ctx=_ctx())
     )
 
     assert result["status"] == "ok"
@@ -715,9 +657,7 @@ async def test_browser_lighthouse_audit_exit_code_nao_zero_retorna_erro(monkeypa
     )
 
     result = json.loads(
-        await bd.browser_lighthouse_audit.ainvoke(
-            {"url": "http://localhost:3000"}, config=_config()
-        )
+        await bd.browser_lighthouse_audit(url="http://localhost:3000", ctx=_ctx())
     )
 
     assert result["status"] == "error"
@@ -738,7 +678,7 @@ async def test_browser_lighthouse_audit_sem_url_usa_url_da_aba_ativa(monkeypatch
 
     monkeypatch.setattr(bd.asyncio, "create_subprocess_exec", _fake_exec)
 
-    result = json.loads(await bd.browser_lighthouse_audit.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_lighthouse_audit(ctx=_ctx()))
 
     assert result["status"] == "ok"
     assert "http://localhost:9999" in captured["args"]
@@ -748,7 +688,7 @@ async def test_browser_lighthouse_audit_sem_url_usa_url_da_aba_ativa(monkeypatch
 async def test_browser_lighthouse_audit_sem_url_e_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
 
-    result = json.loads(await bd.browser_lighthouse_audit.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_lighthouse_audit(ctx=_ctx()))
     assert result["status"] == "error"
 
 
@@ -825,7 +765,7 @@ def _fake_tab_for_snapshot(ax_nodes: list[dict]):
 async def test_browser_snapshot_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
 
-    result = await bd.browser_snapshot.ainvoke({}, config=_config())
+    result = await bd.browser_snapshot(ctx=_ctx())
 
     assert "Nenhuma sess" in result
 
@@ -835,7 +775,7 @@ async def test_browser_snapshot_retorna_arvore_com_uid(monkeypatch):
     tab = _fake_tab_for_snapshot(_AX_NODES)
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
-    result = await bd.browser_snapshot.ainvoke({}, config=_config())
+    result = await bd.browser_snapshot(ctx=_ctx())
 
     assert "[uid=102]" in result
     tab.cdp.send.assert_any_await("Accessibility.enable")
@@ -848,7 +788,7 @@ async def test_browser_snapshot_erro_de_cdp_nao_propaga(monkeypatch):
         bd, "get_tab_state", lambda _wid, _tid: SimpleNamespace(cdp=cdp)
     )
 
-    result = json.loads(await bd.browser_snapshot.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_snapshot(ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -903,9 +843,7 @@ async def test_browser_analyze_trace_artifact_inexistente_retorna_erro_tipado(
     tmp_path,
 ):
     result = json.loads(
-        await bd.browser_analyze_trace.ainvoke(
-            {"artifact_path": str(tmp_path / "nao-existe.json")}
-        )
+        await bd.browser_analyze_trace(artifact_path=str(tmp_path / "nao-existe.json"))
     )
 
     assert result["status"] == "error"
@@ -925,9 +863,7 @@ async def test_browser_analyze_trace_le_artifact_e_analisa(tmp_path):
         encoding="utf-8",
     )
 
-    result = json.loads(
-        await bd.browser_analyze_trace.ainvoke({"artifact_path": str(artifact)})
-    )
+    result = json.loads(await bd.browser_analyze_trace(artifact_path=str(artifact)))
 
     assert result["status"] == "ok"
     assert result["analysis"]["long_task_count"] == 1
@@ -938,9 +874,7 @@ async def test_browser_analyze_trace_json_invalido_retorna_erro_tipado(tmp_path)
     artifact = tmp_path / "trace-corrompido.json"
     artifact.write_text("{ nao-eh-json-valido", encoding="utf-8")
 
-    result = json.loads(
-        await bd.browser_analyze_trace.ainvoke({"artifact_path": str(artifact)})
-    )
+    result = json.loads(await bd.browser_analyze_trace(artifact_path=str(artifact)))
 
     assert result["status"] == "error"
 
@@ -978,11 +912,9 @@ def test_diff_heap_summaries_construtor_que_sumiu_fica_negativo():
 @pytest.mark.asyncio
 async def test_browser_compare_heap_snapshots_artifact_inexistente(tmp_path):
     result = json.loads(
-        await bd.browser_compare_heap_snapshots.ainvoke(
-            {
-                "before_path": str(tmp_path / "antes.json"),
-                "after_path": str(tmp_path / "depois.json"),
-            }
+        await bd.browser_compare_heap_snapshots(
+            before_path=str(tmp_path / "antes.json"),
+            after_path=str(tmp_path / "depois.json"),
         )
     )
 
@@ -1002,8 +934,8 @@ async def test_browser_compare_heap_snapshots_retorna_o_que_cresceu(tmp_path):
     after_path.write_text(json.dumps(grown), encoding="utf-8")
 
     result = json.loads(
-        await bd.browser_compare_heap_snapshots.ainvoke(
-            {"before_path": str(before_path), "after_path": str(after_path)}
+        await bd.browser_compare_heap_snapshots(
+            before_path=str(before_path), after_path=str(after_path)
         )
     )
 
@@ -1039,7 +971,7 @@ def _fake_tab_for_screencast():
 async def test_browser_screencast_start_sem_sessao_retorna_erro(monkeypatch):
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: None)
 
-    result = json.loads(await bd.browser_screencast_start.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_screencast_start(ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -1049,13 +981,13 @@ async def test_browser_screencast_start_ja_em_andamento_retorna_erro(monkeypatch
     tab = _fake_tab_for_screencast()
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
-    first = json.loads(await bd.browser_screencast_start.ainvoke({}, config=_config()))
-    second = json.loads(await bd.browser_screencast_start.ainvoke({}, config=_config()))
+    first = json.loads(await bd.browser_screencast_start(ctx=_ctx()))
+    second = json.loads(await bd.browser_screencast_start(ctx=_ctx()))
 
     assert first["status"] == "ok"
     assert second["status"] == "error"
 
-    await bd.browser_screencast_stop.ainvoke({}, config=_config())
+    await bd.browser_screencast_stop(ctx=_ctx())
 
 
 @pytest.mark.asyncio
@@ -1063,7 +995,7 @@ async def test_browser_screencast_stop_sem_start_retorna_erro(monkeypatch):
     tab = _fake_tab_for_screencast()
     monkeypatch.setattr(bd, "get_tab_state", lambda _wid, _tid: tab)
 
-    result = json.loads(await bd.browser_screencast_stop.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_screencast_stop(ctx=_ctx()))
 
     assert result["status"] == "error"
 
@@ -1078,14 +1010,14 @@ async def test_screencast_acumula_frames_e_persiste_artifact(monkeypatch, tmp_pa
         SimpleNamespace(get=lambda _id: ws),
     )
 
-    await bd.browser_screencast_start.ainvoke({}, config=_config())
+    await bd.browser_screencast_start(ctx=_ctx())
     tab.cdp.emit("Page.screencastFrame", {"data": "base64frame1", "sessionId": 1})
     tab.cdp.emit("Page.screencastFrame", {"data": "base64frame2", "sessionId": 1})
     # dá o controle de volta ao loop de eventos pra tasks de ack criadas
     # dentro do handler síncrono terminarem antes do assert abaixo.
     await asyncio.sleep(0)
 
-    result = json.loads(await bd.browser_screencast_stop.ainvoke({}, config=_config()))
+    result = json.loads(await bd.browser_screencast_stop(ctx=_ctx()))
 
     assert result["status"] == "ok"
     assert result["frame_count"] == 2

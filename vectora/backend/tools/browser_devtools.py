@@ -13,11 +13,7 @@ import json
 import logging
 import uuid
 from pathlib import Path
-from typing import Annotated, Any
-
-from langchain.tools import tool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import InjectedToolArg
+from typing import Any
 
 from backend.browser.session import (
     close_tab,
@@ -28,17 +24,14 @@ from backend.browser.session import (
     select_tab,
     set_dialog_policy,
 )
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
 
-def _workspace_id(config: RunnableConfig | None) -> str:
-    raw = (
-        str((config.get("configurable") or {}).get("workspace_id", ""))
-        if config
-        else ""
-    )
-    return raw or "default"
+def _workspace_id(ctx: ToolContext) -> str:
+    return ctx.workspace_id or "default"
 
 
 #: Perfis de `Network.emulateNetworkConditions` (CDP) — latência em ms,
@@ -75,39 +68,34 @@ _NO_SESSION_ERROR = json.dumps(
 )
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "layout-grid",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="layout-grid",
+    )
 )
-async def browser_list_tabs(
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_list_tabs(ctx: ToolContext) -> str:
     """Lista as abas abertas na sessão de browser do workspace ativo.
 
     Returns:
         JSON `{"tabs": [{"tab_id", "url", "active"}, ...]}`.
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tabs = await list_tabs(workspace_id)
     return json.dumps({"tabs": tabs})
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": False,
-        "icon": "plus-square",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=False,
+        icon="plus-square",
+    )
 )
-async def browser_new_tab(
-    url: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_new_tab(ctx: ToolContext, url: str | None = None) -> str:
     """Abre uma aba nova na sessão do workspace ativo (lança o browser se
     ainda não houver sessão) e a torna a aba ativa.
 
@@ -117,7 +105,7 @@ async def browser_new_tab(
     Returns:
         JSON `{"status": "ok", "tab_id": "..."}` ou erro.
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     try:
         tab_id = await new_tab(workspace_id, url=url)
         return json.dumps({"status": "ok", "tab_id": tab_id})
@@ -126,25 +114,22 @@ async def browser_new_tab(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": True,
-        "icon": "x-square",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=True,
+        icon="x-square",
+    )
 )
-async def browser_close_tab(
-    tab_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_close_tab(tab_id: str, ctx: ToolContext) -> str:
     """Fecha uma aba pelo id. Nunca deixa a sessão sem nenhuma aba —
     fechar a última abre uma em branco no lugar.
 
     Args:
         tab_id: id da aba (de `browser_list_tabs`).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     if not has_browser_session(workspace_id):
         return _NO_SESSION_ERROR
     ok = await close_tab(workspace_id, tab_id)
@@ -155,25 +140,22 @@ async def browser_close_tab(
     return json.dumps({"status": "ok", "tab_id": tab_id})
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": False,
-        "icon": "layout-panel-left",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=False,
+        icon="layout-panel-left",
+    )
 )
-async def browser_select_tab(
-    tab_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_select_tab(tab_id: str, ctx: ToolContext) -> str:
     """Torna `tab_id` a aba ativa da sessão — as demais tools de browser
     (`browser_click`, `browser_screenshot`, etc.) passam a operar nela.
 
     Args:
         tab_id: id da aba (de `browser_list_tabs`).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     if not has_browser_session(workspace_id):
         return _NO_SESSION_ERROR
     ok = await select_tab(workspace_id, tab_id)
@@ -184,18 +166,18 @@ async def browser_select_tab(
     return json.dumps({"status": "ok", "tab_id": tab_id})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "terminal",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="terminal",
+    )
 )
 async def browser_list_console_messages(
+    ctx: ToolContext,
     tab_id: str | None = None,
     limit: int = 50,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Lista as mensagens de console (log/warn/error/...) capturadas da aba
     desde que ela foi aberta.
@@ -207,7 +189,7 @@ async def browser_list_console_messages(
     Returns:
         JSON `{"messages": [{"type", "text"}, ...]}`.
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -215,25 +197,22 @@ async def browser_list_console_messages(
     return json.dumps({"messages": messages})
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": True,
-        "icon": "eraser",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=True,
+        icon="eraser",
+    )
 )
-async def browser_clear_console(
-    tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_clear_console(ctx: ToolContext, tab_id: str | None = None) -> str:
     """Limpa o buffer de mensagens de console capturadas da aba (não afeta
     o console real do browser, só o histórico que o agente lê).
 
     Args:
         tab_id: id da aba (padrão: aba ativa).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -241,19 +220,19 @@ async def browser_clear_console(
     return json.dumps({"status": "ok"})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "network",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="network",
+    )
 )
 async def browser_list_network_requests(
+    ctx: ToolContext,
     tab_id: str | None = None,
     resource_type: str | None = None,
     limit: int = 50,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Lista as requisições de rede capturadas da aba desde que foi aberta.
 
@@ -267,7 +246,7 @@ async def browser_list_network_requests(
         JSON `{"requests": [{"request_id", "url", "method",
         "resource_type", "status"}, ...]}`.
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -277,18 +256,18 @@ async def browser_list_network_requests(
     return json.dumps({"requests": entries[-limit:]})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "network",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="network",
+    )
 )
 async def browser_get_network_request(
     request_id: str,
+    ctx: ToolContext,
     tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Detalhes de uma requisição de rede específica, pelo `request_id`
     retornado por `browser_list_network_requests`.
@@ -297,7 +276,7 @@ async def browser_get_network_request(
         request_id: id da requisição.
         tab_id: id da aba (padrão: aba ativa).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -354,18 +333,15 @@ def _build_ax_outline(nodes: list[dict[str, Any]], max_nodes: int = 500) -> str:
     return "\n".join(lines) if lines else "(árvore de acessibilidade vazia)"
 
 
-@tool(
-    extras={
-        "render_hint": "code_block",
-        "category": "browser",
-        "destructive": False,
-        "icon": "list-tree",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="code_block",
+        category="browser",
+        destructive=False,
+        icon="list-tree",
+    )
 )
-async def browser_snapshot(
-    tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_snapshot(ctx: ToolContext, tab_id: str | None = None) -> str:
     """Gera uma árvore de acessibilidade da página atual, indentada por
     role/nome, com um `uid` estável por nó — use esse `uid` no parâmetro
     `uid` de `browser_click`/`browser_fill` em vez de seletor CSS, mais
@@ -378,7 +354,7 @@ async def browser_snapshot(
     Returns:
         Árvore indentada em texto, ou mensagem de erro.
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -391,18 +367,18 @@ async def browser_snapshot(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": True,
-        "icon": "code",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=True,
+        icon="code",
+    )
 )
 async def browser_evaluate(
     script: str,
+    ctx: ToolContext,
     tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Executa JavaScript arbitrário no contexto da página e devolve o
     valor serializado do resultado. Perigoso (`destructive`) — o script
@@ -417,7 +393,7 @@ async def browser_evaluate(
         JSON `{"status": "ok", "result": <valor>}` ou erro (sintaxe
         inválida, exceção lançada pelo script, etc. — nunca propaga crua).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -429,19 +405,19 @@ async def browser_evaluate(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "text",
-        "category": "browser",
-        "destructive": False,
-        "icon": "message-square",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="browser",
+        destructive=False,
+        icon="message-square",
+    )
 )
 async def browser_set_dialog_policy(
     action: str,
+    ctx: ToolContext,
     prompt_text: str | None = None,
     tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Define como a aba responde automaticamente a `alert`/`confirm`/
     `prompt` futuros — sem isso, um dialog trava a próxima ação
@@ -458,29 +434,29 @@ async def browser_set_dialog_policy(
         return json.dumps(
             {"status": "error", "error": "action deve ser 'accept' ou 'dismiss'"}
         )
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     ok = set_dialog_policy(workspace_id, action, prompt_text=prompt_text, tab_id=tab_id)
     if not ok:
         return _NO_SESSION_ERROR
     return json.dumps({"status": "ok"})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "smartphone",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="smartphone",
+    )
 )
 async def browser_emulate(
+    ctx: ToolContext,
     viewport_width: int | None = None,
     viewport_height: int | None = None,
     device_scale_factor: float | None = None,
     cpu_throttle: float | None = None,
     network_throttle: str | None = None,
     tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Emula viewport/device/throttling na aba — útil pra testar layouts
     mobile ou comportamento sob rede/CPU lentos antes de screenshot.
@@ -498,7 +474,7 @@ async def browser_emulate(
     Returns:
         JSON `{"status": "ok", "applied": [...]}` com o que foi aplicado.
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -583,18 +559,15 @@ def _artifacts_dir(workspace_id: str) -> Path | None:
         return None
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "activity",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="activity",
+    )
 )
-async def browser_start_trace(
-    tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_start_trace(ctx: ToolContext, tab_id: str | None = None) -> str:
     """Inicia a captura de um trace de performance (CDP Tracing) na aba —
     use antes de disparar a interação que você quer medir, depois chame
     `browser_stop_trace` pra encerrar e obter o resumo.
@@ -602,7 +575,7 @@ async def browser_start_trace(
     Args:
         tab_id: id da aba (padrão: aba ativa).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -635,18 +608,15 @@ async def browser_start_trace(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "activity",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="activity",
+    )
 )
-async def browser_stop_trace(
-    tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_stop_trace(ctx: ToolContext, tab_id: str | None = None) -> str:
     """Encerra a captura de trace iniciada por `browser_start_trace` e
     devolve um resumo (contagem de eventos por categoria) + o caminho do
     artifact com os eventos brutos.
@@ -654,7 +624,7 @@ async def browser_stop_trace(
     Args:
         tab_id: id da aba (padrão: aba ativa).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -757,13 +727,13 @@ def _analyze_trace_events(events: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "activity",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="activity",
+    )
 )
 async def browser_analyze_trace(artifact_path: str) -> str:
     """Analisa estruturadamente um trace já capturado por
@@ -885,17 +855,16 @@ def _diff_heap_summaries(
     return diffs
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "database",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="database",
+    )
 )
 async def browser_take_heap_snapshot(
-    tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+    ctx: ToolContext, tab_id: str | None = None
 ) -> str:
     """Tira um heap snapshot (CDP HeapProfiler) da aba e devolve um resumo
     dos construtores que mais ocupam memória. O snapshot bruto (formato V8)
@@ -904,7 +873,7 @@ async def browser_take_heap_snapshot(
     Args:
         tab_id: id da aba (padrão: aba ativa).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -932,13 +901,13 @@ async def browser_take_heap_snapshot(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "git-compare",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="git-compare",
+    )
 )
 async def browser_compare_heap_snapshots(
     before_path: str,
@@ -980,18 +949,18 @@ async def browser_compare_heap_snapshots(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "gauge",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="gauge",
+    )
 )
 async def browser_lighthouse_audit(
+    ctx: ToolContext,
     url: str | None = None,
     tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Roda um audit Lighthouse (performance/acessibilidade/best-practices/
     SEO) — via `npx lighthouse`, único ponto desta suíte que depende de
@@ -1002,7 +971,7 @@ async def browser_lighthouse_audit(
         url: URL a auditar (padrão: URL atual da aba).
         tab_id: id da aba usada só pra resolver a URL padrão.
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     target_url = url
     if target_url is None:
         tab = get_tab_state(workspace_id, tab_id)
@@ -1084,18 +1053,15 @@ async def browser_lighthouse_audit(
     )
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "video",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="video",
+    )
 )
-async def browser_screencast_start(
-    tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_screencast_start(ctx: ToolContext, tab_id: str | None = None) -> str:
     """Inicia a captura contínua de frames da aba (CDP `Page.startScreencast`)
     — diferente de `browser_screenshot` (um frame só), grava um frame a
     cada mudança de tela até `browser_screencast_stop` encerrar. Use pra
@@ -1105,7 +1071,7 @@ async def browser_screencast_start(
     Args:
         tab_id: id da aba (padrão: aba ativa).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
@@ -1144,25 +1110,22 @@ async def browser_screencast_start(
         return json.dumps({"status": "error", "error": str(exc)})
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "browser",
-        "destructive": False,
-        "icon": "video-off",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="browser",
+        destructive=False,
+        icon="video-off",
+    )
 )
-async def browser_screencast_stop(
-    tab_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
-) -> str:
+async def browser_screencast_stop(ctx: ToolContext, tab_id: str | None = None) -> str:
     """Encerra a captura iniciada por `browser_screencast_start` e persiste
     os frames capturados (PNG base64, formato CDP) como artifact.
 
     Args:
         tab_id: id da aba (padrão: aba ativa).
     """
-    workspace_id = _workspace_id(config)
+    workspace_id = _workspace_id(ctx)
     tab = get_tab_state(workspace_id, tab_id)
     if tab is None:
         return _NO_SESSION_ERROR
