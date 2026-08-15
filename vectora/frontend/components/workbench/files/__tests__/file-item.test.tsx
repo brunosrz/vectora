@@ -136,3 +136,20 @@ describe("FileItem — abertura em modo IDE vs Assistente", () => {
     expect(document.querySelector("[role='treeitem']")).not.toBeNull();
   });
 });
+
+describe("FileItem — drag-and-drop (Sprint 27)", () => {
+  it("é arrastável e grava o próprio path no dataTransfer com o MIME da árvore", () => {
+    renderItem("assistant");
+    const node = document.querySelector("[role='treeitem']")!;
+    expect(node).toHaveAttribute("draggable", "true");
+
+    const setData = vi.fn();
+    fireEvent.dragStart(node, {
+      dataTransfer: { setData, effectAllowed: "" },
+    });
+    expect(setData).toHaveBeenCalledWith(
+      "application/x-vectora-fs-path",
+      "src/main.ts",
+    );
+  });
+});

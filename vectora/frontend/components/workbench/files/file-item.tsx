@@ -11,6 +11,7 @@ import { useSettingsStore } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 
 import { GitBadge } from "./git-badge";
+import { FS_DRAG_MIME } from "./files-utils";
 
 /** Linha de um arquivo na árvore: abrir, renomear inline, ações em hover
  * (@ contexto, abrir como janela, renomear, deletar, fixar). */
@@ -57,6 +58,11 @@ export function FileItem({
       tabIndex={0}
       role="treeitem"
       aria-selected={openPath === entry.path}
+      draggable={!renaming}
+      onDragStart={(e) => {
+        e.dataTransfer.setData(FS_DRAG_MIME, entry.path);
+        e.dataTransfer.effectAllowed = "move";
+      }}
       className="group flex items-center px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
       style={{ paddingLeft: 8 + depth * 12 }}
       onKeyDown={(e) => {

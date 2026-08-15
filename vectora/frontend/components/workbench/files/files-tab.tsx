@@ -66,6 +66,7 @@ import {
   fetchDiffSummary,
   apiFsCreate,
   apiFsDelete,
+  apiFsMove,
   apiFsSearch,
   apiFsGitLogFile,
   apiFsGitShow,
@@ -404,6 +405,41 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
       if (openPath === path) setOpenFile(wsId, null);
     }
   }, [wsId, deleteConfirm, openPath, invalidateFiles, setOpenFile]);
+
+  // Mover por drag-and-drop: soltar um arquivo/pasta arrastado sobre outra
+  // pasta (ou a raiz). `targetDir === ""` é a raiz do workspace. No-op
+  // silencioso quando o alvo já é o diretório atual do item (mesmo lugar) —
+  // evita um toast de erro "já existe" pelo caso mais comum de drop.
+  const handleMoveInto = useCallback(
+    async (sourcePath: string, targetDir: string) => {
+      if (!wsId) return;
+      const basename = sourcePath.includes("/")
+        ? sourcePath.split("/").pop()!
+        : sourcePath;
+      const sourceParent = sourcePath.includes("/")
+        ? sourcePath.split("/").slice(0, -1).join("/")
+        : "";
+      if (sourceParent === targetDir) return;
+      // Nunca move uma pasta pra dentro de si mesma ou de um descendente.
+      if (targetDir === sourcePath || targetDir.startsWith(`${sourcePath}/`)) {
+        return;
+      }
+
+      const toPath = targetDir ? `${targetDir}/${basename}` : basename;
+      const result = await apiFsMove(wsId, sourcePath, toPath);
+      if (!result.ok) {
+        const msg =
+          result.message === "Já existe um arquivo ou pasta com esse nome."
+            ? m.workbench_files_rename_exists()
+            : m.workbench_files_rename_error();
+        useToastStore.getState().error(msg);
+        return;
+      }
+      invalidateFiles(wsId);
+      if (openPath === sourcePath) setOpenFile(wsId, toPath);
+    },
+    [wsId, invalidateFiles, openPath, setOpenFile],
+  );
 
   // ── Gerenciador de .gitignore (A.10) ─────────────────────────────────────
   const [gitignoreOpen, setGitignoreOpen] = useState(false);
@@ -769,6 +805,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                   onInlineCreate={handleInlineCreate}
                   onCancelCreate={handleCancelCreate}
                   onRequestCreate={handleRequestCreate}
+                  onMoveInto={handleMoveInto}
                 />
               </>
             )}

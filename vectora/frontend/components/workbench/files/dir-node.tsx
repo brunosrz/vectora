@@ -6,7 +6,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type DragEvent } from "react";
 
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
@@ -19,7 +19,7 @@ import { FileTreeSkeleton } from "@/components/workbench/tabs/file-tree-skeleton
 import { m } from "@/lib/paraglide/messages";
 
 import { fetchTree, apiFsMove } from "./files-api";
-import { norm } from "./files-utils";
+import { norm, FS_DRAG_MIME } from "./files-utils";
 import { FileItem } from "./file-item";
 import { InlineCreateInput } from "./inline-create-input";
 
@@ -46,6 +46,10 @@ interface DirNodeProps {
   onRequestCreate: (type: "file" | "dir", parentDir: string) => void;
   /** rename/move: callback para renomear esta pasta ou arquivo filho */
   onRename?: (oldPath: string, newName: string) => void;
+  /** drag-and-drop: solto um item (arquivo ou pasta) sobre esta pasta —
+   * `sourcePath` é o item arrastado, `targetDir` é sempre `path` desta
+   * DirNode (injetado aqui, não pelo chamador). */
+  onMoveInto?: (sourcePath: string, targetDir: string) => void;
 }
 
 /** Nó de diretório expansível na árvore, recursivo. Carrega entradas via SWR,
@@ -66,9 +70,32 @@ export function DirNode({
   onCancelCreate,
   onRequestCreate,
   onRename,
+  onMoveInto,
 }: DirNodeProps) {
   const [renamingDir, setRenamingDir] = useState(false);
   const [renameDirValue, setRenameDirValue] = useState(name);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDragOver = useCallback((e: DragEvent) => {
+    if (!e.dataTransfer.types.includes(FS_DRAG_MIME)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => setDragOver(false), []);
+
+  const handleDrop = useCallback(
+    (e: DragEvent) => {
+      setDragOver(false);
+      const sourcePath = e.dataTransfer.getData(FS_DRAG_MIME);
+      if (!sourcePath || !onMoveInto) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onMoveInto(sourcePath, path);
+    },
+    [onMoveInto, path],
+  );
 
   const commitDirRename = () => {
     const trimmed = renameDirValue.trim();
@@ -139,13 +166,30 @@ export function DirNode({
     creating !== null && creating.parentDir === path && expanded;
 
   return (
-    <div>
+    <div
+      onDragOver={depth === 0 ? handleDragOver : undefined}
+      onDragLeave={depth === 0 ? handleDragLeave : undefined}
+      onDrop={depth === 0 ? handleDrop : undefined}
+      className={
+        depth === 0 && dragOver ? "bg-primary/5 ring-1 ring-primary/30" : ""
+      }
+    >
       {depth > 0 && (
         <div
           tabIndex={0}
           role="treeitem"
           aria-expanded={expanded}
-          className="group flex items-center px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+          draggable={!renamingDir}
+          onDragStart={(e) => {
+            e.dataTransfer.setData(FS_DRAG_MIME, path);
+            e.dataTransfer.effectAllowed = "move";
+          }}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`group flex items-center px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 ${
+            dragOver ? "bg-primary/10 ring-1 ring-primary/40" : ""
+          }`}
           onKeyDown={(e) => {
             if (e.key === "Delete") {
               e.preventDefault();
@@ -274,6 +318,7 @@ export function DirNode({
                   onCancelCreate={onCancelCreate}
                   onRequestCreate={onRequestCreate}
                   onRename={handleChildRename}
+                  onMoveInto={onMoveInto}
                 />
               ) : (
                 <FileItem

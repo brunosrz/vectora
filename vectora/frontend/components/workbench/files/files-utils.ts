@@ -1,5 +1,10 @@
 /** Helpers puros do Files workbench. */
 
+/** MIME type customizado usado no `dataTransfer` do drag-and-drop da árvore
+ * — evita colidir com drags de fora do app (ex. arrastar um arquivo do
+ * explorador do SO, que usa `Files`/`text/uri-list`, nunca este tipo). */
+export const FS_DRAG_MIME = "application/x-vectora-fs-path";
+
 /** Tom (cor) do badge git por status porcelain. */
 export const GIT_BADGE_TONE: Record<string, string> = {
   M: "text-amber-500",

@@ -196,3 +196,59 @@ describe("DirNode — subpasta (depth>0)", () => {
     expect(onDelete).toHaveBeenLastCalledWith("sub", "sub", true);
   });
 });
+
+function dt(data: Record<string, string> = {}) {
+  return {
+    types: Object.keys(data),
+    getData: (k: string) => data[k] ?? "",
+    dropEffect: "",
+  };
+}
+
+describe("DirNode — drag-and-drop (Sprint 27)", () => {
+  function subProps() {
+    return { ...baseProps(), path: "sub", name: "sub", depth: 1 };
+  }
+
+  it("é arrastável e grava o próprio path no dataTransfer", () => {
+    render(<DirNode {...subProps()} />);
+    const el = document.querySelector("[role='treeitem']")!;
+    expect(el).toHaveAttribute("draggable", "true");
+
+    const setData = vi.fn();
+    fireEvent.dragStart(el, { dataTransfer: { setData, effectAllowed: "" } });
+    expect(setData).toHaveBeenCalledWith(
+      "application/x-vectora-fs-path",
+      "sub",
+    );
+  });
+
+  it("soltar um item arrastado chama onMoveInto(sourcePath, path desta pasta)", () => {
+    const onMoveInto = vi.fn();
+    render(<DirNode {...subProps()} onMoveInto={onMoveInto} />);
+    const el = document.querySelector("[role='treeitem']")!;
+
+    fireEvent.drop(el, {
+      dataTransfer: dt({ "application/x-vectora-fs-path": "other/file.ts" }),
+    });
+    expect(onMoveInto).toHaveBeenCalledWith("other/file.ts", "sub");
+  });
+
+  it("erro/borda: drop sem dado do MIME esperado (drag externo do SO) não chama onMoveInto", () => {
+    const onMoveInto = vi.fn();
+    render(<DirNode {...subProps()} onMoveInto={onMoveInto} />);
+    const el = document.querySelector("[role='treeitem']")!;
+
+    fireEvent.drop(el, { dataTransfer: dt({}) });
+    expect(onMoveInto).not.toHaveBeenCalled();
+  });
+
+  it("dragOver com o MIME certo sinaliza dropEffect='move' (feedback visual)", () => {
+    render(<DirNode {...subProps()} />);
+    const el = document.querySelector("[role='treeitem']")!;
+    const dataTransfer = dt({ "application/x-vectora-fs-path": "x" });
+
+    fireEvent.dragOver(el, { dataTransfer });
+    expect(dataTransfer.dropEffect).toBe("move");
+  });
+});
