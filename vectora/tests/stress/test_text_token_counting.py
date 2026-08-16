@@ -12,7 +12,6 @@ Verifica:
 
 from __future__ import annotations
 
-import asyncio
 import time
 
 import pytest
@@ -100,3 +99,114 @@ def test_split_consistency_under_load():
     # Budget: 200 splits em menos de 60 s
     # (tiktoken é mais lento em Windows; CI Linux deve completar bem abaixo do limite)
     assert elapsed < 60.0, f"Tempo excessivo: {elapsed:.2f}s para {N} splits"
+
+
+@pytest.mark.stress
+@pytest.mark.parametrize(
+    "sample",
+    [
+        "texto curto",
+        "a" * 50,
+        "café, ação, coração — acentuação em português",
+        "🚀🎉✨ emoji stress test 你好世界",
+        "def foo():\n    return 42\n" * 20,
+        "SELECT * FROM users WHERE id = 1;" * 10,
+        " ".join(str(i) for i in range(500)),
+        "\n".join(f"linha {i}" for i in range(200)),
+        "palavra " * 1000,
+        "",
+    ],
+    ids=[
+        "curto",
+        "repetido_a",
+        "acentuacao",
+        "emoji_unicode",
+        "codigo",
+        "sql",
+        "numeros",
+        "multilinha",
+        "muito_longo",
+        "vazio",
+    ],
+)
+def test_count_tokens_various_samples(sample):
+    """count_tokens em amostras variadas de conteúdo — nunca lança, sempre determinístico."""
+    count1 = text_service.count_tokens(sample)
+    count2 = text_service.count_tokens(sample)
+
+    assert count1 == count2
+    assert count1 >= 0
+
+
+@pytest.mark.stress
+@pytest.mark.parametrize(
+    "n_calls", [1_000, 5_000, 10_000, 20_000], ids=lambda n: f"calls={n}"
+)
+def test_count_tokens_throughput_various_volumes(n_calls):
+    """Throughput de count_tokens em volumes crescentes de chamadas."""
+    sample = "O Vectora processa texto em chunks tokenizados via tiktoken."
+    baseline = text_service.count_tokens(sample)
+
+    t0 = time.perf_counter()
+    for _ in range(n_calls):
+        assert text_service.count_tokens(sample) == baseline
+    elapsed = time.perf_counter() - t0
+
+    # Budget generoso e proporcional ao volume, tolerante a máquina ocupada.
+    assert elapsed < (n_calls / 1000) + 5.0
+
+
+@pytest.mark.stress
+@pytest.mark.parametrize(
+    "size", [1_000, 5_000, 20_000, 50_000], ids=lambda n: f"chars={n}"
+)
+def test_split_various_text_sizes(size):
+    """split() em textos de tamanhos crescentes — chunking sempre determinístico."""
+    unit = "frase de teste com conteúdo variado. "
+    text = (unit * ((size // len(unit)) + 1))[:size]
+
+    chunks_a = text_service.split(text)
+    chunks_b = text_service.split(text)
+
+    assert chunks_a == chunks_b
+    assert len(chunks_a) >= 1
+
+
+@pytest.mark.stress
+@pytest.mark.parametrize(
+    "batch_size", [100, 500, 1_000, 5_000], ids=lambda n: f"batch={n}"
+)
+def test_count_tokens_rapid_batch_various_sizes(batch_size):
+    """Lote de chamadas rápidas de count_tokens em textos distintos — sem degradação de precisão."""
+    texts = [
+        f"documento número {i} com algum conteúdo variável {i * 2}"
+        for i in range(batch_size)
+    ]
+
+    t0 = time.perf_counter()
+    counts = [text_service.count_tokens(t) for t in texts]
+    elapsed = time.perf_counter() - t0
+
+    assert len(counts) == batch_size
+    assert all(c > 0 for c in counts)
+    assert elapsed < (batch_size / 500) + 5.0
+
+
+@pytest.mark.stress
+@pytest.mark.parametrize(
+    "text",
+    [
+        "parágrafo um. " * 50,
+        "parágrafo dois com números 123456789. " * 50,
+        "PARÁGRAFO EM MAIÚSCULAS. " * 50,
+        "mixed Case Paragraph With Numbers 42. " * 50,
+        "texto,com,virgulas,em,excesso," * 50,
+    ],
+    ids=["p1", "p2_numeros", "p3_maiusculas", "p4_mixed", "p5_virgulas"],
+)
+def test_split_determinism_across_text_variations(text):
+    """split() é determinístico em textos com formatações e cases distintos."""
+    chunks_a = text_service.split(text)
+    chunks_b = text_service.split(text)
+
+    assert chunks_a == chunks_b

@@ -29,6 +29,10 @@ dependencies = [
     "sqlalchemy>=2.0.51",
     "langchain-mcp-adapters>=0.3.0",
     "mcp>=1.29.0",
+    # mcp.cli.cli importa typer incondicionalmente — não é dependência
+    # opcional de fato apesar do extra "cli" do pacote; sem isso o build
+    # nativo (PyInstaller collect_all('mcp')) quebra com ModuleNotFoundError.
+    "typer>=0.15.0",
     "rich>=15.0.0",
     "rank-bm25>=0.2.2",
     "python-dotenv>=1.2.2",
