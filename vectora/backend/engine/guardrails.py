@@ -13,12 +13,11 @@ o mesmo objeto, não um novo por iteração do loop, porque o teto é por
 turno inteiro, não por volta.
 
 Nota de escopo: o timeout+cap do AITL (``backend/tools/aitl.py::
-ask_parent_agent``) descrito no plano original desta workstream continua
-fora daqui. O tool em si já foi migrado pro registry nativo (``@vtool``,
-``FallbackChatClient``, ``ToolContext``) — mas até o corte de dispatch
-acontecer, ele só é invocado pelo grafo LangGraph atual via
-``backend.tools.langchain_bridge.as_langchain_tool``, sem nenhum
-``TurnBudget`` em escopo (esse objeto só existe dentro do loop de
+ask_parent_agent``) continua fora daqui. O tool em si já foi migrado pro
+registry nativo (``@vtool``, ``FallbackChatClient``, ``ToolContext``) —
+mas até o corte de dispatch acontecer, ele só é invocado pelo grafo ainda
+em produção via ``backend.tools.langchain_bridge.as_langchain_tool``, sem
+nenhum ``TurnBudget`` em escopo (esse objeto só existe dentro do loop de
 conversa nativo, `run_conversation`/`execute_tool_batch`). O tool está
 pronto pra receber o teto assim que for chamado de dentro do motor
 nativo de verdade — ``TurnBudget.record_aitl_call`` já existe pronto

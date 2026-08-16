@@ -445,10 +445,9 @@ SOUL_CATALOG: dict[str, Soul] = {
 
 # AITL: toda SOUL ganha ask_parent_agent — só faz sentido dentro de uma
 # delegação (pedir algo ao pai), nunca no orquestrador (que não tem pai).
-# `ask_parent_agent` é a primeira tool migrada pro registry nativo
-# (`backend.tools.aitl`, `@vtool`) — o dispatch LangGraph atual consome a
-# versão em BaseTool via `as_langchain_tool` (ponte removida no corte de
-# dispatch final).
+# `ask_parent_agent` é uma tool do registry nativo (`backend.tools.aitl`,
+# `@vtool`) — o dispatch ainda em produção consome a versão envolvida em
+# adapter compatível via `as_langchain_tool`.
 _ask_parent_agent_spec = TOOL_REGISTRY.get("ask_parent_agent")
 if _ask_parent_agent_spec is None:
     msg = "ask_parent_agent não registrado — backend.tools.aitl não foi importado"

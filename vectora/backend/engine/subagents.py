@@ -1,15 +1,15 @@
 """Delegação de subagentes nativa. Cada subagente é uma instância nova do
 motor nativo (``run_conversation``) rodando com seu próprio ``SessionStore``
 thread, tools restritas ao ``SubagentSpec``, e prompt de sistema próprio —
-``asyncio.Task``, nunca thread OS (CLAUDE.md regra 10).
+``asyncio.Task``, nunca thread OS.
 
-``SubagentSpec.tools`` já são ``ToolSpec`` do registry nativo — não os
-``@tool`` do LangChain que ``backend/agents/souls.py`` (catálogo real em
-produção, ``SOUL_CATALOG``) ainda usa. Esse arquivo continua sendo a fonte
-de verdade em produção até a migração das ~152 tools pro registry nativo
-acontecer e o dispatch cortar pro motor novo — este módulo entrega o
-MECANISMO de delegação nativo, testável com qualquer ``ToolRegistry``,
-coexistindo sem depender de um catálogo ainda inexistente.
+``SubagentSpec.tools`` já são ``ToolSpec`` do registry nativo. ``backend/
+agents/souls.py`` (catálogo real em produção, ``SOUL_CATALOG``) consome as
+mesmas tools nativas por baixo, envolvidas em adapter compatível — a fonte
+de verdade em produção continua sendo ``SOUL_CATALOG`` até o dispatch
+cortar pro motor novo; este módulo entrega o MECANISMO de delegação
+nativo, testável com qualquer ``ToolRegistry``, coexistindo sem depender
+de um catálogo próprio ainda ligado ao dispatch.
 
 Sub-thread_id = ``f"{parent_thread_id}:{spec.name}:{uuid4()}"`` com
 ``parent_thread_id`` gravado em ``SessionStore.create_session`` — dá
@@ -36,9 +36,8 @@ Escopo RBAC do subagente (``_tools_outside_user_scope``): as tools
 do ``SubagentSpec`` nunca podem exceder o que ``tool_policy.
 effective_disabled(ctx.user_id)`` permite pro usuário/sessão que está
 delegando — mesmo filtro que ``agent_factory._subagent_specs()`` já aplica
-no catálogo LangGraph em produção (kill-switch global + ABAC por usuário),
-replicado aqui pro motor nativo não abrir uma segunda porta sem esse
-filtro quando o corte de dispatch acontecer.
+no catálogo em produção (kill-switch global + ABAC por usuário), replicado
+aqui pro motor nativo não abrir uma segunda porta sem esse filtro.
 """
 
 from __future__ import annotations
@@ -264,8 +263,8 @@ async def run_subagent(
     elif resultado.stopped_reason == "interrupted":
         # Ainda pausado esperando aprovação — nem sucesso nem erro. Não
         # emite evento de conclusão: o subagente segue "running" até
-        # alguém retomar (fora do escopo deste workstream — a UI vê a
-        # pendência via o mesmo pending_approvals do agente principal).
+        # alguém retomar (a UI vê a pendência via o mesmo pending_approvals
+        # do agente principal).
         status = "running"
     else:
         status = "error"
@@ -282,7 +281,7 @@ def spawn_subagent_background(
     spec: SubagentSpec, prompt: str, **kwargs: Any
 ) -> asyncio.Task[str]:
     """Dispara `run_subagent` em segundo plano via `asyncio.create_task` —
-    nunca thread OS (CLAUDE.md regra 10). Devolve a `asyncio.Task[str]` pra
+    nunca thread OS. Devolve a `asyncio.Task[str]` pra
     quem chamou decidir se/quando esperar (ex.: `await` direto pra
     delegação síncrona, ou nunca esperar pra fire-and-forget real)."""
     return asyncio.create_task(run_subagent(spec, prompt, **kwargs))
