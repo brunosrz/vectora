@@ -25,6 +25,7 @@ import {
 } from "@dnd-kit/core";
 
 import { m } from "@/lib/paraglide/messages";
+import { TaskDetailPanel } from "./task-detail-panel";
 
 function NewTaskForm({
   threadId,
@@ -277,6 +278,7 @@ function TaskCard({
     useDraggable({ id: task.id });
   const [runs, setRuns] = useState<KanbanRun[] | null>(null);
   const [runsOpen, setRunsOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const toggleRuns = () => {
     if (runsOpen) {
@@ -423,7 +425,20 @@ function TaskCard({
         >
           {runsOpen ? m.kanban_action_hide_runs() : m.kanban_action_show_runs()}
         </button>
+        <button
+          onClick={() => setDetailOpen(true)}
+          className="text-[10px] text-muted-foreground hover:underline"
+        >
+          {m.kanban_action_view_details()}
+        </button>
       </div>
+      <TaskDetailPanel
+        threadId={threadId}
+        taskId={task.id}
+        taskName={task.name}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
       {runsOpen ? (
         <ul className="text-[10px] text-muted-foreground space-y-0.5 pl-2">
           {runs === null ? null : runs.length === 0 ? (

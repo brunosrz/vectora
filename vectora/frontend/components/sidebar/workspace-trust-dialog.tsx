@@ -54,6 +54,7 @@ import {
   type CodespaceSummary,
 } from "@/lib/stores/workspaces-store";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
+import { useIngestPreview } from "@/lib/hooks/use-ingest-preview";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
 import {
   RagSettingsButton,
@@ -88,6 +89,7 @@ export function WorkspaceTrustDialog({
   const { offline } = useNetworkStatus();
   const create = useWorkspacesStore((s) => s.create);
   const getActive = useWorkspacesStore((s) => s.getActive);
+  const activeWorkspaceId = useWorkspacesStore((s) => s.active_id);
   const ragStart = useRagJobsStore((s) => s.start);
   const createRemote = useWorkspacesStore((s) => s.createRemote);
   const listSshKeys = useWorkspacesStore((s) => s.listSshKeys);
@@ -119,6 +121,16 @@ export function WorkspaceTrustDialog({
   const ragSettings = useRagSettings();
   const ingestJob = useRagJobsStore((s) =>
     ingestJobId ? s.jobs[ingestJobId] : null,
+  );
+  // Espelha o mesmo atalho de tipo hardcoded "all" que handleConfirm já
+  // envia ao ragStart real — o preview mostra exatamente o que a indexação
+  // de fato indexaria.
+  const ingestPreview = useIngestPreview(
+    mode === "ingest" ? activeWorkspaceId : null,
+    mode === "ingest" && tab === "local" ? (listing?.path ?? "") : "",
+    "all",
+    includeExts,
+    excludeExts,
   );
 
   // SSH state
@@ -535,6 +547,40 @@ export function WorkspaceTrustDialog({
                         placeholder={m.workspace_ingest_bucket_name_placeholder()}
                       />
                     </div>
+                    <div
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                      data-testid="workspace-ingest-preview"
+                    >
+                      {ingestPreview.loading ? (
+                        <>
+                          <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
+                          {m.workspace_ingest_preview_loading()}
+                        </>
+                      ) : ingestPreview.total === 0 ? (
+                        <span>{m.workspace_ingest_preview_empty()}</span>
+                      ) : (
+                        <span>
+                          {m.workspace_ingest_preview_count({
+                            n: ingestPreview.total,
+                          })}
+                        </span>
+                      )}
+                    </div>
+                    {!ingestPreview.loading &&
+                      ingestPreview.files.length > 0 && (
+                        <ScrollArea className="h-24 rounded-md border border-border/60">
+                          <ul className="p-1.5 space-y-0.5">
+                            {ingestPreview.files.map((f) => (
+                              <li
+                                key={f}
+                                className="truncate font-mono text-[11px] text-muted-foreground"
+                              >
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+                        </ScrollArea>
+                      )}
                   </div>
                 )}
                 {/* Path editável — Enter ou botão "Ir" navega para o destino.

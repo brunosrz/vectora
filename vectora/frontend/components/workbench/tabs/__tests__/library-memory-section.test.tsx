@@ -15,6 +15,7 @@ import {
   cleanup,
   waitFor,
   fireEvent,
+  act,
 } from "@testing-library/react";
 
 import { MemorySection } from "../library-memory-section";
@@ -28,6 +29,8 @@ beforeEach(() => {
     memoryItems: [],
     memoryLoading: false,
     memoryFetchedAt: null,
+    memoryQuery: "",
+    memoryError: null,
   });
   useWorkspacesStore.setState({ workspaces: [], active_id: null });
 });
@@ -191,6 +194,60 @@ describe("MemorySection", () => {
       expect(screen.getByText("falha ao instalar")).toBeTruthy();
     });
     expect(screen.getByText("Bucket 2")).toBeTruthy();
+  });
+
+  it("digitar na busca dispara /rag-library/catalog?q= com debounce de 350ms; erro de rede na busca seguinte mantém o último resultado bom e mostra erro discreto", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/license/status") {
+        return {
+          ok: true,
+          json: async () => ({ configured: false }),
+        } as Response;
+      }
+      if (url === "/rag-library/catalog") {
+        return { ok: true, json: async () => CATALOG } as Response;
+      }
+      if (url === "/rag-library/catalog?q=bucket+1") {
+        return { ok: true, json: async () => [CATALOG[0]] } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const { rerender } = render(
+      <MemorySection query="" onCountChange={() => {}} />,
+    );
+    await vi.waitFor(() => expect(screen.getByText("Bucket 1")).toBeTruthy());
+
+    rerender(<MemorySection query="bucket 1" onCountChange={() => {}} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    await vi.waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(
+          (c) => c[0] === "/rag-library/catalog?q=bucket+1",
+        ),
+      ).toBe(true);
+      expect(screen.queryByText("Bucket 2")).toBeNull();
+    });
+
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url === "/rag-library/catalog?q=falha") throw new Error("offline");
+      return { ok: true, json: async () => ({}) } as Response;
+    });
+    rerender(<MemorySection query="falha" onCountChange={() => {}} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    await vi.waitFor(() => {
+      expect(screen.getByText("Bucket 1")).toBeTruthy();
+      expect(screen.getByText("Error searching memory buckets")).toBeTruthy();
+    });
+
+    vi.useRealTimers();
   });
 
   it("erro/borda: catálogo vazio mostra o estado vazio específico", async () => {

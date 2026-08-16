@@ -107,6 +107,28 @@ class RunOut(BaseModel):
     finished_at: str | None
 
 
+class CommentOut(BaseModel):
+    id: str
+    task_id: str
+    user_id: str
+    body: str
+    created_at: str
+
+
+class CreateCommentRequest(BaseModel):
+    body: str
+
+
+class TaskEventOut(BaseModel):
+    id: str
+    task_id: str
+    from_status: str | None
+    to_status: str
+    block_kind: str | None
+    block_reason: str | None
+    created_at: str
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -382,3 +404,69 @@ async def get_task_runs(request: Request, thread_id: str, task_id: str) -> list[
     await _require_task(thread_id, task_id)
     rows = await list_runs_for_task(task_id)
     return [_row_to_run_out(r) for r in rows]
+
+
+def _row_to_comment_out(r: dict[str, Any]) -> CommentOut:
+    return CommentOut(
+        id=r["id"],
+        task_id=r["task_id"],
+        user_id=r["user_id"],
+        body=r["body"],
+        created_at=r["created_at"],
+    )
+
+
+def _row_to_event_out(r: dict[str, Any]) -> TaskEventOut:
+    return TaskEventOut(
+        id=r["id"],
+        task_id=r["task_id"],
+        from_status=r.get("from_status"),
+        to_status=r["to_status"],
+        block_kind=r.get("block_kind"),
+        block_reason=r.get("block_reason"),
+        created_at=r["created_at"],
+    )
+
+
+@router.post("/tasks/{task_id}/comments", response_model=CommentOut, status_code=201)
+async def post_comment_endpoint(
+    request: Request, thread_id: str, task_id: str, body: CreateCommentRequest
+) -> CommentOut:
+    from backend.scheduling.kanban import add_comment
+
+    uid = _user_id(request)
+    await _require_task(thread_id, task_id)
+    try:
+        comment = await add_comment(task_id, uid, body.body)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("background: falha ao criar comentário")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return _row_to_comment_out(comment)
+
+
+@router.get("/tasks/{task_id}/comments", response_model=list[CommentOut])
+async def get_comments_endpoint(
+    request: Request, thread_id: str, task_id: str
+) -> list[CommentOut]:
+    from backend.scheduling.kanban import list_comments
+
+    _user_id(request)
+    await _require_task(thread_id, task_id)
+    rows = await list_comments(task_id)
+    return [_row_to_comment_out(r) for r in rows]
+
+
+@router.get("/tasks/{task_id}/events", response_model=list[TaskEventOut])
+async def get_events_endpoint(
+    request: Request, thread_id: str, task_id: str
+) -> list[TaskEventOut]:
+    """Timeline de transições de status do card — `vectora_task_events`,
+    gravada por `kanban._record_task_event` em cada transição."""
+    from backend.scheduling.kanban import list_events
+
+    _user_id(request)
+    await _require_task(thread_id, task_id)
+    rows = await list_events(task_id)
+    return [_row_to_event_out(r) for r in rows]

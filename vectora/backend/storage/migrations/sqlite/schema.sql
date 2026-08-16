@@ -296,3 +296,32 @@ CREATE INDEX IF NOT EXISTS idx_agent_profiles_user ON vectora_agent_profiles(use
 -- Perfil de agente atribuído a uma task do Kanban — NULL = comportamento
 -- padrão do orchestrator.
 ALTER TABLE vectora_background_tasks ADD COLUMN agent_profile_id TEXT;
+
+-- Comentários de humanos num card do Kanban — discussão sobre a task,
+-- separada da timeline de transições abaixo.
+CREATE TABLE IF NOT EXISTS vectora_task_comments (
+    id         TEXT PRIMARY KEY,
+    task_id    TEXT NOT NULL,
+    user_id    TEXT NOT NULL,
+    body       TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_task_comments_task ON vectora_task_comments(task_id);
+
+-- Timeline de transições de status do Kanban. `backend/scheduling/kanban.py`
+-- já dispara um evento SSE (efêmero) para cada transição; esta tabela é o
+-- histórico consultável que o SSE nunca persistiu. `from_status` nullable —
+-- a primeira transição registrada de uma task pode não ter estado anterior
+-- capturado.
+CREATE TABLE IF NOT EXISTS vectora_task_events (
+    id           TEXT PRIMARY KEY,
+    task_id      TEXT NOT NULL,
+    from_status  TEXT,
+    to_status    TEXT NOT NULL,
+    block_kind   TEXT,
+    block_reason TEXT,
+    created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_task_events_task ON vectora_task_events(task_id);

@@ -12,7 +12,7 @@
  * vez de um botão que falharia sempre.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CheckCircle2,
   Database,
@@ -384,6 +384,7 @@ export function MemorySection({
 }) {
   const buckets = useLibraryStore((s) => s.memoryItems);
   const loading = useLibraryStore((s) => s.memoryLoading);
+  const error = useLibraryStore((s) => s.memoryError);
   const ensureMemoryLoaded = useLibraryStore((s) => s.ensureMemoryLoaded);
   const invalidateMemory = useLibraryStore((s) => s.invalidateMemory);
   const workspaceId = useWorkspacesStore((s) => s.getActive()?.id);
@@ -392,22 +393,19 @@ export function MemorySection({
   const canPublish = Boolean(licenseStatus?.configured && workspaceId);
 
   useEffect(() => {
-    void ensureMemoryLoaded();
-  }, [ensureMemoryLoaded]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return buckets;
-    return buckets.filter(
-      (b) =>
-        b.name.toLowerCase().includes(q) ||
-        b.description.toLowerCase().includes(q),
-    );
-  }, [buckets, query]);
+    if (!query.trim()) {
+      void ensureMemoryLoaded(query);
+      return;
+    }
+    const timer = setTimeout(() => {
+      void ensureMemoryLoaded(query);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [query, ensureMemoryLoaded]);
 
   useEffect(() => {
-    onCountChange(filtered.length);
-  }, [filtered.length, onCountChange]);
+    onCountChange(buckets.length);
+  }, [buckets.length, onCountChange]);
 
   if (loading) {
     return (
@@ -419,12 +417,13 @@ export function MemorySection({
 
   return (
     <div className="space-y-2 py-1">
-      {filtered.length === 0 ? (
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {buckets.length === 0 ? (
         <p className="py-4 text-xs text-muted-foreground text-center">
           {m.library_empty_memory()}
         </p>
       ) : (
-        filtered.map((bucket) => (
+        buckets.map((bucket) => (
           <BucketCard
             key={bucket.id}
             bucket={bucket}
@@ -453,7 +452,7 @@ export function MemorySection({
           onClose={() => setPublishing(false)}
           onPublished={() => {
             invalidateMemory();
-            void ensureMemoryLoaded();
+            void ensureMemoryLoaded(query);
           }}
         />
       )}

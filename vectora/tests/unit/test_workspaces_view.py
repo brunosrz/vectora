@@ -1084,3 +1084,35 @@ class TestMemorySearchUnified:
             await search_memory_unified(workspace_id="alheio", request=request, q="x")
 
         assert exc_info.value.status_code == 403
+
+
+class TestRagIngestPreview:
+    @pytest.mark.asyncio
+    async def test_lists_files_matching_current_filters(self, tmp_path):
+        from backend.api.handlers.workspaces import rag_ingest_preview
+
+        (tmp_path / "a.py").write_text("1", encoding="utf-8")
+        (tmp_path / "b.md").write_text("1", encoding="utf-8")
+
+        result = await rag_ingest_preview(
+            workspace_id="vws", path=str(tmp_path), file_types="markdown"
+        )
+
+        assert result.total == 1
+        assert result.files == ["b.md"]
+
+    @pytest.mark.asyncio
+    async def test_unsafe_path_raises_400(self, monkeypatch, tmp_path):
+        from fastapi import HTTPException
+
+        from backend.api.handlers import workspaces as ws_handlers_mod
+        from backend.services import security as security_mod
+
+        monkeypatch.setattr(security_mod, "is_safe_file_path", lambda _p: False)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await ws_handlers_mod.rag_ingest_preview(
+                workspace_id="vws", path=str(tmp_path)
+            )
+
+        assert exc_info.value.status_code == 400

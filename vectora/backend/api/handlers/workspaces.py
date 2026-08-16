@@ -3648,6 +3648,11 @@ class RagIngestResponse(BaseModel):
     bucket_id: str
 
 
+class RagIngestPreviewResponse(BaseModel):
+    total: int
+    files: list[str]
+
+
 class RagJobStatus(BaseModel):
     job_id: str
     path: str
@@ -3974,6 +3979,43 @@ async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResp
         status="indexing",
         bucket_id=bucket.id,
     )
+
+
+@workspace_scoped_router.get(
+    "/rag/ingest/preview", response_model=RagIngestPreviewResponse
+)
+async def rag_ingest_preview(
+    workspace_id: str,
+    path: str,
+    file_types: str = "all",
+    include_exts: str | None = None,
+    exclude_exts: str | None = None,
+) -> RagIngestPreviewResponse:
+    """Lista os arquivos que os filtros atuais bateriam, sem indexar nada.
+
+    Mesma validação de caminho do ``POST /rag/ingest`` (400 em path inválido)
+    para dar feedback antes de disparar a indexação de fato.
+    """
+    from pathlib import Path
+
+    from fastapi import HTTPException
+
+    from backend.embedding.rag_ingest import list_matching_files
+    from backend.services.security import is_safe_file_path
+
+    if not is_safe_file_path(path) or not Path(path).is_dir():
+        raise HTTPException(
+            status_code=400, detail="Caminho inválido ou fora do escopo."
+        )
+
+    files, total = list_matching_files(
+        path,
+        file_types=file_types,
+        include_exts=include_exts,
+        exclude_exts=exclude_exts,
+        limit=200,
+    )
+    return RagIngestPreviewResponse(total=total, files=files)
 
 
 @workspace_scoped_router.get("/rag/jobs/{job_id}", response_model=RagJobStatus)

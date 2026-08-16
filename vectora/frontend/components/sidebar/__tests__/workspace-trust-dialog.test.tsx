@@ -269,3 +269,79 @@ describe("WorkspaceTrustDialog — mode=ingest, filtro de formato e bucket", () 
     expect(body.bucket_name).toBeUndefined();
   });
 });
+
+describe("WorkspaceTrustDialog — preview de arquivos filtrados", () => {
+  beforeEach(() => {
+    useWorkspacesStore.getState().setWorkspaces(
+      [
+        {
+          id: "ws-1",
+          name: "vectora",
+          cwd: listing.path,
+          trusted: true,
+        } as unknown as ReturnType<
+          typeof useWorkspacesStore.getState
+        >["workspaces"][number],
+      ],
+      "ws-1",
+    );
+  });
+
+  it("digitar no filtro de inclusão atualiza a contagem exibida via preview real (feliz); sem match mostra mensagem vazia (bad)", async () => {
+    FETCH.mockImplementation((url: string) => {
+      if (url.startsWith("/workspaces/browse")) return jsonRes(listing);
+      if (url.startsWith("/workspaces/ws-1/rag/ingest/preview")) {
+        if (url.includes("include_exts=xml")) {
+          return jsonRes({ total: 3, files: ["a.xml", "b.xml", "c.xml"] });
+        }
+        return jsonRes({ total: 0, files: [] });
+      }
+      return jsonRes({}, 404);
+    });
+
+    render(<WorkspaceTrustDialog open onOpenChange={() => {}} mode="ingest" />);
+    await waitFor(() => screen.getByText("projeto-a"));
+
+    // Sem filtro: nenhum match no mock → mensagem de vazio (bad path).
+    await waitFor(() => screen.getByText("No files match these filters."), {
+      timeout: 2000,
+    });
+
+    fireEvent.change(
+      screen.getByPlaceholderText("e.g. xml, tscn, src/components"),
+      { target: { value: "xml" } },
+    );
+
+    await waitFor(() => screen.getByText("3 file(s) found"), {
+      timeout: 2000,
+    });
+    expect(screen.getByText("a.xml")).toBeTruthy();
+  });
+
+  it("debounça: digitação rápida em sequência não gera 1 fetch por tecla", async () => {
+    FETCH.mockImplementation((url: string) => {
+      if (url.startsWith("/workspaces/browse")) return jsonRes(listing);
+      if (url.startsWith("/workspaces/ws-1/rag/ingest/preview")) {
+        return jsonRes({ total: 1, files: ["x.md"] });
+      }
+      return jsonRes({}, 404);
+    });
+
+    render(<WorkspaceTrustDialog open onOpenChange={() => {}} mode="ingest" />);
+    await waitFor(() => screen.getByText("projeto-a"));
+
+    const input = screen.getByPlaceholderText("e.g. xml, tscn, src/components");
+    for (const partial of ["m", "md", "md,", "md,t"]) {
+      fireEvent.change(input, { target: { value: partial } });
+    }
+
+    await waitFor(() => screen.getByText("1 file(s) found"), {
+      timeout: 2000,
+    });
+
+    const previewCalls = FETCH.mock.calls.filter((call) =>
+      String(call[0]).startsWith("/workspaces/ws-1/rag/ingest/preview"),
+    );
+    expect(previewCalls.length).toBeLessThan(4);
+  });
+});

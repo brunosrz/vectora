@@ -22,6 +22,7 @@ do Vectora e é o mesmo desacoplamento do Hermes.
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -120,6 +121,41 @@ def _emit_kanban_event(
         logger.debug("kanban: falha ao emitir evento SSE de status", exc_info=True)
 
 
+async def _record_task_event(
+    task_id: str,
+    from_status: str | None,
+    to_status: str,
+    *,
+    block_kind: str | None = None,
+    block_reason: str | None = None,
+) -> None:
+    """Grava a transição em `vectora_task_events` — a timeline consultável
+    que `_emit_kanban_event` (SSE efêmero) nunca persiste.
+
+    Mesmo contrato de falha do `_emit_kanban_event`: a transição de status já
+    foi commitada por quem chamou, então um erro aqui é só perda de uma linha
+    de histórico, não pode desfazer a transição real.
+    """
+    try:
+        db = await _get_db()
+        await db.execute(
+            "INSERT INTO vectora_task_events "
+            "(id, task_id, from_status, to_status, block_kind, block_reason) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                str(uuid.uuid4()),
+                task_id,
+                from_status,
+                to_status,
+                block_kind,
+                block_reason,
+            ),
+        )
+        await db.commit()
+    except Exception:
+        logger.debug("kanban: falha ao gravar evento de timeline", exc_info=True)
+
+
 async def get_task_status(task_id: str) -> dict[str, Any]:
     db = await _get_db()
     async with db.execute(
@@ -142,6 +178,11 @@ async def set_status(task_id: str, status: str) -> None:
         )
         raise ValueError(msg)
     db = await _get_db()
+    async with db.execute(
+        "SELECT status FROM vectora_background_tasks WHERE id = ?", (task_id,)
+    ) as cur:
+        row = await cur.fetchone()
+    from_status = row["status"] if row else None
     if status in ("ready", "done"):
         # Saída bem-sucedida do ciclo de bloqueio — zera o contador de
         # escalonamento (ver BLOCK_RECURRENCE_LIMIT), senão uma task que
@@ -160,6 +201,7 @@ async def set_status(task_id: str, status: str) -> None:
         )
     await db.commit()
     _emit_kanban_event(task_id, status)
+    await _record_task_event(task_id, from_status, status)
 
 
 async def manual_transition(task_id: str, target_status: str) -> None:
@@ -275,6 +317,11 @@ async def block_task(task_id: str, kind: str, reason: str) -> None:
     db = await _get_db()
 
     if kind == "dependency":
+        async with db.execute(
+            "SELECT status FROM vectora_background_tasks WHERE id = ?", (task_id,)
+        ) as cur:
+            row = await cur.fetchone()
+        from_status = row["status"] if row else None
         # Bloqueio por dependência não é acionável por ninguém: colocá-lo em
         # `blocked` encheria a coluna de cards que a pessoa não pode destravar.
         await db.execute(
@@ -285,12 +332,17 @@ async def block_task(task_id: str, kind: str, reason: str) -> None:
         )
         await db.commit()
         _emit_kanban_event(task_id, "todo", block_kind=kind, block_reason=reason)
+        await _record_task_event(
+            task_id, from_status, "todo", block_kind=kind, block_reason=reason
+        )
         return
 
     async with db.execute(
-        "SELECT block_count FROM vectora_background_tasks WHERE id = ?", (task_id,)
+        "SELECT status, block_count FROM vectora_background_tasks WHERE id = ?",
+        (task_id,),
     ) as cur:
         row = await cur.fetchone()
+    from_status = row["status"] if row else None
     novo_count = ((row["block_count"] if row else 0) or 0) + 1
 
     if novo_count >= BLOCK_RECURRENCE_LIMIT:
@@ -309,10 +361,18 @@ async def block_task(task_id: str, kind: str, reason: str) -> None:
     )
     await db.commit()
     _emit_kanban_event(task_id, status, block_kind=kind, block_reason=reason)
+    await _record_task_event(
+        task_id, from_status, status, block_kind=kind, block_reason=reason
+    )
 
 
 async def unblock_task(task_id: str) -> None:
     db = await _get_db()
+    async with db.execute(
+        "SELECT status FROM vectora_background_tasks WHERE id = ?", (task_id,)
+    ) as cur:
+        row = await cur.fetchone()
+    from_status = row["status"] if row else None
     await db.execute(
         "UPDATE vectora_background_tasks SET status = 'ready', block_kind = NULL, "
         "block_reason = NULL, block_count = 0, updated_at = datetime('now') "
@@ -321,6 +381,7 @@ async def unblock_task(task_id: str) -> None:
     )
     await db.commit()
     _emit_kanban_event(task_id, "ready", block_kind=None, block_reason=None)
+    await _record_task_event(task_id, from_status, "ready")
 
 
 async def get_dependencies(task_id: str) -> list[dict[str, Any]]:
@@ -419,3 +480,55 @@ async def recompute_ready() -> int:
         )
     await db.commit()
     return len(prontas)
+
+
+async def add_comment(task_id: str, user_id: str, body: str) -> dict[str, Any]:
+    """Grava um comentário no card. Corpo vazio/whitespace é recusado —
+    não existe comentário sem conteúdo no board."""
+    corpo = body.strip()
+    if not corpo:
+        msg = "comentário vazio não é permitido"
+        raise ValueError(msg)
+
+    comment_id = str(uuid.uuid4())
+    db = await _get_db()
+    await db.execute(
+        "INSERT INTO vectora_task_comments (id, task_id, user_id, body) "
+        "VALUES (?, ?, ?, ?)",
+        (comment_id, task_id, user_id, corpo),
+    )
+    await db.commit()
+    async with db.execute(
+        "SELECT id, task_id, user_id, body, created_at "
+        "FROM vectora_task_comments WHERE id = ?",
+        (comment_id,),
+    ) as cur:
+        row = await cur.fetchone()
+    return dict(row)
+
+
+async def list_comments(task_id: str) -> list[dict[str, Any]]:
+    """Comentários do card em ordem cronológica."""
+    db = await _get_db()
+    async with db.execute(
+        "SELECT id, task_id, user_id, body, created_at "
+        "FROM vectora_task_comments WHERE task_id = ? ORDER BY created_at ASC",
+        (task_id,),
+    ) as cur:
+        rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+async def list_events(task_id: str) -> list[dict[str, Any]]:
+    """Timeline de transições de status do card, em ordem cronológica —
+    gravada por `_record_task_event` a cada `set_status`/`block_task`/
+    `unblock_task`."""
+    db = await _get_db()
+    async with db.execute(
+        "SELECT id, task_id, from_status, to_status, block_kind, block_reason, "
+        "created_at FROM vectora_task_events WHERE task_id = ? "
+        "ORDER BY created_at ASC",
+        (task_id,),
+    ) as cur:
+        rows = await cur.fetchall()
+    return [dict(r) for r in rows]

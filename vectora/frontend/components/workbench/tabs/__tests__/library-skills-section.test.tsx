@@ -14,6 +14,7 @@ import {
   cleanup,
   waitFor,
   fireEvent,
+  act,
 } from "@testing-library/react";
 
 vi.mock("@/components/settings/environment/tabs/skills-tab", () => ({
@@ -30,6 +31,8 @@ beforeEach(() => {
     skillsItems: [],
     skillsLoading: false,
     skillsFetchedAt: null,
+    skillsQuery: "",
+    skillsError: null,
   });
 });
 
@@ -122,6 +125,65 @@ describe("SkillsSection — Catálogo", () => {
         }),
       );
     });
+  });
+
+  it("digitar na busca dispara /skills/catalog?q= com debounce de 350ms; erro de rede na busca seguinte mantém o último resultado bom e mostra erro discreto", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/license/status") {
+        return {
+          ok: true,
+          json: async () => ({ configured: false }),
+        } as Response;
+      }
+      if (url === "/skills/catalog") {
+        return {
+          ok: true,
+          json: async () => ({ entries: CATALOG }),
+        } as Response;
+      }
+      if (url === "/skills/catalog?q=pdf") {
+        return {
+          ok: true,
+          json: async () => ({ entries: CATALOG }),
+        } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const { rerender } = render(
+      <SkillsSection query="" onCountChange={() => {}} />,
+    );
+    await vi.waitFor(() =>
+      expect(screen.getByText("PDF Extract")).toBeTruthy(),
+    );
+
+    rerender(<SkillsSection query="pdf" onCountChange={() => {}} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    await vi.waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some((c) => c[0] === "/skills/catalog?q=pdf"),
+      ).toBe(true);
+    });
+
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url === "/skills/catalog?q=falha") throw new Error("offline");
+      return { ok: true, json: async () => ({}) } as Response;
+    });
+    rerender(<SkillsSection query="falha" onCountChange={() => {}} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    await vi.waitFor(() => {
+      expect(screen.getByText("PDF Extract")).toBeTruthy();
+      expect(screen.getByText("Error searching skills")).toBeTruthy();
+    });
+
+    vi.useRealTimers();
   });
 
   it("catálogo vazio mostra estado específico, não erro e não quebra SkillsTab", async () => {

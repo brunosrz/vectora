@@ -61,6 +61,22 @@ async def db(tmp_path, monkeypatch):
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             PRIMARY KEY (parent_id, child_id)
         );
+        CREATE TABLE vectora_task_comments (
+            id         TEXT PRIMARY KEY,
+            task_id    TEXT NOT NULL,
+            user_id    TEXT NOT NULL,
+            body       TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE vectora_task_events (
+            id           TEXT PRIMARY KEY,
+            task_id      TEXT NOT NULL,
+            from_status  TEXT,
+            to_status    TEXT NOT NULL,
+            block_kind   TEXT,
+            block_reason TEXT,
+            created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        );
         """
     )
     await conn.commit()
@@ -573,3 +589,68 @@ class TestDelegacaoSincronaForaDoBoard:
         assert kinds <= {"subagent", "coder", "prompt"}, (
             f"kind inesperado no board: {kinds}"
         )
+
+
+class TestComentarios:
+    @pytest.mark.asyncio
+    async def test_comentario_aparece_na_listagem_e_corpo_vazio_e_recusado(self, db):
+        from backend.scheduling.kanban import add_comment, list_comments
+
+        await _cria(db, "t1")
+
+        criado = await add_comment("t1", "u1", "primeiro comentário")
+        listados = await list_comments("t1")
+
+        assert criado["body"] == "primeiro comentário"
+        assert criado["user_id"] == "u1"
+        assert len(listados) == 1
+        assert listados[0]["id"] == criado["id"]
+
+        # Erro/borda: corpo vazio (ou só whitespace) não vira comentário.
+        with pytest.raises(ValueError, match="vazio"):
+            await add_comment("t1", "u1", "   ")
+
+    @pytest.mark.asyncio
+    async def test_comentarios_de_tasks_diferentes_nao_se_misturam(self, db):
+        from backend.scheduling.kanban import add_comment, list_comments
+
+        await _cria(db, "t1")
+        await _cria(db, "t2")
+        await add_comment("t1", "u1", "sobre t1")
+        await add_comment("t2", "u1", "sobre t2")
+
+        assert [c["body"] for c in await list_comments("t1")] == ["sobre t1"]
+        assert [c["body"] for c in await list_comments("t2")] == ["sobre t2"]
+
+
+class TestTimelineDeEventos:
+    @pytest.mark.asyncio
+    async def test_transicoes_reais_gravam_a_timeline_em_ordem_cronologica(self, db):
+        from backend.scheduling.kanban import (
+            block_task,
+            list_events,
+            set_status,
+            unblock_task,
+        )
+
+        await _cria(db, "t1", status="ready")
+        await set_status("t1", "running")
+        await block_task("t1", "needs_input", "falta chave")
+        await unblock_task("t1")
+
+        eventos = await list_events("t1")
+
+        assert [e["to_status"] for e in eventos] == ["running", "blocked", "ready"]
+        assert eventos[0]["from_status"] == "ready"
+        assert eventos[1]["block_kind"] == "needs_input"
+        assert eventos[1]["block_reason"] == "falta chave"
+
+    @pytest.mark.asyncio
+    async def test_task_sem_transicao_nenhuma_devolve_lista_vazia(self, db):
+        """Edge: task recém-criada, nenhuma transição ainda aconteceu — lista
+        vazia, não erro."""
+        from backend.scheduling.kanban import list_events
+
+        await _cria(db, "t1")
+
+        assert await list_events("t1") == []

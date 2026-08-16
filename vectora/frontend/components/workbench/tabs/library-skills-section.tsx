@@ -268,26 +268,39 @@ function CatalogCard({ skill }: { skill: CatalogSkill }) {
   );
 }
 
-function SkillsCatalog() {
+function SkillsCatalog({ query }: { query: string }) {
   const [open, setOpen] = useState(true);
   const entries = useLibraryStore((s) => s.skillsItems);
   const loading = useLibraryStore((s) => s.skillsLoading);
+  const error = useLibraryStore((s) => s.skillsError);
   const ensureSkillsLoaded = useLibraryStore((s) => s.ensureSkillsLoaded);
 
   useEffect(() => {
-    if (open) void ensureSkillsLoaded();
-  }, [open, ensureSkillsLoaded]);
+    if (!open) return;
+    if (!query.trim()) {
+      void ensureSkillsLoaded(query);
+      return;
+    }
+    const timer = setTimeout(() => {
+      void ensureSkillsLoaded(query);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [open, query, ensureSkillsLoaded]);
 
   const content = loading ? (
     <div className="flex justify-center py-4">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
     </div>
   ) : entries.length === 0 ? (
-    <p className="text-xs text-muted-foreground text-center py-2">
-      {m.library_skills_catalog_empty()}
-    </p>
+    <div className="py-2 space-y-1">
+      <p className="text-xs text-muted-foreground text-center">
+        {m.library_skills_catalog_empty()}
+      </p>
+      {error && <p className="text-xs text-destructive text-center">{error}</p>}
+    </div>
   ) : (
     <div className="space-y-2 py-1">
+      {error && <p className="text-xs text-destructive">{error}</p>}
       {entries.map((skill) => (
         <CatalogCard key={skill.id} skill={skill} />
       ))}
@@ -314,6 +327,7 @@ function SkillsCatalog() {
 }
 
 export function SkillsSection({
+  query,
   onCountChange,
 }: {
   query: string;
@@ -328,7 +342,7 @@ export function SkillsSection({
   return (
     <div className="space-y-1">
       <SkillsTab onSkillsChange={onCountChange} />
-      <SkillsCatalog />
+      <SkillsCatalog query={query} />
       {canPublish ? (
         <Button
           variant="outline"
@@ -349,7 +363,7 @@ export function SkillsSection({
           onClose={() => setPublishing(false)}
           onPublished={() => {
             invalidateSkills();
-            void ensureSkillsLoaded();
+            void ensureSkillsLoaded(query);
           }}
         />
       )}

@@ -16,6 +16,7 @@ import {
   cleanup,
   waitFor,
   fireEvent,
+  act,
 } from "@testing-library/react";
 
 vi.mock("@/components/settings/environment/tabs/plugins-tab", () => ({
@@ -33,6 +34,8 @@ beforeEach(() => {
     mcpInstalledIds: new Set(),
     mcpLoading: false,
     mcpFetchedAt: null,
+    mcpQuery: "",
+    mcpError: null,
   });
 });
 
@@ -210,6 +213,61 @@ describe("McpSection", () => {
         ),
       ).toBe(true);
     });
+  });
+
+  it("digitar na busca dispara /mcp/registry?q= com debounce de 350ms; erro de rede na busca seguinte mantém o último resultado bom e mostra erro discreto", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input);
+      if (url === "/plugins") {
+        return { ok: true, json: async () => ({ servers: [] }) } as Response;
+      }
+      if (url === "/mcp/registry") {
+        return { ok: true, json: async () => REGISTRY } as Response;
+      }
+      if (url === "/mcp/registry?q=brave") {
+        return { ok: true, json: async () => [REGISTRY[1]] } as Response;
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    const { rerender } = render(
+      <McpSection query="" onCountChange={() => {}} />,
+    );
+    await vi.waitFor(() => expect(screen.getByText("Filesystem")).toBeTruthy());
+
+    rerender(<McpSection query="brave" onCountChange={() => {}} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    await vi.waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some((c) => c[0] === "/mcp/registry?q=brave"),
+      ).toBe(true);
+    });
+    await vi.waitFor(() => {
+      expect(screen.getByText("Brave Search")).toBeTruthy();
+      expect(screen.queryByText("Filesystem")).toBeNull();
+    });
+
+    fetchMock.mockImplementation(async (input: URL | RequestInfo) => {
+      if (String(input) === "/mcp/registry?q=brave2") {
+        throw new Error("network down");
+      }
+      return { ok: true, json: async () => ({ servers: [] }) } as Response;
+    });
+    rerender(<McpSection query="brave2" onCountChange={() => {}} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    await vi.waitFor(() => {
+      expect(screen.getByText("Brave Search")).toBeTruthy();
+      expect(screen.getByText("Error searching connectors")).toBeTruthy();
+    });
+
+    vi.useRealTimers();
   });
 
   it("toggle 'avançado' mostra o form manual (PluginsTab)", async () => {

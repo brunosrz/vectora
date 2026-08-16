@@ -282,6 +282,7 @@ export function McpSection({
   const connectors = useLibraryStore((s) => s.mcpItems);
   const installedIds = useLibraryStore((s) => s.mcpInstalledIds);
   const loading = useLibraryStore((s) => s.mcpLoading);
+  const error = useLibraryStore((s) => s.mcpError);
   const ensureMcpLoaded = useLibraryStore((s) => s.ensureMcpLoaded);
   const invalidateMcp = useLibraryStore((s) => s.invalidateMcp);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -289,28 +290,25 @@ export function McpSection({
   const load = useMemo(
     () => async () => {
       invalidateMcp();
-      await ensureMcpLoaded();
+      await ensureMcpLoaded(query);
     },
-    [invalidateMcp, ensureMcpLoaded],
+    [invalidateMcp, ensureMcpLoaded, query],
   );
 
   useEffect(() => {
-    void ensureMcpLoaded();
-  }, [ensureMcpLoaded]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return connectors;
-    return connectors.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q),
-    );
-  }, [connectors, query]);
+    if (!query.trim()) {
+      void ensureMcpLoaded(query);
+      return;
+    }
+    const timer = setTimeout(() => {
+      void ensureMcpLoaded(query);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [query, ensureMcpLoaded]);
 
   useEffect(() => {
-    onCountChange(filtered.length);
-  }, [filtered.length, onCountChange]);
+    onCountChange(connectors.length);
+  }, [connectors.length, onCountChange]);
 
   if (loading) {
     return (
@@ -320,12 +318,15 @@ export function McpSection({
     );
   }
 
-  if (filtered.length === 0) {
+  if (connectors.length === 0) {
     return (
       <div className="py-4 space-y-3">
         <p className="text-xs text-muted-foreground text-center">
           {m.library_empty_mcp()}
         </p>
+        {error && (
+          <p className="text-xs text-destructive text-center">{error}</p>
+        )}
         <AdvancedToggle
           open={showAdvanced}
           onToggle={() => setShowAdvanced((v) => !v)}
@@ -337,7 +338,8 @@ export function McpSection({
 
   return (
     <div className="space-y-2 py-1">
-      {filtered.map((connector) => (
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {connectors.map((connector) => (
         <ConnectorCard
           key={connector.id}
           connector={connector}

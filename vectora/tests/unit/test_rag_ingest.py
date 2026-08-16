@@ -143,6 +143,71 @@ class TestMatchesFileTypeIncludeExclude:
         )
 
 
+class TestListMatchingFiles:
+    def test_simple_extension_matches_relative_name(self, tmp_path: Path) -> None:
+        _make_tree(tmp_path)
+        (tmp_path / "docs.xml").write_text("<doc>xml</doc>\n", encoding="utf-8")
+        files, total = rag_ingest.list_matching_files(str(tmp_path), file_types=["xml"])
+        assert total == 1
+        assert files == ["docs.xml"]
+
+    def test_path_glob_excludes_only_matching_files(self, tmp_path: Path) -> None:
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "app.js").write_text("1", encoding="utf-8")
+        (tmp_path / "src" / "app.min.js").write_text("1", encoding="utf-8")
+        files, total = rag_ingest.list_matching_files(
+            str(tmp_path), exclude_exts="**/*.min.js"
+        )
+        assert total == 1
+        assert files == ["src/app.js"]
+
+    def test_exclude_folder_name_excludes_whole_subtree(self, tmp_path: Path) -> None:
+        (tmp_path / "node_modules" / "foo").mkdir(parents=True)
+        (tmp_path / "node_modules" / "foo" / "index.js").write_text(
+            "1", encoding="utf-8"
+        )
+        (tmp_path / "app.js").write_text("1", encoding="utf-8")
+        files, total = rag_ingest.list_matching_files(
+            str(tmp_path), exclude_exts="node_modules"
+        )
+        assert total == 1
+        assert files == ["app.js"]
+
+    def test_exclude_takes_precedence_over_include(self, tmp_path: Path) -> None:
+        (tmp_path / "a.xml").write_text("1", encoding="utf-8")
+        (tmp_path / "b.xml").write_text("1", encoding="utf-8")
+        files, total = rag_ingest.list_matching_files(
+            str(tmp_path), include_exts="xml", exclude_exts="a.xml"
+        )
+        assert total == 1
+        assert files == ["b.xml"]
+
+    def test_limit_truncates_list_but_total_reflects_full_count(
+        self, tmp_path: Path
+    ) -> None:
+        for i in range(250):
+            (tmp_path / f"f{i}.txt").write_text("1", encoding="utf-8")
+        files, total = rag_ingest.list_matching_files(str(tmp_path), limit=200)
+        assert len(files) == 200
+        assert total == 250
+
+    def test_rejects_unsafe_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(rag_ingest, "is_safe_file_path", lambda _p: False)
+        with pytest.raises(ValueError, match="fora do escopo"):
+            rag_ingest.list_matching_files(str(tmp_path))
+
+    def test_rejects_non_directory(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(rag_ingest, "is_safe_file_path", lambda _p: True)
+        f = tmp_path / "file.py"
+        f.write_text("x = 1\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="Não é um diretório"):
+            rag_ingest.list_matching_files(str(f))
+
+
 @pytest.mark.asyncio
 async def test_ingest_markdown_only(tmp_path: Path, _patched: _FakeQueue) -> None:
     _make_tree(tmp_path)

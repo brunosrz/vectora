@@ -344,3 +344,88 @@ async def test_get_task_runs_task_de_outra_session_e_404(db):
         await bg_api.get_task_runs(_fake_request(), "s1", task.id)
 
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_post_comment_aparece_na_listagem_e_corpo_vazio_e_400(db):
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="A",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+
+    criado = await bg_api.post_comment_endpoint(
+        _fake_request(), "s1", task.id, bg_api.CreateCommentRequest(body="oi")
+    )
+    listados = await bg_api.get_comments_endpoint(_fake_request(), "s1", task.id)
+
+    assert criado.body == "oi"
+    assert criado.user_id == "u1"
+    assert len(listados) == 1
+    assert listados[0].id == criado.id
+
+    # Erro/borda: corpo vazio (ou whitespace) é recusado com 400, não 500.
+    with pytest.raises(HTTPException) as exc_info:
+        await bg_api.post_comment_endpoint(
+            _fake_request(), "s1", task.id, bg_api.CreateCommentRequest(body="   ")
+        )
+    assert exc_info.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_post_comment_task_inexistente_e_404_nao_500(db):
+    with pytest.raises(HTTPException) as exc_info:
+        await bg_api.post_comment_endpoint(
+            _fake_request(),
+            "s1",
+            "id-inexistente",
+            bg_api.CreateCommentRequest(body="oi"),
+        )
+
+    assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_comments_task_de_outra_session_e_404(db):
+    task = await bg.create_task(
+        session_id="s-outra",
+        user_id="u1",
+        kind="routine",
+        name="A",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await bg_api.get_comments_endpoint(_fake_request(), "s1", task.id)
+
+    assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_events_reflete_transicoes_reais_e_task_inexistente_e_404(db):
+    task = await bg.create_task(
+        session_id="s1",
+        user_id="u1",
+        kind="routine",
+        name="A",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={},
+    )
+    await kanban.set_status(task.id, "ready")
+    await kanban.block_task(task.id, "needs_input", "falta chave")
+
+    eventos = await bg_api.get_events_endpoint(_fake_request(), "s1", task.id)
+
+    assert [e.to_status for e in eventos] == ["ready", "blocked"]
+    assert eventos[-1].block_kind == "needs_input"
+
+    with pytest.raises(HTTPException) as exc_info:
+        await bg_api.get_events_endpoint(_fake_request(), "s1", "id-inexistente")
+    assert exc_info.value.status_code == 404

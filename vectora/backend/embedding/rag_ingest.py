@@ -175,6 +175,54 @@ def _matches_file_type(
     return True if allowed is None else ext in allowed
 
 
+def list_matching_files(
+    directory_path: str,
+    *,
+    file_types: str | list[str] = "all",
+    include_exts: str | list[str] | None = None,
+    exclude_exts: str | list[str] | None = None,
+    limit: int | None = None,
+) -> tuple[list[str], int]:
+    """Varre ``directory_path`` e devolve os arquivos que batem no filtro.
+
+    Mesma validação e mesma lógica de match usadas por ``ingest_directory``
+    (``is_safe_file_path`` + ``.gitignore``/``.vectoraignore`` via
+    ``walk_files`` + ``_matches_file_type``). Paths devolvidos são relativos
+    ao diretório, em POSIX.
+
+    Returns:
+        ``(paths_relativos[:limit], total_sem_corte)`` — ``total`` reflete a
+        contagem real de arquivos que batem, independente de ``limit``.
+
+    Raises:
+        ValueError: caminho fora do escopo seguro ou não é diretório.
+    """
+    if not is_safe_file_path(directory_path):
+        raise ValueError(f"Caminho fora do escopo permitido: {directory_path}")
+    path = Path(directory_path).resolve()
+    if not path.is_dir():
+        raise ValueError(f"Não é um diretório: {directory_path}")
+
+    spec = load_ignore_spec(path)
+    all_files, _skipped = walk_files(path, "**/*", spec)
+    # Glob de pasta/arquivo casa contra o caminho RELATIVO ao root (mesmo
+    # contrato dos padrões de files.exclude do VS Code).
+    files = [
+        f
+        for f in all_files
+        if _matches_file_type(
+            f.relative_to(path),
+            file_types,
+            include_exts=include_exts,
+            exclude_exts=exclude_exts,
+        )
+    ]
+    total = len(files)
+    matched = files[:limit] if limit is not None else files
+    relative = [str(f.relative_to(path)).replace("\\", "/") for f in matched]
+    return relative, total
+
+
 async def ingest_directory(
     directory_path: str,
     *,
@@ -198,27 +246,15 @@ async def ingest_directory(
     Raises:
         ValueError: caminho fora do escopo seguro ou não é diretório.
     """
-    if not is_safe_file_path(directory_path):
-        raise ValueError(f"Caminho fora do escopo permitido: {directory_path}")
-    path = Path(directory_path).resolve()
-    if not path.is_dir():
-        raise ValueError(f"Não é um diretório: {directory_path}")
-
     job = job_id or str(uuid4())
-    spec = load_ignore_spec(path)
-    all_files, _skipped = walk_files(path, "**/*", spec)
-    # Glob de pasta/arquivo casa contra o caminho RELATIVO ao root (mesmo
-    # contrato dos padrões de files.exclude do VS Code).
-    files = [
-        f
-        for f in all_files
-        if _matches_file_type(
-            f.relative_to(path),
-            file_types,
-            include_exts=include_exts,
-            exclude_exts=exclude_exts,
-        )
-    ]
+    relative_files, _total = list_matching_files(
+        directory_path,
+        file_types=file_types,
+        include_exts=include_exts,
+        exclude_exts=exclude_exts,
+    )
+    path = Path(directory_path).resolve()
+    files = [path / rel for rel in relative_files]
 
     if not files:
         return {

@@ -12,12 +12,18 @@ function resetStore() {
     mcpInstalledIds: new Set(),
     mcpLoading: false,
     mcpFetchedAt: null,
+    mcpQuery: "",
+    mcpError: null,
     skillsItems: [],
     skillsLoading: false,
     skillsFetchedAt: null,
+    skillsQuery: "",
+    skillsError: null,
     memoryItems: [],
     memoryLoading: false,
     memoryFetchedAt: null,
+    memoryQuery: "",
+    memoryError: null,
   });
 }
 
@@ -97,6 +103,40 @@ describe("library-store — MCP", () => {
       (fetchMock as ReturnType<typeof vi.fn>).mock.calls.length,
     ).toBeGreaterThan(2);
   });
+
+  it("ensureMcpLoaded('brave') propaga q pro backend; erro na busca seguinte mantém itens antigos e seta mcpError", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (String(url).startsWith("/mcp/registry")) {
+        return {
+          ok: true,
+          json: async () => [{ id: "brave-search", name: "Brave" } as never],
+        } as Response;
+      }
+      return { ok: true, json: async () => ({ servers: [] }) } as Response;
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await useLibraryStore.getState().ensureMcpLoaded("brave");
+
+    const registryCall = fetchMock.mock.calls.find((c) =>
+      String(c[0]).startsWith("/mcp/registry"),
+    )!;
+    expect(registryCall[0]).toBe("/mcp/registry?q=brave");
+    expect(useLibraryStore.getState().mcpItems).toHaveLength(1);
+    expect(useLibraryStore.getState().mcpError).toBeNull();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("network down");
+      }),
+    );
+    await useLibraryStore.getState().ensureMcpLoaded("outra-busca");
+
+    expect(useLibraryStore.getState().mcpItems).toHaveLength(1);
+    expect(useLibraryStore.getState().mcpItems[0].id).toBe("brave-search");
+    expect(useLibraryStore.getState().mcpError).not.toBeNull();
+  });
 });
 
 describe("library-store — Skills e Memory", () => {
@@ -114,16 +154,42 @@ describe("library-store — Skills e Memory", () => {
     expect((fetchMock as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
   });
 
-  it("erro/borda: resposta não-ok em skills não lança e deixa lista vazia", async () => {
+  it("erro/borda: resposta não-ok em skills não lança, mantém itens antigos e seta skillsError", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ entries: [{ id: "s0", name: "Old" }] }),
+      })),
+    );
+    await useLibraryStore.getState().ensureSkillsLoaded();
+    expect(useLibraryStore.getState().skillsItems).toHaveLength(1);
+
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({ ok: false, json: async () => ({}) })),
     );
 
     await expect(
-      useLibraryStore.getState().ensureSkillsLoaded(),
+      useLibraryStore.getState().ensureSkillsLoaded("nova-busca"),
     ).resolves.not.toThrow();
-    expect(useLibraryStore.getState().skillsItems).toEqual([]);
+    expect(useLibraryStore.getState().skillsItems).toHaveLength(1);
+    expect(useLibraryStore.getState().skillsItems[0].id).toBe("s0");
+    expect(useLibraryStore.getState().skillsError).not.toBeNull();
+  });
+
+  it("ensureSkillsLoaded('pdf') propaga q pro backend via querystring", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ entries: [] }),
+    })) as unknown as typeof fetch;
+    vi.stubGlobal("fetch", fetchMock);
+
+    await useLibraryStore.getState().ensureSkillsLoaded("pdf");
+
+    expect((fetchMock as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBe(
+      "/skills/catalog?q=pdf",
+    );
   });
 
   it("ensureMemoryLoaded popula memoryItems e não refetch dentro do TTL", async () => {
@@ -138,6 +204,30 @@ describe("library-store — Skills e Memory", () => {
 
     expect(useLibraryStore.getState().memoryItems).toHaveLength(1);
     expect((fetchMock as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
+  });
+
+  it("ensureMemoryLoaded('docs') propaga q; erro na busca seguinte mantém lista antiga e seta memoryError", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => ({
+        ok: true,
+        json: async () =>
+          String(url).includes("?q=docs") ? [{ id: "m1", name: "Docs" }] : [],
+      })),
+    );
+    await useLibraryStore.getState().ensureMemoryLoaded("docs");
+    expect(useLibraryStore.getState().memoryItems).toHaveLength(1);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("falhou");
+      }),
+    );
+    await useLibraryStore.getState().ensureMemoryLoaded("outra");
+
+    expect(useLibraryStore.getState().memoryItems).toHaveLength(1);
+    expect(useLibraryStore.getState().memoryError).not.toBeNull();
   });
 });
 
