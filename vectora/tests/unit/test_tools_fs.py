@@ -305,6 +305,76 @@ class TestListDir:
 
 
 # ---------------------------------------------------------------------------
+# _active_workspace — resolução de fallback sem workspace_id
+# ---------------------------------------------------------------------------
+
+
+class TestActiveWorkspaceFallback:
+    """Sem `ctx.workspace_id` (ou apontando pra um id que não existe mais no
+    registry), a resolução precisa passar pelo workspace ativo do usuário
+    antes de cair no último recurso — nunca deve escrever silenciosamente
+    no diretório de trabalho do processo do backend."""
+
+    async def test_sem_workspace_id_usa_o_workspace_ativo_do_usuario(
+        self, tmp_path, monkeypatch
+    ):
+        from backend.tools.context import ToolContext
+        from backend.tools.fs import _active_workspace
+        from backend.workspace import workspace as ws_mod
+
+        ativo = Workspace(
+            id="ws-ativo",
+            name="ws-ativo",
+            cwd=str(tmp_path / "ativo"),
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+        )
+        monkeypatch.setattr(ws_mod.workspace_registry, "get", lambda _wid: None)
+        monkeypatch.setattr(ws_mod.workspace_registry, "get_active", lambda _uid: ativo)
+
+        def _boom(*_a, **_kw):
+            raise AssertionError(
+                "não deveria cair no diretório de trabalho do processo "
+                "quando há um workspace ativo registrado"
+            )
+
+        monkeypatch.setattr(ws_mod.workspace_registry, "get_or_create", _boom)
+
+        ctx = ToolContext(user_id="local", workspace_id="")
+        resolved = _active_workspace(ctx)
+
+        assert resolved.id == "ws-ativo"
+
+    async def test_sem_workspace_ativo_cai_no_ultimo_recurso(
+        self, tmp_path, monkeypatch
+    ):
+        """Erro/borda: nenhum workspace ativo registrado (primeiro uso,
+        registry vazio) — só aí o último recurso (cwd do processo) é
+        aceitável."""
+        from backend.tools.context import ToolContext
+        from backend.tools.fs import _active_workspace
+        from backend.workspace import workspace as ws_mod
+
+        fallback = Workspace(
+            id="fallback",
+            name="fallback",
+            cwd=str(tmp_path),
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=True,
+        )
+        monkeypatch.setattr(ws_mod.workspace_registry, "get", lambda _wid: None)
+        monkeypatch.setattr(ws_mod.workspace_registry, "get_active", lambda _uid: None)
+        monkeypatch.setattr(
+            ws_mod.workspace_registry, "get_or_create", lambda: fallback
+        )
+
+        ctx = ToolContext(user_id="local", workspace_id="")
+        resolved = _active_workspace(ctx)
+
+        assert resolved.id == "fallback"
+
+
+# ---------------------------------------------------------------------------
 # create_artifact
 # ---------------------------------------------------------------------------
 

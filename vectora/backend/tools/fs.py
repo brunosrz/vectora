@@ -46,13 +46,24 @@ logger = logging.getLogger(__name__)
 
 
 def _active_workspace(ctx: ToolContext) -> Any:
-    """Resolve o Workspace ativo a partir do ctx (workspace_id)."""
+    """Resolve o Workspace ativo a partir do ctx (workspace_id).
+
+    Sem ``ctx.workspace_id`` (ou apontando pra um id que não existe mais no
+    registry), tenta o workspace marcado como ativo do usuário antes de
+    cair no último recurso (``get_or_create()`` sem ``cwd``, que resolve
+    pelo diretório de trabalho do PROCESSO do backend — quase nunca o que o
+    usuário está vendo selecionado na UI). Sem esse fallback intermediário,
+    uma tool call sem workspace_id propagado escreve silenciosamente no
+    workspace errado."""
     from backend.workspace.workspace import workspace_registry
 
     if ctx.workspace_id:
         ws = workspace_registry.get(ctx.workspace_id)
         if ws is not None:
             return ws
+    active = workspace_registry.get_active(ctx.user_id)
+    if active is not None:
+        return active
     return workspace_registry.get_or_create()
 
 
