@@ -1,372 +1,198 @@
-# Vectora × Hermes Agent — Comparativo de features e níveis de implementação
+# Vectora × Hermes Agent — Comparativo de features e níveis de implementação (revalidação 2026-08-16)
 
-> Documento vivo. Origem: pedido explícito do usuário (2026-08-14) para estudar a
-> fundo o hermes-agent (NousResearch, MIT, open source) como referência
-> comparativa — release notes completas (24 releases, mar→ago/2026), página
-> `hermesagents.net/evolution/`, issues abertas (`P1`+`area/auth` e
-> `type/feature`), e comparação de código-fonte real área por área, via 8
-> subagentes de pesquisa rodados em paralelo.
->
-> **Regra de leitura deste documento**: nenhuma célula de "quem lidera" é
-> absoluta. Cada capacidade tem um **nível de implementação** próprio
-> (`ausente` / `stub` / `funcional básico` / `funcional com edge cases` /
-> `produção madura com testes/hardening`) — o objetivo é nunca tratar
-> "Vectora tem X" ou "Hermes tem X" como resposta binária. Os dois produtos
-> têm formas fundamentalmente diferentes (Hermes é gateway multi-plataforma
-> de mensageria com CLI/TUI/Desktop; Vectora é workspace chat-first
-> webapp/desktop com filesystem/git/terminal/browser compartilhados entre
-> usuário e agente) — comparar célula a célula pode enganar se a diferença
-> de arquitetura não for levada em conta.
+> **Regra de leitura**: nenhuma célula é binária. Cada capacidade tem um
+> **nível de implementação** próprio — `ausente` / `esqueleto` / `funcional
+> básico` / `funcional com edge cases` / `maduro/produção`. Nunca tratar
+> "Vectora tem X" ou "Hermes tem X" como resposta de sim/não. A comparação é
+> sempre bidirecional: o que falta no Vectora E o que falta no Hermes.
 
 ---
 
-## 1. Hermes Agent — quem é, trajetória (fonte: 24 release notes + evolution page)
+## 0. Achado de conduta desta rodada — corrigir antes de tudo
 
-Lançado publicamente em 12/mar/2026 (v0.2.0) após ~8 meses de desenvolvimento
-interno, MIT-licensed, 100% público no GitHub, 1.400+ contribuidores. Ritmo de
-release extremamente alto: 24 releases em ~5 meses (a cada 5-15 dias, centenas
-de PRs por janela — 245 contribuidores só na v0.17.0).
-
-Trajetória de produto em 3 frentes simultâneas:
-
-1. **Alcance** — de 7 para 24+ plataformas de mensageria (Telegram, Discord,
-   Slack, WhatsApp, Signal, iMessage, WeChat, LINE, Matrix, etc.) e dezenas de
-   providers de LLM.
-2. **Profundidade do agente** — memória plugável, Kanban multi-agente durável,
-   verificação de trabalho ("done = provado"), voz conversacional.
-3. **Superfície de produto** — CLI → TUI (React/Ink) → Dashboard web → Desktop
-   Electron nativo → Desktop como plataforma (artifacts sandboxed + Plugin SDK).
-
-Segurança é tratada como esforço contínuo (seção dedicada em toda release, 3
-ondas declaradas de "zero P0/P1": v0.13.0, v0.18.0, v0.19.0/v0.20.0).
-Performance é benchmarkada publicamente com números exatos.
-
-Releases mais recentes (v0.18.0→v0.20.1, jul-ago/2026): Mixture-of-Agents como
-modelo selecionável, `/goal` com completion contracts, `/learn`/`/journey`,
-smart approvals como default, secret sources plugáveis (Bitwarden/1Password),
-ledger de entrega à prova de crash, voz com barge-in, citações verificáveis,
-webhooks assinados, protocolo A2A (Agent-to-Agent) v1.0, limite de iteração
-90→500. Timeline completa e evolução por área funcional (auth, memória,
-sandbox, orquestração, MCP, streaming/UI, billing, observability) foram
-mapeadas release a release nesta investigação¹.
-
-Roadmap público (issues abertas, `type/feature`, 100 issues): maior bloco é
-paridade completa com a API REST do Discord (~30 issues, quase pronto),
-seguido por confiabilidade de delegação/orquestração multi-agente (incluindo
-interoperabilidade com um agente externo "Prime Agent") e observabilidade de
-compressão de contexto (nascida de um incidente reconhecido publicamente).
-Auth aparece só 2x no roadmap de features (GitHub App bot-identity, "A2A Trust
-Levels") — os 4 issues P1+area/auth são todos bugs de robustez em torno do
-OAuth de assinatura Anthropic, não features novas.
-
-¹ Levantamento feito via `gh release view`/`gh issue list` contra
-`NousResearch/hermes-agent` (24 releases, mar→ago/2026) e reproduzível a
-qualquer momento — os digests brutos são artefato de pesquisa desta sessão,
-não foram commitados como arquivo separado no repo; este documento é a
-síntese que substitui/resume esse material.
+A tarefa de tracking do projeto marca **"Sprint 23: liveness ativa de subagente (heartbeat + cancelamento real)"** como `completed`. A revalidação de código real (2026-08-16) encontrou que isso **não é verdade**: `backend/engine/subagents.py` (o motor nativo, ainda não ligado ao dispatch de produção — ver `Sprint 29` do plano) continua com `LivenessConfig(heartbeat_interval_s=30, max_stalled_heartbeats=3)` + `_watch_liveness()` que só cancela por **timeout de inatividade** — não há cancelamento real sob pedido explícito (nenhum equivalente a `request_hard_interrupt()` do Hermes), e o comentário do próprio código de Vectora (`backend/scheduling/liveness.py:1-10`) reconhece que `classify_liveness` é regex leve, puramente informativo, mais fraco que o próprio watchdog de `subagents.py`. A parte de "validação formal de escopo RBAC do subagente" da mesma sprint está sim entregue (`_tools_outside_user_scope()`), então não é uma sprint 100% falsa — é uma sprint **parcialmente reportada como concluída sem sê-lo**, o mesmo padrão que motivou a crise do LangChain (ver `Sprint 29`). Corrigido na seção "Pendências conhecidas" do plano de desenvolvimento e nos itens da Fase 1 da `Sprint 29`.
 
 ---
 
-## 2. Matriz-resumo por área
+## 1. Hermes Agent — trajetória desde a última rodada (release notes + issues, ago/2026)
 
-| Área                                                | Quem lidera hoje                               | Lacuna mais séria do Vectora                                                                                                                             | Esforço                       |
-| --------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| Auth / SSO                                          | Hermes (SSO/OIDC)                              | **Zero código de OIDC/SAML** — só menção aspiracional em docstring                                                                                       | Alto                          |
-| Auth / RBAC produto                                 | **Vectora**                                    | Hermes deliberadamente não tem RBAC granular                                                                                                             | —                             |
-| Multi-tenant SaaS                                   | Nenhum dos dois                                | Lacuna **compartilhada** — nenhum isola dados entre orgs num banco compartilhado                                                                         | Alto (decisão de arquitetura) |
-| Sandbox / isolamento OS-level                       | **Vectora, folgado**                           | Nenhuma — Hermes só isola via Docker/terceiros                                                                                                           | —                             |
-| Guardrail de loop preso                             | Hermes                                         | Vectora só tem contador de iteração fixo, sem detecção de repetição                                                                                      | Médio                         |
-| Denylist write/read sem sandbox ativo               | Hermes                                         | Proteção do Vectora depende do sandbox estar ativo                                                                                                       | Baixo                         |
-| Memória de fatos / RAG / Context Graph              | **Vectora, folgado**                           | Nenhuma — Hermes terceiriza tudo a plugins, sem RAG/context-graph nativo                                                                                 | —                             |
-| Delegação básica de subagente                       | Empate (formas diferentes)                     | —                                                                                                                                                        | —                             |
-| Decomposer automático (triage → grafo)              | Hermes                                         | Vectora já tem toda infra de grafo, só falta a camada LLM                                                                                                | Médio (maior ROI)             |
-| Goal-mode (Ralph loop)                              | Hermes                                         | Ausência estrutural completa — não é feature, é um padrão de execução                                                                                    | Alto                          |
-| Liveness ativa de subagente                         | Hermes                                         | Vectora só classifica pós-hoc, não detecta travamento em tempo real                                                                                      | Médio-alto                    |
-| Marketplace de skills (fontes múltiplas)            | Hermes, com folga                              | Vectora tem 1 fonte só (catálogo curado)                                                                                                                 | Médio                         |
-| Versionamento de skill/pacote                       | Hermes                                         | **Vectora — já resolvido** (`package_name`/`version`/`GET /:name/versions`, commit `f2f798e9`, posterior à pendência que o registrava)                   | —                             |
-| Cliente MCP (robustez)                              | Hermes                                         | Vectora sem retry/circuit-breaker dedicado                                                                                                               | Baixo-médio                   |
-| Catálogo de tools nativas (contagem)                | **Vectora**                                    | —                                                                                                                                                        | —                             |
-| Composição/reuso nomeado de toolsets                | Hermes                                         | Vectora reusa grupos de tools por concatenação estática de listas (`FS_TOOLS + GIT_TOOLS + ...`), sem registry nomeado/resolvível em runtime nem aliases | Baixo-médio (ver seção 7)     |
-| Registry de conectores MCP (discovery automatizado) | **Vectora**                                    | —                                                                                                                                                        | —                             |
-| Filesystem compartilhado (edição real pelo usuário) | **Vectora, com folga real**                    | Hermes só visualiza (explorador), sem editar/criar pela UI                                                                                               | —                             |
-| Terminal compartilhado usuário↔agente               | **Vectora** (diferencial real confirmado)      | Hermes tem 2 terminais separados, um deles read-only                                                                                                     | —                             |
-| Browser compartilhado (navegação real, multi-tab)   | **Vectora, com folga real**                    | Hermes é preview de dev server local, não navegador de internet                                                                                          | —                             |
-| Context Graph / code intelligence                   | **Vectora** (ausente no Hermes)                | —                                                                                                                                                        | —                             |
-| Streaming — contrato tipado                         | **Vectora** (17 eventos Pydantic vs dataclass) | —                                                                                                                                                        | —                             |
+Ritmo de release mantido alto: de v0.13.0 (07/mai) a v0.20.1 (13/ago), 8
+releases em ~3 meses. Destaques de arquitetura desde a comparação anterior:
 
----
+- **v0.20.0 "The Herald"** (03/ago): voz conversacional em tempo real
+  (streaming TTS, barge-in, wake words on-device), citações de pesquisa
+  "grounded" com fact-checking, **protocolo A2A v1.0** (agent-to-agent),
+  webhooks assinados de saída, artifacts renderizados no desktop com live
+  preview.
+- **v0.19.0 "The Quicksilver"** (20/jul): -80% no tempo do primeiro token,
+  app desktop 14× mais rápido em streaming de markdown, integração de
+  secrets (Bitwarden/1Password), ledger de entrega durável a crash.
+- **v0.18.0 "The Judgment"** (01/jul): zero P0/P1 abertas (marco de
+  segurança), Mixture-of-Agents como modelo selecionável de primeira
+  classe, comando `/learn` pra criar skills reutilizáveis a partir de
+  demonstrações.
+- **v0.15.0 "The Velocity"** (28/mai): Kanban evoluiu pra plataforma
+  multi-agente com auto-decomposição e swarm topology (o Vectora só fechou
+  a parte de decomposição via `Sprint 20`, sem swarm topology).
+- **v0.13.0 "The Tenacity"** (07/mai): comando `/goal` (Ralph loop) e
+  correção de 8 vulnerabilidades P0 com redação (redaction) ligada por
+  padrão.
 
-## 3. Auth, RBAC e multi-tenant
-
-Fonte: subagente dedicado desta investigação (2026-08-14), leitura direta de código em ambos os repositórios.
-
-| Capacidade                       | Hermes                                                                                                        | Vectora                                                                           | Lidera                            | Lacuna real                                                                     |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------- |
-| Login/senha                      | Funcional, produção-com-hardening (plugin opcional, timing-safe compare)                                      | Funcional com edge cases (Argon2id, núcleo do produto)                            | Empate qualitativo                | —                                                                               |
-| Token de sessão                  | Produção madura (JWT/JWKS externo RS256, RFC 7009 revoke)                                                     | Funcional com edge cases (HS256 local, rotação a cada refresh)                    | Hermes (protocolo)                | Não crítico — Vectora é self-host de instância única                            |
-| **SSO/OIDC**                     | **Produção madura, testada** (`self_hosted`/`nous` providers, PKCE S256, JWKS, RFC 8252)                      | **Ausente** — zero código, só docstring aspiracional                              | **Hermes, muito à frente**        | **Lacuna real e grave**, bloqueador de venda enterprise                         |
-| API token / service account      | Funcional (seam `token_auth_middleware` desacoplado)                                                          | Ausente — só JWT de usuário                                                       | Hermes                            | Sem mecanismo de credencial máquina-a-máquina                                   |
-| **RBAC granular**                | Funcional básico, **deliberadamente raso** (admin/user binário em slash commands, versão completa descartada) | **4 papéis hierárquicos**, funcional com edge cases, usado consistentemente       | **Vectora, muito à frente**       | —                                                                               |
-| Multi-tenant / isolamento de org | Stub (`org_id` decorativo)                                                                                    | Funcional básico (isolamento por projeto local, não SaaS)                         | Nenhum — **lacuna compartilhada** | Design de arquitetura novo se mirar SaaS multi-org                              |
-| Convites de usuário              | Ausente                                                                                                       | Funcional com edge cases (token/TTL/papel pré-atribuído)                          | **Vectora**                       | —                                                                               |
-| Recuperação de senha             | Ausente                                                                                                       | Ausente                                                                           | Nenhum                            | Lacuna comum                                                                    |
-| Auditoria/logs                   | Funcional (redação automática, arquivo local)                                                                 | Funcional (consultável via API, RBAC próprio) — sem redação automática confirmada | Dividido                          | Vectora deveria confirmar que `metadata_json` do audit nunca grava token/cookie |
-
-**Recomendações priorizadas** (detalhe completo no relatório do subagente):
-
-1. Implementar OIDC real antes de vender o benefício "pro" — alto esforço (3-5 dias), portar desenho `DashboardAuthProvider` do Hermes.
-2. Redação automática de campos sensíveis no audit log — baixo esforço (1-2h).
-3. Mecanismo de service account / API token — médio esforço (1-2 dias).
-4. Fluxo de recuperação de senha — médio esforço (1 dia), reaproveitando o padrão de convite já existente.
-5. Multi-tenant real — registrar como decisão de arquitetura em `docs/`, não como sprint.
+**Issues abertas relevantes** (`P1`+`area/auth`: só 2, ambas bug em OAuth
+existente, não feature nova; `type/feature`: 12, majoritariamente P3 —
+provider MAIA Router, UI de imagem no desktop, limite de workers
+concorrentes no Kanban, grupos de sessão com auto-agrupamento por IA,
+recall assíncrono oportunista de memória). Nenhuma delas é um gap estrutural
+que mude a priorização deste documento — a maior parte é polimento de
+produto específico do domínio de mensageria do Hermes.
 
 ---
 
-## 4. Sandbox, isolamento e segurança de tools
+## 2. Matriz-resumo por área (revalidada)
 
-Fonte: subagente dedicado desta investigação (2026-08-14).
-
-| Capacidade                                            | Hermes                                                                                      | Vectora                                                                                                                                                                                                                             | Lidera                                    | Lacuna real                                                    |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------- |
-| **Isolamento OS-level** (seccomp/Landlock/namespaces) | **Nenhum in-tree** — doc oficial admite "só o SO é fronteira"; real só via Docker/terceiros | **Produção madura** — bwrap+seccomp+Landlock(egress V4)+rlimits (Linux), WSL2+bwrap (Windows), Seatbelt (macOS), Singularity                                                                                                        | **Vectora, folgado**                      | —                                                              |
-| Isolamento via container Docker                       | Funcional com hardening documentado (cap-drop, pids-limit, tmpfs)                           | **Funcional, paridade confirmada** — `backend/sandbox/docker.py`: `--cap-drop`, `--security-opt no-new-privileges`, perfis `normal`/`lockdown` com `--memory`/`--cpus`/`--pids-limit`, `--network none --read-only` quando sem rede | **Empate, paridade confirmada**           | —                                                              |
-| Egress de rede no sandbox                             | Nenhum controle nativo (só SSRF em tools de fetch)                                          | **Landlock ABI V4** — controle real de syscall                                                                                                                                                                                      | **Vectora**                               | —                                                              |
-| Política de aprovação (HITL)                          | Madura — blocklist hardline inamovível (sobrevive a yolo/cron)                              | Funcional — HITL nativo com sobrevivência a restart                                                                                                                                                                                 | Empate, vantagem de maturidade pro Hermes | Vectora sem blocklist hardline explícita e documentada         |
-| Detecção de comando perigoso                          | Extenso (+25 padrões documentados) + scanner de conteúdo (Tirith)                           | Não localizado catálogo equivalente — depende do isolamento de sandbox                                                                                                                                                              | Hermes na cobertura documentada           | Se sandbox desabilitado (Windows sem WSL2), sem segunda camada |
-| Proteção de arquivos sensíveis                        | Muito madura (denylist + cross-profile + sandbox-mirror guard)                              | Mask de sandbox nativo, bloqueio a nível de kernel quando ativo                                                                                                                                                                     | Dividido                                  | Sem denylist independente do sandbox ativo                     |
-| **Guardrail de loop preso**                           | **Maduro** — classificação idempotente/mutante + detecção de repetição (642+798 linhas)     | **Básico** — só `max_iterations=50`, sem detecção de repetição                                                                                                                                                                      | **Hermes, com folga**                     | **Lacuna real e concreta**                                     |
-| Prompt injection defense                              | Funcional (scanner de padrão textual)                                                       | Funcional, dupla camada (scanner + envelope `<untrusted_content>`)                                                                                                                                                                  | Vectora, ligeira vantagem de design       | Vectora cobre menos padrões (5 regras vs cobertura mais ampla) |
-| Credential env filtering (MCP/subprocess)             | Maduro                                                                                      | **Não existe** — `backend/tools/mcp.py::_build_connections()` monta o dict stdio sem campo `env`; o `MultiServerMCPClient`/SDK subjacente herda `os.environ` inteiro do processo pai (API keys de LLM inclusive) por padrão         | **Hermes**                                | **Lacuna real** — allowlist de env pro subprocess MCP local    |
-| SSRF protection                                       | Maduro e documentado                                                                        | **Maduro** — `backend/browser/ssrf_guard.py::is_url_ssrf_safe` resolve DNS antes de checar IP privado/loopback/link-local/reservado/multicast (proteção contra DNS rebinding, não só validação de string), usado em `fetch_url`     | **Empate, paridade confirmada**           | —                                                              |
-
-**Recomendações priorizadas**:
-
-1. Loop guardrail com detecção de repetição — médio esforço (2-3 dias). **Em andamento (Sprint 19 do plano de desenvolvimento).**
-2. Denylist write/read independente do sandbox — baixo esforço (1 dia). **Feito (Sprint 19).**
-3. Expandir catálogo de padrões de prompt injection — baixo esforço (0.5 dia). **Em andamento (Sprint 19).**
-4. **Allowlist de env pro subprocess MCP local** (`tools/mcp.py`) — baixo esforço (0.5-1 dia), fecha a lacuna confirmada acima.
-5. Documentar o limite dos guards do Vectora ("defense-in-depth, not a boundary") — trivial (1h).
-
----
-
-## 5. Memória, RAG e Context Graph
-
-Fonte: subagente dedicado desta investigação (2026-08-14).
-
-**Achado estrutural mais importante**: o hermes-agent core **não tem memória
-própria** — `agent/memory_manager.py` é só um orquestrador de `MemoryProvider`s
-plugáveis de terceiros (mem0, hindsight, holographic, honcho...), um por vez.
-`agent/learning_graph.py` também não é code intelligence — é um grafo de UI
-ligando skills+memória por overlap léxico de tokens, sem parsing de código.
-
-| Capacidade                                    | Hermes                                                                        | Vectora                                                                                               | Lidera                                    |
-| --------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| Fatos key-value / memória de sessão           | Nenhum nativo — 100% dependente de plugin externo                             | Maduro — `save/get/search/delete_memory`, categorização, busca semântica                              | **Vectora**                               |
-| Orquestração de múltiplos backends de memória | Muito maduro (fencing, scrubbing, dispatch assíncrono)                        | Não existe (1 backend só)                                                                             | Hermes (não prioritário pro Vectora hoje) |
-| Consolidação/síntese de memória               | Só de skills (`curator.py`), não de conversas                                 | Real e completo — job periódico, síntese LLM, versionado, HITL gate                                   | **Vectora**                               |
-| RAG / vetorização própria                     | Ausente no core (só via skills que instruem o LLM a chamar CLIs de terceiros) | Maduro — `VectorStoreBackend` nativo (LanceDB/Qdrant), busca híbrida RRF                              | **Vectora**                               |
-| Context graph / code intelligence             | **Ausente**                                                                   | Maduro — tree-sitter ~30 linguagens, passe semântico LLM, cluster, resolução de símbolos, incremental | **Vectora, larga margem**                 |
-
-**Conclusão**: nenhuma ação defensiva necessária nesta área — Vectora lidera
-com folga real e nativa. Único ponto de referência de design a considerar (não
-prioritário): padrão de dispatch assíncrono serializado + drenagem com timeout
-do `memory_manager.py`, caso `memory_consolidation.py` precise rodar mais
-operações em background no futuro.
+| Área                                               | Quem lidera hoje                                      | Mudou desde 2026-08-14?                                                                                                                                                           |
+| -------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SSO/OIDC                                           | Hermes (multi-provider, mais maduro)                  | **Vectora fechou o gap** — de "zero código" para funcional single-IDP (`Sprint 21`)                                                                                               |
+| Redação de audit log                               | Empate                                                | **Vectora fechou** (`Sprint 24`)                                                                                                                                                  |
+| Service account / API token                        | Empate                                                | **Vectora fechou** (`Sprint 24`)                                                                                                                                                  |
+| Recuperação de senha                               | **Vectora** (Hermes não confirmado)                   | **Vectora fechou** (`Sprint 24`)                                                                                                                                                  |
+| Multi-tenant SaaS real                             | Nenhum — continua lacuna compartilhada                | Sem mudança — `org_id` existe como campo de contexto mas **zero query SQL filtra por ele**                                                                                        |
+| Sandbox OS-level (bwrap/Landlock/Seatbelt)         | **Vectora, folga ainda maior que o registrado antes** | Confirmado: Hermes **não tem nenhum** equivalente Rust/nativo — isolamento dele é só via Docker/cloud                                                                             |
+| Guardrail de loop preso                            | Empate                                                | **Vectora fechou** (`Sprint 19`)                                                                                                                                                  |
+| Denylist de arquivo sensível sem sandbox ativo     | Empate                                                | **Vectora fechou** (`Sprint 19`)                                                                                                                                                  |
+| **Allowlist de env pro subprocess MCP local**      | Hermes                                                | **Sem mudança — nunca virou sprint**, gap real desde 2026-08-14                                                                                                                   |
+| Memória / RAG / Context Graph                      | **Vectora, folga ainda maior**                        | Sem mudança relevante — Vectora segue muito à frente                                                                                                                              |
+| Decomposer automático (Kanban triage→children)     | Empate                                                | **Vectora fechou** (`Sprint 20`)                                                                                                                                                  |
+| **Capability token / dedup de subagente nativo**   | Hermes                                                | **Gap novo, não coberto** — `backend/engine/subagents.py` (motor nativo) não tem nada disso; `Sprint 16 WS7` cobriu só `backend/tools/background.py` (caminho de produção antigo) |
+| **Liveness ativa (heartbeat + cancelamento real)** | Hermes                                                | **Continua ausente**, apesar de `Sprint 23` reportar como concluído — ver seção 0                                                                                                 |
+| Validação RBAC subagente vs pai                    | Empate                                                | **Vectora fechou** (`Sprint 23`, parte real)                                                                                                                                      |
+| Goal-mode (Ralph loop)                             | Hermes                                                | Sem mudança — deliberadamente adiado (`Sprint 25`, decisão de produto)                                                                                                            |
+| Marketplace de skills (fontes múltiplas)           | Hermes, folga grande (10 fontes vs 1)                 | Sem mudança — `Sprint 22` só reavaliou, não adicionou fonte nova                                                                                                                  |
+| Composição nomeada de toolsets                     | Hermes                                                | Sem mudança — `Sprint 28` bloqueada esperando `Sprint 14` completar (correto, `Sprint 14` não está completa)                                                                      |
+| MCP marketplace (discovery multi-fonte)            | **Vectora**                                           | Sem mudança — vantagem já existente, 3 fontes com merge                                                                                                                           |
+| Filesystem/Git/Terminal/Browser compartilhados     | **Vectora, com folga real**                           | Sem mudança — vantagem consolidada                                                                                                                                                |
+| Contrato de streaming tipado                       | **Vectora** (20 tipos vs 7)                           | Cresceu de 17 para 20 tipos desde a última contagem                                                                                                                               |
+| Kanban — maturidade de board no desktop            | Hermes (1430 linhas vs 496)                           | Gap não fechado, baixa prioridade                                                                                                                                                 |
+| Terminal — persistência de buffer entre reloads    | Hermes (`revive-buffer.ts`), Vectora não confirmado   | Não verificado a fundo, candidato a checagem futura                                                                                                                               |
 
 ---
 
-## 6. Subagentes, orquestração e Kanban
+## 3. Auth / Multi-tenant (revalidado 2026-08-16)
 
-Fonte: subagente dedicado desta investigação (2026-08-14).
+| Capacidade                                     | Hermes                                                                                                        | Vectora                                                                                                                                                                                                    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SSO/OIDC                                       | Maduro — dois providers reais (`self_hosted` genérico PKCE+JWKS, `nous` proprietário), 862+671 linhas         | **Funcional, single-IDP** — `backend/rbac/oidc.py` (256 linhas), discovery `.well-known`, PKCE S256, JWKS via `PyJWKClient`. `state` em memória de processo, não sobrevive restart (trade-off documentado) |
+| Audit log com redação                          | Maduro — `_REDACTED_FIELDS` (8 campos)                                                                        | **Funcional, equivalente** — `_REDACTED_METADATA_FIELDS` (`backend/rbac/auth.py:1104-1123`), inspirado explicitamente no Hermes                                                                            |
+| Service account / token de máquina             | Existe (não auditado a fundo nesta rodada)                                                                    | **Funcional** — `backend/rbac/token_auth.py`, tokens opacos `vst_` hasheados SHA-256, scopes com wildcard, revogação idempotente. Único consumidor real hoje é automação de webhook                        |
+| Reset de senha                                 | Não confirmado nesta rodada                                                                                   | **Maduro/completo** — fluxo fim-a-fim (`/auth/password-reset/{request,confirm}`)                                                                                                                           |
+| Multi-tenant real (org_id particionando dados) | **Ausente como partição** — `org_id` só aparece em claims de billing, Hermes é single-user/local por natureza | **Esqueleto** — `VectoraContext.org_id` existe e é propagado, mas **zero query SQL filtra por `org_id`** em todo `backend/` (grep confirmado)                                                              |
 
-| Capacidade                                          | Hermes                                               | Vectora                                                                                             | Lidera                    | Esforço se fechar                                                |
-| --------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------- |
-| Delegação básica                                    | Produção madura (wait/cancel/reconnect assíncrono)   | Funcional com edge cases (síncrono, sem resume externo)                                             | Empate (design diferente) | —                                                                |
-| Capability token / dedup                            | Produção madura (HMAC, correlation_id)               | Ausente — mas não é regressão (Vectora não expõe handle serializável)                               | Hermes                    | Baixo risco hoje                                                 |
-| **Validação de RBAC scope do subagente vs pai**     | Produção madura (`_validate_request`)                | Mitigação estrutural (allowlist fixa por SOUL), sem checagem formal explícita                       | Hermes em rigor formal    | **Médio** — gap real se SOUL novo ganhar tools amplas            |
-| Liveness / subagente travado                        | Produção madura (watchdog ativo + cancelamento real) | Básico — regex pós-hoc sobre texto final, puramente informativo                                     | Hermes                    | **Médio-alto**                                                   |
-| Triage automático (LLM classifica task)             | Produção madura                                      | Ausente — cards ficam presos em `triage` esperando ação humana                                      | Hermes                    | Médio                                                            |
-| **Decomposer automático** (fan-out triage→children) | Produção madura                                      | **Infra de dados já existe** (dependências, anticiclo, promoção automática) — só falta a camada LLM | Hermes                    | **Médio — maior ROI da lista, reaproveita 90% do que já existe** |
-| **Goal-mode** (Ralph loop)                          | Produção madura (judge + gates + turn budget)        | **Ausência estrutural completa**                                                                    | Hermes                    | **Alto — padrão de execução inteiro, exige decisão de produto**  |
-| Kanban — máquina de estados                         | 6 estados                                            | **9 estados**, claim atômico CAS, TTL, escalonamento automático                                     | **Vectora**               | —                                                                |
-| Kanban — UI (prioridade/assignee/comentários)       | —                                                    | Presente, gap de UI anterior parece corrigido (não validado E2E)                                    | Vectora                   | Validação, não implementação                                     |
-| Budget de custo por run                             | Não encontrado equivalente                           | Funcional — `check_budget`/`estimate_cost_cents`, corte automático antes de criar run               | **Vectora**               | —                                                                |
-
-**Recomendações priorizadas**:
-
-1. Baixo esforço — testar/documentar que `SOUL_CATALOG` já mitiga escalonamento de escopo.
-2. **Médio esforço, maior ROI — portar decomposer automático** (`kanban_decompose.py`): infra já pronta, só falta a função LLM.
-3. Médio esforço — checagem formal de RBAC scope na delegação.
-4. Médio-alto esforço — liveness ativa com heartbeat + cancelamento real.
-5. Alto esforço — Goal-mode (decisão de produto antes de código).
+**Conclusão**: Vectora fechou 3 dos 5 gaps que o documento anterior listava (SSO, audit redaction, service token) e abriu um novo à frente do Hermes (reset de senha). Multi-tenant continua lacuna real e compartilhada — não é regressão, é decisão de arquitetura ainda não tomada (`Sprint 26`).
 
 ---
 
-## 7. MCP, tools e marketplace de skills
+## 4. Sandbox / Segurança (revalidado 2026-08-16)
 
-Fonte: subagente dedicado desta investigação (2026-08-14).
+**Correção de premissa importante desta rodada**: o Hermes **não tem** nenhum
+equivalente a `bwrap.rs`/`landlock.rs`/`seatbelt.rs` — não há isolamento de
+processo local via namespaces/Landlock/Seatbelt em lugar nenhum do
+repositório. O isolamento de execução do Hermes é 100% via containers
+(Docker) e ambientes cloud (Modal, Vercel Sandbox). A vantagem do Vectora
+nesta área é ainda maior do que o documento anterior registrava.
 
-| Capacidade                                   | Hermes                                                             | Vectora                                                                                       | Lidera                                                                 |
-| -------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Cliente MCP (robustez)                       | Maduro (OAuth, circuit breaker, cert cliente, >20 testes)          | Funcional mas fino (`MultiServerMCPClient`, 2 conexões fixas)                                 | Hermes                                                                 |
-| Servidor MCP                                 | Tem os dois lados                                                  | Não tem — decisão deliberada (CLAUDE.md §16)                                                  | Diferença de arquitetura, não atraso                                   |
-| Catálogo de tools nativas (contagem)         | ~125 tools                                                         | **~163 tools**, registry nativo próprio                                                       | **Vectora**                                                            |
-| **Composição/reuso nomeado de toolsets**     | **Maduro** — `toolsets.py` (ver detalhe abaixo)                    | **Rudimentar** — concatenação estática de listas Python em import-time                        | **Hermes** — ver proposta de melhoria abaixo                           |
-| **Marketplace de skills (fontes múltiplas)** | **5 fontes** (GitHub/WellKnown/Url/SkillsSh/ClawHub), trust levels | **1 fonte** (catálogo curado + GitHub code-search)                                            | **Hermes, com folga**                                                  |
-| Versionamento de skill                       | Sim (`_resolve_latest_version`, download por versão)               | **Sim — já implementado** (`package_name`/`version`/`GET /:name/versions`, commit `f2f798e9`) | Empate real — pendência anterior estava obsoleta                       |
-| Publish de skill                             | Não tem publish próprio (consome hubs de terceiros)                | `install_skill` via git URL direto                                                            | Modelos diferentes, Vectora mais auditável                             |
-| Registry de conectores MCP                   | Sem discovery automatizado confirmado                              | **Discovery automatizado** contra registry oficial MCP, persistência D1                       | **Vectora**                                                            |
-| Sistema de plugins Python de terceiros       | Maduro (4 fontes, manifest, hooks)                                 | Não existe — via MCP client e Skills                                                          | Hermes, mas **não recomendado replicar** (contradiz CLAUDE.md §16/§17) |
+| Capacidade                                    | Hermes                                                                                                                                                       | Vectora                                                                                                                                                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sandbox de processo local (Linux)             | **Ausente**                                                                                                                                                  | **Maduro** — bwrap real + seccomp BPF via `pyseccomp` (denylist de syscalls perigosas), degrada graciosamente se ausente                                                                                                            |
+| Landlock filesystem                           | Ausente                                                                                                                                                      | **Maduro** — ABI V1 completa via `ctypes`/syscall cru                                                                                                                                                                               |
+| Landlock rede (ABI V4)                        | Ausente                                                                                                                                                      | **Maduro, fail-closed correto** — nega TCP exceto portas liberadas; se kernel não suportar V4, retorna `False` explicitamente em vez de fingir a restrição (ressalva: kernel 6.5+ é recente, na prática nem sempre disponível)      |
+| Seatbelt macOS                                | Ausente                                                                                                                                                      | **Funcional, limitação reconhecida no próprio código** — `sandbox-exec` é API não documentada da Apple, rigor estruturalmente menor que Linux                                                                                       |
+| Hardening de Docker                           | Maduro (cap-drop, no-new-privileges, cgroup limits)                                                                                                          | **Maduro, paridade real confirmada** — mesmas flags, mesmo desenho                                                                                                                                                                  |
+| SSRF guard                                    | **Mais sofisticado no fluxo de browser real** — revalida URL pós-navegação (cobre redirect/DNS rebinding), mas é **fail-open** documentado em falha de probe | **Funcional, mais raso** — só pré-flight (fail-closed em falha de resolução, mais seguro nesse ponto), mas sem revalidação pós-redirect (TOCTOU real não coberto)                                                                   |
+| **Allowlist de env pro subprocess MCP local** | Maduro                                                                                                                                                       | **Ausente** — `backend/tools/mcp.py::_build_connections()` não passa `env=` explícito, herda `os.environ` inteiro do processo pai (API keys de LLM inclusive) pro subprocess MCP. **Gap real desde 2026-08-14, nunca virou sprint** |
 
-### Composição de toolsets — como o Hermes faz e o que falta no Vectora
-
-O `toolsets.py` do Hermes é um dict estático `TOOLSETS: dict[str, dict]` onde cada
-entrada tem três campos: `description` (texto pra UI/CLI), `tools` (lista de
-**nomes-string** de tool, resolvidos contra o registry central) e `includes`
-(lista de **nomes de outros toolsets**). A peça que falta no Vectora é
-`includes`: um toolset pode compor outros por referência nomeada, resolvida
-recursivamente em runtime por `resolve_toolset()` (com detecção de ciclo via
-`visited: set[str]`) — ex. `"debugging"` inclui `"web"` + `"file"` sem
-precisar listar as tools de novo; `"hermes-gateway"` é a união nomeada de 18
-toolsets de plataforma. Há também alias de toolset (`register_toolset_alias`,
-usado por servidores MCP conectados dinamicamente) e um mecanismo de bundle-delta
-(`bundle_non_core_tools()`) pra desligar só as tools específicas de um bundle
-sem esvaziar o núcleo compartilhado por outros. Isso alimenta configuração real
-pelo usuário (`hermes tools`, painel do desktop) e a restrição de tools em
-`delegate_task` (bloqueia toolsets inteiros por papel — `leaf` não recebe
-`delegation`, `orchestrator` recebe de volta — e não filtro tool-a-tool).
-
-**O que o Vectora tem hoje**: os "grupos" em `backend/nodes/tools.py`
-(`FS_TOOLS`, `GIT_TOOLS`, `MEMORY_TOOLS`, etc.) são listas Python de objetos
-`BaseTool`, não nomes registrados — `souls.py` reusa por concatenação
-(`tools=FS_TOOLS + GIT_TOOLS + ...`), resolvida estaticamente em import-time.
-Isso cobre o caso de "reuso simples", mas não tem: nome consultável em
-runtime, composição recursiva por referência (só concatenação direta),
-aliases, nem uma API (`get_toolset`/`resolve_toolset`/`validate_toolset`) que
-CLI/UI/config possam usar pra descobrir ou validar o que um perfil deveria
-ter. A restrição de tools por SOUL já existe e já é enforcement real (bind de
-function-calling, não sugestão de prompt) — o gap é só a camada de
-nomeação/composição/consulta por cima disso.
-
-**Proposta de melhoria pro Vectora** (esforço baixo-médio, ~1-2 dias):
-
-1. Promover os grupos de `backend/nodes/tools.py` a um dict nomeado
-   `TOOL_GROUPS: dict[str, ToolGroupSpec]` (nome + description + lista de
-   nomes de tool), registrado no `ToolRegistry` nativo (`backend/tools/registry.py`,
-   já existe desde a migração pro motor nativo) em vez de listas soltas de
-   objetos `BaseTool`.
-2. Adicionar `includes: list[str]` opcional por grupo + uma função
-   `resolve_tool_group(name, visited=None) -> list[ToolSpec]` recursiva com
-   detecção de ciclo — mesmo padrão do `resolve_toolset()` do Hermes.
-3. `souls.py` passa a declarar `tool_groups: list[str]` (nomes) em vez de
-   concatenar listas de objeto — resolvido em `_subagent_specs()` no momento
-   de montar o subagent, não em import-time.
-4. Ganho prático: `SOUL_CATALOG` fica mais legível (nomes em vez de
-   concatenação de imports), e abre caminho pra expor um catálogo consultável
-   (`GET /admin/tool-groups`) se o produto quiser permitir customização de
-   perfil pelo usuário no futuro — hoje o Vectora não precisa disso com a
-   mesma urgência do Hermes (só ~10 SOULs vs ~20 toolsets de plataforma), mas
-   a infraestrutura fica pronta sem custo alto.
-
-**Recomendações priorizadas**:
-
-1. Composição nomeada de toolsets — baixo-médio esforço (1-2 dias), ver proposta acima.
-2. Segunda fonte de discovery de skills — médio-alto esforço (3-5 dias), reavaliar decisão anterior de descartar skills.sh.
-3. Trust level explícito no catálogo — baixo esforço (1 dia), reaproveitando padrão `vectora_verified`.
-4. Retry/circuit-breaker básico em `tools/mcp.py` — baixo-médio esforço (1-2 dias).
-5. **Não fazer**: plugin system Python instalável — contradiz princípio arquitetural do produto.
+**Conclusão**: Vectora lidera com folga ainda maior que o documento anterior sugeria — a pilha de isolamento OS-level simplesmente não tem paralelo no Hermes. O único gap real e não fechado é a allowlist de env do subprocess MCP, que precisa entrar na próxima sprint.
 
 ---
 
-## 8. Streaming, UI e workbench compartilhado
+## 5. Memória / RAG / Context-Graph (revalidado 2026-08-16)
 
-Fonte: subagente dedicado desta investigação (2026-08-14).
+| Capacidade                                       | Hermes                                                                                          | Vectora                                                                                                                                                                                    |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Memória — seções endereçáveis vs overwrite total | Maduro — `MEMORY.md`/`USER.md` com entradas delimitadas, sem histórico versionado por timestamp | **Maduro, com histórico versionado** — `memory_consolidation.py` arquiva versão anterior em `.history/` antes de sobrescrever, mais completo que o Hermes nesse ponto específico           |
+| Promoção assíncrona com trilha de auditoria      | Parcial — edição direta via CLI/TUI, sem job de background propondo mudanças validadas          | **Maduro** — job periódico (6h) propõe consolidação como artifact HITL, só persiste com aprovação explícita                                                                                |
+| Índice unificado de memória (fatos+skills+RAG)   | Não encontrado como índice único — provedores plugáveis externos                                | **Funcional, mas raso na busca** — `search_unified_memory` agrega os 3 tipos, mas só fatos têm busca semântica real (com embedding configurado); skills/buckets são sempre substring match |
+| Parsing multi-linguagem (tree-sitter)            | Ausente                                                                                         | **Maduro** — extração AST determinística, ~30 linguagens                                                                                                                                   |
+| GraphRAG / comunidades (Leiden)                  | Ausente                                                                                         | **Maduro, sem paralelo no Hermes** — pipeline completo extração→NetworkX→Leiden→GraphRAG                                                                                                   |
 
-**Correção de premissa importante**: Hermes NÃO é "agente único ator,
-usuário só observa" — o desktop dele (`apps/desktop`) tem painéis reais de
-arquivos, review/diff e terminal manipuláveis pelo usuário. A tese de venda do
-Vectora precisa ser mais cirúrgica.
-
-| Capacidade                                            | Hermes                                                                                                                                                                                            | Vectora                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Lidera                                                                                                                                                                                                                       |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Filesystem compartilhado                              | **Médio — só visualização real de arquivos**; sem edição/criação pelo usuário na UI (painel `right-sidebar/files/`, tree+DnD, mas é um explorador, não um editor)                                 | **Alto — criar, editar, deletar, mover pela própria UI**, com resolução de conflito otimista (`expected_sha256` + HTTP 412 quando o agente edita por baixo, com opção de forçar), busca em conteúdo + replace-all em massa, histórico de arquivo via git, gerenciador de `.gitignore`. Edição é **Monaco real** (`frontend/lib/monaco/setup.ts`, mesmo motor do VS Code — o "IDE mode" do produto existe justamente pra aproveitar isso), não um textarea simplificado. Ressalva real: mover arquivo entre pastas por **drag-and-drop não existe hoje** (zero `onDrop`/`draggable` em `files-tab.tsx`) — vira sprint de UX fix.      | **Vectora, com folga real (editor)** — gap real de UX em mover arquivo                                                                                                                                                       |
-| Git/diff                                              | Médio-alto (foco em revisar/"ship", não git genérico)                                                                                                                                             | Alto (escopo mais amplo)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Vectora                                                                                                                                                                                                                      |
-| **Terminal compartilhado**                            | **Baixo-médio — DOIS terminais separados**, um deles explicitamente read-only/sem PTY                                                                                                             | **Alto — literalmente a mesma sessão pty** compartilhada                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | **Vectora, diferencial real confirmado**                                                                                                                                                                                     |
-| Browser compartilhado                                 | **Médio — preview de app rodando localmente** (webview do dev server, devtools/console/error states), não navegação livre de internet                                                             | **Alto — navegador completo**: `browser_navigate` aceita qualquer URL http/https (só o esquema é checado, sem allowlist de host/porta), suporte nativo a **múltiplas abas** (tab strip com favicon/histórico, uma `WebContentsView` por aba no desktop), e o agente opera a **mesma sessão Playwright/CDP do workspace** que a UI observa (painel de devtools inspeciona literalmente a sessão do agente). Tools reais de interação: `navigate`/`click`/`scroll`/`fill`/`drag`/`upload_file`/`fill_form`/`wait_for`/`read_dom`/`screenshot`, mais gestão de dev servers locais como complemento opcional, não como escopo principal. | **Vectora, com folga real**                                                                                                                                                                                                  |
-| Kanban/orquestração de tarefas                        | Médio (plugin externo sobre REST próprio)                                                                                                                                                         | Médio-alto (nativo ao streaming, `TodosUpdatedEvent`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Vectora (integração nativa)                                                                                                                                                                                                  |
-| **Context graph**                                     | **Ausente**                                                                                                                                                                                       | Alto (tab dedicada)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | **Vectora**                                                                                                                                                                                                                  |
-| RAG/memória — síntese automática de skills (Remember) | **Alto — design original**: o Hermes não tem RAG nativo (ver seção 5 — "ausente no core"), mas tem a feature "Remember"/`/learn`, somada a Honcho (modelagem de usuário) e FTS5 (busca de sessão) | **Alto — feature "Remember"**: gatilho automático a cada 5 turnos (`remember_trigger.py`), destila via LLM estruturado tanto **skills novas** (`SKILL.md` completo: nome, descrição, passo a passo) quanto fatos duráveis, com dedup contra o que já foi aprovado; nunca instala nada sozinho — sempre grava proposta revisável (artifact na aba Plan) e exige HITL explícito (`install_learned_skill`/`save_learned_fact`, ambas `destructive: True`) antes de persistir. **Construído diretamente com base no Remember do Hermes** — não é convergência paralela, é o mesmo conceito com HITL/dedup adicionados depois.            | **Duas afirmações diferentes, não empate**: Hermes lidera em design _original_ do conceito (Vectora é o derivado, honestamente creditado); Vectora lidera em RAG/Context Graph nativos, que o Hermes não tem em lugar nenhum |
-| Tab "library" unificada                               | Espalhado (skills/ + plugins)                                                                                                                                                                     | Unificada (MCP+Skills+Memory)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Vectora                                                                                                                                                                                                                      |
-| **Protocolo de streaming (contrato tipado)**          | Dataclass, não confirmado se documentado como union discriminada                                                                                                                                  | **17 tipos de evento, Pydantic union discriminada explícita**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | **Vectora**                                                                                                                                                                                                                  |
-
-**Achado-chave para reposicionamento de mensagem**: o diferencial real não é
-"Hermes não compartilha nada" (falso) — é que o Vectora compartilha a MESMA
-sessão de terminal (não cópia read-only) e unifica 9 tabs sob um único
-contrato de evento tipado, enquanto o Hermes tem os componentes mas espalhados
-em mecanismos de sync diferentes (IPC, REST de plugin, buffer de xterm).
-
-**Recomendações**:
-
-1. Reposicionar o discurso de "shared workbench" com a formulação mais precisa acima — esforço baixo (só copy).
-2. **Concorrência de escrita no terminal — investigado**: `PtySession.write()` (`backend/services/pty_session.py:213`) é síncrono sem lock explícito, mas roda dentro do único event loop asyncio do processo — GIL + loop único evitam corrupção de baixo nível em cada chamada individual. Risco residual real, porém baixo: não há fila que agrupe os múltiplos `write()` de um comando do agente como unidade lógica — se o usuário digitar no meio dessa sequência, os bytes podem intercalar. Considerar fila de escrita só se algum bug real de intercalação for reportado, não preventivamente.
-3. Avaliar "kanban por subagente" (lanes by profile) se subagentes ganharem peso — médio-alto esforço.
-4. **Profundidade da tab `browser` — confirmada**: `frontend/components/workbench/tabs/browser-tab.tsx` tem `TabState` com `history`/`historyIndex`/`canGoBack`/`canGoForward` por aba, multi-tab real tanto em desktop (`WebContentsView`) quanto web — a alegação da tabela acima já estava correta, sem gap a fechar aqui.
-5. **Drag-and-drop pra mover arquivo no Filesystem — não existe** (`frontend/components/workbench/files/files-tab.tsx`, zero `onDrop`/`draggable`) — vira sprint de UX fix no plano de desenvolvimento.
+**Conclusão**: maior assimetria bidirecional do comparativo — Vectora tem um subsistema de Context Graph inteiro sem equivalente no Hermes, e amadureceu memória de conversa (histórico versionado, promoção HITL) além do que o Hermes tem nativamente. Ressalva: o Hermes compensa via ecossistema de provedores de memória externos plugáveis (supermemory, honcho, hindsight) que não foram avaliados em profundidade — não é comparável 1:1 sem essa investigação adicional, se vier a ser prioridade.
 
 ---
 
-## 9. Features do Vectora que valeriam ser propostas ao Hermes
+## 6. Subagentes / Orquestração (revalidado 2026-08-16)
 
-**Ressalva de honestidade**: a base de issues do Hermes investigada nesta
-sessão foi pequena (só 2 filtros de busca, `P1`+`area/auth` e
-`type/feature`, ~100 issues no total) — não é leitura robusta o bastante do
-roadmap completo do concorrente pra ser tratada como conclusiva. Esta seção
-lista capacidades que o Vectora já tem, de nível maduro, que fariam sentido
-como sugestão de contribuição/PR pro Hermes (produto MIT, aberto a PRs
-externos) — não é o inverso (o que o Hermes está construindo, isso já está
-mapeado nas seções 1 e nas tabelas de cada área acima).
+| Capacidade                                            | Hermes                                                                                                                    | Vectora                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capability token (anti-forge de handle)               | **Maduro** — HMAC-SHA256 por processo, `hmac.compare_digest`                                                              | **Ausente no motor nativo** — `backend/engine/subagents.py::run_subagent()` roda inline sem handle assinado. (`backend/tools/background.py::schedule_subagent_task`, caminho de produção antigo, tem capability token desde `Sprint 16 WS7` — mas isso não cobre o motor nativo que vai virar produção real na `Sprint 29`) |
+| Dedup por correlation-id                              | **Maduro**                                                                                                                | **Ausente no motor nativo** — mesma ressalva acima                                                                                                                                                                                                                                                                          |
+| Liveness ativa (heartbeat + cancelamento sob demanda) | **Maduro** — `request_hard_interrupt()` cancela de verdade sob pedido                                                     | **Só timeout passivo** — `_watch_liveness()` cancela por inatividade, não por pedido explícito. Reportado como "concluído" na `Sprint 23`, não está — ver seção 0                                                                                                                                                           |
+| Validação RBAC filho vs pai                           | Funcional                                                                                                                 | **Funcional, replicado corretamente** — `_tools_outside_user_scope()` filtra contra `tool_policy.effective_disabled`                                                                                                                                                                                                        |
+| Goal-mode (Ralph loop)                                | **Muito maduro** — `hermes_cli/goals.py` (2157 linhas): judge LLM, quality gates determinísticos, turn budget, auto-pause | **Ausente, sem vestígio de trabalho** — nenhuma ocorrência de "goal"/"judge"/"quality_gate" em `backend/` fora do comentário que descreve a ausência. Deliberadamente adiado (`Sprint 25`, decisão de produto pendente)                                                                                                     |
 
-- **Sandbox com isolamento real a nível de SO** (bwrap+seccomp+Landlock(egress
-  V4)+rlimits no Linux, Seatbelt no macOS, Singularity) — o Hermes hoje só
-  isola via Docker/terceiros, com a própria doc admitindo "só o SO é
-  fronteira". É a lacuna mais séria e mais madura do Vectora pra oferecer de
-  volta — reduziria o gap de segurança do concorrente sem exigir reescrever
-  a arquitetura dele (o padrão bwrap+Landlock é replicável em qualquer
-  produto Python/Node que rode em Linux).
-- **RAG + Context Graph nativos** — o Hermes terceiriza 100% memória/busca a
-  plugins de terceiros (mem0, Honcho, hindsight); nunca teve intelligence de
-  código nativa (tree-sitter, GraphRAG). Contribuir a ideia (não o código —
-  arquiteturas de storage são diferentes) de um provider nativo opcional
-  seria o maior ganho de capacidade "out of the box" que o Hermes poderia
-  herdar.
-- **Filesystem compartilhado com edição real** (Monaco embutido, conflito
-  otimista via `expected_sha256`/412) — o explorador de arquivos do Hermes
-  hoje é só visualização; dar ao usuário edição direta pela UI (não só
-  visualizar o que o agente fez) fecha uma lacuna de produto real dele.
-- **Terminal literalmente compartilhado** (mesma sessão PTY entre usuário e
-  agente) — o Hermes tem 2 terminais separados, um deles read-only; unificar
-  numa sessão só reduziria a divergência de estado que dois terminais
-  paralelos naturalmente criam.
+**Conclusão**: maior gap real e ainda aberto do comparativo inteiro. O motor nativo de subagentes (`backend/engine/subagents.py`) — que é justamente o que a `Sprint 29` vai promover a produção — está menos hardened do que o caminho antigo que está substituindo. Isso precisa ser resolvido **dentro** da `Sprint 29`, não depois, porque senão o corte de dispatch promove um subsistema mais frágil a produção.
 
 ---
 
-## 10. O que o Vectora tem que o Hermes não tem (resumo, para não perder de vista)
+## 7. MCP / Tools / Marketplace (revalidado 2026-08-16)
 
-- Context Graph / code intelligence nativo (tree-sitter ~30 linguagens, GraphRAG) — **ausência confirmada** no Hermes.
-- RAG nativo com vector store próprio (LanceDB/Qdrant), cobrindo **código-fonte e documentos** (não só texto corrido — `backend/embedding/rag_ingest.py` tem atalho `file_types="code"` ao lado de `"markdown"`/`"all"`) mais um índice GraphRAG próprio dos nós do Context Graph (`backend/context_graph/graph_index.py`, mesmo pipeline de embedding, índice LanceDB dedicado) — Hermes terceiriza 100% a skills/plugins, sem RAG nativo de nenhum tipo.
-- Consolidação de memória automática e versionada — Hermes só tem MEMORY.md/USER.md em prosa livre.
-- Sandbox com isolamento real a nível de SO (seccomp/Landlock/Seatbelt) — Hermes documenta que só tem isolamento real via Docker/terceiros.
-- RBAC granular de produto (4 papéis hierárquicos) — Hermes descartou deliberadamente essa complexidade.
-- **Filesystem compartilhado com edição real** — o usuário cria, edita, deleta e move arquivos pela própria UI, com resolução de conflito otimista (`expected_sha256`/412) quando o agente edita por baixo; o Hermes só visualiza (explorador read-only).
-- Terminal literalmente compartilhado entre usuário e agente (mesma sessão pty) — Hermes tem 2 terminais separados.
-- **Browser compartilhado como navegador completo** — navegação livre pra qualquer URL http/https, multi-tab nativo, agente opera a mesma sessão Playwright/CDP que a UI observa; o Hermes é preview de dev server local, não navegador de internet.
-- **Remember — síntese automática de skills e fatos via LLM**, com HITL obrigatório antes de persistir — comparável em espírito ao self-improvement loop/`/learn` do Hermes, não é só key-value.
-- Contrato de streaming SSE com union discriminada Pydantic de 17 tipos — mais explícito que o vocabulário dataclass do Hermes.
-- Kanban com 9 estados (vs 6) e budget de custo por run integrado.
-- Discovery automatizado de registry MCP oficial com persistência.
-- Catálogo de tools nativas maior em contagem (~163 vs ~125).
-- Versionamento de skill/pacote (`package_name`/`version`) — já implementado, não é mais lacuna.
-- Editor de arquivo Monaco real (não textarea) — IDE mode existe justamente pra isso.
-- SSRF protection madura em `backend/tools/web.py` (`ssrf_guard.py`, com defesa contra DNS rebinding).
-- Hardening real do sandbox Docker (`cap-drop`, `security-opt`, `pids-limit`, `read-only`) — paridade confirmada com o padrão do Hermes.
-- Browser: multi-tab real com histórico por aba (`canGoBack`/`canGoForward`), tanto desktop quanto web.
+| Capacidade                                                    | Hermes                                                                                                              | Vectora                                                                                                                                                                       |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Composição nomeada de toolsets (`includes` recursivo + ciclo) | **Maduro** — `toolsets.py` (1040 linhas), `resolve_toolset()` com detecção de ciclo                                 | **Ausente** — `souls.py` usa concatenação estática de listas Python (`FS_TOOLS + GIT_TOOLS + ...`). Bloqueada corretamente (`Sprint 28`) esperando `Sprint 14`/`29` completar |
+| Fontes de discovery de skill                                  | **Muito maduro** — 10 classes de `SkillSource` (GitHub, WellKnown, Url, SkillsSh, ClawHub, LobeHub, BrowseSh, etc.) | **Esqueleto/parcial** — 1 fonte remota (`registry_client.fetch_catalog`), sem fallback local hardcoded, catálogo pode ficar vazio                                             |
+| MCP marketplace (discovery de servers)                        | Sem equivalente dedicado encontrado                                                                                 | **Funcional, vantagem real do Vectora** — 3 fontes com merge e prioridade (D1 próprio, registry oficial MCP, fallback local de 6 conectores curados)                          |
+
+**Conclusão**: Hermes lidera com folga grande em discovery de skills (10 fontes vs 1). Vectora tem uma vantagem pontual em discovery de MCP servers especificamente (escopo mais estreito, mas bem desenhado). Composição de toolsets segue como gap conhecido, corretamente sequenciado depois do corte de dispatch.
+
+---
+
+## 8. Streaming / UI / Workbench (revalidado 2026-08-16)
+
+| Capacidade                             | Hermes                                                                                             | Vectora                                                                                                                                                                                             |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vocabulário de eventos de streaming    | **Funcional, deliberadamente magro** — 7 tipos, desenhado pra plataformas de mensagens sem UI rica | **Mais rico, desenhado para múltiplos painéis** — 20 tipos (cresceu de 17), incluindo `WorkbenchInvalidate`/`TerminalLine`/`NodeStatus`/`RagCitations` específicos de alimentar painéis simultâneos |
+| Editor de código no painel de arquivos | **Ausente** — árvore de arquivo é navegação/preview, sem editor embutido (zero "monaco" no repo)   | **Maduro** — Monaco real editável (`@monaco-editor/react`), mais variante readonly pra preview                                                                                                      |
+| Git no painel                          | Médio — foco em revisar/"ship"                                                                     | **Maduro** — worktrees reais via UI (criar/listar)                                                                                                                                                  |
+| Terminal persistente                   | **Maduro, com replay de buffer entre sessões** (`revive-buffer.ts`)                                | Terminal persistente confirmado (mesma sessão PTY usuário↔agente), mas **persistência de buffer entre reloads não confirmada** — candidato a checagem                                               |
+| Kanban no desktop                      | **Maduro, board grande** (1430 linhas)                                                             | Funcional, mais raso (496 linhas) — baixa prioridade de fechar                                                                                                                                      |
+| Memory tab unificada                   | Sem equivalente                                                                                    | **Presente** — RAG+skills+memory+journey num só painel                                                                                                                                              |
+| Context Graph tab                      | Ausente                                                                                            | **Presente, sem equivalente no Hermes**                                                                                                                                                             |
+
+**Conclusão**: os dois produtos investiram em direções diferentes — Hermes em profundidade de mensageria/Kanban, Vectora em profundidade de dev-workbench (editor real, git, context graph). Ponto a verificar: persistência de buffer de terminal entre reloads, onde o Hermes tem um mecanismo dedicado e o Vectora não foi confirmado.
+
+---
+
+## 8.5. Correção — plugins MCP contados como capacidade nativa do Hermes
+
+O usuário apontou, corretamente, que 4 projetos locais (`C:\Users\Machi\Desktop\vectora\{graphify-8,omskills-main,chrome-devtools-mcp-main,ragflow-main}`) são conectáveis ao Hermes como servidores MCP — e que tratá-los como "ausentes no Hermes" nas seções 5, 7 e 8 acima é injusto, já que o Hermes é cliente MCP e pode plugá-los. 4 agentes leram os 4 projetos e confirmaram, com ressalvas reais por projeto — nem tudo vira paridade automática:
+
+**`graphify-8` (Context Graph)** — servidor MCP real e funcional (`graphify/serve.py`, ~2100 linhas, tools `query_graph`/`get_pr_impact`/etc., plug-and-play). Extração AST via tree-sitter (~30-40 linguagens) e clustering Leiden/Louvain são **equivalentes/empatados** com o Vectora — os dois parecem compartilhar a mesma base de código (`backend/context_graph/cluster.py` do Vectora tem o mesmo código de Leiden/graspologic, comentário por comentário). **O gap não fecha em GraphRAG**: o graphify-8 se declara explicitamente "not a vector index — no embeddings, no vector store" (é uma alternativa deliberadamente sem vetores ao RAG denso); `backend/context_graph/graph_index.py` do Vectora indexa os nós do grafo em LanceDB com embedding multi-provider e faz busca híbrida vetor+grafo, capacidade que o graphify-8 não tem por design. **Correção de veredito**: de "Vectora lidera com folga, sem equivalente" para "empate em extração/clustering via plugin; Vectora mantém vantagem real e específica em GraphRAG".
+
+**`ragflow-main` (RAG)** — tem servidor MCP real (`mcp/server/server.py`, 3 tools: `ragflow_retrieval`/`list_datasets`/`list_chats`), mas é um proxy fino sobre a REST API do RAGFlow — exige rodar a stack standalone inteira (Elasticsearch/Infinity + MySQL + Redis + MinIO + task executors + UI própria pra criar datasets) antes de expor as 3 tools. Não é "plugar e usar", é operar uma aplicação externa completa ao lado do Hermes. Tecnicamente é um motor de RAG mais profundo que o do Vectora nalguns eixos (parsing multimodal, mais opções de rerank, GraphRAG próprio), mas ao custo de infraestrutura pesada. **Correção de veredito**: de "Vectora lidera, sem equivalente no Hermes" para "Vectora lidera em simplicidade/integração nativa (código+docs, sem infra externa); Hermes alcança paridade funcional via plugin RAGFlow, ao custo operacional de uma stack externa completa".
+
+**`omskills-main` (Skills)** — **não é** uma fonte de discovery adicional. É um pacote estático de ~19 skills em formato `SKILL.md` (fork de `mattpocock/skills`), instalado via symlink local (`scripts/link-skills.sh`), sem API, sem registry remoto, sem menção a MCP em lugar nenhum do repo. Conceitualmente diferente das 10 fontes dinâmicas de discovery do Hermes (`toolsets.py`/`skills_hub.py`) — é mais parecido com um pacote de conteúdo que poderia ser instalado manualmente em qualquer um dos dois produtos (o Vectora, aliás, já aceita a URL git desse repo diretamente via `install_skill`). **Sem correção de veredito** — "Hermes lidera em discovery de skills, 10 fontes vs 1" permanece válido, com a ressalva de que "1 fonte" no Vectora é o catálogo curado oficial, não um limite técnico (qualquer URL git funciona via `install_skill`).
+
+**`chrome-devtools-mcp-main` (Browser DevTools)** — confirmado como o servidor MCP **oficial** do Chrome DevTools Team (Google), maduro, testado (~209 blocos de teste), mantido ativamente (v1.6.0, releases frequentes). Expõe ~54 tools (~33 ativas por padrão, o resto atrás de flags experimentais) cobrindo input, navegação, performance trace, network, console, snapshot de acessibilidade, heap snapshot granular (11 sub-tools), lighthouse. A contagem real de tools do Vectora nesta área também precisa de correção: não são "~19-25" como uma rodada anterior registrava, e sim **~34** (`browser.py` 14 + `browser_devtools.py` 20). Com o chrome-devtools-mcp contado como plugin do Hermes, **o gap de tooling bruto fecha quase totalmente** (~33-34 de cada lado, ou até 54 se o Hermes ativar as flags experimentais). **A única vantagem que sobra, e que o Hermes estruturalmente não pode adquirir só conectando o mesmo plugin, é o painel visual integrado no workbench** (`browser-tab.tsx` + `browser-devtools-panel.tsx`) — console/network/DOM inspecionáveis diretamente pelo usuário humano, não só pelo agente via protocolo MCP; o chrome-devtools-mcp não tem UI própria, é consumido só por clientes MCP. **Correção de veredito**: de "Vectora com folga real (mais tools)" para "empate técnico em cobertura de tools via plugin; vantagem real do Vectora é exclusivamente o painel visual pro usuário humano, que é uma capacidade de frontend, não de tooling do agente".
+
+### Ajuste geral de leitura
+
+Nenhuma dessas 4 correções inverte a conclusão de que o Vectora lidera nas áreas de sandbox, memória/RAG nativo e workbench compartilhado — mas 3 das 4 (graphify-8, ragflow-main, chrome-devtools-mcp) mostram que parte dessa liderança é mais estreita do que parecia quando o ecossistema MCP do concorrente é contado a favor dele, como é justo fazer. A lição prática: comparar "produto A vs produto B" sem contar o que A pode plugar via MCP super-representa a vantagem nativa de B — o comparativo correto é sempre "capacidade nativa + ecossistema plugável de cada lado".
+
+---
+
+## 9. O que fazer a seguir
+
+Ver `Sprint 29` (remoção de LangChain, agora também absorvendo o hardening
+do motor nativo de subagentes — capability token, dedup, liveness ativa —
+porque é o mesmo código que vai virar produção) e `Sprint 30` (consolidação:
+allowlist de env MCP, segunda fonte de skill discovery, verificação de
+persistência de buffer de terminal) no plano de desenvolvimento
+(`iterative-bouncing-treehouse.md`).
