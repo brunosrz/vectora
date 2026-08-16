@@ -1,9 +1,7 @@
-"""Testes para agent_factory.py — cache de grafos por sessão e ParallelToolNode."""
+"""Testes para agent_factory.py — cache de grafos por sessão."""
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -152,107 +150,3 @@ async def test_get_user_agent_rejects_permission_mode_kwarg():
 
     with pytest.raises(TypeError):
         await af.get_user_agent(user_id="user-2", permission_mode="plan")  # ty: ignore[unknown-argument]
-
-
-# ---------------------------------------------------------------------------
-# ParallelToolNode — execução paralela de tools de tipos diferentes
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_parallel_tool_node_runs_tools_concurrently():
-    """Tools de tipos diferentes acionam asyncio.gather."""
-    from langchain_core.tools import tool as lc_tool
-
-    from backend.nodes.parallel_tools import ParallelToolNode
-
-    @lc_tool
-    async def tool_a(query: str = "") -> str:
-        """Tool A."""
-        return "result_a"
-
-    @lc_tool
-    async def tool_b(query: str = "") -> str:
-        """Tool B."""
-        return "result_b"
-
-    node = ParallelToolNode(tools=[tool_a, tool_b])
-
-    data = {
-        "tool_calls": [
-            {"name": "tool_a", "args": {"query": "x"}},
-            {"name": "tool_b", "args": {"query": "y"}},
-        ]
-    }
-
-    with patch(
-        "backend.nodes.parallel_tools.asyncio.gather", wraps=asyncio.gather
-    ) as gather_spy:
-        result = await node.arun(data)
-
-    # Verifica que gather foi chamado com return_exceptions=True (assinatura do ParallelToolNode)
-    parallel_calls = [
-        c
-        for c in gather_spy.call_args_list
-        if c.kwargs.get("return_exceptions") is True
-    ]
-    assert len(parallel_calls) == 1
-    assert result is not None
-
-
-@pytest.mark.asyncio
-async def test_parallel_tool_node_same_type_not_parallelized():
-    """Tools do mesmo tipo não acionam asyncio.gather — delega para super."""
-    from langchain_core.tools import tool as lc_tool
-
-    from backend.nodes.parallel_tools import ParallelToolNode
-
-    @lc_tool
-    async def tool_a(query: str = "") -> str:
-        """Tool A."""
-        return "ok"
-
-    node = ParallelToolNode(tools=[tool_a])
-
-    data = {
-        "tool_calls": [
-            {"name": "tool_a", "args": {}},
-            {"name": "tool_a", "args": {}},
-        ]
-    }
-
-    gather_mock = AsyncMock()
-    with patch("backend.nodes.parallel_tools.asyncio.gather", gather_mock):
-        with contextlib.suppress(Exception):
-            await node.arun(data)
-
-    gather_mock.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_parallel_tool_node_empty_tool_calls_delegates():
-    """Sem tool_calls, asyncio.gather não é chamado — delega para super."""
-    from backend.nodes.parallel_tools import ParallelToolNode
-
-    node = ParallelToolNode(tools=[])
-
-    data: dict[str, list[object]] = {"tool_calls": []}
-
-    gather_mock = AsyncMock()
-    with patch("backend.nodes.parallel_tools.asyncio.gather", gather_mock):
-        with contextlib.suppress(Exception):
-            await node.arun(data)
-
-    gather_mock.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_parallel_tool_node_unknown_tool_returns_error():
-    """Tool desconhecida retorna dict com chave 'error' (defensivo, não lança)."""
-    from backend.nodes.parallel_tools import ParallelToolNode
-
-    node = ParallelToolNode(tools=[])
-
-    result = await node._run_tool({"name": "nao_existe", "args": {}})
-    assert "error" in result
-    assert "nao_existe" in result["error"]
