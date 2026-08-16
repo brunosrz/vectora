@@ -134,24 +134,21 @@ class TestAgetThreadMessagesNativePrimeiro:
         # tool nunca aparecem no histórico exibido ao usuário.
         assert pairs == []
 
-    async def test_thread_sem_mensagem_nativa_cai_no_fallback_legado(
+    async def test_thread_sem_mensagem_nativa_devolve_lista_vazia(
         self, session_store: SessionStore
     ):
-        chamado = AsyncMock(return_value=[("human", "veio do legado", "cp1", [])])
-        with (
-            patch.object(
-                af, "get_session_store", AsyncMock(return_value=session_store)
-            ),
-            patch.object(af, "_aget_thread_messages_legacy", chamado),
+        """Sem checkpointer LangGraph legado a consultar, uma thread sem
+        nenhum registro no SessionStore devolve lista vazia direto."""
+        with patch.object(
+            af, "get_session_store", AsyncMock(return_value=session_store)
         ):
             pairs = await af.aget_thread_messages("thread-inexistente")
 
-        chamado.assert_awaited_once()
-        assert pairs == [("human", "veio do legado", "cp1", [])]
+        assert pairs == []
 
 
 class TestAgetThreadPendingInterruptNativePrimeiro:
-    async def test_pendencia_nativa_tem_prioridade_sobre_o_fallback(
+    async def test_pendencia_nativa_e_devolvida_do_session_store(
         self, session_store: SessionStore
     ):
         await session_store.create_session("thread-hitl", user_id="alice")
@@ -163,33 +160,21 @@ class TestAgetThreadPendingInterruptNativePrimeiro:
             args={"path": "a.py"},
         )
 
-        legado = AsyncMock(return_value=None)
-        with (
-            patch.object(
-                af, "get_session_store", AsyncMock(return_value=session_store)
-            ),
-            patch.object(af, "_aget_thread_pending_interrupt_legacy", legado),
+        with patch.object(
+            af, "get_session_store", AsyncMock(return_value=session_store)
         ):
             pending = await af.aget_thread_pending_interrupt("thread-hitl")
 
-        legado.assert_not_awaited()
         assert pending == {
             "tool_name": "file_write",
             "args": {"path": "a.py"},
             "interrupt_id": "intr-1",
         }
 
-    async def test_sem_pendencia_nativa_cai_no_fallback_legado(
-        self, session_store: SessionStore
-    ):
-        legado = AsyncMock(return_value=None)
-        with (
-            patch.object(
-                af, "get_session_store", AsyncMock(return_value=session_store)
-            ),
-            patch.object(af, "_aget_thread_pending_interrupt_legacy", legado),
+    async def test_sem_pendencia_nativa_devolve_none(self, session_store: SessionStore):
+        with patch.object(
+            af, "get_session_store", AsyncMock(return_value=session_store)
         ):
             pending = await af.aget_thread_pending_interrupt("thread-sem-pendencia")
 
-        legado.assert_awaited_once()
         assert pending is None

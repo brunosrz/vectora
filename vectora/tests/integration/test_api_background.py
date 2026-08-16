@@ -28,8 +28,14 @@ from backend.api.handlers.background import (
     resume_run_endpoint,
     run_task_endpoint,
 )
+from backend.engine.hitl import ApprovalGate
+from backend.persistence.native.session_store import SessionStore
 from backend.scheduling import background_tasks as bg
 from backend.services import agent_factory
+from backend.services.agent_factory import NativeAgent
+from backend.storage.sqlite.pool import AsyncConnectionPool
+from backend.tools.registry import ToolRegistry
+from backend.vtypes.message import VMessageChunk
 
 _UUID = "aa844f17-7e0e-4b0a-8991-c3aab9bdcc63"
 _SCHEMA = (
@@ -70,6 +76,73 @@ def _pro_tier_by_default(monkeypatch):
     """Tarefas `webhook` exigem tier pro — este arquivo cobre o handler
     REST, não o gating em si (coberto em test_services_background.py)."""
     monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+
+
+class _ScriptedChatClient:
+    """Cliente de chat fake — devolve um único turno de texto puro (sem
+    tool call), suficiente pra exercitar o handler REST ponta a ponta."""
+
+    def __init__(self, texto: str) -> None:
+        self._texto = texto
+
+    async def astream(self, messages, *, tools=None, temperature=None, max_tokens=None):
+        yield VMessageChunk(delta_text=self._texto)
+
+
+def _patch_native_engine(
+    monkeypatch, *, session_store: SessionStore, texto: str
+) -> None:
+    """Substitui as dependências que `run_task`/`resume_background_run`
+    resolvem via `agent_factory` (motor nativo) + `FallbackChatClient` —
+    mesmo padrão de `tests/unit/test_services_background.py`."""
+    native_agent = NativeAgent(
+        tool_registry=ToolRegistry(),
+        subagent_catalog={},
+        system_prompt="system prompt de teste",
+    )
+
+    async def _fake_get_native_agent(
+        user_id: str | None = None,
+        chat_mode: bool = False,
+        workspace_id: str | None = None,
+    ) -> NativeAgent:
+        return native_agent
+
+    async def _fake_get_session_store() -> SessionStore:
+        return session_store
+
+    approval_gate = ApprovalGate(session_store)
+
+    async def _fake_get_approval_gate() -> ApprovalGate:
+        return approval_gate
+
+    async def _fake_get_store() -> None:
+        return None
+
+    monkeypatch.setattr(agent_factory, "get_native_agent", _fake_get_native_agent)
+    monkeypatch.setattr(agent_factory, "get_session_store", _fake_get_session_store)
+    monkeypatch.setattr(agent_factory, "get_approval_gate", _fake_get_approval_gate)
+    monkeypatch.setattr(agent_factory, "get_store", _fake_get_store)
+    monkeypatch.setattr(
+        bg, "FallbackChatClient", lambda primary_model_id="": _ScriptedChatClient(texto)
+    )
+
+
+@pytest.fixture
+async def native_session_store(tmp_path):
+    """``SessionStore`` real (sqlite à parte do banco de tasks/runs) — a
+    mesma infraestrutura que ``agent_factory.get_session_store()`` devolve
+    em produção, isolada por teste."""
+    pool = AsyncConnectionPool(
+        str(tmp_path / "native-sessions.db"), min_size=1, max_size=2
+    )
+    await pool.open()
+    store = SessionStore(pool)
+    await store.setup()
+    try:
+        yield store
+    finally:
+        await pool.close()
 
 
 async def test_post_task_with_uuid_user_does_not_crash(db):
@@ -136,23 +209,10 @@ async def test_patch_and_delete_enforce_session_scope(db):
     assert await get_tasks(_req(), "thread-A") == []
 
 
-async def test_manual_run_creates_run_and_registers_thread(db, monkeypatch):
-    agent = SimpleNamespace()
-
-    async def _ainvoke(inp, config=None, context=None) -> Any:
-        return {"messages": [{"content": "feito"}]}
-
-    agent.ainvoke = _ainvoke
-
-    async def _get_agent(
-        user_id: str | None = None,
-        model: str = "",
-        chat_mode: bool = False,
-        workspace_id: str | None = None,
-    ) -> Any:
-        return agent
-
-    monkeypatch.setattr(agent_factory, "get_user_agent", _get_agent)
+async def test_manual_run_creates_run_and_registers_thread(
+    db, monkeypatch, native_session_store
+):
+    _patch_native_engine(monkeypatch, session_store=native_session_store, texto="feito")
 
     upserts: list[str] = []
 
@@ -192,7 +252,9 @@ async def test_manual_run_creates_run_and_registers_thread(db, monkeypatch):
     assert wrong.value.status_code == 404
 
 
-async def test_resume_run_endpoint_cancel_and_approve(db, monkeypatch):
+async def test_resume_run_endpoint_cancel_and_approve(
+    db, monkeypatch, native_session_store
+):
     """POST /runs/{id}/resume: cancela sincronamente (decision='cancel') ou
     enfileira o resume (approve/reject) via BackgroundTasks — mesmo padrão do
     disparo manual. Erro/borda: run inexistente → 404; run que não está
@@ -250,22 +312,22 @@ async def test_resume_run_endpoint_cancel_and_approve(db, monkeypatch):
     await bg._insert_run(run_id_2, task, "bg-thread-resume-2", "manual")
     await bg._mark_run_awaiting(run_id_2, "Aguardando aprovação: terminal")
 
-    agent = SimpleNamespace()
-
-    async def _ainvoke(inp, config=None, context=None) -> Any:
-        return {"messages": [{"content": "concluído"}]}
-
-    agent.ainvoke = _ainvoke
-
-    async def _get_agent(
-        user_id: str | None = None,
-        model: str = "",
-        chat_mode: bool = False,
-        workspace_id: str | None = None,
-    ) -> Any:
-        return agent
-
-    monkeypatch.setattr(agent_factory, "get_user_agent", _get_agent)
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, texto="concluído"
+    )
+    # `resume_conversation` só age se houver uma aprovação pendente real no
+    # SessionStore pro `run_thread_id` — registra a mesma pendência que uma
+    # pausa HITL real teria persistido antes do run virar 'awaiting_approval'.
+    await native_session_store.create_session(
+        "bg-thread-resume-2", user_id=task.user_id
+    )
+    await native_session_store.put_pending_approval(
+        "bg-thread-resume-2",
+        interrupt_id="intr-resume-2",
+        tool_name="terminal",
+        tool_call_id="call-1",
+        args={"command": "echo oi"},
+    )
 
     bt = BackgroundTasks()
     resp_approve = await resume_run_endpoint(

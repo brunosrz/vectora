@@ -153,8 +153,6 @@ o gap, sem apontar para nenhum processo de execução específico:
 - Allowlist de variáveis de ambiente pro subprocess MCP local (herda
   `os.environ` inteiro hoje).
 - Segunda fonte de discovery de skills (só 1 fonte remota, sem fallback).
-- Verificação de persistência de buffer de terminal entre reloads de
-  página (não confirmado se existe).
 - Hardening do motor nativo de subagentes: capability token, dedup por
   correlation-id, cancelamento ativo sob pedido (hoje só watchdog passivo
   por timeout).
@@ -162,5 +160,3 @@ o gap, sem apontar para nenhum processo de execução específico:
   ciclo (hoje é concatenação estática de listas).
 - Goal-mode (Ralph loop): judge de conclusão, quality gates
   determinísticos, turn budget persistente — ausente por completo.
-- Correção de contagem de tools de browser devtools onde aparecer em copy
-  externa (número real é ~34, não "~19-25").

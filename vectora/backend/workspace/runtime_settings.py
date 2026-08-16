@@ -484,16 +484,6 @@ runtime_settings = RuntimeSettings()
 # ── Orquestração de troca de modelo ──────────────────────────────────────────
 
 
-def _invalidate_default_graph() -> None:
-    """Invalida o grafo deep-agent do modelo padrão após troca de provider/model."""
-    try:
-        from backend.services.agent_factory import reset_default_graph
-
-        reset_default_graph()
-    except Exception as e:
-        logger.warning("Erro ao invalidar grafo do modelo padrão: %s", e)
-
-
 def apply_model_change(provider: str, model: str) -> None:
     """Aplica troca de provider/model: SQLite + os.environ + Settings em memória + singletons LLM."""
     from backend.settings import PROVIDER_MODEL_ENV, settings
@@ -513,6 +503,4 @@ def apply_model_change(provider: str, model: str) -> None:
     except Exception as e:
         logger.warning("Erro ao atualizar settings singleton: %s", e)
 
-    # 4. Invalida o grafo do modelo padrão -> próxima chamada recompila com o novo LLM
-    _invalidate_default_graph()
     logger.info("Model aplicado: provider=%s model=%s", provider, model)

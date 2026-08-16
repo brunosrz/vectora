@@ -1,59 +1,54 @@
-"""Factory do agente Vectora usando create_deep_agent (harness canônico).
+"""Factory do agente Vectora — motor nativo (sem grafo LangGraph/deepagents).
 
-Substitui o StateGraph manual de src/graph.py. Expõe a mesma interface de
-lifecycle (get_user_agent, awarm, aclose) consumida por
-src/api/handlers/chat.py, garantindo zero alteração no caller.
+Expõe a interface de lifecycle (awarm, aclose) consumida por
+backend/api/handlers/chat.py, garantindo zero alteração no caller.
 
 Arquitetura:
-    - Agente principal (orchestrator) construído via create_deep_agent.
-    - Subagents como SubAgent dicts derivados de backend.agents.souls.SOUL_CATALOG
-      — catálogo de specs pré-compiladas (nome, descrição, prompt, tools); o
-      orquestrador escolhe qual delegar por `task(subagent_type=<nome>)`.
-    - HITL dinâmico por middleware: build_middleware_stack monta um único
-      HumanInTheLoopMiddleware cujo predicate lê permission_mode do
-      runtime.context por request (ver backend.services.middleware) — o mesmo
-      middleware é passado a cada subagent spec, senão delegação não pausa
-      pra aprovação (deepagents só herda o `interrupt_on` top-level de
-      create_deep_agent, que o Vectora nunca usa, não o `middleware=` custom).
-    - Checkpointer/Store: VectoraSqliteSaver/VectoraStore (nativos, aiosqlite),
-      ou VectoraPostgresSaver/VectoraPostgresStore (nativos, asyncpg) em
-      STORAGE_MODE=complete — implementam BaseCheckpointSaver/BaseStore do
-      LangGraph diretamente, sem as libs langgraph-checkpoint-sqlite/-postgres.
+    - ``get_native_agent``/``NativeAgent`` resolve tools + catálogo de
+      subagents (derivado de ``backend.agents.souls.SOUL_CATALOG``) + system
+      prompt para um ``(user_id, chat_mode, workspace_id)`` — sem grafo
+      compilado. O dispatch real roda em
+      ``backend/engine/conversation_loop.py::run_conversation``.
+    - HITL dinâmico via ``backend.engine.hitl`` — a política de aprovação por
+      ``permission_mode`` é lida por request, não compilada num grafo.
+    - Checkpointer/Store nativos: VectoraSqliteSaver/VectoraStore (aiosqlite),
+      ou VectoraPostgresSaver/VectoraPostgresStore (asyncpg) em
+      STORAGE_MODE=complete — implementam a mesma interface que os
+      equivalentes LangGraph implementavam, sem depender de langgraph.
     - Singleton compartilhado entre todos os usuários; versionamento por user
       via _version_tracker detecta rebind necessário de tools/policy/skills.
 
 Cache:
-    O grafo é compilado uma vez e compartilhado. A personalização por user fica
-    nas tools (ABAC via tool_policy) e no contexto injetado no system prompt
-    via configurable (user_name, language, workspace_id).
+    ``NativeAgent`` é resolvido uma vez por ``(user_id, chat_mode,
+    workspace_id)`` e compartilhado. A personalização por user fica nas
+    tools (ABAC via tool_policy) e no contexto injetado no system prompt.
 
 Lifecycle:
     Servidor: awarm() no startup, aclose() no shutdown.
     Testes: use fixtures que chamam aclose() no teardown.
 
-Dois dispatches coexistem neste módulo:
-    - ``get_native_agent`` / ``NativeAgent`` — motor nativo
-      (``backend/engine/conversation_loop.py::run_conversation``), consumido
-      pelo StreamChat/ResumeChat de produção
-      (``backend/api/handlers/chat.py``). Sem grafo compilado: tools e
-      subagentes não dependem do modelo escolhido (o ``ChatClient`` é
-      resolvido por chamada via ``FallbackChatClient``), então o cache é só
-      por ``(user_id, chat_mode, workspace_id)``.
-    - ``get_user_agent`` / ``_build_graph_async`` — grafo ``deepagents``
-      legado, mantido em uso por três consumidores que ainda esperam a API
-      do grafo (``.ainvoke``/``.aupdate_state``/``.astream_events``) e que
-      não fazem parte do escopo desta migração:
-      ``backend/scheduling/background_tasks.py`` (rotinas agendadas,
-      heartbreaks, resume de HITL em background, relatório de resultado na
-      sessão-mãe via ``aupdate_state``) e
-      ``backend/services/connect/runner.py`` (mensagens de plataformas
-      externas via ``handle_incoming_message``). Migrar esses dois
-      consumidores pro motor nativo é trabalho de uma fase seguinte — eles
-      escrevem histórico via checkpointer LangGraph, não via
-      ``SessionStore``, então uma thread tocada por uma task em background
-      pode ter mensagens em qualquer um dos dois backends de persistência
-      (ver fallback em ``aget_thread_messages``/``aget_thread_pending_interrupt``
-      abaixo).
+Dispatch de produção:
+    ``get_native_agent`` / ``NativeAgent`` — motor nativo
+    (``backend/engine/conversation_loop.py::run_conversation``), consumido
+    por todo caller de produção: StreamChat/ResumeChat
+    (``backend/api/handlers/chat.py``), rotinas agendadas/heartbreaks/resume
+    de HITL em background (``backend/scheduling/background_tasks.py``) e
+    mensagens de plataformas externas via Connect
+    (``backend/services/connect/runner.py``). Sem grafo compilado: tools e
+    subagentes não dependem do modelo escolhido (o ``ChatClient`` é
+    resolvido por chamada via ``FallbackChatClient``), então o cache é só
+    por ``(user_id, chat_mode, workspace_id)``.
+
+    O checkpointer/store LangGraph nativos (``VectoraSqliteSaver``/
+    ``VectoraPostgresSaver``/``VectoraPostgresStore``) seguem abertos por
+    ``_ensure_infra`` e expostos via ``get_checkpointer``/``get_store`` —
+    não são mais usados por nenhum grafo compilado, mas continuam servindo
+    outros consumidores nativos (tools de memória, backend nativo de
+    subagente avulso). O histórico de thread é sempre lido do
+    ``SessionStore`` nativo; sem produto em uso público até agora, não há
+    dado de conversa pré-existente em checkpointer LangGraph para migrar —
+    uma thread sem registro no ``SessionStore`` simplesmente não tem
+    histórico/todos/interrupt pendente.
 """
 
 from __future__ import annotations
@@ -449,24 +444,14 @@ def _build_session_system_prompt(
 
 
 # ---------------------------------------------------------------------------
-# Singleton do grafo
+# Singleton da infra de persistência (checkpointer/store nativos)
 # ---------------------------------------------------------------------------
 
-# Cache de grafos compilados por modelo (`model_id` "provider:model"; "" = o
-# padrão de env/settings). A troca de modelo por request constrói/reusa um
-# grafo por modelo — o deepagents não aceita modelo configurável, então cada
-# modelo tem seu grafo, todos compartilhando o MESMO checkpointer + store
-# (uma única conexão SQLite, sem disputa de lock).
-_graphs: dict[str, Any] = {}
-_graphs_by_user: dict[
-    tuple[str, str, str], Any
-] = {}  # (user_id, model, workspace) → graph
 _checkpointer_ctx: Any = None
 _checkpointer: Any = None
 _store: Any = None
 _store_ctx: Any = None  # context manager do store Postgres (complete mode)
 _lock = asyncio.Lock()
-_profiles_registered: bool = False
 
 # ---------------------------------------------------------------------------
 # Infra do motor nativo — SessionStore/ApprovalGate compartilhados
@@ -476,7 +461,7 @@ _session_store_pool: Any = None
 """``AsyncConnectionPool`` dedicado a ``sessions.db`` (histórico de
 mensagens/aprovações pendentes do motor nativo) — sempre SQLite local,
 independente de ``storage_mode``: ``SessionStore`` ainda não tem backend
-Postgres (só o checkpointer/store LangGraph legados têm as duas variantes)."""
+Postgres (só o checkpointer/store nativos abaixo têm as duas variantes)."""
 _session_store: SessionStore | None = None
 _approval_gate: ApprovalGate | None = None
 
@@ -485,9 +470,8 @@ _approval_gate: ApprovalGate | None = None
 class NativeAgent:
     """Componentes do motor nativo para um ``(user_id, chat_mode,
     workspace_id)`` — tools, catálogo de subagentes e system prompt já
-    resolvidos. Substitui o grafo compilado para o dispatch de produção do
-    chat (``backend/api/handlers/chat.py``); ver nota de escopo no topo do
-    módulo sobre os consumidores que ainda usam ``get_user_agent``."""
+    resolvidos. Consumido por todo o dispatch de produção
+    (``backend/api/handlers/chat.py``, rotinas agendadas, Connect)."""
 
     tool_registry: ToolRegistry
     subagent_catalog: dict[str, SubagentSpec]
@@ -702,225 +686,23 @@ async def get_checkpointer() -> Any:
     return _checkpointer
 
 
-async def _build_graph_async(
-    model_id: str = "",
-    chat_mode: bool = False,
-    user_id: str | None = None,
-    workspace_id: str | None = None,
-) -> Any:
-    """Compila um grafo deepagents para ``model_id`` (checkpointer/store compartilhados).
-
-    Não muta estado global de cache — quem cacheia é ``get_user_agent``. Vazio
-    em ``model_id`` usa o modelo padrão de env/settings. Em ``chat_mode`` o agente
-    é conversacional puro: ``CHAT_TOOLS`` (sem fs/git/terminal/workspace) e sem
-    subagents de dev. ``user_id`` filtra a toolset principal e a dos subagents
-    por ``tool_policy.effective_disabled`` (kill-switch global + ABAC).
-
-    O HITL é dinâmico (ver ``backend.services.middleware.build_middleware_stack``):
-    um único ``HumanInTheLoopMiddleware`` lê ``runtime.context.permission_mode``
-    por request, então o grafo compilado é o mesmo para todos os modos.
-    """
-    await _ensure_infra()
-
-    from typing import cast as _cast
-
-    from deepagents import create_deep_agent
-    from langchain_core.language_models.chat_models import BaseChatModel
-
-    from backend.llm.backends import build_backend
-    from backend.llm.fallback_chat_model import FallbackChatModel
-    from backend.nodes.tools import ALL_TOOLS, CHAT_TOOLS
-    from backend.workspace.workspace import workspace_registry
-
-    # FallbackChatModel envolve o LLM do modelo escolhido: em 429/quota antes do
-    # primeiro token, troca para o próximo provider de `fallback_order` (lido em
-    # runtime), registrando a troca p/ o handler de chat notificar a UI. Cadeia
-    # vazia → delega ao primário de forma transparente (sem overhead semântico).
-    llm: BaseChatModel = _cast(
-        "BaseChatModel", FallbackChatModel(primary_model_id=model_id)
-    )
-    tools = CHAT_TOOLS if chat_mode else ALL_TOOLS
-    disabled = tool_policy.effective_disabled(user_id)
-    if disabled:
-        tools = [t for t in tools if t.name not in disabled]
-        logger.debug(
-            "agent_factory: tools principais filtradas user=%s disabled=%s",
-            user_id,
-            disabled,
-        )
-    system_prompt = _build_session_system_prompt()
-
-    global _profiles_registered
-    if not _profiles_registered:
-        from backend.workspace.profiles import _register_profiles
-
-        _register_profiles()
-        _profiles_registered = True
-
-    # Middleware stack: um HumanInTheLoopMiddleware dinâmico (lê permission_mode
-    # do runtime.context por request). create_deep_agent já adiciona
-    # SummarizationMiddleware ao stack base incondicionalmente.
-    from backend.services.middleware import build_middleware_stack
-
-    middleware = build_middleware_stack()
-
-    # Chat puro não usa subagents (SOULs são orientadas a dev/filesystem/busca).
-    # middleware=middleware propaga o mesmo HITL dinâmico do agente principal
-    # pras delegações — sem isso, tools destrutivas dentro de um `task()`
-    # nunca pausam pra aprovação.
-    subagents = [] if chat_mode else _subagent_specs(user_id, middleware=middleware)
-
-    from backend.vtypes.context import VectoraContext
-    from backend.workspace.skills import list_skill_paths
-
-    # Skills instaladas pelo usuário local (singleton compartilhado).
-    # Paths absolutos — harness lê SKILL.md frontmatter on-demand.
-    skill_paths = [str(p) for p in list_skill_paths("local")]
-
-    # AGENTS.md paths para o MemoryMiddleware — injetado no system prompt.
-    memory_paths = _agents_md_paths()
-
-    effective_workspace_id = workspace_id
-    if effective_workspace_id is None and user_id:
-        try:
-            active_ws = workspace_registry.get_active(user_id)
-            effective_workspace_id = active_ws.id if active_ws else None
-        except Exception:
-            logger.debug(
-                "agent_factory: falha ao resolver workspace ativo do usuário %s",
-                user_id,
-                exc_info=True,
-            )
-
-    compiled = create_deep_agent(
-        llm,
-        tools=tools,
-        system_prompt=system_prompt,
-        subagents=subagents,
-        middleware=middleware,
-        backend=build_backend(
-            workspace_id=effective_workspace_id,
-            user_id=user_id,
-        ),
-        checkpointer=_checkpointer,
-        context_schema=VectoraContext,
-        skills=skill_paths,
-        store=_store,
-        memory=memory_paths,
-        name="vectora",
-    )
-
-    # O grafo é consumido via `astream_events` no handler de chat para
-    # streaming de tokens em tempo real. NÃO envolvemos em `with_retry`
-    # (RunnableRetry): o retry precisa poder reexecutar a chamada de forma
-    # atômica, então bufferiza a saída inteira — o cliente só veria a resposta
-    # ao final, sem streaming. Além disso, num 429 o retry insistia 3x com
-    # backoff (até ~30s) antes de surgir o erro. Erros transientes do provider
-    # são tratados pelo `max_retries` do próprio modelo (nível da chamada LLM,
-    # não quebra o stream) e classificados/limpos em `adapters.classify_stream_error`.
-    logger.info(
-        "agent_factory: grafo compilado (model=%r, chat_mode=%s, deepagents + %d tools + %d subagents + %d middleware)",
-        model_id or "default",
-        chat_mode,
-        len(tools),
-        len(subagents),
-        len(middleware),
-    )
-    return compiled
-
-
 def _check_global_tools_version() -> None:
-    """Se o kill-switch global de tools mudou, derruba TODOS os grafos em cache.
+    """Se o kill-switch global de tools mudou, derruba o cache de ``NativeAgent``.
 
-    Precisa rodar antes de qualquer lookup em ``_graphs``/``_graphs_by_user``
-    (chamado no início de ``get_user_agent``), senão uma sessão já em cache
-    continuaria usando o toolset antigo indefinidamente.
+    Precisa rodar antes de qualquer lookup em ``_native_agents`` (chamado no
+    início de ``get_native_agent``), senão uma sessão já em cache continuaria
+    usando o toolset antigo indefinidamente.
     """
     global _global_tools_version
     current = tool_policy.policy_version(tool_policy.GLOBAL_SCOPE)
     if _global_tools_version is not None and current != _global_tools_version:
-        _graphs.clear()
-        _graphs_by_user.clear()
         _native_agents.clear()
         logger.info(
-            "agent_factory: kill-switch global de tools mudou (v%d→v%d) — grafos invalidados",
+            "agent_factory: kill-switch global de tools mudou (v%d→v%d) — NativeAgents invalidados",
             _global_tools_version,
             current,
         )
     _global_tools_version = current
-
-
-async def get_user_agent(
-    user_id: str | None = None,
-    model: str = "",
-    chat_mode: bool = False,
-    workspace_id: str | None = None,
-) -> Any:
-    """Retorna o grafo compilado para (user_id, model, chat_mode).
-
-    Se user_id está presente: cacheia por (user_id, model_key). Se user_id é None:
-    usa cache global por model_key. O ``chat_mode`` entra no ``model_key`` (sufixo
-    ``#chat``) — chat e dev têm grafos compilados separados (toolsets diferentes).
-
-    O ``permission_mode`` NÃO entra na chave de cache: o HITL é dinâmico (lê
-    ``runtime.context.permission_mode`` por request via ``_dynamic_hitl_when``),
-    então um único grafo por (user, model, chat_mode) atende os 5 modos. Trocar o
-    modo na appbar passa a valer no turno seguinte sem recompilar nem trocar de
-    grafo. Todos compartilham checkpointer/store. Thread-safe via asyncio.Lock.
-
-    A toolset é filtrada por ``tool_policy.effective_disabled(user_id)`` no
-    momento da compilação (``_build_graph_async``); mudanças de política depois
-    disso só valem a partir da próxima invalidação de cache (``_track_versions``
-    por usuário, ``_check_global_tools_version`` para o kill-switch do admin).
-    """
-    _check_global_tools_version()
-
-    effective_workspace_id = workspace_id
-    if effective_workspace_id is None and user_id:
-        try:
-            from backend.workspace.workspace import workspace_registry
-
-            active_ws = workspace_registry.get_active(user_id)
-            effective_workspace_id = active_ws.id if active_ws else None
-        except Exception:
-            logger.debug(
-                "agent_factory: falha ao resolver workspace ativo do usuário %s",
-                user_id,
-                exc_info=True,
-            )
-
-    base = model or "__default__"
-    model_key = f"{base}#chat" if chat_mode else base
-    workspace_key = effective_workspace_id or ""
-
-    # Cache por sessão (user_id, model_key, workspace_id)
-    if user_id:
-        session_key = (user_id, model_key, workspace_key)
-        if session_key not in _graphs_by_user:
-            async with _lock:
-                if session_key not in _graphs_by_user:
-                    _graphs_by_user[session_key] = await _build_graph_async(
-                        model,
-                        chat_mode,
-                        user_id,
-                        effective_workspace_id,
-                    )
-        _track_versions(user_id)
-        return _graphs_by_user[session_key]
-
-    # Fallback: cache global por model_key + workspace_id
-    global_key = f"{model_key}::ws={workspace_key}"
-    if global_key not in _graphs:
-        async with _lock:
-            if global_key not in _graphs:
-                _graphs[global_key] = await _build_graph_async(
-                    model,
-                    chat_mode,
-                    user_id,
-                    effective_workspace_id,
-                )
-
-    return _graphs[global_key]
 
 
 # ---------------------------------------------------------------------------
@@ -1020,7 +802,7 @@ async def get_native_agent(
 ) -> NativeAgent:
     """Componentes do motor nativo (tools, subagentes, system prompt) para
     o dispatch de produção do chat — cache por ``(user_id, chat_mode,
-    workspace_id)``. Thread-safe via o mesmo ``_lock`` do cache de grafos."""
+    workspace_id)``. Thread-safe via ``_lock``."""
     _check_global_tools_version()
 
     key = (user_id or "", chat_mode, workspace_id or "")
@@ -1035,31 +817,6 @@ async def get_native_agent(
     return _native_agents[key]
 
 
-def _message_text(content: Any) -> str:
-    """Extrai o texto de uma mensagem (str ou lista de partes multimodais).
-
-    Mensagens AI modernas têm ``content`` como lista de blocos
-    (``[{"type": "text", "text": ...}, ...]``); extrai e concatena só o texto.
-    """
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        parts: list[str] = []
-        for block in content:
-            if isinstance(block, dict):
-                btype = block.get("type")
-                if btype == "text":
-                    parts.append(str(block.get("text", "")))
-                elif btype == "image_url":
-                    # Placeholder para imagem no histórico (evita base64 gigante no payload REST).
-                    # TODO: Implementar armazenamento de arquivos para persistir imagens reais no histórico.
-                    parts.append("\n[Imagem]\n")
-            elif isinstance(block, str):
-                parts.append(block)
-        return "".join(parts)
-    return str(content)
-
-
 async def aget_thread_messages(
     thread_id: str,
     workspace_id: str | None = None,
@@ -1067,123 +824,30 @@ async def aget_thread_messages(
     """Mensagens persistidas de uma thread como ``(role, text, checkpoint_id,
     attachments_meta)``.
 
-    Consulta o ``SessionStore`` nativo primeiro (fonte de verdade do
-    StreamChat/ResumeChat de produção) — ``checkpoint_id`` aqui é o ``id``
-    da mensagem (``str(int)``), alvo de ``SessionStore.set_branch_head``
-    pra "editar e reenviar"/"regenerar". Thread sem nenhuma mensagem nativa
-    cai no fallback do checkpointer LangGraph legado (thread só tocada por
-    tarefa em background/mensageria externa — ver nota de escopo no topo
-    do módulo). ``attachments_meta`` sempre ``[]`` no caminho nativo:
-    ``VMessage`` ainda não carrega metadados de anexo (gap documentado —
-    thumbnails de imagem não reaparecem num reload de thread nativa; o
-    anexo em si continua enviado ao provider e persistido em disco).
+    Lê do ``SessionStore`` nativo — fonte única de verdade do dispatch de
+    produção (StreamChat/ResumeChat, rotinas agendadas, Connect).
+    ``checkpoint_id`` aqui é o ``id`` da mensagem (``str(int)``), alvo de
+    ``SessionStore.set_branch_head`` pra "editar e reenviar"/"regenerar".
+    Thread sem nenhum registro no ``SessionStore`` devolve lista vazia — sem
+    dado de conversa pré-existente em produto público, não há checkpointer
+    legado a consultar. ``attachments_meta`` sempre ``[]``: ``VMessage``
+    ainda não carrega metadados de anexo (gap documentado — thumbnails de
+    imagem não reaparecem num reload de thread; o anexo em si continua
+    enviado ao provider e persistido em disco).
     """
     from backend.vtypes.message import MessageRole
 
     store = await get_session_store()
     pares = await store.get_history_with_ids(thread_id)
-    if pares:
-        out: list[tuple[str, str, str, list[dict[str, Any]]]] = []
-        for msg_id, msg in pares:
-            if msg.role in (MessageRole.TOOL, MessageRole.SYSTEM):
-                continue
-            text = msg.text().strip()
-            if not text:
-                continue
-            role = "human" if msg.role == MessageRole.USER else "assistant"
-            out.append((role, text, str(msg_id), []))
-        return out
-
-    return await _aget_thread_messages_legacy(thread_id, workspace_id)
-
-
-async def _aget_thread_messages_legacy(
-    thread_id: str,
-    workspace_id: str | None = None,
-) -> list[tuple[str, str, str, list[dict[str, Any]]]]:
-    """Fallback: histórico via checkpointer deepagents legado — ver
-    docstring de ``aget_thread_messages`` e a nota de escopo no topo do
-    módulo.
-
-    Usa o grafo deepagents compilado (schema idêntico ao que escreveu os
-    checkpoints) para ler o histórico via ``aget_state_history`` — não só o
-    estado mais recente (``aget_state``), pra poder atribuir a cada mensagem o
-    checkpoint pai (estado do thread imediatamente antes dela existir). Um
-    grafo mínimo NOOP falha na desserialização porque não possui os canais
-    internos do deepagents.
-
-    O ``checkpoint_id`` devolvido por mensagem é o alvo de fork pra "editar e
-    reenviar" (edita a própria mensagem) e "regenerar" (edita a última
-    resposta do assistente) — resumir o grafo a partir dele faz o LangGraph
-    ramificar dali, preservando o histórico original intacto (ver
-    ``ChatConfig.fork_from_checkpoint_id`` em chat.py). Vazio quando não há
-    checkpoint pai (raríssimo — thread sem nenhum estado gravado ainda).
-
-    Filtra mensagens de tool e turnos AI sem texto — devolve transcript limpo.
-    """
-    await _ensure_infra()
-    if _checkpointer is None:
-        return []
-
-    from langchain_core.runnables import RunnableConfig
-
-    graph = await get_user_agent(workspace_id=workspace_id)
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    try:
-        # aget_state_history vem do mais recente pro mais antigo (LangGraph);
-        # inverte pra processar em ordem cronológica e comparar snapshots
-        # consecutivos. Itera TODOS os checkpoints do grafo (um por
-        # super-step — cada tool call, cada delegação de subagente, cada
-        # write_todos), não só as mensagens finais — numa conversa longa
-        # isso pode ser milhares de checkpoints; timeout explícito evita
-        # travar indefinidamente numa cadeia muito grande.
-        async with asyncio.timeout(30):
-            history = [snap async for snap in graph.aget_state_history(config)]
-    except TimeoutError:
-        logger.warning(
-            "aget_thread_messages: timeout lendo histórico thread=%s "
-            "(conversa muito longa? checkpointer lento?)",
-            thread_id,
-        )
-        return []
-    except Exception:
-        # Antes era logger.debug — silencioso demais para um erro que
-        # esvazia o histórico inteiro do usuário sem nenhuma pista visível
-        # nos logs padrão (INFO/WARNING).
-        logger.warning(
-            "aget_thread_messages: falha ao ler histórico thread=%s",
-            thread_id,
-            exc_info=True,
-        )
-        return []
-
-    if not history:
-        return []
-    history.reverse()
-
     out: list[tuple[str, str, str, list[dict[str, Any]]]] = []
-    prev_len = 0
-    for snapshot in history:
-        msgs = snapshot.values.get("messages", []) if snapshot.values else []
-        new_msgs = msgs[prev_len:]
-        if new_msgs:
-            parent_config = snapshot.parent_config or {}
-            parent_checkpoint_id = parent_config.get("configurable", {}).get(
-                "checkpoint_id", ""
-            )
-            for msg in new_msgs:
-                msg_type = getattr(msg, "type", "")
-                if msg_type == "tool":
-                    continue
-                text = _message_text(getattr(msg, "content", "")).strip()
-                if not text:
-                    continue
-                role = "human" if msg_type == "human" else "assistant"
-                attachments_meta = getattr(msg, "additional_kwargs", {}).get(
-                    "attachments_meta", []
-                )
-                out.append((role, text, parent_checkpoint_id, attachments_meta))
-        prev_len = len(msgs)
+    for msg_id, msg in pares:
+        if msg.role in (MessageRole.TOOL, MessageRole.SYSTEM):
+            continue
+        text = msg.text().strip()
+        if not text:
+            continue
+        role = "human" if msg.role == MessageRole.USER else "assistant"
+        out.append((role, text, str(msg_id), []))
     return out
 
 
@@ -1195,56 +859,14 @@ async def aget_thread_todos(
 
     Gap documentado: o motor nativo (``backend/engine/conversation_loop.py``)
     não tem nenhuma tool ``write_todos``/rastreamento de plano equivalente
-    ao ``TodoListMiddleware`` que o deepagents injetava incondicionalmente
-    — threads despachadas pelo motor nativo sempre devolvem ``[]`` aqui (a
-    seção "Tasks" do Plan tab fica vazia para elas). Cair no fallback
-    legado só faz sentido pra threads que nunca passaram pelo motor nativo
-    (mensagens só em ``SessionStore`` → sem histórico deepagents pra ler).
+    ao ``TodoListMiddleware`` que o grafo deepagents legado injetava — toda
+    thread despachada pelo motor nativo devolve ``[]`` aqui (a seção "Tasks"
+    do Plan tab fica vazia). ``workspace_id`` não é usado hoje; mantido na
+    assinatura para paridade com ``aget_thread_messages``/
+    ``aget_thread_pending_interrupt``, caso um rastreamento de plano nativo
+    seja adicionado por workspace no futuro.
     """
-    store = await get_session_store()
-    pares = await store.get_history_with_ids(thread_id)
-    if pares:
-        return []
-
-    return await _aget_thread_todos_legacy(thread_id, workspace_id)
-
-
-async def _aget_thread_todos_legacy(
-    thread_id: str,
-    workspace_id: str | None = None,
-) -> list[dict[str, str]]:
-    """Fallback: snapshot de ``state["todos"]`` via checkpointer deepagents
-    legado — ver docstring de ``aget_thread_todos`` e a nota de escopo no
-    topo do módulo.
-
-    Popula a seção "Tasks" do Plan tab num reload de página — o SSE ao vivo
-    (``TodosUpdatedEvent``) já entrega isso em tempo real, mas não persiste
-    em lugar nenhum entre streams; aqui lê direto do checkpoint, mesma fonte
-    de verdade de ``aget_thread_messages``. Usa ``aget_state`` (só o
-    snapshot mais recente), não ``aget_state_history`` — não precisa do
-    histórico completo, só do estado atual.
-    """
-    await _ensure_infra()
-    if _checkpointer is None:
-        return []
-
-    from langchain_core.runnables import RunnableConfig
-
-    graph = await get_user_agent(workspace_id=workspace_id)
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    try:
-        snapshot = await graph.aget_state(config)
-    except Exception:
-        logger.debug(
-            "aget_thread_todos: falha ao ler state thread=%s",
-            thread_id,
-            exc_info=True,
-        )
-        return []
-
-    if not snapshot or not snapshot.values:
-        return []
-    return snapshot.values.get("todos", []) or []
+    return []
 
 
 async def aget_thread_pending_interrupt(
@@ -1253,89 +875,20 @@ async def aget_thread_pending_interrupt(
     """Devolve o interrupt pendente da thread (se houver), pra reidratar o
     HITLPanel após um reload de página.
 
-    Consulta ``SessionStore.get_pending_approval`` primeiro (motor nativo —
-    ``ApprovalGate.request_approval`` persiste ali de forma síncrona,
-    sobrevivendo a restart). Sem pendência nativa, cai no fallback do
-    checkpointer deepagents legado (ver nota de escopo no topo do módulo).
-    Retorna ``None`` se não houver interrupt pendente em nenhum dos dois —
-    nunca lança, é consultado num reload de página.
+    Consulta ``SessionStore.get_pending_approval`` — ``ApprovalGate.
+    request_approval`` persiste ali de forma síncrona, sobrevivendo a
+    restart. Retorna ``None`` sem pendência; nunca lança, é consultado num
+    reload de página.
     """
     store = await get_session_store()
     pending = await store.get_pending_approval(thread_id)
-    if pending is not None:
-        return {
-            "tool_name": pending["tool_name"],
-            "args": pending["args"],
-            "interrupt_id": pending["interrupt_id"],
-        }
-
-    return await _aget_thread_pending_interrupt_legacy(thread_id, workspace_id)
-
-
-async def _aget_thread_pending_interrupt_legacy(
-    thread_id: str, workspace_id: str | None = None
-) -> dict[str, Any] | None:
-    """Fallback: interrupt pendente via checkpointer deepagents legado —
-    ver docstring de ``aget_thread_pending_interrupt`` e a nota de escopo
-    no topo do módulo.
-
-    O interrupt sobrevive a um restart do backend — o checkpointer é real,
-    não ``MemorySaver`` — mas a UI só *mostra* a proposta quando a mensagem
-    chega via streaming; um F5 no meio de uma pausa HITL perdia o card até
-    o usuário mandar uma mensagem nova. Lê ``snapshot.tasks[*].interrupts``
-    (não ``snapshot.values``) — é onde o LangGraph guarda o interrupt de um
-    nó pausado, mesmo formato que ``adapters.py`` consome ao vivo do
-    ``on_chain_stream``.
-    """
-    await _ensure_infra()
-    if _checkpointer is None:
+    if pending is None:
         return None
-
-    from langchain_core.runnables import RunnableConfig
-
-    graph = await get_user_agent(workspace_id=workspace_id)
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    try:
-        snapshot = await graph.aget_state(config)
-    except Exception:
-        logger.debug(
-            "aget_thread_pending_interrupt: falha ao ler state thread=%s",
-            thread_id,
-            exc_info=True,
-        )
-        return None
-
-    if not snapshot or not snapshot.tasks:
-        return None
-
-    for task in snapshot.tasks:
-        interrupts = getattr(task, "interrupts", None) or ()
-        for intr in interrupts:
-            intr_val = getattr(intr, "value", None)
-            if not isinstance(intr_val, list) or not intr_val:
-                continue
-            first = intr_val[0]
-            if not isinstance(first, dict):
-                continue
-            return {
-                "tool_name": first.get("name", "unknown"),
-                "args": first.get("args", {}) or {},
-                "interrupt_id": first.get("id", ""),
-            }
-    return None
-
-
-def reset_default_graph() -> None:
-    """Invalida o grafo do modelo padrão após troca de provider/model.
-
-    ``apply_model_change`` muda o provider/modelo padrão (env/settings); o grafo
-    ``"__default__"`` foi compilado com o LLM antigo e fica stale. O cache por
-    modelo explícito (``"provider:model"``) continua válido. Requests em voo que
-    já seguram o grafo antigo não são afetados — o próximo ``get_user_agent()``
-    sem modelo recompila com o novo padrão.
-    """
-    _graphs.pop("__default__", None)
-    logger.info("agent_factory: grafo do modelo padrão invalidado (troca de modelo)")
+    return {
+        "tool_name": pending["tool_name"],
+        "args": pending["args"],
+        "interrupt_id": pending["interrupt_id"],
+    }
 
 
 def _track_versions(user_id: str) -> None:
@@ -1354,17 +907,13 @@ def _track_versions(user_id: str) -> None:
 
 
 def _invalidate_llm_cache(user_id: str) -> None:
-    """Remove os grafos compilados em cache do usuário (tools/policy/skills mudaram).
+    """Remove o ``NativeAgent`` em cache do usuário (tools/policy/skills mudaram).
 
-    Purga ``_graphs_by_user`` — o cache real consultado por ``get_user_agent``
-    — para que a próxima chamada recompile com a toolset atualizada. Também
-    limpa ``llm_tools._bound_cache`` (cache auxiliar por chave de versão).
+    Purga ``_native_agents`` para que a próxima chamada a ``get_native_agent``
+    reconstrua com a toolset atualizada. Também limpa ``llm_tools._bound_cache``
+    (cache auxiliar por chave de versão).
     """
     try:
-        stale_graph_keys = [k for k in _graphs_by_user if k[0] == user_id]
-        for k in stale_graph_keys:
-            del _graphs_by_user[k]
-
         stale_native_keys = [k for k in _native_agents if k[0] == user_id]
         for k in stale_native_keys:
             del _native_agents[k]
@@ -1374,11 +923,10 @@ def _invalidate_llm_cache(user_id: str) -> None:
         stale_keys = [k for k in llm_tools._bound_cache if k[0] == user_id]
         for k in stale_keys:
             del llm_tools._bound_cache[k]
-        if stale_graph_keys or stale_native_keys or stale_keys:
+        if stale_native_keys or stale_keys:
             logger.info(
-                "agent_factory: %d grafo(s) + %d NativeAgent(s) + %d entrada(s) "
+                "agent_factory: %d NativeAgent(s) + %d entrada(s) "
                 "de LLM cache invalidados para %s",
-                len(stale_graph_keys),
                 len(stale_native_keys),
                 len(stale_keys),
                 user_id,
@@ -1448,8 +996,8 @@ async def coder_compensate(workspace_id: str | None = None) -> str | None:
 
 
 async def aclose() -> None:
-    """Fecha o grafo + checkpointer/store (SQLite ou Postgres) + o
-    ``SessionStore``/``ApprovalGate`` nativos. Idempotente.
+    """Fecha o checkpointer/store nativos (SQLite ou Postgres) + o
+    ``SessionStore``/``ApprovalGate``. Idempotente.
 
     Deve ser chamado no shutdown do FastAPI (lifespan).
     """
@@ -1477,7 +1025,6 @@ async def aclose() -> None:
         _checkpointer = None
         _store = None  # reaberto no próximo _ensure_infra
         _store_ctx = None
-        _graphs.clear()
         _version_tracker.clear()
         try:
             # ctx é o pool que _ensure_infra abriu: AsyncConnectionPool
@@ -1497,12 +1044,15 @@ async def aclose() -> None:
 
 
 async def awarm() -> None:
-    """Inicializa o grafo eagerly no startup (opt-in).
+    """Inicializa a infra de persistência + o ``NativeAgent`` padrão eagerly
+    no startup (opt-in).
 
-    Evita que a primeira request pague o custo de compilação (~3-5s).
-    Falhas aqui não derrubam o servidor — apenas logam aviso.
+    Evita que a primeira request pague o custo de abrir checkpointer/store e
+    montar tools/subagentes. Falhas aqui não derrubam o servidor — apenas
+    logam aviso.
     """
     try:
-        await get_user_agent()
+        await _ensure_infra()
+        await get_native_agent()
     except Exception as exc:
         logger.warning("agent_factory: awarm falhou: %s", exc)

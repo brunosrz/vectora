@@ -59,7 +59,6 @@ _GEMINI_EXCLUDED: frozenset[str] = frozenset(
 def _register_profiles() -> None:
     """Registra os perfis de harness do Vectora no deepagents.
 
-    Chamado uma vez no startup do ``agent_factory._build_graph_async()``.
     Idempotente: registrar o mesmo perfil duas vezes simplesmente sobrescreve.
     """
     try:

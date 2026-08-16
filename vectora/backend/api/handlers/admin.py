@@ -369,7 +369,7 @@ async def list_tools_admin(request: Request) -> dict:
     """Lista todas as tools com status de habilitação global.
 
     "enabled" reflete ``tool_policy.GLOBAL_SCOPE`` — o mesmo kill-switch
-    aplicado na compilação do grafo do agente (``agent_factory._build_graph_async``),
+    aplicado na montagem do ``NativeAgent`` (``agent_factory._native_tool_registry``),
     não um valor decorativo.
     """
     user = _get_user(request)
@@ -404,9 +404,9 @@ async def list_tools_admin(request: Request) -> dict:
 async def toggle_tool(request: Request, tool_name: str, body: ToolToggleBody) -> dict:
     """Habilita ou desabilita uma tool globalmente (kill-switch, todas as sessões).
 
-    Persiste em ``tool_policy.GLOBAL_SCOPE`` — o próximo ``get_user_agent()``
-    (qualquer usuário) recompila o grafo sem a tool, via invalidação de cache
-    em ``agent_factory._check_global_tools_version``.
+    Persiste em ``tool_policy.GLOBAL_SCOPE`` — o próximo ``get_native_agent()``
+    (qualquer usuário) reconstrói o ``NativeAgent`` sem a tool, via invalidação
+    de cache em ``agent_factory._check_global_tools_version``.
     """
     user = _get_user(request)
     require_admin(user)
