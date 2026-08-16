@@ -152,13 +152,11 @@ class TestCallMcpToolIntegration:
 
     async def test_mcp_desabilitado_retorna_aviso(self, monkeypatch):
         monkeypatch.setattr(mcp_tool_module.settings, "enable_mcp", False)
-        result = await call_mcp_tool.ainvoke({"tool_name": "echo", "arguments": "{}"})
+        result = await call_mcp_tool(tool_name="echo", arguments="{}")
         assert "desabilitado" in result.lower()
 
     async def test_arguments_json_invalido_retorna_erro_tipado(self, _enable_mcp):
-        result = await call_mcp_tool.ainvoke(
-            {"tool_name": "echo", "arguments": "{invalido"}
-        )
+        result = await call_mcp_tool(tool_name="echo", arguments="{invalido")
         assert "JSON válido" in result
 
     async def test_nenhum_servidor_configurado_retorna_aviso(
@@ -166,23 +164,19 @@ class TestCallMcpToolIntegration:
     ):
         monkeypatch.setattr(mcp_tool_module.settings, "mcp_server_url", None)
         monkeypatch.setattr(mcp_tool_module.settings, "mcp_command", None)
-        result = await call_mcp_tool.ainvoke({"tool_name": "echo", "arguments": "{}"})
+        result = await call_mcp_tool(tool_name="echo", arguments="{}")
         assert "Nenhuma tool MCP disponível" in result
 
     async def test_happy_path_chama_tool_do_servidor_real(
         self, _enable_mcp, _dummy_server_settings
     ):
-        result = await call_mcp_tool.ainvoke(
-            {"tool_name": "echo", "arguments": '{"text": "mundo"}'}
-        )
+        result = await call_mcp_tool(tool_name="echo", arguments='{"text": "mundo"}')
         assert result == "echo: mundo"
 
     async def test_tool_inexistente_lista_disponiveis(
         self, _enable_mcp, _dummy_server_settings
     ):
-        result = await call_mcp_tool.ainvoke(
-            {"tool_name": "nao_existe", "arguments": "{}"}
-        )
+        result = await call_mcp_tool(tool_name="nao_existe", arguments="{}")
         assert "não encontrada" in result
         assert "echo" in result
 
@@ -190,7 +184,5 @@ class TestCallMcpToolIntegration:
         self, _enable_mcp, _dummy_server_settings, monkeypatch
     ):
         monkeypatch.setattr(mcp_tool_module.settings, "mcp_timeout", 0)
-        result = await call_mcp_tool.ainvoke(
-            {"tool_name": "echo", "arguments": '{"text": "x"}'}
-        )
+        result = await call_mcp_tool(tool_name="echo", arguments='{"text": "x"}')
         assert "excedeu" in result

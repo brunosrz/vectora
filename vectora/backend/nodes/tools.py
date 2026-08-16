@@ -61,6 +61,9 @@ from backend.tools import (
     linear as _linear_module,
 )
 from backend.tools import (
+    mcp as _mcp_module,
+)
+from backend.tools import (
     media as _media_module,
 )
 from backend.tools import (
@@ -88,7 +91,6 @@ from backend.tools import (
     workspace as _workspace_module,
 )
 from backend.tools.langchain_bridge import as_langchain_tool
-from backend.tools.mcp import call_mcp_tool
 from backend.tools.native import (
     base64_decode,
     base64_encode,
@@ -157,6 +159,7 @@ git_worktree = _bridge("git_worktree")
 git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 git_discard = _bridge("git_discard")
+call_mcp_tool = _bridge("call_mcp_tool")
 kanban_list = _bridge("kanban_list")
 kanban_create = _bridge("kanban_create")
 kanban_update_status = _bridge("kanban_update_status")

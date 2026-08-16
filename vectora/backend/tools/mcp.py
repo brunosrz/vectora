@@ -1,23 +1,15 @@
 """MCP tool: invoca ferramentas de outros servidores via Model Context Protocol.
 
-Usa o SDK oficial `mcp` (Python) direto — este módulo não depende mais de
-`langchain-mcp-adapters`/`MultiServerMCPClient` (a lib segue no projeto só
+Usa o SDK oficial `mcp` (Python) direto — este módulo não depende de
+`langchain-mcp-adapters`/`MultiServerMCPClient` (essa lib segue no projeto só
 por causa de `backend/workspace/plugins.py`, que resolve tools MCP
-por-usuário direto pro grafo LangChain; migra junto do corte de dispatch).
+por-usuário direto pro grafo ainda em produção).
 `VectoraMCPClient` mantém uma `ClientSession` por servidor configurado
 (stdio/SSE/streamable_http) e expõe as `mcp.types.Tool` agregadas.
 
-A tool `call_mcp_tool` em si continua no formato `@tool` do
-`langchain.tools` (não `@vtool`/`ToolSpec`) — o dispatch de produção
-(`agent_factory.py`/`create_deep_agent`) ainda consome `BaseTool`; a
-migração pro registry nativo é escopo da etapa de "migração de tools de
-produção" da conclusão da Sprint 14, não desta workstream (que troca só o
-client MCP por baixo, sem tocar a interface exposta ao agente).
-
 Subprocess stdio nunca herda `os.environ` inteiro do processo pai — só um
 allowlist mínimo (`_SAFE_SUBPROCESS_ENV_KEYS`) é repassado, fechando o vazamento
-de API keys de LLM/tokens pro servidor MCP local (achado da comparação com o
-Hermes, `documents/features.md` §4).
+de API keys de LLM/tokens pro servidor MCP local.
 """
 
 from __future__ import annotations
@@ -30,7 +22,6 @@ import time
 from contextlib import AsyncExitStack
 from typing import Any
 
-from langchain.tools import tool
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
@@ -38,6 +29,7 @@ from mcp.client.streamable_http import streamable_http_client
 from mcp.types import Tool as MCPTool
 
 from backend.settings import settings
+from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
 
@@ -236,13 +228,13 @@ async def _get_mcp_client() -> VectoraMCPClient | None:
     return _mcp_client
 
 
-@tool(
-    extras={
-        "render_hint": "json",
-        "category": "mcp",
-        "destructive": False,
-        "icon": "share-2",
-    }
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="mcp",
+        destructive=False,
+        icon="share-2",
+    )
 )
 async def call_mcp_tool(tool_name: str, arguments: str) -> str:
     """Invoca uma ferramenta de outro servidor MCP via Model Context Protocol.

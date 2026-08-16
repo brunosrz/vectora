@@ -28,11 +28,11 @@ from backend.tools import browser as _browser_module
 from backend.tools import fs as _fs_module
 from backend.tools import git as _git_module
 from backend.tools import github as _github_module
+from backend.tools import mcp as _mcp_module
 from backend.tools import memory as _memory_module
 from backend.tools import rag as _rag_module
 from backend.tools import web as _web_module
 from backend.tools.langchain_bridge import as_langchain_tool
-from backend.tools.mcp import call_mcp_tool
 from backend.tools.native import (
     base64_decode,
     base64_encode,
@@ -71,6 +71,7 @@ git_stage = _bridge("git_stage")
 git_unstage = _bridge("git_unstage")
 github_fetch_pr_diff = _bridge("github_fetch_pr_diff")
 github_post_pr_comment = _bridge("github_post_pr_comment")
+call_mcp_tool = _bridge("call_mcp_tool")
 web_search = _bridge("web_search")
 fetch_url = _bridge("fetch_url")
 embedding = _bridge("embedding")
