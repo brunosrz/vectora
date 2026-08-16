@@ -155,6 +155,11 @@ class TestNamespaceIsolation:
 def store(monkeypatch):
     real_store = InMemoryStore()
     monkeypatch.setattr("backend.tools.memory._get_store", lambda: real_store)
+
+    async def _fake_agent_store() -> InMemoryStore:
+        return real_store
+
+    monkeypatch.setattr("backend.services.agent_factory.get_store", _fake_agent_store)
     return real_store
 
 
@@ -222,7 +227,11 @@ class TestSaveMemoryCategory:
 class TestListFactContents:
     """`list_fact_contents` — acessor simples usado por `remember_trigger.py`
     (fora do wrapper `vtool`, que exige `ToolContext`) pra buscar os fatos já
-    salvos de um usuário antes de propor duplicatas."""
+    salvos de um usuário antes de propor duplicatas. Roda fire-and-forget
+    DEPOIS do turno já ter terminado — nunca pode depender de
+    `langgraph.config.get_store()` (contextvar só válido durante a execução
+    do grafo), por isso usa `agent_factory.get_store()` em vez de
+    `_get_store()`."""
 
     async def test_retorna_conteudo_de_todos_os_fatos_do_usuario(self, store):
         from backend.tools.memory import list_fact_contents, save_memory
@@ -241,3 +250,31 @@ class TestListFactContents:
         result = await list_fact_contents("usuario-novo")
 
         assert result == []
+
+    async def test_funciona_fora_do_contexto_de_execucao_do_grafo(self, monkeypatch):
+        """Regressão: `_get_store()` (via `langgraph.config.get_store()`)
+        levanta RuntimeError fora de um nó em execução — exatamente o
+        cenário real do caller (`remember_trigger.py`, disparado via
+        `asyncio.ensure_future` depois do turno já ter terminado).
+        `list_fact_contents` precisa funcionar mesmo assim, porque não
+        depende mais de `_get_store()`."""
+        from backend.tools.memory import list_fact_contents
+
+        def _boom() -> None:
+            raise RuntimeError("Called get_config outside of a runnable context")
+
+        monkeypatch.setattr("backend.tools.memory._get_store", _boom)
+
+        real_store = InMemoryStore()
+
+        async def _fake_agent_store() -> InMemoryStore:
+            return real_store
+
+        monkeypatch.setattr(
+            "backend.services.agent_factory.get_store", _fake_agent_store
+        )
+        await real_store.aput(("user", "u2", "memories"), "a", {"content": "Fato C"})
+
+        result = await list_fact_contents("u2")
+
+        assert result == ["Fato C"]

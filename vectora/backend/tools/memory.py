@@ -64,8 +64,15 @@ async def list_fact_contents(user_id: str) -> list[str]:
     `backend/services/remember_trigger.py` pra deduplicar propostas do
     Remember (`dedupe_fact_drafts`) antes de sugerir de novo um fato já
     aprovado. Acessor direto (sem passar por `ToolContext`/`vtool`, que o
-    caller — fora do turno do agente — não tem)."""
-    store = _get_store()
+    caller — fora do turno do agente — não tem).
+
+    Usa `backend.services.agent_factory.get_store()` (mesma instância
+    injetada no grafo do agente via `create_deep_agent(store=...)`), não
+    `_get_store()` — o caller roda fire-and-forget depois do turno já
+    terminado, fora do contexto de execução que `_get_store()` exige."""
+    from backend.services.agent_factory import get_store as get_agent_store
+
+    store = await get_agent_store()
     ns = _memory_namespace(ToolContext(user_id=user_id))
     items = await store.asearch(ns)
     return [item.value.get("content", "") for item in items]
