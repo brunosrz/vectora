@@ -328,6 +328,7 @@
   "page_downloads_title": "Downloads",
   "page_downloads_desc": "Download Vectora Desktop for your system.",
   "downloads_recommended": "Recommended",
+  "current_version_label": "Current version",
   "downloads_cta": "Download",
   "downloads_footer": "Same signed binary, built for each platform. Your data never leaves your server.",
   "auth_device_title": "Authorize Vectora",

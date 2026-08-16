@@ -325,6 +325,7 @@
   "page_downloads_title": "Téléchargements",
   "page_downloads_desc": "Téléchargez Vectora Desktop pour votre système.",
   "downloads_recommended": "Recommandé",
+  "current_version_label": "Version actuelle",
   "downloads_cta": "Télécharger",
   "downloads_footer": "Le même binaire signé, compilé pour chaque plateforme. Vos données ne quittent jamais votre serveur.",
   "signup_confirm_heading": "Confirmez votre e-mail",

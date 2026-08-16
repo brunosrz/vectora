@@ -226,6 +226,78 @@ describe("GET /download/:channel/:target", () => {
   });
 });
 
+describe("GET /version/:channel", () => {
+  function fakeEnv(opts: { config?: object }) {
+    const configJson = opts.config ? JSON.stringify(opts.config) : null;
+    const KV = {
+      get: async () => configJson,
+      put: async () => {},
+    };
+    return { KV };
+  }
+
+  it("canal conhecido — devolve a versão estável do canal", async () => {
+    const env = fakeEnv({
+      config: {
+        channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
+        quarantined: [],
+      },
+    });
+
+    const res = await app.request("/version/latest", {}, env as never);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toContain("application/json");
+    await expect(res.json()).resolves.toEqual({
+      version: "1.2.0",
+      channel: "latest",
+    });
+  });
+
+  it("versão quarentinada cai pra previous_stable", async () => {
+    const env = fakeEnv({
+      config: {
+        channels: {
+          latest: {
+            version: "1.3.0",
+            rollout_percent: 100,
+            previous_stable: "1.2.0",
+          },
+        },
+        quarantined: ["1.3.0"],
+      },
+    });
+
+    const res = await app.request("/version/latest", {}, env as never);
+
+    await expect(res.json()).resolves.toEqual({
+      version: "1.2.0",
+      channel: "latest",
+    });
+  });
+
+  it("canal desconhecido → 404 (erro claro, não crash)", async () => {
+    const env = fakeEnv({ config: { channels: {}, quarantined: [] } });
+
+    const res = await app.request("/version/beta", {}, env as never);
+
+    expect(res.status).toBe(404);
+  });
+
+  it("versão quarentinada sem previous_stable → 404 (edge)", async () => {
+    const env = fakeEnv({
+      config: {
+        channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
+        quarantined: ["1.2.0"],
+      },
+    });
+
+    const res = await app.request("/version/latest", {}, env as never);
+
+    expect(res.status).toBe(404);
+  });
+});
+
 describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
   it("funciona sem token/query nenhum (Free não tem conta)", async () => {
     const KV = {

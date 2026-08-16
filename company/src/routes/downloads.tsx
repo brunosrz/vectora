@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
+import { useLatestVersion } from "#/hooks/use-latest-version";
 
 // vectora-services (Cloudflare Worker + R2). Rota pública sem token:
 // GET /download/:channel/:os-:arch.:ext (services/src/updates/worker.ts).
@@ -93,6 +94,7 @@ export const Route = createFileRoute("/downloads")({
 function DownloadsPage() {
   const [userOS, setUserOS] = useState<OS | null>(null);
   useEffect(() => setUserOS(detectOS()), []);
+  const { data: latestVersion } = useLatestVersion();
 
   // O SO detectado vem primeiro (destacado como recomendado).
   const ordered = [...PLATFORMS].sort((a, b) =>
@@ -103,6 +105,11 @@ function DownloadsPage() {
     <Container size="default" className="py-16">
       <PageHeader title={m.page_downloads_title()}>
         <p className="mt-2 text-muted-foreground">{m.page_downloads_desc()}</p>
+        {latestVersion && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {m.current_version_label()}: v{latestVersion}
+          </p>
+        )}
       </PageHeader>
 
       <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">

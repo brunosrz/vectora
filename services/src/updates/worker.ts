@@ -200,6 +200,28 @@ app.get("/download/:channel/:target", async (c) => {
   });
 });
 
+// Versão atual exposta pro site (Hero + página de Downloads) — mesma
+// resolução do `/download/:channel/:target` (versão estável do canal,
+// respeitando quarentena), mas sem servir binário: só o número. Sem token,
+// mesma justificativa do `/download` — visitante do site ainda não tem
+// conta nem app instalado.
+app.get("/version/:channel", async (c) => {
+  const { channel } = c.req.param();
+  const config = await getConfig(c.env.KV);
+  const ch = config.channels[channel];
+  if (!ch) return c.text("unknown channel", 404);
+  const version = config.quarantined.includes(ch.version)
+    ? (ch.previous_stable ?? null)
+    : ch.version;
+  if (!version) return c.text("no version available", 404);
+  return new Response(JSON.stringify({ version, channel }), {
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=60",
+    },
+  });
+});
+
 interface TelemetryBody {
   state: "started" | "completed" | "failed";
   version: string;

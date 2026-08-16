@@ -3,6 +3,7 @@ import { Clock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { m } from "#/paraglide/messages";
 import Logo from "#/components/shared/Logo";
+import { useLatestVersion } from "#/hooks/use-latest-version";
 
 /** Três bullets do eyebrow — textos vindos das mensagens i18n */
 function Eyebrow() {
@@ -26,6 +27,7 @@ function Eyebrow() {
 export default function Hero() {
   const [gifFailed, setGifFailed] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const { data: latestVersion } = useLatestVersion();
 
   // O SSR entrega o <img> antes do React hidratar; se o GIF já 404 nesse
   // meio-tempo, o navegador dispara o "error" nativo antes do onError do
@@ -74,9 +76,17 @@ export default function Hero() {
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           <Link
             to="/downloads"
-            className="flex h-[42px] items-center justify-center rounded-2xl bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-[0px_10px_15px_-3px_rgba(121,184,255,0.25),0px_4px_6px_-4px_rgba(121,184,255,0.25)] transition-colors hover:bg-primary/90 sm:w-auto"
+            className="flex h-[42px] items-center gap-2 justify-center rounded-2xl bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-[0px_10px_15px_-3px_rgba(121,184,255,0.25),0px_4px_6px_-4px_rgba(121,184,255,0.25)] transition-colors hover:bg-primary/90 sm:w-auto"
           >
             {m.hero_cta_download()}
+            {latestVersion && (
+              <span
+                className="rounded-md bg-primary-foreground/15 px-1.5 py-0.5 text-xs font-medium"
+                title={m.current_version_label()}
+              >
+                v{latestVersion}
+              </span>
+            )}
           </Link>
           <Link
             to="/"

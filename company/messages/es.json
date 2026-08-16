@@ -326,6 +326,7 @@
   "page_downloads_title": "Descargas",
   "page_downloads_desc": "Descarga Vectora Desktop para tu sistema.",
   "downloads_recommended": "Recomendado",
+  "current_version_label": "Versión actual",
   "downloads_cta": "Descargar",
   "downloads_footer": "El mismo binario firmado, compilado para cada plataforma. Tus datos nunca salen de tu servidor.",
   "auth_device_title": "Autorizar Vectora",
