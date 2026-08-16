@@ -1,6 +1,7 @@
 """Ciclo de vida completo do sidecar de frontend: build real servido por um
-backend spawnado como processo real — o mesmo caminho que o Electron usa em
-produção (``VECTORA_DESKTOP=1``, subprocess, health-check por HTTP).
+backend spawnado como processo real via subprocess, health-check por HTTP
+(sem ``VECTORA_DESKTOP=1`` — esse modo troca o transporte pra Unix Domain
+Socket/named pipe em vez de TCP, incompatível com testar via HTTP simples).
 
 Diferente do resto da suíte (``TestClient``/``AsyncClient`` in-process contra
 a mesma app instanciada no processo de teste), aqui é um
@@ -106,9 +107,11 @@ async def _drain(stream: asyncio.StreamReader | None) -> None:
 async def _spawn_backend(vectora_home: Path, port: int) -> asyncio.subprocess.Process:
     env = dict(os.environ)
     env["VECTORA_HOME"] = str(vectora_home)
-    # Mesmo caminho usado pelo Electron em produção: sem tray/GUI, servidor
-    # puro na main thread — evita popup de bandeja real durante o teste.
-    env["VECTORA_DESKTOP"] = "1"
+    # Sem VECTORA_DESKTOP=1: em Linux/macOS esse modo troca o transporte
+    # inteiro para Unix Domain Socket (nenhuma porta TCP aberta, por design
+    # — desktop fala por IPC, nunca TCP), incompatível com o health-check
+    # via HTTP que este teste faz. No Windows o modo desktop mantém a porta
+    # TCP em paralelo ao named pipe, o que mascarava a lacuna localmente.
     env["VECTORA_UVICORN_LOG_LEVEL"] = "warning"
     env.pop("VECTORA_SKIP_STATIC", None)  # garante que frontend/dist é servido
 

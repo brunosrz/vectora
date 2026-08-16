@@ -157,17 +157,21 @@ def _isolate_native_tool_registry() -> Generator[None]:
 @pytest.fixture
 async def spawned_backend(tmp_path: Path):
     """Backend real (``python -m backend.main start``) rodando num
-    ``VECTORA_HOME`` isolado — mesmo caminho de processo que o Electron usa
-    em produção. Não exige ``frontend/dist`` (diferente de
+    ``VECTORA_HOME`` isolado. Não exige ``frontend/dist`` (diferente de
     ``_spawned_backend`` em ``test_frontend_served_lifecycle.py``, que serve
     estático — este fixture é pra exercitar a API real via HTTP).
+
+    Sem ``VECTORA_DESKTOP=1``: em Linux/macOS esse modo troca o transporte
+    inteiro para Unix Domain Socket (nenhuma porta TCP é aberta — desktop
+    fala por IPC, nunca TCP), o que este fixture não consegue exercitar
+    via HTTP simples. No Windows o modo desktop mantém a porta TCP aberta
+    em paralelo ao named pipe, então a lacuna só aparece em CI Linux.
 
     Yields ``(base_url, port)``.
     """
     port = _free_port()
     env = dict(os.environ)
     env["VECTORA_HOME"] = str(tmp_path)
-    env["VECTORA_DESKTOP"] = "1"
     env["VECTORA_UVICORN_LOG_LEVEL"] = "warning"
     env["VECTORA_SKIP_STATIC"] = "1"
 
