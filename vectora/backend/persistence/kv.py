@@ -347,6 +347,13 @@ async def get_kv() -> KV:
     return _kv
 
 
+def kv_initialized() -> bool:
+    """Sem efeito colateral — diferente de `get_kv()`, nunca cria o KV. Usado
+    no shutdown: fechar algo que nunca chegou a ser inicializado só subiria
+    um sidecar novo (NATS) do zero para imediatamente encerrá-lo."""
+    return _kv is not None
+
+
 def reset_kv() -> None:
     """Descarta o singleton — usado em testes."""
     global _kv

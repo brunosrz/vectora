@@ -331,6 +331,13 @@ async def get_mq() -> MQ:
     return _mq
 
 
+def mq_initialized() -> bool:
+    """Sem efeito colateral — diferente de `get_mq()`, nunca cria a fila.
+    Usado no shutdown: fechar algo que nunca chegou a ser inicializado só
+    subiria um sidecar novo (NATS) do zero para imediatamente encerrá-lo."""
+    return _mq is not None
+
+
 def reset_mq() -> None:
     """Descarta o singleton — usado em testes."""
     global _mq

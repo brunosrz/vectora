@@ -6,7 +6,14 @@ import asyncio
 
 import pytest
 
-from backend.scheduling.mq import MemoryMQ, RedisMQ, StreamMessage, get_mq, reset_mq
+from backend.scheduling.mq import (
+    MemoryMQ,
+    RedisMQ,
+    StreamMessage,
+    get_mq,
+    mq_initialized,
+    reset_mq,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -196,3 +203,23 @@ async def test_get_mq_sem_redis_usa_nats_quando_sidecar_disponivel(
     )
     result = await get_mq()
     assert isinstance(result, mq_mod.NatsMQ)
+
+
+class TestMqInitialized:
+    """`mq_initialized()` — sem efeito colateral, usada no shutdown pra
+    nunca subir a fila (e o sidecar NATS por trás dela) só pra fechá-la."""
+
+    def test_false_antes_de_qualquer_get_mq(self) -> None:
+        assert mq_initialized() is False
+
+    @pytest.mark.asyncio
+    async def test_true_depois_de_get_mq(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "redis_url", None)
+        await get_mq()
+        assert mq_initialized() is True
+
+    def test_false_de_novo_depois_de_reset(self) -> None:
+        reset_mq()
+        assert mq_initialized() is False

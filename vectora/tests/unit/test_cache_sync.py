@@ -7,7 +7,7 @@ import json
 import pytest
 
 from backend.embedding import cache_sync
-from backend.persistence.kv import MemoryKV, get_kv, reset_kv
+from backend.persistence.kv import MemoryKV, get_kv, kv_initialized, reset_kv
 from backend.rbac import tool_policy
 from backend.workspace import plugins
 
@@ -110,3 +110,28 @@ async def test_payload_invalido_e_ignorado() -> None:
     # Nenhuma exceção deve escapar para o publisher.
     await (await get_kv()).publish(cache_sync.CHANNEL_TOOLS, "não-é-json")
     await (await get_kv()).publish(cache_sync.CHANNEL_TOOLS, json.dumps({"version": 1}))
+
+
+class TestStopCacheSyncSemInicializar:
+    """`stop_cache_sync` roda no shutdown — sem `start_cache_sync` (ou outro
+    caller) ter chamado `get_kv()` antes, não pode inicializar o KV do zero
+    só pra fechá-lo em seguida (subiria o sidecar NATS sem necessidade)."""
+
+    @pytest.mark.asyncio
+    async def test_nao_inicializa_kv_quando_nunca_foi_usado(self) -> None:
+        assert kv_initialized() is False
+
+        await cache_sync.stop_cache_sync()
+
+        assert kv_initialized() is False
+
+    @pytest.mark.asyncio
+    async def test_fecha_o_kv_quando_ja_estava_inicializado(self) -> None:
+        await cache_sync.start_cache_sync()
+        assert kv_initialized() is True
+
+        await cache_sync.stop_cache_sync()
+
+        # MemoryKV.close() não reseta o singleton — só confirma que rodou
+        # sem levantar, sobre o KV já existente (não um novo).
+        assert kv_initialized() is True

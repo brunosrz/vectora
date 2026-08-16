@@ -7,7 +7,14 @@ import asyncio
 import pytest
 
 from backend.persistence import kv as kv_mod
-from backend.persistence.kv import MemoryKV, RedisKV, get_kv, publish_soon, reset_kv
+from backend.persistence.kv import (
+    MemoryKV,
+    RedisKV,
+    get_kv,
+    kv_initialized,
+    publish_soon,
+    reset_kv,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -206,3 +213,23 @@ async def test_publish_soon_entrega_no_loop(monkeypatch: pytest.MonkeyPatch) -> 
 def test_publish_soon_sem_loop_e_noop() -> None:
     # Fora de event loop não deve lançar (CLI puro / import time).
     publish_soon("ch", "x")
+
+
+class TestKvInitialized:
+    """`kv_initialized()` — sem efeito colateral, usada no shutdown pra
+    nunca subir o KV (e o sidecar NATS por trás dele) só pra fechá-lo."""
+
+    def test_false_antes_de_qualquer_get_kv(self) -> None:
+        assert kv_initialized() is False
+
+    @pytest.mark.asyncio
+    async def test_true_depois_de_get_kv(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "redis_url", None)
+        await get_kv()
+        assert kv_initialized() is True
+
+    def test_false_de_novo_depois_de_reset(self) -> None:
+        reset_kv()
+        assert kv_initialized() is False

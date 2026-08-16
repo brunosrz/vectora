@@ -403,11 +403,15 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
         # Fecha a message queue (Redis Streams / NATS JetStream) — usada por
         # background tasks/kanban, não exclusiva do worker de jobs removido.
+        # Só se já inicializada nesta sessão: chamar get_mq() incondicional
+        # aqui subiria um sidecar NATS do zero (sessão que nunca usou fila)
+        # só para fechá-lo em seguida, atrasando o shutdown sem necessidade.
         try:
-            from backend.scheduling.mq import get_mq
+            from backend.scheduling.mq import get_mq, mq_initialized
 
-            mq = await get_mq()
-            await mq.close()
+            if mq_initialized():
+                mq = await get_mq()
+                await mq.close()
         except Exception:
             logger.debug("api/server: erro ao fechar message queue")
 

@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import logging
 
-from backend.persistence.kv import get_kv
+from backend.persistence.kv import get_kv, kv_initialized
 
 logger = logging.getLogger(__name__)
 
@@ -88,5 +88,11 @@ async def start_cache_sync() -> None:
 
 
 async def stop_cache_sync() -> None:
+    """Fecha o KV só se `start_cache_sync` (ou outro caller) já o inicializou
+    — chamar `get_kv()` incondicionalmente no shutdown subiria o sidecar
+    NATS do zero (se ainda não tinha subido nesta sessão) só pra fechá-lo
+    em seguida."""
+    if not kv_initialized():
+        return
     kv = await get_kv()
     await kv.close()
