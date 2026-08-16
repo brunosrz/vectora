@@ -154,13 +154,13 @@ jobs:
           EOF
       - name: Run unit tests
         run: uv run pytest tests/unit/ -v -m "not live" --cov=backend --cov-report=xml
+      - name: Run stress tests
+        run: uv run pytest tests/stress/ -v --timeout=120 --tb=short
       - name: Upload coverage
         uses: codecov/codecov-action@v7
         with:
           files: vectora/coverage.xml
         continue-on-error: true
-      - name: Run stress tests
-        run: uv run pytest tests/stress/ -v --timeout=120 --tb=short
 
   # ── 4b. Integration + E2E (gate do Docker; precisam de chaves reais) ────
   test-external:
