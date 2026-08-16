@@ -254,9 +254,32 @@ def _req_user_id(request: Request) -> str:
     return str(user.id) if user is not None else "local"
 
 
+def _filter_registry(
+    connectors: list[MCPConnector], *, q: str | None, category: str | None
+) -> list[MCPConnector]:
+    """Filtro em memória sobre o catálogo já mesclado — as 3 fontes de
+    `list_registry` (D1, registry oficial, fallback local) não têm um
+    `?q=`/`?category=` comum pra repassar adiante, então o filtro roda
+    aqui, depois do merge, não em cada fonte."""
+    result = connectors
+    if q:
+        needle = q.strip().lower()
+        if needle:
+            result = [
+                c
+                for c in result
+                if needle in c.name.lower() or needle in c.description.lower()
+            ]
+    if category:
+        result = [c for c in result if c.category == category]
+    return result
+
+
 @router.get("/registry", response_model=list[MCPConnector])
-async def get_registry() -> list[MCPConnector]:
-    return await list_registry()
+async def get_registry(
+    q: str | None = None, category: str | None = None
+) -> list[MCPConnector]:
+    return _filter_registry(await list_registry(), q=q, category=category)
 
 
 @router.post("/install")

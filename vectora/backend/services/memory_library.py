@@ -34,14 +34,17 @@ def _rag_library_url() -> str:
     return os.getenv("VECTORA_RAG_LIBRARY_URL", DEFAULT_RAG_LIBRARY_URL).strip()
 
 
-async def list_catalog() -> list[dict]:
-    """Lista o catálogo completo da Memory Library. Degrada para lista
-    vazia em qualquer falha de rede — nunca propaga exceção pro handler
-    HTTP (a seção da Library trata lista vazia como estado vazio, não erro)."""
+async def list_catalog(q: str | None = None) -> list[dict]:
+    """Lista o catálogo da Memory Library, opcionalmente filtrado por `q`
+    (repassado direto pro Worker — `services/src/rag-library/routes.ts`
+    já faz `LIKE` sobre nome/descrição). Degrada para lista vazia em
+    qualquer falha de rede — nunca propaga exceção pro handler HTTP (a
+    seção da Library trata lista vazia como estado vazio, não erro)."""
     url = f"{_rag_library_url()}/"
+    params = {"q": q} if q else None
     try:
         async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
-            resp = await client.get(url)
+            resp = await client.get(url, params=params)
             resp.raise_for_status()
             return resp.json()
     except Exception as exc:

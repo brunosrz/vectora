@@ -47,8 +47,8 @@ class PublishRequest(BaseModel):
 
 
 @router.get("/catalog")
-async def get_catalog() -> list[dict]:
-    return await _list_catalog()
+async def get_catalog(q: str | None = None) -> list[dict]:
+    return await _list_catalog(q)
 
 
 @router.post("/install")

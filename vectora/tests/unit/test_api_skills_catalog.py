@@ -34,6 +34,79 @@ async def test_get_skills_catalog_empty_is_not_error(monkeypatch):
     assert result == {"entries": [], "total": 0}
 
 
+class TestSkillsCatalogQueryFilters:
+    """`GET /skills/catalog?q=&category=&tags=` — filtro em memória sobre
+    o catálogo já cacheado por `registry_client.fetch_catalog`."""
+
+    _ENTRIES = [
+        {
+            "id": "s1",
+            "name": "Docker Deploy",
+            "description": "publica containers",
+            "category": "devtools",
+            "tags": ["docker", "ci"],
+        },
+        {
+            "id": "s2",
+            "name": "Writer",
+            "description": "gera documentação",
+            "category": "docs",
+            "tags": ["markdown"],
+        },
+    ]
+
+    @pytest.mark.asyncio
+    async def test_q_filtra_por_nome_ou_descricao(self, monkeypatch):
+        monkeypatch.setattr(
+            skills_handler.registry_client,
+            "fetch_catalog",
+            AsyncMock(return_value=self._ENTRIES),
+        )
+
+        result = await skills_handler.get_skills_catalog(q="docker")
+
+        assert [e["id"] for e in result["entries"]] == ["s1"]
+        assert result["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_category_filtra_exato(self, monkeypatch):
+        monkeypatch.setattr(
+            skills_handler.registry_client,
+            "fetch_catalog",
+            AsyncMock(return_value=self._ENTRIES),
+        )
+
+        result = await skills_handler.get_skills_catalog(category="docs")
+
+        assert [e["id"] for e in result["entries"]] == ["s2"]
+
+    @pytest.mark.asyncio
+    async def test_tags_filtra_por_membro_da_lista(self, monkeypatch):
+        monkeypatch.setattr(
+            skills_handler.registry_client,
+            "fetch_catalog",
+            AsyncMock(return_value=self._ENTRIES),
+        )
+
+        result = await skills_handler.get_skills_catalog(tags="ci")
+
+        assert [e["id"] for e in result["entries"]] == ["s1"]
+
+    @pytest.mark.asyncio
+    async def test_sem_match_devolve_lista_vazia_nao_erro(self, monkeypatch):
+        monkeypatch.setattr(
+            skills_handler.registry_client,
+            "fetch_catalog",
+            AsyncMock(return_value=self._ENTRIES),
+        )
+
+        result = await skills_handler.get_skills_catalog(
+            q="nao existe nenhuma skill assim"
+        )
+
+        assert result == {"entries": [], "total": 0}
+
+
 class TestPublishUserSkill:
     @pytest.mark.asyncio
     async def test_publica_com_token_configurado(self, monkeypatch):

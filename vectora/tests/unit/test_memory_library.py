@@ -197,6 +197,38 @@ async def test_list_catalog_vazio_do_servidor_e_estado_valido(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_list_catalog_repassa_q_como_query_param(monkeypatch):
+    """`q` chega como `?q=` na requisição real ao Worker — sem isso, o
+    parâmetro fica órfão e a busca sempre devolve o catálogo inteiro."""
+    captured: dict = {}
+
+    async def _fake_get(self, url, **kwargs):
+        captured["params"] = kwargs.get("params")
+        return _catalog_response([])
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", _fake_get)
+
+    await list_catalog(q="godot")
+
+    assert captured["params"] == {"q": "godot"}
+
+
+@pytest.mark.asyncio
+async def test_list_catalog_sem_q_nao_manda_param_vazio(monkeypatch):
+    captured: dict = {}
+
+    async def _fake_get(self, url, **kwargs):
+        captured["params"] = kwargs.get("params")
+        return _catalog_response([])
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", _fake_get)
+
+    await list_catalog()
+
+    assert captured["params"] is None
+
+
+@pytest.mark.asyncio
 async def test_download_com_embed_model_ausente_no_bucket_nao_bloqueia(
     tmp_path, monkeypatch
 ):

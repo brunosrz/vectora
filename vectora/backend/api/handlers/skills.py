@@ -60,15 +60,42 @@ async def list_user_skills(request: Request) -> dict:
     return {"skills": [s.model_dump() for s in skills], "total": len(skills)}
 
 
+def _matches_skill_query(
+    entry: dict, *, q: str | None, category: str | None, tags: str | None
+) -> bool:
+    if q:
+        needle = q.strip().lower()
+        if needle:
+            haystack = f"{entry.get('name', '')} {entry.get('description', '')}".lower()
+            if needle not in haystack:
+                return False
+    if category and entry.get("category") != category:
+        return False
+    if tags:
+        entry_tags = entry.get("tags") or []
+        if isinstance(entry_tags, str):
+            entry_tags = [entry_tags]
+        if tags not in entry_tags:
+            return False
+    return True
+
+
 @router.get("/catalog")
-async def get_skills_catalog() -> dict:
+async def get_skills_catalog(
+    q: str | None = None, category: str | None = None, tags: str | None = None
+) -> dict:
     """Catálogo de skills curadas do registry remoto (D1, `skills_catalog`) —
     distinto de `GET /skills` (que lista as já instaladas). Sem fallback
     hardcoded local: até hoje não existe skill oficial pré-curada, então
     catálogo vazio é um estado válido (registry fora do ar ou sem seed
-    ainda), não erro."""
+    ainda), não erro. `q`/`category`/`tags` filtram em memória sobre o
+    catálogo já cacheado por `registry_client` — não refazem a requisição
+    remota a cada busca."""
     entries = await registry_client.fetch_catalog("skills")
-    return {"entries": entries, "total": len(entries)}
+    filtered = [
+        e for e in entries if _matches_skill_query(e, q=q, category=category, tags=tags)
+    ]
+    return {"entries": filtered, "total": len(filtered)}
 
 
 @router.post("")

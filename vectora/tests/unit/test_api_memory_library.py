@@ -47,6 +47,20 @@ async def test_get_catalog_degrades_to_empty_list_on_service_failure(monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_get_catalog_repassa_q_pro_service(monkeypatch):
+    """`?q=` chega no handler e é repassado pro service — não fica órfão."""
+    from backend.api.handlers import memory_library
+
+    list_catalog_mock = AsyncMock(return_value=[{"id": "b1"}])
+    monkeypatch.setattr(memory_library, "_list_catalog", list_catalog_mock)
+
+    result = await get_catalog(q="godot")
+
+    list_catalog_mock.assert_awaited_once_with("godot")
+    assert result == [{"id": "b1"}]
+
+
+@pytest.mark.asyncio
 async def test_post_install_returns_collection_on_success(monkeypatch):
     from backend.api.handlers import memory_library
 

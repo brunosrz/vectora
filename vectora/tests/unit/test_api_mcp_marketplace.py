@@ -15,7 +15,9 @@ from backend.api.handlers.mcp_marketplace import (
     MCPConnector,
     UninstallRequest,
     _connector_to_server,
+    _filter_registry,
     _req_user_id,
+    get_registry,
     install_mcp,
     list_registry,
     uninstall_mcp,
@@ -265,6 +267,63 @@ async def test_list_registry_no_real_source_has_no_verified_entries_still_sorts(
 
     assert [c.name for c in result] == ["Aaa", "Bbb"]
     assert all(not c.vectora_verified for c in result)
+
+
+class TestFilterRegistry:
+    """`GET /mcp/registry?q=&category=` — filtro em memória sobre o catálogo
+    já mesclado (as 3 fontes não compartilham um `?q=` comum)."""
+
+    def test_sem_filtro_devolve_tudo(self):
+        connectors = [
+            MCPConnector(id="a", name="Alpha", description="d1", category="web"),
+            MCPConnector(id="b", name="Beta", description="d2", category="devtools"),
+        ]
+        assert _filter_registry(connectors, q=None, category=None) == connectors
+
+    def test_q_filtra_por_nome_ou_descricao_case_insensitive(self):
+        connectors = [
+            MCPConnector(
+                id="a", name="Brave Search", description="web", category="web"
+            ),
+            MCPConnector(id="b", name="Postgres", description="banco", category="db"),
+        ]
+        result = _filter_registry(connectors, q="BRAVE", category=None)
+        assert [c.id for c in result] == ["a"]
+
+    def test_category_filtra_exato(self):
+        connectors = [
+            MCPConnector(id="a", name="A", description="d", category="web"),
+            MCPConnector(id="b", name="B", description="d", category="devtools"),
+        ]
+        result = _filter_registry(connectors, q=None, category="devtools")
+        assert [c.id for c in result] == ["b"]
+
+    def test_q_sem_match_e_string_vazia_nao_quebram(self):
+        connectors = [
+            MCPConnector(id="a", name="Alpha", description="d", category="web"),
+        ]
+        assert _filter_registry(connectors, q="nao existe", category=None) == []
+        assert _filter_registry(connectors, q="  ", category=None) == connectors
+
+
+@pytest.mark.asyncio
+async def test_get_registry_aplica_filtro_de_query(_no_remote_registry, monkeypatch):
+    from backend.api.handlers import mcp_marketplace
+
+    monkeypatch.setattr(
+        mcp_marketplace,
+        "_REGISTRY",
+        [
+            MCPConnector(
+                id="a", name="Brave Search", description="web", category="web"
+            ),
+            MCPConnector(id="b", name="Postgres", description="banco", category="db"),
+        ],
+    )
+
+    result = await get_registry(q="brave")
+
+    assert [c.id for c in result] == ["a"]
 
 
 @pytest.mark.asyncio
