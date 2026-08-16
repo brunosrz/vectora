@@ -58,7 +58,7 @@ vi.mock("@/lib/stores/new-session-signal", () => ({
 vi.mock("@/lib/queries/threads", () => ({
   useThreadsQuery: () => ({ data: [], isLoading: false }),
   useDeleteThread: () => ({ mutateAsync: vi.fn() }),
-  threadsQueryKey: ["threads"],
+  threadsQueryKey: (limit = 100) => ["threads", limit],
 }));
 
 vi.mock("@/lib/api/vectora-client", () => ({

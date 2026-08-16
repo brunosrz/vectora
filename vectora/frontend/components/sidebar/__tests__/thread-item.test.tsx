@@ -21,7 +21,9 @@ vi.mock("@/lib/api/vectora-client", () => ({
   getHistory: vi.fn(),
   listThreads: vi.fn(),
 }));
-vi.mock("@/lib/queries/threads", () => ({ threadsQueryKey: ["threads"] }));
+vi.mock("@/lib/queries/threads", () => ({
+  threadsQueryKey: (limit = 100) => ["threads", limit],
+}));
 
 vi.mock("@/lib/paraglide/messages", () => ({
   m: {

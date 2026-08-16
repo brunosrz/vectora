@@ -58,8 +58,13 @@ beforeEach(() => {
 });
 
 describe("threadsQueryKey", () => {
-  it("é ['threads']", () => {
-    expect(threadsQueryKey).toEqual(["threads"]);
+  it("inclui o limit — default THREAD_FETCH_LIMIT quando não passado", () => {
+    expect(threadsQueryKey()).toEqual(["threads", 100]);
+  });
+
+  it("limit explícito diferente gera uma chave distinta", () => {
+    expect(threadsQueryKey(50)).toEqual(["threads", 50]);
+    expect(threadsQueryKey(50)).not.toEqual(threadsQueryKey());
   });
 });
 
@@ -130,7 +135,7 @@ describe("useDeleteThread", () => {
 
   it("remove a thread otimisticamente do cache", async () => {
     const { qc, wrapper } = makeWrapper();
-    qc.setQueryData(threadsQueryKey, {
+    qc.setQueryData(threadsQueryKey(), {
       threads: [vthread("t1"), vthread("t2")],
     });
     deleteThread.mockResolvedValue({});
@@ -139,14 +144,14 @@ describe("useDeleteThread", () => {
       await result.current.mutateAsync("t1");
     });
     const data = qc.getQueryData<{ threads: { id: string }[] }>(
-      threadsQueryKey,
+      threadsQueryKey(),
     );
     expect(data!.threads.map((t) => t.id)).toEqual(["t2"]);
   });
 
   it("faz rollback do cache quando deleteThread falha", async () => {
     const { qc, wrapper } = makeWrapper();
-    qc.setQueryData(threadsQueryKey, {
+    qc.setQueryData(threadsQueryKey(), {
       threads: [vthread("t1"), vthread("t2")],
     });
     deleteThread.mockRejectedValue(new Error("falhou"));
@@ -155,7 +160,7 @@ describe("useDeleteThread", () => {
       await result.current.mutateAsync("t1").catch(() => {});
     });
     const data = qc.getQueryData<{ threads: { id: string }[] }>(
-      threadsQueryKey,
+      threadsQueryKey(),
     );
     expect(data!.threads.map((t) => t.id)).toEqual(["t1", "t2"]);
   });
@@ -226,7 +231,7 @@ describe("useUpdateThread", () => {
     await act(async () => {
       await result.current.mutateAsync({ id: "t1", updates: { title: "x" } });
     });
-    expect(spy).toHaveBeenCalledWith({ queryKey: threadsQueryKey });
+    expect(spy).toHaveBeenCalledWith({ queryKey: threadsQueryKey() });
   });
 
   it("title null no retorno vira string vazia no broadcast", async () => {

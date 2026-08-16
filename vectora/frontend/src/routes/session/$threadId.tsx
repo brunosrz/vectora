@@ -83,7 +83,7 @@ export const Route = createFileRoute("/session/$threadId")({
   // pré-carregar histórico", não pra "não abre a sessão".
   loader: async ({ params }) => {
     const threadsPromise = queryClient.ensureQueryData({
-      queryKey: threadsQueryKey,
+      queryKey: threadsQueryKey(),
       queryFn: () => listThreads(THREAD_FETCH_LIMIT),
       staleTime: 30_000,
     });
@@ -442,7 +442,7 @@ function SessionPage() {
   // lastMessage="") fica sendo uma sessão fantasma só local. Remove.
   const handleThreadPersistFailed = useCallback((id: string) => {
     queryClient.setQueryData<{ threads: VectoraThread[] }>(
-      threadsQueryKey,
+      threadsQueryKey(),
       (old) => ({
         threads: (old?.threads ?? []).filter((th) => th.id !== id),
       }),
@@ -456,7 +456,7 @@ function SessionPage() {
       // refletimos na sidebar localmente — sem chamar UpdateThread (404).
       if (isNew(id) && !lastMessage) {
         queryClient.setQueryData<{ threads: VectoraThread[] }>(
-          threadsQueryKey,
+          threadsQueryKey(),
           (old) => {
             const existing = old?.threads ?? [];
             if (existing.some((th) => th.id === id)) return old;
@@ -492,7 +492,7 @@ function SessionPage() {
       // defensivo para o caso de handleRegenerate/handleEditAndRerun
       // chamarem onThreadUpdate direto numa thread ainda não presente.
       queryClient.setQueryData<{ threads: VectoraThread[] }>(
-        threadsQueryKey,
+        threadsQueryKey(),
         (old) => {
           const existing = old?.threads ?? [];
           const now = new Date().toISOString();

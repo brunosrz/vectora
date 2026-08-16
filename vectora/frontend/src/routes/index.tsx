@@ -32,7 +32,7 @@ export const Route = createFileRoute("/")({
     // lista truncada, que o loader de /session/$threadId (ensureQueryData,
     // sem refetchOnMount) podia servir stale dentro do staleTime de 30s.
     await queryClient.ensureQueryData({
-      queryKey: threadsQueryKey,
+      queryKey: threadsQueryKey(),
       queryFn: () => listThreads(THREAD_FETCH_LIMIT),
       staleTime: 30_000,
     });

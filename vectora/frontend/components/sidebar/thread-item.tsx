@@ -6,6 +6,7 @@ import type { Thread } from "@/lib/hooks/threads";
 import { queryClient } from "../../src/router";
 import { getHistory, listThreads } from "@/lib/api/vectora-client";
 import { threadsQueryKey } from "@/lib/queries/threads";
+import { THREAD_FETCH_LIMIT } from "@/lib/constants/features";
 import { m } from "@/lib/paraglide/messages";
 import { useStreamingStore } from "@/lib/stores/streaming-store";
 import { useContextMenu } from "@/components/workbench/git/git-context-menu";
@@ -42,8 +43,12 @@ export const ThreadItem = memo(function ThreadItem({
       staleTime: 30_000,
     });
     void queryClient.prefetchQuery({
-      queryKey: threadsQueryKey,
-      queryFn: () => listThreads(50),
+      // Mesmo limit que useThreadsQuery/os loaders de rota — um valor
+      // diferente aqui sob a mesma chave (agora parametrizada por limit)
+      // simplesmente vira uma entrada de cache separada, sem colidir, mas
+      // também sem aproveitar o cache principal. Manter consistente.
+      queryKey: threadsQueryKey(),
+      queryFn: () => listThreads(THREAD_FETCH_LIMIT),
       staleTime: 30_000,
     });
   };

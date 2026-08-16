@@ -27,8 +27,17 @@ import {
   BROADCAST_THREADS,
 } from "@/lib/hooks/use-broadcast-sync";
 
-// Chave estável para o cache — toda query de threads usa esta lista.
-export const threadsQueryKey = ["threads"] as const;
+// Chave de cache parametrizada por `limit` — sem isso, dois consumidores
+// que fazem `listThreads(limit)` com valores diferentes sob a MESMA chave
+// colidem: um popula o cache com uma lista truncada, o outro lê essa lista
+// stale dentro do `staleTime`. Todo consumidor de produção usa o default
+// (THREAD_FETCH_LIMIT) — só testes/casos futuros passariam um limit
+// explícito, e aí a chave diverge de propósito, não por acidente.
+export function threadsQueryKey(
+  limit: number = THREAD_FETCH_LIMIT,
+): readonly ["threads", number] {
+  return ["threads", limit] as const;
+}
 
 // ---------------------------------------------------------------------------
 // Conversão VectoraThread → Thread (formato do Sidebar)
@@ -57,7 +66,7 @@ export function useThreadsQuery(
   userId: string | undefined,
 ): UseQueryResult<Thread[], Error> {
   return useQuery({
-    queryKey: threadsQueryKey,
+    queryKey: threadsQueryKey(),
     queryFn: () => listThreads(THREAD_FETCH_LIMIT),
     select: (data) => data.threads.map((t) => toSidebarThread(t, userId ?? "")),
     enabled: !!userId,
@@ -82,20 +91,23 @@ export function useDeleteThread(): UseMutationResult<
   return useMutation({
     mutationFn: deleteThread,
     onMutate: async (threadId) => {
-      await qc.cancelQueries({ queryKey: threadsQueryKey });
+      await qc.cancelQueries({ queryKey: threadsQueryKey() });
       const prev = qc.getQueryData<{ threads: VectoraThread[] }>(
-        threadsQueryKey,
+        threadsQueryKey(),
       );
-      qc.setQueryData<{ threads: VectoraThread[] }>(threadsQueryKey, (old) => ({
-        threads: old?.threads.filter((t) => t.id !== threadId) ?? [],
-      }));
+      qc.setQueryData<{ threads: VectoraThread[] }>(
+        threadsQueryKey(),
+        (old) => ({
+          threads: old?.threads.filter((t) => t.id !== threadId) ?? [],
+        }),
+      );
       return { prev };
     },
     onError: (_err, _id, ctx) => {
-      if (ctx?.prev) qc.setQueryData(threadsQueryKey, ctx.prev);
+      if (ctx?.prev) qc.setQueryData(threadsQueryKey(), ctx.prev);
     },
     onSettled: (_data, _err, threadId) => {
-      void qc.invalidateQueries({ queryKey: threadsQueryKey });
+      void qc.invalidateQueries({ queryKey: threadsQueryKey() });
       broadcastEvent(BROADCAST_THREADS, { type: "deleted", id: threadId });
     },
   });
@@ -111,7 +123,7 @@ export function useUpdateThread(): UseMutationResult<
   return useMutation({
     mutationFn: ({ id, updates }) => updateThread(id, updates),
     onSuccess: (thread) => {
-      void qc.invalidateQueries({ queryKey: threadsQueryKey });
+      void qc.invalidateQueries({ queryKey: threadsQueryKey() });
       broadcastEvent(BROADCAST_THREADS, {
         type: "renamed",
         id: thread.id,
