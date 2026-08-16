@@ -241,7 +241,7 @@ describe("useStreamHandler.processStream", () => {
     await streamPromise;
   });
 
-  it("queda de transporte (throw) preserva conteúdo parcial já recebido", async () => {
+  it("queda de transporte (throw) mostra o conteúdo parcial de imediato e depois reconcilia com o backend", async () => {
     // announceSSEDropped loga via console.error de propósito (diagnóstico
     // via DevTools) — espiona pra manter a saída do vitest limpa e
     // validar que o log de diagnóstico realmente aconteceu.
@@ -253,18 +253,46 @@ describe("useStreamHandler.processStream", () => {
         throw new Error("network down");
       })(),
     );
+    // O turno pode ter continuado rodando no backend depois da conexão
+    // cair — a versão completa persistida substitui o texto truncado
+    // acumulado no client, igual ao caminho de esgotamento silencioso.
+    getHistoryMock.mockResolvedValue({
+      messages: [
+        { role: "human", content: "oi" },
+        { role: "assistant", content: "parcial completo do backend" },
+      ],
+    });
 
     const { result } = run();
     await result.current.processStream("oi", "a1");
 
     const assistant = messages.find((m) => m.id === "a1");
-    // Conteúdo parcial preservado; sem texto cru de exceção.
-    expect(assistant?.content).toBe("parcial");
+    expect(assistant?.content).toBe("parcial completo do backend");
     expect(assistant?.isThinking).toBe(false);
+    expect(getHistoryMock).toHaveBeenCalledWith("t1");
     expect(errorSpy).toHaveBeenCalledWith(
       "[chat] queda de transporte no stream:",
       expect.any(Error),
     );
+    errorSpy.mockRestore();
+  });
+
+  it("queda de transporte sem reconciliação disponível (getHistory rejeita) mantém o conteúdo parcial — nunca perde o que já foi gerado", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    streamChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "thread", thread_id: "t1" } as StreamEvent;
+        yield { type: "token", content: "parcial" } as StreamEvent;
+        throw new Error("network down");
+      })(),
+    );
+    getHistoryMock.mockRejectedValue(new Error("offline"));
+
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    const assistant = messages.find((m) => m.id === "a1");
+    expect(assistant?.content).toBe("parcial");
     errorSpy.mockRestore();
   });
 
@@ -1314,7 +1342,7 @@ describe("useStreamHandler.processResume", () => {
     expect(a?.content).not.toContain("429");
   });
 
-  it("queda de transporte preserva conteúdo parcial já recebido", async () => {
+  it("queda de transporte reconcilia com o histórico do backend (mesmo mecanismo do processStream)", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     resumeChatMock.mockReturnValue(
       (async function* () {
@@ -1322,15 +1350,38 @@ describe("useStreamHandler.processResume", () => {
         throw new Error("network error");
       })(),
     );
+    getHistoryMock.mockResolvedValue({
+      messages: [
+        { role: "human", content: "oi" },
+        { role: "assistant", content: "parcial completo do backend" },
+      ],
+    });
     const { result } = run();
     await result.current.processResume(resumeReq, "a1");
     const a = messages.find((m) => m.id === "a1");
     expect(a?.isThinking).toBe(false);
-    expect(a?.content).toContain("parcial");
+    expect(a?.content).toBe("parcial completo do backend");
+    expect(getHistoryMock).toHaveBeenCalledWith("t1");
     expect(errorSpy).toHaveBeenCalledWith(
       "[chat] queda de transporte no stream:",
       expect.any(Error),
     );
+    errorSpy.mockRestore();
+  });
+
+  it("queda de transporte sem reconciliação disponível mantém o conteúdo parcial recebido", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    resumeChatMock.mockReturnValue(
+      (async function* () {
+        yield { type: "token", content: "parcial" } as StreamEvent;
+        throw new Error("network error");
+      })(),
+    );
+    getHistoryMock.mockRejectedValue(new Error("offline"));
+    const { result } = run();
+    await result.current.processResume(resumeReq, "a1");
+    const a = messages.find((m) => m.id === "a1");
+    expect(a?.content).toContain("parcial");
     errorSpy.mockRestore();
   });
 

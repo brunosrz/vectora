@@ -520,9 +520,9 @@ export function useStreamHandler({
           // Distingue queda de transporte (badge "Reconectando…") de
           // erro de aplicação reportado pelo próprio backend via evento `error`.
           announceSSEDropped(err);
-          // Queda de transporte: preserva qualquer conteúdo parcial já
-          // recebido; sem conteúdo, mostra mensagem genérica localizada e
-          // marca isError (retry), nunca o texto cru da exceção.
+          // Queda de transporte: mostra o conteúdo parcial já recebido de
+          // imediato (feedback rápido) — sem conteúdo, mensagem genérica
+          // localizada e isError (retry), nunca o texto cru da exceção.
           setMessages((prev) =>
             updateMessageInList(prev, activeId, (m) => ({
               ...m,
@@ -535,6 +535,14 @@ export function useStreamHandler({
                   : undefined,
             })),
           );
+          // O texto acumulado no client é só o que chegou até a exceção —
+          // se o turno continuou rodando no backend depois da conexão
+          // cair (comum: a queda é do transporte, não do processamento),
+          // esse conteúdo parcial fica truncado no meio de uma frase
+          // indefinidamente, sem o reload manual que hoje é o único jeito
+          // de ver a versão completa. Reconcilia igual ao caminho de
+          // esgotamento silencioso do loop, abaixo.
+          await reconcileTruncatedMessage(threadId, activeId, setMessages);
         }
       } finally {
         // Restaura o sinal "criar novo workspace" se essa tentativa terminou
@@ -689,6 +697,13 @@ export function useStreamHandler({
               isError: !assistantContent,
               isThinking: false,
             })),
+          );
+          // Mesmo reconcile do processStream: o turno pode ter continuado
+          // no backend depois da conexão cair.
+          await reconcileTruncatedMessage(
+            threadId,
+            assistantMessageId,
+            setMessages,
           );
         }
       } finally {
