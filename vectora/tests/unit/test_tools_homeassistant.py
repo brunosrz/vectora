@@ -12,15 +12,33 @@ Cada caminho feliz tem o par de erro/borda no mesmo teste.
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
+from unittest.mock import patch
 
 import httpx
 import pytest
 
 from backend.tools import homeassistant as ha
 
+_RealAsyncClient = httpx.AsyncClient
 
-def _client(handler) -> httpx.AsyncClient:
-    return httpx.AsyncClient(transport=httpx.MockTransport(handler))
+
+@contextmanager
+def _mocked_client(handler):
+    """Substitui `httpx.AsyncClient` real por um `MockTransport` — a tool não
+    recebe client por parâmetro (deixaria de fazer parte do schema exposto
+    ao LLM), então o teste intercepta a própria construção do client dentro
+    de `ha_request`. Uma instância nova por chamada (não uma reusada): o
+    `async with` de `ha_request` fecha o client no fim de cada chamada —
+    reusar a mesma instância quebraria na segunda chamada do mesmo teste.
+    Usa `_RealAsyncClient` (capturada antes do patch) — chamar
+    `httpx.AsyncClient(...)` aqui dentro recairia no próprio mock."""
+
+    def _new_client(*_args, **_kwargs):
+        return _RealAsyncClient(transport=httpx.MockTransport(handler))
+
+    with patch("httpx.AsyncClient", side_effect=_new_client):
+        yield
 
 
 @pytest.fixture(autouse=True)
@@ -49,9 +67,8 @@ class TestCredenciais:
         def _nunca(_req):
             raise AssertionError("não deveria chamar o Home Assistant")
 
-        saida = json.loads(
-            await ha.ha_list_entities(domain="", http_client=_client(_nunca))
-        )
+        with _mocked_client(_nunca):
+            saida = json.loads(await ha.ha_list_entities(domain=""))
 
         assert "error" in saida
         assert "HOME_ASSISTANT_TOKEN" in saida["error"]
@@ -64,9 +81,8 @@ class TestCredenciais:
         def _handler(_req):
             return httpx.Response(401, json={"message": "Unauthorized"})
 
-        saida = json.loads(
-            await ha.ha_list_entities(domain="", http_client=_client(_handler))
-        )
+        with _mocked_client(_handler):
+            saida = json.loads(await ha.ha_list_entities(domain=""))
 
         assert "error" in saida
         assert "token" in saida["error"].lower()
@@ -80,15 +96,12 @@ class TestListEntities:
             assert req.headers["Authorization"] == "Bearer tok"
             return httpx.Response(200, json=_ESTADOS)
 
-        todas = json.loads(
-            await ha.ha_list_entities(domain="", http_client=_client(_handler))
-        )
-        assert len(todas["entities"]) == 2
+        with _mocked_client(_handler):
+            todas = json.loads(await ha.ha_list_entities(domain=""))
+            assert len(todas["entities"]) == 2
 
-        so_luz = json.loads(
-            await ha.ha_list_entities(domain="light", http_client=_client(_handler))
-        )
-        assert [e["entity_id"] for e in so_luz["entities"]] == ["light.sala"]
+            so_luz = json.loads(await ha.ha_list_entities(domain="light"))
+            assert [e["entity_id"] for e in so_luz["entities"]] == ["light.sala"]
 
     @pytest.mark.asyncio
     async def test_dominio_sem_nenhuma_entidade_devolve_lista_vazia(self):
@@ -99,9 +112,8 @@ class TestListEntities:
         def _handler(_req):
             return httpx.Response(200, json=_ESTADOS)
 
-        saida = json.loads(
-            await ha.ha_list_entities(domain="climate", http_client=_client(_handler))
-        )
+        with _mocked_client(_handler):
+            saida = json.loads(await ha.ha_list_entities(domain="climate"))
 
         assert saida["entities"] == []
         assert "climate" in saida["warning"]
@@ -114,9 +126,8 @@ class TestGetState:
             assert req.url.path == "/api/states/light.sala"
             return httpx.Response(200, json=_ESTADOS[0])
 
-        saida = json.loads(
-            await ha.ha_get_state(entity_id="light.sala", http_client=_client(_handler))
-        )
+        with _mocked_client(_handler):
+            saida = json.loads(await ha.ha_get_state(entity_id="light.sala"))
 
         assert saida["state"] == "on"
 
@@ -127,11 +138,8 @@ class TestGetState:
         def _handler(_req):
             return httpx.Response(404, json={"message": "Entity not found"})
 
-        saida = json.loads(
-            await ha.ha_get_state(
-                entity_id="light.inexistente", http_client=_client(_handler)
-            )
-        )
+        with _mocked_client(_handler):
+            saida = json.loads(await ha.ha_get_state(entity_id="light.inexistente"))
 
         assert "light.inexistente" in saida["error"]
 
@@ -148,9 +156,8 @@ class TestListServices:
                 ],
             )
 
-        saida = json.loads(
-            await ha.ha_list_services(domain="light", http_client=_client(_handler))
-        )
+        with _mocked_client(_handler):
+            saida = json.loads(await ha.ha_list_services(domain="light"))
 
         assert sorted(saida["services"]) == ["turn_off", "turn_on"]
 
@@ -162,9 +169,8 @@ class TestListServices:
         def _handler(_req):
             return httpx.Response(200, text="<html>login</html>")
 
-        saida = json.loads(
-            await ha.ha_list_services(domain="light", http_client=_client(_handler))
-        )
+        with _mocked_client(_handler):
+            saida = json.loads(await ha.ha_list_services(domain="light"))
 
         assert "error" in saida
 
@@ -180,15 +186,15 @@ class TestCallService:
             }
             return httpx.Response(200, json=[_ESTADOS[0]])
 
-        saida = json.loads(
-            await ha.ha_call_service(
-                domain="light",
-                service="turn_on",
-                entity_id="light.sala",
-                data={"brightness": 120},
-                http_client=_client(_handler),
+        with _mocked_client(_handler):
+            saida = json.loads(
+                await ha.ha_call_service(
+                    domain="light",
+                    service="turn_on",
+                    entity_id="light.sala",
+                    data={"brightness": 120},
+                )
             )
-        )
 
         assert saida["changed"][0]["entity_id"] == "light.sala"
 
@@ -200,15 +206,15 @@ class TestCallService:
         def _handler(_req):
             return httpx.Response(400, json={"message": "Service not found"})
 
-        saida = json.loads(
-            await ha.ha_call_service(
-                domain="light",
-                service="explodir",
-                entity_id="light.sala",
-                data={},
-                http_client=_client(_handler),
+        with _mocked_client(_handler):
+            saida = json.loads(
+                await ha.ha_call_service(
+                    domain="light",
+                    service="explodir",
+                    entity_id="light.sala",
+                    data={},
+                )
             )
-        )
 
         assert "error" in saida
         assert "changed" not in saida
@@ -237,6 +243,35 @@ class TestAprovacaoHumana:
             "ha_list_services",
             "ha_call_service",
         } <= nomes
+
+    def test_schema_das_quatro_tools_nunca_expoe_parametro_sem_tipo(self):
+        """Regressão: `http_client` (parâmetro de injeção de teste) vazou
+        pro schema OpenAI-function exposto ao LLM/providers — um parâmetro
+        `Any` sem `type` resolvido quebra o Cohere v2, que exige `type`
+        sempre presente (string ou array de strings)."""
+        from langchain_core.utils.function_calling import convert_to_openai_function
+
+        from backend.nodes.tools import ALL_TOOLS
+
+        alvo = {
+            "ha_list_entities",
+            "ha_get_state",
+            "ha_list_services",
+            "ha_call_service",
+        }
+        tools = [t for t in ALL_TOOLS if t.name in alvo]
+        assert len(tools) == 4
+
+        for tool in tools:
+            schema = convert_to_openai_function(tool)
+            properties = schema.get("parameters", {}).get("properties", {})
+            assert "http_client" not in properties
+            for pname, pdef in properties.items():
+                has_type = "type" in pdef and pdef["type"] is not None
+                has_any_of = "anyOf" in pdef
+                assert has_type or has_any_of, (
+                    f"{tool.name}.{pname} sem type/anyOf resolvido: {pdef}"
+                )
 
 
 class TestCatalogoDeIntegracao:

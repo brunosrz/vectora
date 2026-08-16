@@ -47,7 +47,6 @@ async def ha_request(
     path: str,
     *,
     payload: dict | None = None,
-    http_client: Any = None,
 ) -> Any:
     """Chamada crua à API do HA. Levanta; quem trata é a tool."""
     url, token = _credenciais()
@@ -56,8 +55,7 @@ async def ha_request(
 
     import httpx
 
-    client = http_client or httpx.AsyncClient(timeout=_TIMEOUT_S)
-    try:
+    async with httpx.AsyncClient(timeout=_TIMEOUT_S) as client:
         resp = await client.request(
             method,
             f"{url}{path}",
@@ -83,15 +81,11 @@ async def ha_request(
             # HA atrás de proxy/portal devolve HTML numa falha de auth.
             msg = f"resposta do Home Assistant em {path} não é JSON"
             raise RuntimeError(msg) from exc
-    finally:
-        if http_client is None:
-            await client.aclose()
 
 
 @vtool(extras=ToolExtras(render_hint="table", category="smart_home", icon="home"))
 async def ha_list_entities(
     domain: str = "",
-    http_client: Any = None,
 ) -> str:
     """Lista as entidades do Home Assistant, com o estado atual de cada uma.
 
@@ -103,7 +97,7 @@ async def ha_list_entities(
         JSON com `entities`, ou com `error`.
     """
     try:
-        estados = await ha_request("GET", "/api/states", http_client=http_client)
+        estados = await ha_request("GET", "/api/states")
         if not isinstance(estados, list):
             return _erro("Home Assistant devolveu /api/states fora do formato de lista")
 
@@ -135,7 +129,6 @@ async def ha_list_entities(
 @vtool(extras=ToolExtras(render_hint="json", category="smart_home", icon="home"))
 async def ha_get_state(
     entity_id: str,
-    http_client: Any = None,
 ) -> str:
     """Estado atual de uma entidade específica do Home Assistant.
 
@@ -150,9 +143,7 @@ async def ha_get_state(
             return _erro("entity_id vazio — informe algo como `light.sala`")
 
         try:
-            estado = await ha_request(
-                "GET", f"/api/states/{entity_id.strip()}", http_client=http_client
-            )
+            estado = await ha_request("GET", f"/api/states/{entity_id.strip()}")
         except RuntimeError as exc:
             # 404 genérico faria o LLM concluir que o Home Assistant caiu.
             if "404" in str(exc):
@@ -180,7 +171,6 @@ async def ha_get_state(
 @vtool(extras=ToolExtras(render_hint="table", category="smart_home", icon="home"))
 async def ha_list_services(
     domain: str,
-    http_client: Any = None,
 ) -> str:
     """Serviços disponíveis num domínio do Home Assistant.
 
@@ -194,7 +184,7 @@ async def ha_list_services(
         JSON com `services`, ou com `error`.
     """
     try:
-        catalogo = await ha_request("GET", "/api/services", http_client=http_client)
+        catalogo = await ha_request("GET", "/api/services")
         if not isinstance(catalogo, list):
             return _erro("Home Assistant devolveu /api/services fora do formato")
 
@@ -231,7 +221,6 @@ async def ha_call_service(
     service: str,
     entity_id: str = "",
     data: dict | None = None,
-    http_client: Any = None,
 ) -> str:
     """Chama um serviço do Home Assistant — age nos dispositivos de verdade.
 
@@ -260,7 +249,6 @@ async def ha_call_service(
             "POST",
             f"/api/services/{domain.strip()}/{service.strip()}",
             payload=payload,
-            http_client=http_client,
         )
         mudadas = resultado if isinstance(resultado, list) else []
         return json.dumps(
