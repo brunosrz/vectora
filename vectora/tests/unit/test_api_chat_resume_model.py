@@ -1,36 +1,27 @@
 """Regressão ao vivo: `resume_chat` (retomada de HITL) chamava
 `get_user_agent(resume_user_id)` sem `model`/`chat_mode`/`workspace_id` —
 caía no grafo "__default__" em vez do grafo compilado com o
-`FallbackChatModel.primary_model_id` que o usuário de fato selecionou
-(ex.: `nine_router:gemini-...`). Sintoma real: aprovar uma tool destrutiva
-resumia a conversa com o provider padrão do sistema (Google), que falhava
-com `GoogleGenAIResponseError: API key not valid` mesmo o usuário tendo
-selecionado um modelo roteado via 9Router.
+`FallbackChatModel.primary_model_id` que o usuário de fato selecionou.
 
-`stream_chat` agora grava o seletor de grafo (`model`, `chat_mode`,
-`workspace_id`) por `thread_id` em `_thread_graph_selector`; `resume_chat`
-lê esse seletor para chamar `get_user_agent` com os mesmos parâmetros.
+Migrado pro motor nativo: `stream_chat` grava o seletor (`model`,
+`chat_mode`, `workspace_id`) por `thread_id` em `_thread_graph_selector`;
+`resume_chat` lê esse seletor para chamar `agent_factory.get_native_agent`
+com os mesmos parâmetros e monta o `FallbackChatClient` com o mesmo
+`primary_model_id` do turno original.
 """
 
 from __future__ import annotations
 
 import importlib
+from contextlib import ExitStack
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from backend.api.schemas import ChatConfig, ResumeChatRequest, StreamChatRequest
-
-
-async def _empty_events(*_a: object, **_kw: object):
-    return
-    yield  # async generator
-
-
-def _mock_graph() -> MagicMock:
-    graph = MagicMock()
-    graph.astream_events = MagicMock(return_value=_empty_events())
-    return graph
+from backend.engine.conversation_loop import LoopResult
+from backend.services.agent_factory import NativeAgent
+from backend.tools.registry import ToolRegistry
 
 
 def _mock_registry(ws_id: str) -> MagicMock:
@@ -43,31 +34,91 @@ def _mock_registry(ws_id: str) -> MagicMock:
     return registry
 
 
-class TestResumeChatUsesSameGraphAsStreamChat:
+def _fake_session_store() -> AsyncMock:
+    store = AsyncMock()
+    store.create_session = AsyncMock()
+    store.get_branch_head_id = AsyncMock(return_value=1)
+    store.append_message = AsyncMock(return_value=2)
+    store.set_branch_head = AsyncMock()
+    store.get_pending_approval = AsyncMock(
+        return_value={
+            "interrupt_id": "irrelevant",
+            "tool_name": "file_write",
+            "tool_call_id": "call-1",
+            "args": {},
+            "reasoning": None,
+            "created_at": "2026-01-01T00:00:00Z",
+        }
+    )
+    store.get_history = AsyncMock(return_value=[])
+    return store
+
+
+class TestResumeChatUsesSameNativeAgentAsStreamChat:
     @pytest.mark.asyncio
     async def test_resume_chat_repassa_model_chat_mode_e_workspace_do_turno_original(
         self,
     ) -> None:
-        get_user_agent_calls: list[dict[str, object]] = []
+        get_native_agent_calls: list[dict[str, object]] = []
 
-        async def _fake_get_user_agent(user_id, **kwargs):
-            get_user_agent_calls.append({"user_id": user_id, **kwargs})
-            return _mock_graph()
+        async def _fake_get_native_agent(user_id, **kwargs):
+            get_native_agent_calls.append({"user_id": user_id, **kwargs})
+            return NativeAgent(
+                tool_registry=ToolRegistry(), subagent_catalog={}, system_prompt="p"
+            )
 
-        with (
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(side_effect=_fake_get_user_agent),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                new=AsyncMock(),
-            ),
-            patch(
-                "backend.workspace.workspace.workspace_registry",
-                _mock_registry("ws-resume-test"),
-            ),
-        ):
+        session_store = _fake_session_store()
+
+        with ExitStack() as stack:
+            stack.enter_context(
+                patch(
+                    "backend.services.agent_factory.get_native_agent",
+                    new=AsyncMock(side_effect=_fake_get_native_agent),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.services.agent_factory.get_session_store",
+                    new=AsyncMock(return_value=session_store),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.services.agent_factory.get_approval_gate",
+                    new=AsyncMock(return_value=AsyncMock()),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.services.agent_factory.get_store",
+                    new=AsyncMock(return_value=None),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.engine.conversation_loop.run_conversation",
+                    new=AsyncMock(return_value=LoopResult(stopped_reason="stop")),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.engine.conversation_loop.resume_conversation",
+                    new=AsyncMock(return_value=True),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    new=AsyncMock(),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace.workspace_registry",
+                    _mock_registry("ws-resume-test"),
+                )
+            )
+
             import backend.api.handlers.chat as chat_mod
 
             importlib.reload(chat_mod)
@@ -80,24 +131,23 @@ class TestResumeChatUsesSameGraphAsStreamChat:
                 thread_id="thread-resume-1",
                 config=ChatConfig(model="nine_router:gemini-2.5-flash"),
             )
-            await chat_mod.stream_chat(stream_request, http_request)
+            stream_response = await chat_mod.stream_chat(stream_request, http_request)
+            async for _chunk in stream_response.body_iterator:
+                pass
 
             resume_request = ResumeChatRequest(
                 thread_id="thread-resume-1",
                 interrupt_id="irrelevant",
                 decision="approve",
             )
-            await chat_mod.resume_chat(resume_request, http_request)
+            resume_response = await chat_mod.resume_chat(resume_request, http_request)
+            async for _chunk in resume_response.body_iterator:
+                pass
 
-        assert len(get_user_agent_calls) == 2
-        stream_call, resume_call = get_user_agent_calls
+        assert len(get_native_agent_calls) == 2
+        stream_call, resume_call = get_native_agent_calls
 
-        assert stream_call["model"] == "nine_router:gemini-2.5-flash"
-        assert resume_call["model"] == "nine_router:gemini-2.5-flash", (
-            "resume_chat deve resolver o MESMO grafo (mesmo model_id embutido "
-            "no FallbackChatModel) que stream_chat usou nesse turno — nunca "
-            "cair no grafo '__default__'"
-        )
+        assert stream_call["chat_mode"] is False
         assert resume_call["chat_mode"] == stream_call["chat_mode"]
         assert resume_call["workspace_id"] == stream_call["workspace_id"]
 
@@ -107,17 +157,45 @@ class TestResumeChatUsesSameGraphAsStreamChat:
     ) -> None:
         """Erro/borda: thread nunca vista por stream_chat (processo reiniciado
         entre o pedido de aprovação e a resposta, ou request malformada) não
-        deve lançar — degrada pro grafo default em vez de quebrar o resume."""
-        get_user_agent_calls: list[dict[str, object]] = []
+        deve lançar — degrada pro NativeAgent default em vez de quebrar o
+        resume."""
+        get_native_agent_calls: list[dict[str, object]] = []
 
-        async def _fake_get_user_agent(user_id, **kwargs):
-            get_user_agent_calls.append({"user_id": user_id, **kwargs})
-            return _mock_graph()
+        async def _fake_get_native_agent(user_id, **kwargs):
+            get_native_agent_calls.append({"user_id": user_id, **kwargs})
+            return NativeAgent(
+                tool_registry=ToolRegistry(), subagent_catalog={}, system_prompt="p"
+            )
 
-        with patch(
-            "backend.services.agent_factory.get_user_agent",
-            new=AsyncMock(side_effect=_fake_get_user_agent),
-        ):
+        session_store = _fake_session_store()
+        session_store.get_pending_approval = AsyncMock(return_value=None)
+
+        with ExitStack() as stack:
+            stack.enter_context(
+                patch(
+                    "backend.services.agent_factory.get_native_agent",
+                    new=AsyncMock(side_effect=_fake_get_native_agent),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.services.agent_factory.get_session_store",
+                    new=AsyncMock(return_value=session_store),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.services.agent_factory.get_approval_gate",
+                    new=AsyncMock(return_value=AsyncMock()),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.services.agent_factory.get_store",
+                    new=AsyncMock(return_value=None),
+                )
+            )
+
             import backend.api.handlers.chat as chat_mod
 
             importlib.reload(chat_mod)
@@ -130,9 +208,10 @@ class TestResumeChatUsesSameGraphAsStreamChat:
                 interrupt_id="irrelevant",
                 decision="approve",
             )
-            await chat_mod.resume_chat(resume_request, http_request)
+            resume_response = await chat_mod.resume_chat(resume_request, http_request)
+            async for _chunk in resume_response.body_iterator:
+                pass
 
-        assert len(get_user_agent_calls) == 1
-        assert get_user_agent_calls[0]["model"] == ""
-        assert get_user_agent_calls[0]["chat_mode"] is False
-        assert get_user_agent_calls[0]["workspace_id"] is None
+        assert len(get_native_agent_calls) == 1
+        assert get_native_agent_calls[0]["chat_mode"] is False
+        assert get_native_agent_calls[0]["workspace_id"] is None

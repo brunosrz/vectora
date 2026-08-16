@@ -1,13 +1,10 @@
-"""Invoca uma SOUL específica isoladamente, fora do fluxo síncrono de
-delegação do orchestrator (tool `task()`).
+"""Resolve o spec de uma SOUL específica pelo nome, fora do fluxo síncrono
+de delegação do orchestrator (``delegate_to_subagent``).
 
-Diferente de ``agent_factory.get_user_agent`` (grafo completo com todas as
-tools + o catálogo inteiro de SOULs disponível via `task()`), aqui o grafo
-compilado usa SÓ as tools e o system prompt da SOUL pedida — o LLM não tem a
-opção de responder fora do escopo daquela SOUL. Reusa o mesmo
-checkpointer/store compartilhado (``agent_factory.get_checkpointer``/
-``get_store``) para as runs aparecerem na mesma infraestrutura de
-threads/histórico que o resto do produto.
+``backend/scheduling/background_tasks.py::run_task`` usa ``_spec_for`` (via
+o catálogo importado direto) para montar um ``ToolRegistry`` isolado só com
+as tools da SOUL pedida quando uma task tem ``trigger_config.subagent_type``
+— o LLM não tem a opção de responder fora do escopo daquela SOUL.
 """
 
 from __future__ import annotations
@@ -47,54 +44,3 @@ SUBAGENT_TYPES = (
     "browser-qa",
     "planner",
 )
-
-
-async def build_subagent_graph(
-    subagent_type: str, model_id: str = "", user_id: str | None = None
-) -> Any:
-    """Compila um grafo deepagents isolado, só com as tools/prompt da SOUL
-    pedida — sem `subagents=` (não delega mais fundo).
-
-    Propaga o mesmo middleware do agente principal (HITL dinâmico incluso) —
-    sem isso, uma execução agendada de SOUL nunca pausa pra aprovação mesmo
-    chamando `terminal`/`file_write`.
-
-    `user_id` filtra `soul.tools` por `tool_policy.effective_disabled` —
-    mesma política (kill-switch global + ABAC por usuário) que
-    `agent_factory._subagent_specs` já aplica na delegação síncrona
-    (`task()` dentro da conversa). Sem isso, uma SOUL agendada via
-    `schedule_subagent_task` rodava com o catálogo de tools fixo da SOUL
-    sempre completo, ignorando qualquer tool que o usuário/admin tivesse
-    desabilitado — a única forma de execução de SOUL que escapava do
-    filtro."""
-    from typing import cast as _cast
-
-    from deepagents import create_deep_agent
-    from langchain_core.language_models.chat_models import BaseChatModel
-
-    from backend.llm.fallback_chat_model import FallbackChatModel
-    from backend.rbac import tool_policy
-    from backend.services import agent_factory
-    from backend.services.middleware import build_middleware_stack
-
-    soul = _spec_for(subagent_type)
-
-    checkpointer = await agent_factory.get_checkpointer()
-    store = await agent_factory.get_store()
-
-    llm: BaseChatModel = _cast(
-        "BaseChatModel", FallbackChatModel(primary_model_id=model_id)
-    )
-
-    disabled = tool_policy.effective_disabled(user_id)
-    tools = [t for t in soul.tools if t.name not in disabled]
-
-    return create_deep_agent(
-        llm,
-        tools=tools,
-        system_prompt=soul.system_prompt,
-        middleware=build_middleware_stack(),
-        checkpointer=checkpointer,
-        store=store,
-        name=f"vectora-subagent-{subagent_type}",
-    )

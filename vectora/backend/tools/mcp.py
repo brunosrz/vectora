@@ -1,9 +1,9 @@
 """MCP tool: invoca ferramentas de outros servidores via Model Context Protocol.
 
-Usa o SDK oficial `mcp` (Python) direto — este módulo não depende de
-`langchain-mcp-adapters`/`MultiServerMCPClient` (essa lib segue no projeto só
-por causa de `backend/workspace/plugins.py`, que resolve tools MCP
-por-usuário direto pro grafo ainda em produção).
+Usa o SDK oficial `mcp` (Python) direto — nenhuma dependência de
+`langchain-mcp-adapters`/`MultiServerMCPClient`. `VectoraMCPClient` também é
+reutilizado por `backend/workspace/plugins.py` pra resolver as tools MCP
+por-usuário (servidores configurados via marketplace).
 `VectoraMCPClient` mantém uma `ClientSession` por servidor configurado
 (stdio/SSE/streamable_http) e expõe as `mcp.types.Tool` agregadas.
 
@@ -74,9 +74,15 @@ class VectoraMCPClient:
         self._tools_by_name: dict[str, tuple[str, MCPTool]] = {}
         self._connected = False
 
-    async def connect(self, connections: dict[str, dict[str, Any]]) -> None:
-        """Abre uma sessão por servidor configurado. Falha de um servidor
-        não impede os demais — cada conexão é isolada e logada."""
+    async def connect(
+        self, connections: dict[str, dict[str, Any]], *, strict: bool = False
+    ) -> None:
+        """Abre uma sessão por servidor configurado.
+
+        Por padrão, falha de um servidor não impede os demais — cada conexão
+        é isolada e logada (uso em produção, múltiplos servidores agregados).
+        Com ``strict=True`` a primeira falha propaga — uso em health-check de
+        um único servidor, onde o chamador precisa do erro real."""
         for server_name, cfg in connections.items():
             try:
                 session = await self._connect_one(server_name, cfg)
@@ -84,6 +90,8 @@ class VectoraMCPClient:
                 logger.exception(
                     "mcp: falha ao conectar servidor", extra={"server": server_name}
                 )
+                if strict:
+                    raise
                 continue
             self._sessions[server_name] = session
             try:
@@ -92,6 +100,8 @@ class VectoraMCPClient:
                 logger.exception(
                     "mcp: falha ao listar tools", extra={"server": server_name}
                 )
+                if strict:
+                    raise
                 continue
             for t in listed.tools:
                 self._tools_by_name[t.name] = (server_name, t)
@@ -124,6 +134,10 @@ class VectoraMCPClient:
 
     def tools(self) -> dict[str, MCPTool]:
         return {name: tool for name, (_, tool) in self._tools_by_name.items()}
+
+    def tools_by_server(self) -> dict[str, str]:
+        """Nome da tool -> nome do servidor configurado que a expõe."""
+        return {name: server for name, (server, _) in self._tools_by_name.items()}
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> str:
         """Invoca `tool_name` no servidor que a expõe. Levanta `KeyError` se

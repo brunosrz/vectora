@@ -1,9 +1,9 @@
 """Registry de servidores MCP por usuário.
 
 Cada usuário tem sua própria lista de servidores MCP (plugins), persistida em
-``~/.vectora/mcp/<user_id>.json``. As tools desses servidores entram no grafo
-via o cliente MCP. O isolamento por arquivo garante que um usuário não veja os
-plugins de outro.
+``~/.vectora/mcp/<user_id>.json``. As tools desses servidores entram no
+toolset via ``VectoraMCPClient`` (``backend/tools/mcp.py``). O isolamento por
+arquivo garante que um usuário não veja os plugins de outro.
 """
 
 from __future__ import annotations
@@ -12,13 +12,13 @@ import asyncio
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
-try:
-    from langchain_mcp_adapters.client import MultiServerMCPClient
-except ImportError:
-    MultiServerMCPClient = None  # type: ignore[assignment,misc]  # ty: ignore[invalid-assignment]
+from backend.tools.langchain_bridge import as_langchain_tool
+from backend.tools.mcp import VectoraMCPClient
+from backend.tools.registry import ToolExtras, ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,8 @@ def remove_server(user_id: str, name: str) -> bool:
 
 
 def build_connection(server: McpServer) -> dict:
-    """Monta o dict de conexão no formato do MultiServerMCPClient."""
+    """Monta o dict de conexão no formato aceito por
+    ``VectoraMCPClient.connect`` (``backend/tools/mcp.py``)."""
     if server.transport == "stdio":
         return {
             "transport": "stdio",
@@ -160,30 +161,92 @@ async def health_check(server: McpServer) -> dict:
     """Tenta conectar ao servidor e listar suas tools.
 
     Retorna ``{ok, tools, error}``. Nunca lança — falhas viram ``ok=False``.
+    Conecta em modo ``strict``: a primeira falha (servidor não sobe, timeout,
+    etc.) propaga pro ``except`` em vez de virar silenciosamente "0 tools".
     """
-    if MultiServerMCPClient is None:
-        return {
-            "ok": False,
-            "tools": [],
-            "error": "langchain-mcp-adapters não instalado.",
-        }
-    connections = {server.name: build_connection(server)}
+    client = VectoraMCPClient()
     try:
-        client = MultiServerMCPClient(connections)  # ty: ignore[invalid-argument-type]
         async with asyncio.timeout(_HEALTH_TIMEOUT_S):
-            tools = await client.get_tools()
-        return {"ok": True, "tools": [t.name for t in tools], "error": ""}
+            await client.connect({server.name: build_connection(server)}, strict=True)
+        return {"ok": True, "tools": sorted(client.tools()), "error": ""}
     except Exception as exc:
         return {"ok": False, "tools": [], "error": str(exc)}
+    finally:
+        await client.aclose()
+
+
+_JSON_SCHEMA_TYPES: dict[str, Any] = {
+    "string": str,
+    "integer": int,
+    "number": float,
+    "boolean": bool,
+    "array": list,
+    "object": dict,
+}
+
+
+def _args_model_from_input_schema(
+    tool_name: str, input_schema: dict | None
+) -> type[BaseModel]:
+    """Constrói um ``BaseModel`` dinâmico a partir do JSON Schema que um
+    servidor MCP publica em ``Tool.inputSchema`` — mapeamento raso (tipos
+    primitivos + array/object), o suficiente pro schema que o LLM recebe
+    pra chamar a tool remota."""
+    properties: dict[str, Any] = (input_schema or {}).get("properties", {}) or {}
+    required = set((input_schema or {}).get("required", []) or [])
+    fields: dict[str, Any] = {}
+    for prop_name, prop_schema in properties.items():
+        py_type = _JSON_SCHEMA_TYPES.get((prop_schema or {}).get("type", ""), Any)
+        if prop_name in required:
+            fields[prop_name] = (py_type, ...)
+        else:
+            fields[prop_name] = (py_type | None, (prop_schema or {}).get("default"))
+    return create_model(f"{tool_name}Args", **fields)
+
+
+def _remote_tool_spec(server_name: str, connection: dict, mcp_tool: Any) -> ToolSpec:
+    """Empacota uma ``mcp.types.Tool`` remota como ``ToolSpec`` nativa —
+    cada invocação abre uma conexão nova, isolada, só com o servidor dono da
+    tool (nenhum estado de sessão é mantido entre chamadas)."""
+    tool_name = mcp_tool.name
+
+    async def _handler(**kwargs: Any) -> str:
+        client = VectoraMCPClient()
+        try:
+            async with asyncio.timeout(_HEALTH_TIMEOUT_S):
+                await client.connect({server_name: connection}, strict=True)
+                return await client.call_tool(tool_name, kwargs)
+        except TimeoutError:
+            return f"Erro: tool MCP '{tool_name}' excedeu {_HEALTH_TIMEOUT_S}s."
+        except Exception as exc:
+            logger.exception(
+                "plugins: falha ao invocar tool MCP remota", extra={"tool": tool_name}
+            )
+            return f"Erro ao invocar tool MCP '{tool_name}': {exc}"
+        finally:
+            await client.aclose()
+
+    _handler.__name__ = tool_name
+
+    return ToolSpec(
+        name=tool_name,
+        description=mcp_tool.description or "",
+        args_model=_args_model_from_input_schema(tool_name, mcp_tool.inputSchema),
+        handler=_handler,
+        extras=ToolExtras(render_hint="json", category="mcp", icon="share-2"),
+        needs_ctx=False,
+    )
 
 
 async def get_user_mcp_tools(user_id: str) -> list:
-    """Carrega as tools (BaseTool) dos servidores MCP do usuário.
+    """Carrega as tools (``BaseTool``, via ``as_langchain_tool``) dos
+    servidores MCP do usuário.
 
     Cacheado por ``(user_id, version)`` — só reconecta quando o usuário muda
-    seus servidores. Sem servidores ou sem a lib instalada → lista vazia. Falha
-    de um servidor degrada para os que responderam (o MultiServerMCPClient é
-    tolerante; uma exceção global vira lista vazia + log).
+    seus servidores. Sem servidores configurados → lista vazia. Falha de um
+    servidor degrada para os que responderam (``VectoraMCPClient.connect``
+    é tolerante por padrão); uma exceção ao listar todas ainda vira lista
+    vazia + log, nunca propaga.
     """
     version = tools_version(user_id)
     cached = _mcp_tools_cache.get(user_id)
@@ -191,18 +254,31 @@ async def get_user_mcp_tools(user_id: str) -> list:
         return cached[1]
 
     servers = list_servers(user_id)
-    if not servers or MultiServerMCPClient is None:
+    if not servers:
         _mcp_tools_cache[user_id] = (version, [])
         return []
 
     connections = {s.name: build_connection(s) for s in servers}
+    client = VectoraMCPClient()
     try:
-        client = MultiServerMCPClient(connections)  # ty: ignore[invalid-argument-type]
         async with asyncio.timeout(_HEALTH_TIMEOUT_S):
-            tools = await client.get_tools()
+            await client.connect(connections)
+        remote_tools = client.tools()
+        tools_by_server = client.tools_by_server()
     except Exception:
         logger.warning("plugins: falha ao carregar tools MCP de %s", user_id)
-        tools = []
+        remote_tools, tools_by_server = {}, {}
+    finally:
+        await client.aclose()
 
-    _mcp_tools_cache[user_id] = (version, list(tools))
-    return _mcp_tools_cache[user_id][1]
+    tools = [
+        as_langchain_tool(
+            _remote_tool_spec(
+                tools_by_server[name], connections[tools_by_server[name]], t
+            )
+        )
+        for name, t in remote_tools.items()
+    ]
+
+    _mcp_tools_cache[user_id] = (version, tools)
+    return tools

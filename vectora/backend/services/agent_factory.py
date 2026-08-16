@@ -30,19 +30,50 @@ Cache:
 Lifecycle:
     Servidor: awarm() no startup, aclose() no shutdown.
     Testes: use fixtures que chamam aclose() no teardown.
+
+Dois dispatches coexistem neste módulo:
+    - ``get_native_agent`` / ``NativeAgent`` — motor nativo
+      (``backend/engine/conversation_loop.py::run_conversation``), consumido
+      pelo StreamChat/ResumeChat de produção
+      (``backend/api/handlers/chat.py``). Sem grafo compilado: tools e
+      subagentes não dependem do modelo escolhido (o ``ChatClient`` é
+      resolvido por chamada via ``FallbackChatClient``), então o cache é só
+      por ``(user_id, chat_mode, workspace_id)``.
+    - ``get_user_agent`` / ``_build_graph_async`` — grafo ``deepagents``
+      legado, mantido em uso por três consumidores que ainda esperam a API
+      do grafo (``.ainvoke``/``.aupdate_state``/``.astream_events``) e que
+      não fazem parte do escopo desta migração:
+      ``backend/scheduling/background_tasks.py`` (rotinas agendadas,
+      heartbreaks, resume de HITL em background, relatório de resultado na
+      sessão-mãe via ``aupdate_state``) e
+      ``backend/services/connect/runner.py`` (mensagens de plataformas
+      externas via ``handle_incoming_message``). Migrar esses dois
+      consumidores pro motor nativo é trabalho de uma fase seguinte — eles
+      escrevem histórico via checkpointer LangGraph, não via
+      ``SessionStore``, então uma thread tocada por uma task em background
+      pode ter mensagens em qualquer um dos dois backends de persistência
+      (ver fallback em ``aget_thread_messages``/``aget_thread_pending_interrupt``
+      abaixo).
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from backend.agents._identity import VECTORA_IDENTITY
 from backend.rbac import tool_policy
 from backend.workspace.plugins import tools_version
 from backend.workspace.skills import skills_version
+
+if TYPE_CHECKING:
+    from backend.engine.hitl import ApprovalGate
+    from backend.engine.subagents import SubagentSpec
+    from backend.persistence.native.session_store import SessionStore
+    from backend.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -437,6 +468,37 @@ _store_ctx: Any = None  # context manager do store Postgres (complete mode)
 _lock = asyncio.Lock()
 _profiles_registered: bool = False
 
+# ---------------------------------------------------------------------------
+# Infra do motor nativo — SessionStore/ApprovalGate compartilhados
+# ---------------------------------------------------------------------------
+
+_session_store_pool: Any = None
+"""``AsyncConnectionPool`` dedicado a ``sessions.db`` (histórico de
+mensagens/aprovações pendentes do motor nativo) — sempre SQLite local,
+independente de ``storage_mode``: ``SessionStore`` ainda não tem backend
+Postgres (só o checkpointer/store LangGraph legados têm as duas variantes)."""
+_session_store: SessionStore | None = None
+_approval_gate: ApprovalGate | None = None
+
+
+@dataclass(slots=True)
+class NativeAgent:
+    """Componentes do motor nativo para um ``(user_id, chat_mode,
+    workspace_id)`` — tools, catálogo de subagentes e system prompt já
+    resolvidos. Substitui o grafo compilado para o dispatch de produção do
+    chat (``backend/api/handlers/chat.py``); ver nota de escopo no topo do
+    módulo sobre os consumidores que ainda usam ``get_user_agent``."""
+
+    tool_registry: ToolRegistry
+    subagent_catalog: dict[str, SubagentSpec]
+    system_prompt: str
+
+
+_native_agents: dict[tuple[str, bool, str], NativeAgent] = {}
+"""Cache por ``(user_id, chat_mode, workspace_id)`` — sem partição por
+modelo: o ``ChatClient`` é resolvido por chamada (``FallbackChatClient``),
+não fica preso ao componente cacheado como o LLM do grafo deepagents ficava."""
+
 # Rastreia (tools_version, policy_version, skills_version) por usuário.
 # Quando qualquer versão muda, o cache de LLM do usuário é invalidado.
 _version_tracker: dict[str, tuple[int, int, int]] = {}
@@ -580,6 +642,43 @@ async def _ensure_infra() -> None:
             from backend.llm.backends import build_store
 
             _store = await build_store()
+
+    global _session_store_pool, _session_store, _approval_gate
+    if _session_store is None:
+        from backend.engine.hitl import ApprovalGate
+        from backend.persistence.native.session_store import SessionStore
+        from backend.settings import settings as _settings
+        from backend.storage.sqlite.pool import AsyncConnectionPool
+
+        db_path = str(_settings.vectora_home / "sessions.db")
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        _session_store_pool = AsyncConnectionPool(db_path, min_size=1, max_size=4)
+        await _session_store_pool.open()
+        _session_store = SessionStore(_session_store_pool)
+        await _session_store.setup()
+        _approval_gate = ApprovalGate(_session_store)
+
+
+async def get_session_store() -> SessionStore:
+    """``SessionStore`` compartilhado do motor nativo — histórico de
+    mensagens e aprovações pendentes das threads de chat (StreamChat/
+    ResumeChat)."""
+    await _ensure_infra()
+    if _session_store is None:
+        msg = "_ensure_infra não inicializou o SessionStore"
+        raise RuntimeError(msg)
+    return _session_store
+
+
+async def get_approval_gate() -> ApprovalGate:
+    """``ApprovalGate`` compartilhado — mesma instância entre StreamChat e
+    ResumeChat, para o fast-path local (``wait_for_resume``) funcionar
+    dentro do mesmo processo."""
+    await _ensure_infra()
+    if _approval_gate is None:
+        msg = "_ensure_infra não inicializou o ApprovalGate"
+        raise RuntimeError(msg)
+    return _approval_gate
 
 
 async def get_store() -> Any:
@@ -742,6 +841,7 @@ def _check_global_tools_version() -> None:
     if _global_tools_version is not None and current != _global_tools_version:
         _graphs.clear()
         _graphs_by_user.clear()
+        _native_agents.clear()
         logger.info(
             "agent_factory: kill-switch global de tools mudou (v%d→v%d) — grafos invalidados",
             _global_tools_version,
@@ -823,6 +923,118 @@ async def get_user_agent(
     return _graphs[global_key]
 
 
+# ---------------------------------------------------------------------------
+# Motor nativo — tools/subagentes/system prompt (sem grafo compilado)
+# ---------------------------------------------------------------------------
+
+
+def _native_tool_registry(chat_mode: bool, user_id: str | None) -> ToolRegistry:
+    """Registry nativo com as mesmas tools que ``ALL_TOOLS``/``CHAT_TOOLS``
+    expõem hoje (por nome), resolvidas direto do ``TOOL_REGISTRY`` nativo —
+    sem o adapter ``as_langchain_tool`` que ``backend/nodes/tools.py`` usa
+    pro dispatch deepagents ainda em produção (ver nota de escopo no topo
+    do módulo). Importar ``backend.nodes.tools`` aqui é o que garante que
+    todo módulo de tool (``@vtool``) já foi importado e registrado no
+    ``TOOL_REGISTRY`` antes da resolução por nome abaixo."""
+    from backend.nodes.tools import ALL_TOOLS, CHAT_TOOLS
+    from backend.tools.registry import TOOL_REGISTRY, ToolRegistry
+
+    names = {t.name for t in (CHAT_TOOLS if chat_mode else ALL_TOOLS)}
+    disabled = tool_policy.effective_disabled(user_id)
+    registry = ToolRegistry()
+    for name in sorted(names):
+        if name in disabled:
+            continue
+        spec = TOOL_REGISTRY.get(name)
+        if spec is not None:
+            registry.register(spec)
+
+    if not chat_mode:
+        import backend.tools.subagent_delegate
+
+        delegate_spec = TOOL_REGISTRY.get("delegate_to_subagent")
+        if delegate_spec is not None and "delegate_to_subagent" not in disabled:
+            registry.register(delegate_spec)
+
+    return registry
+
+
+def _native_subagent_catalog(user_id: str | None) -> dict[str, SubagentSpec]:
+    """Catálogo de ``SubagentSpec`` nativas a partir de ``SOUL_CATALOG`` —
+    mesma fonte de verdade que ``_subagent_specs`` (dispatch deepagents
+    legado) usa, resolvendo cada tool langchain-wrapped de volta pro
+    ``ToolSpec`` nativo original via ``TOOL_REGISTRY.get(tool.name)`` (todo
+    tool de ``SOUL_CATALOG`` nasce do registry nativo — ver
+    ``backend/nodes/tools.py::_bridge``)."""
+    from backend.agents.souls import SOUL_CATALOG
+    from backend.engine.subagents import SubagentSpec
+    from backend.tools.registry import TOOL_REGISTRY
+
+    disabled = tool_policy.effective_disabled(user_id)
+    catalog: dict[str, SubagentSpec] = {}
+    for soul in SOUL_CATALOG.values():
+        tools = []
+        for lc_tool in soul.tools:
+            name = getattr(lc_tool, "name", "")
+            if not name or name in disabled:
+                continue
+            spec = TOOL_REGISTRY.get(name)
+            if spec is not None:
+                tools.append(spec)
+        catalog[soul.name] = SubagentSpec(
+            name=soul.name,
+            description=soul.description,
+            system_prompt=soul.system_prompt,
+            tools=tools,
+        )
+    return catalog
+
+
+def _build_native_agent(
+    user_id: str | None, chat_mode: bool, workspace_id: str | None
+) -> NativeAgent:
+    tool_registry = _native_tool_registry(chat_mode, user_id)
+    subagent_catalog: dict[str, SubagentSpec] = (
+        {} if chat_mode else _native_subagent_catalog(user_id)
+    )
+    system_prompt = _build_session_system_prompt(workspace_id)
+    logger.info(
+        "agent_factory: NativeAgent construído (user=%s, chat_mode=%s, "
+        "%d tools + %d subagentes)",
+        user_id or "local",
+        chat_mode,
+        len(tool_registry.all()),
+        len(subagent_catalog),
+    )
+    return NativeAgent(
+        tool_registry=tool_registry,
+        subagent_catalog=subagent_catalog,
+        system_prompt=system_prompt,
+    )
+
+
+async def get_native_agent(
+    user_id: str | None = None,
+    chat_mode: bool = False,
+    workspace_id: str | None = None,
+) -> NativeAgent:
+    """Componentes do motor nativo (tools, subagentes, system prompt) para
+    o dispatch de produção do chat — cache por ``(user_id, chat_mode,
+    workspace_id)``. Thread-safe via o mesmo ``_lock`` do cache de grafos."""
+    _check_global_tools_version()
+
+    key = (user_id or "", chat_mode, workspace_id or "")
+    if key not in _native_agents:
+        async with _lock:
+            if key not in _native_agents:
+                _native_agents[key] = _build_native_agent(
+                    user_id, chat_mode, workspace_id
+                )
+        if user_id:
+            _track_versions(user_id)
+    return _native_agents[key]
+
+
 def _message_text(content: Any) -> str:
     """Extrai o texto de uma mensagem (str ou lista de partes multimodais).
 
@@ -852,7 +1064,46 @@ async def aget_thread_messages(
     thread_id: str,
     workspace_id: str | None = None,
 ) -> list[tuple[str, str, str, list[dict[str, Any]]]]:
-    """Mensagens persistidas de uma thread como ``(role, text, checkpoint_id, attachments_meta)``.
+    """Mensagens persistidas de uma thread como ``(role, text, checkpoint_id,
+    attachments_meta)``.
+
+    Consulta o ``SessionStore`` nativo primeiro (fonte de verdade do
+    StreamChat/ResumeChat de produção) — ``checkpoint_id`` aqui é o ``id``
+    da mensagem (``str(int)``), alvo de ``SessionStore.set_branch_head``
+    pra "editar e reenviar"/"regenerar". Thread sem nenhuma mensagem nativa
+    cai no fallback do checkpointer LangGraph legado (thread só tocada por
+    tarefa em background/mensageria externa — ver nota de escopo no topo
+    do módulo). ``attachments_meta`` sempre ``[]`` no caminho nativo:
+    ``VMessage`` ainda não carrega metadados de anexo (gap documentado —
+    thumbnails de imagem não reaparecem num reload de thread nativa; o
+    anexo em si continua enviado ao provider e persistido em disco).
+    """
+    from backend.vtypes.message import MessageRole
+
+    store = await get_session_store()
+    pares = await store.get_history_with_ids(thread_id)
+    if pares:
+        out: list[tuple[str, str, str, list[dict[str, Any]]]] = []
+        for msg_id, msg in pares:
+            if msg.role in (MessageRole.TOOL, MessageRole.SYSTEM):
+                continue
+            text = msg.text().strip()
+            if not text:
+                continue
+            role = "human" if msg.role == MessageRole.USER else "assistant"
+            out.append((role, text, str(msg_id), []))
+        return out
+
+    return await _aget_thread_messages_legacy(thread_id, workspace_id)
+
+
+async def _aget_thread_messages_legacy(
+    thread_id: str,
+    workspace_id: str | None = None,
+) -> list[tuple[str, str, str, list[dict[str, Any]]]]:
+    """Fallback: histórico via checkpointer deepagents legado — ver
+    docstring de ``aget_thread_messages`` e a nota de escopo no topo do
+    módulo.
 
     Usa o grafo deepagents compilado (schema idêntico ao que escreveu os
     checkpoints) para ler o histórico via ``aget_state_history`` — não só o
@@ -940,8 +1191,31 @@ async def aget_thread_todos(
     thread_id: str,
     workspace_id: str | None = None,
 ) -> list[dict[str, str]]:
-    """Snapshot mais recente de ``state["todos"]`` (write_todos/
-    TodoListMiddleware, injetado incondicionalmente pelo deepagents).
+    """Snapshot mais recente da lista de todos da thread.
+
+    Gap documentado: o motor nativo (``backend/engine/conversation_loop.py``)
+    não tem nenhuma tool ``write_todos``/rastreamento de plano equivalente
+    ao ``TodoListMiddleware`` que o deepagents injetava incondicionalmente
+    — threads despachadas pelo motor nativo sempre devolvem ``[]`` aqui (a
+    seção "Tasks" do Plan tab fica vazia para elas). Cair no fallback
+    legado só faz sentido pra threads que nunca passaram pelo motor nativo
+    (mensagens só em ``SessionStore`` → sem histórico deepagents pra ler).
+    """
+    store = await get_session_store()
+    pares = await store.get_history_with_ids(thread_id)
+    if pares:
+        return []
+
+    return await _aget_thread_todos_legacy(thread_id, workspace_id)
+
+
+async def _aget_thread_todos_legacy(
+    thread_id: str,
+    workspace_id: str | None = None,
+) -> list[dict[str, str]]:
+    """Fallback: snapshot de ``state["todos"]`` via checkpointer deepagents
+    legado — ver docstring de ``aget_thread_todos`` e a nota de escopo no
+    topo do módulo.
 
     Popula a seção "Tasks" do Plan tab num reload de página — o SSE ao vivo
     (``TodosUpdatedEvent``) já entrega isso em tempo real, mas não persiste
@@ -979,6 +1253,32 @@ async def aget_thread_pending_interrupt(
     """Devolve o interrupt pendente da thread (se houver), pra reidratar o
     HITLPanel após um reload de página.
 
+    Consulta ``SessionStore.get_pending_approval`` primeiro (motor nativo —
+    ``ApprovalGate.request_approval`` persiste ali de forma síncrona,
+    sobrevivendo a restart). Sem pendência nativa, cai no fallback do
+    checkpointer deepagents legado (ver nota de escopo no topo do módulo).
+    Retorna ``None`` se não houver interrupt pendente em nenhum dos dois —
+    nunca lança, é consultado num reload de página.
+    """
+    store = await get_session_store()
+    pending = await store.get_pending_approval(thread_id)
+    if pending is not None:
+        return {
+            "tool_name": pending["tool_name"],
+            "args": pending["args"],
+            "interrupt_id": pending["interrupt_id"],
+        }
+
+    return await _aget_thread_pending_interrupt_legacy(thread_id, workspace_id)
+
+
+async def _aget_thread_pending_interrupt_legacy(
+    thread_id: str, workspace_id: str | None = None
+) -> dict[str, Any] | None:
+    """Fallback: interrupt pendente via checkpointer deepagents legado —
+    ver docstring de ``aget_thread_pending_interrupt`` e a nota de escopo
+    no topo do módulo.
+
     O interrupt sobrevive a um restart do backend — o checkpointer é real,
     não ``MemorySaver`` — mas a UI só *mostra* a proposta quando a mensagem
     chega via streaming; um F5 no meio de uma pausa HITL perdia o card até
@@ -986,9 +1286,6 @@ async def aget_thread_pending_interrupt(
     (não ``snapshot.values``) — é onde o LangGraph guarda o interrupt de um
     nó pausado, mesmo formato que ``adapters.py`` consome ao vivo do
     ``on_chain_stream``.
-
-    Retorna ``None`` se não houver interrupt pendente ou se a thread não
-    existir — nunca lança, é consultado num reload de página.
     """
     await _ensure_infra()
     if _checkpointer is None:
@@ -1068,15 +1365,21 @@ def _invalidate_llm_cache(user_id: str) -> None:
         for k in stale_graph_keys:
             del _graphs_by_user[k]
 
+        stale_native_keys = [k for k in _native_agents if k[0] == user_id]
+        for k in stale_native_keys:
+            del _native_agents[k]
+
         from backend.llm import llm_tools
 
         stale_keys = [k for k in llm_tools._bound_cache if k[0] == user_id]
         for k in stale_keys:
             del llm_tools._bound_cache[k]
-        if stale_graph_keys or stale_keys:
+        if stale_graph_keys or stale_native_keys or stale_keys:
             logger.info(
-                "agent_factory: %d grafo(s) + %d entrada(s) de LLM cache invalidados para %s",
+                "agent_factory: %d grafo(s) + %d NativeAgent(s) + %d entrada(s) "
+                "de LLM cache invalidados para %s",
                 len(stale_graph_keys),
+                len(stale_native_keys),
                 len(stale_keys),
                 user_id,
             )
@@ -1145,13 +1448,27 @@ async def coder_compensate(workspace_id: str | None = None) -> str | None:
 
 
 async def aclose() -> None:
-    """Fecha o grafo + checkpointer/store (SQLite ou Postgres). Idempotente.
+    """Fecha o grafo + checkpointer/store (SQLite ou Postgres) + o
+    ``SessionStore``/``ApprovalGate`` nativos. Idempotente.
 
     Deve ser chamado no shutdown do FastAPI (lifespan).
     """
     global _checkpointer_ctx, _checkpointer, _store, _store_ctx
+    global _session_store_pool, _session_store, _approval_gate
 
     async with _lock:
+        if _session_store_pool is not None:
+            pool = _session_store_pool
+            _session_store_pool = None
+            _session_store = None
+            _approval_gate = None
+            _native_agents.clear()
+            try:
+                await pool.close()
+                logger.info("agent_factory: SessionStore fechado")
+            except Exception as exc:
+                logger.warning("agent_factory: erro ao fechar SessionStore: %s", exc)
+
         if _checkpointer_ctx is None:
             return
         ctx = _checkpointer_ctx

@@ -18,20 +18,20 @@
 > plano generaliza isso pra multi-modelo, multi-instância (conexões remotas)
 > e adiciona OpenRouter do zero. Nenhuma das duas telas existe hoje no
 > frontend — é greenfield de UI, mas o backbone de carregamento de LLM
-> (`load_llm()`) já é provider-agnóstico o suficiente pra não precisar de
-> reescrita.
+> (`load_chat_client()`, em `backend/llm/fallback_chat_client.py`) já é
+> provider-agnóstico o suficiente pra não precisar de reescrita.
 
 ---
 
 ## 1. Panorama
 
-|                          | Ollama                                                                            | OpenRouter                                                                                                      |
-| ------------------------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **Onde roda**            | Processo do usuário (local ou outra máquina na rede)                              | Serviço cloud de terceiro (openrouter.ai)                                                                       |
-| **Autenticação**         | Nenhuma (ou rede/túnel do usuário)                                                | API key própria do usuário                                                                                      |
-| **Catálogo de modelo**   | O que o usuário baixou (`ollama list`) — infinitas variações de tag               | Centenas de modelos de dezenas de provedores, id `provider/model`                                               |
-| **Integração LangChain** | `langchain[ollama]`, já usado via `init_chat_model(..., model_provider="ollama")` | Sem pacote dedicado — `init_chat_model("openrouter:<id>")` usa o caminho OpenAI-compatible por baixo (ver §3.2) |
-| **Suporte hoje**         | Parcial (single-instance, sem UI, sem registro de modelo)                         | Zero                                                                                                            |
+|                        | Ollama                                                                          | OpenRouter                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Onde roda**          | Processo do usuário (local ou outra máquina na rede)                            | Serviço cloud de terceiro (openrouter.ai)                                                                               |
+| **Autenticação**       | Nenhuma (ou rede/túnel do usuário)                                              | API key própria do usuário                                                                                              |
+| **Catálogo de modelo** | O que o usuário baixou (`ollama list`) — infinitas variações de tag             | Centenas de modelos de dezenas de provedores, id `provider/model`                                                       |
+| **Client nativo**      | `OllamaChatClient` (`backend/llm/ollama/chat_client.py`), Protocol `ChatClient` | `OpenRouterChatClient` (`backend/llm/openrouter/chat_client.py`), formato Chat Completions OpenAI-compatível (ver §3.2) |
+| **Suporte hoje**       | Parcial (single-instance, sem UI, sem registro de modelo)                       | Zero                                                                                                                    |
 
 Os dois são "**gateways**" no mesmo sentido: uma conexão configurada pelo
 usuário (endpoint + credencial) que expõe uma lista de modelos que o próprio
@@ -53,25 +53,29 @@ ollama_base_url: str | None = None
 ollama_model: str = "llama2"
 ```
 
-`backend/services/utils.py:104-114` (`_build_concrete_model`, caso `"ollama"`):
+`backend/llm/fallback_chat_client.py` (`load_chat_client`, caso `"ollama"`):
 
 ```python
 case "ollama":
-    from langchain.chat_models import init_chat_model
+    from backend.llm.ollama.chat_client import OllamaChatClient
+    from backend.llm.ollama.client import OllamaClient
 
-    return init_chat_model(
+    return OllamaChatClient(
         model=model_name,
-        model_provider="ollama",
-        base_url=_get_env_with_default(
-            "OLLAMA_BASE_URL", "http://127.0.0.1:11434"
+        client=OllamaClient(
+            base_url=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+            api_key=os.getenv("OLLAMA_API_KEY", ""),
         ),
-        temperature=temperature,
     )
 ```
 
-Isso já cobre o caso mais difícil (instanciar o `BaseChatModel` certo) — o
+Isso já cobre o caso mais difícil (instanciar o `ChatClient` certo) — o
 que falta é tudo em volta: múltiplos modelos, múltiplas instâncias
-(conexões remotas), e uma UI pra cadastrar isso sem editar `.env`.
+(conexões remotas), e uma UI pra cadastrar isso sem editar `.env`. A
+generalização abaixo troca o `base_url` fixo de `os.getenv` por um lookup
+na tabela `ollama_instances` (§2.5), resolvido a partir do model id de 3
+partes (§2.6) — o `OllamaClient` em si não muda, só quem escolhe o
+`base_url` que passa pra ele.
 
 ### 2.2 Modelo de dados — instâncias + modelos registrados
 
@@ -95,8 +99,8 @@ OllamaRegisteredModel
 ```
 
 **Conexões remotas**: `base_url` é só um HTTP endpoint — não tem nada
-especial de "local" vs "remoto" no client (`langchain-ollama` já aceita
-qualquer `base_url`). O que muda é a **responsabilidade do usuário**: expor
+especial de "local" vs "remoto" no client (`OllamaClient`, `backend/llm/
+ollama/client.py`, já aceita qualquer `base_url`). O que muda é a **responsabilidade do usuário**: expor
 a porta 11434 do Ollama remoto de forma segura (túnel SSH, Tailscale,
 Cloudflare Tunnel, VPN — o Vectora não gerencia isso, só documenta). A UI
 deve deixar isso explícito: um campo de ajuda linkando pra
@@ -177,21 +181,22 @@ Modo `lite` (SQLite sempre, ver `CLAUDE.md` — "Usuários/auth/settings
 sempre em SQLite, independente do modo") já é o storage de auth hoje — essa
 tabela mora no mesmo banco, sem depender do modo `complete`/Postgres.
 
-### 2.6 Model id — como isso chega no `load_llm()`
+### 2.6 Model id — como isso chega no `load_chat_client()`
 
-Hoje o formato de model id é `"provider:model"` (`backend/services/
-utils.py`, `load_llm(model_id)`). Um modelo Ollama registrado vira:
+Hoje o formato de model id é `"provider:model"` (`backend/llm/
+fallback_chat_client.py`, `load_chat_client(model_id)`). Um modelo Ollama
+registrado vira:
 
 ```
 ollama:<instance_id>:<model_tag>
 ```
 
-`load_llm()` já faz `model_id.split(":", 1)` — passa a ser `split(":", 2)`
-quando o provider é `ollama`, resolvendo o `base_url` daquela instância
-específica (lookup na tabela `ollama_instances`) antes de chamar
-`_build_concrete_model("ollama", model_tag, ..., base_url=instance.base_url)`.
-Isso é a única mudança estrutural no `load_llm()` — os outros providers
-continuam com o formato de 2 partes.
+`load_chat_client()` já faz `model_id.partition(":")` — passa a resolver o
+`base_url` a partir de `<instance_id>` (lookup na tabela `ollama_instances`)
+antes de instanciar `OllamaClient(base_url=instance.base_url, ...)` e
+devolver o `OllamaChatClient` correspondente. Isso é a única mudança
+estrutural no `load_chat_client()` — os outros providers continuam com o
+formato de 2 partes (`provider:model`).
 
 ---
 
@@ -203,48 +208,46 @@ continuam com o formato de 2 partes.
 contrário do Ollama, aqui não tem "instância" (é sempre `openrouter.ai`) —
 só uma API key por usuário e uma lista de modelos registrados.
 
-### 3.2 Integração — `init_chat_model("openrouter:<model>")`
+### 3.2 Integração — `OpenRouterChatClient`, formato Chat Completions
 
-Confirmado via MCP docs-langchain (`oss/python/concepts/
-providers-and-models.mdx`, seção "Routers & proxies"): LangChain trata
-OpenRouter como um provider de primeira classe dentro de `init_chat_model`,
-sem pacote dedicado — usa o caminho OpenAI-compatible por baixo (mesma
-família do `ChatOpenAI` com `base_url` customizado, documentado em
-`oss/python/integrations/chat/index.mdx` — "Chat Completions API"):
-
-```python
-from langchain.chat_models import init_chat_model
-
-model = init_chat_model("openrouter:anthropic/claude-sonnet-4-6")
-```
-
-A API key vem de `OPENROUTER_API_KEY` no ambiente do processo por padrão —
-como o Vectora precisa de uma key **por usuário** (não uma global do
-servidor), a implementação passa a key explicitamente em vez de depender da
-env var global:
+O OpenRouter já tem client e chat client nativos completos hoje —
+`backend/llm/openrouter/client.py` (`OpenRouterClient`, HTTP puro contra
+`/chat/completions`, formato OpenAI-compatible) e `backend/llm/openrouter/
+chat_client.py` (`OpenRouterChatClient`, implementa o Protocol `ChatClient`
+de `backend/llm/base.py`). Resolução em `load_chat_client()`
+(`backend/llm/fallback_chat_client.py`):
 
 ```python
-# backend/services/utils.py — novo case em _build_concrete_model
 case "openrouter":
-    from langchain.chat_models import init_chat_model
+    from backend.llm.openrouter.chat_client import OpenRouterChatClient
+    from backend.llm.openrouter.client import OpenRouterClient
 
-    return init_chat_model(
-        model=model_name,          # ex.: "anthropic/claude-sonnet-4-6"
-        model_provider="openrouter",
-        api_key=api_key,           # resolvido por user, não de os.environ
-        temperature=temperature,
+    api_key = get_env("OPENROUTER_API_KEY")
+    if not api_key:
+        msg = (
+            "OPENROUTER_API_KEY não configurado. Adicione ao seu .env "
+            "para usar o provider openrouter."
+        )
+        raise ValueError(msg)
+    return OpenRouterChatClient(
+        model=model_name, client=OpenRouterClient(api_key=api_key)
     )
 ```
 
-Adiciona `"openrouter"` em `_PROVIDER_SPEC` (`backend/services/utils.py:36`)
-e na lista de providers válidos de `load_llm()`/`_build_concrete_model()`
-(mensagens de erro em `services/utils.py` e `settings.py:890` citam a
-lista fechada de providers — precisa incluir `openrouter` nelas também).
+A API key vem de `OPENROUTER_API_KEY` via `get_env()` por padrão — como o
+Vectora precisa de uma key **por usuário** (não uma global do servidor), o
+registro de modelo de gateway (§3.5) resolve a key salva em
+`env_overrides["OPENROUTER_API_KEY"]` daquele usuário e passa pro
+`OpenRouterClient(api_key=...)` explicitamente, em vez de depender da env
+var de processo — o `get_env()` acima já cobre esse fallback por
+usuário/processo (ver `backend/services/env.py`).
 
-Dependência nova: `langchain[openai]` (openrouter usa o client OpenAI por
-baixo) — **já é dependência transitiva do Vectora** hoje (Cohere/OpenAI já
-usam pacotes da família `langchain-openai`/`openai`), então não deve
-adicionar peso novo relevante ao bundle Nuitka.
+O `OpenRouterClient` (mesmo client HTTP) também é reaproveitado pelo
+provider `nine_router` — mesmo protocolo OpenAI-compatível, só troca
+`base_url`/`api_key` (ver o case `"nine_router"` no mesmo
+`load_chat_client()`). Adicionar um gateway novo de terceiro que fale o
+mesmo protocolo é o mesmo padrão: nenhuma dependência nova, só um case a
+mais resolvendo `base_url`/`api_key`.
 
 ### 3.3 Descoberta de modelos — API pública de catálogo
 
@@ -414,8 +417,8 @@ processam imagem de verdade.
   `httpx` — caminho feliz (lista modelos) e erro (instância offline →
   lista vazia + log, nunca exceção pro caller); endpoints `/provider-routing/*`
   com auth (401 sem sessão, isolamento por `user_id` — usuário A não vê
-  instância do usuário B); `load_llm()` com model id de gateway resolve
-  pro `base_url`/`api_key` corretos (parametrizado por provider).
+  instância do usuário B); `load_chat_client()` com model id de gateway
+  resolve pro `base_url`/`api_key` corretos (parametrizado por provider).
 - Frontend: `provider-routing-tab.tsx` — formulário de nova instância valida
   campos, mostra erro de conexão falha; `model-selector.tsx` mescla
   catálogo estático + dinâmico sem duplicar entradas quando os dois
@@ -427,8 +430,9 @@ processam imagem de verdade.
 
 1. Migration SQLite (tabelas `ollama_instances`, `ollama_registered_models`,
    `openrouter_registered_models`) + `env_overrides["OPENROUTER_API_KEY"]`.
-2. Backend: `_PROVIDER_SPEC`/`_build_concrete_model` ganham `openrouter`;
-   `load_llm()` resolve model id de 3 partes pro Ollama por instância.
+2. Backend: `load_chat_client()` (`backend/llm/fallback_chat_client.py`)
+   ganha o case `"openrouter"` resolvendo a key por usuário e passa a
+   resolver model id de 3 partes pro Ollama por instância.
 3. Backend: router `/provider-routing/*` completo (Ollama + OpenRouter + endpoint
    agregado `/provider-routing/models`).
 4. Frontend: aba "Provider Routing" no `EnvironmentDialog` (Ollama primeiro —

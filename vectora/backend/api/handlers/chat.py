@@ -21,12 +21,12 @@ import os
 import uuid
 from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from backend.api.adapters import adapt_stream
+from backend.api.native_stream import stream_engine_events
 from backend.api.schemas import (
     Attachment,
     AttachmentKind,
@@ -42,25 +42,38 @@ from backend.api.schemas import (
     TranscribeAudioResponse,
     encode_event,
 )
+from backend.engine.conversation_loop import (
+    LoopConfig,
+    resume_conversation,
+    run_conversation,
+)
+from backend.engine.hitl import should_require_approval
+from backend.llm.fallback_chat_client import FallbackChatClient
 from backend.services import agent_factory
 from backend.settings import TOOL_CALLING_INCOMPATIBLE_MODELS, VISION_CAPABLE_PROVIDERS
+from backend.tools.subagent_delegate import SubagentDeps
 from backend.vtypes.context import ctx_from_config
+from backend.vtypes.message import ContentBlock, MessageRole, VMessage, text_message
+
+if TYPE_CHECKING:
+    from backend.engine.stream_events import EventSink
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 #: permission_mode do último turno de cada thread — resume_chat (HITL) precisa
-#: retomar no MESMO grafo compilado (ver agent_factory.get_user_agent), já que
-#: cada permission_mode com interrupt_on distinto ("plan", "accept_edits",
-#: "bypass"/"auto") agora é um grafo cacheado à parte, não mais um "ask" fixo.
+#: reidratar o MESMO ``ToolContext`` que ``stream_chat`` usou nesse turno,
+#: já que o motor nativo reavalia ``should_require_approval`` dinamicamente a
+#: partir de ``ctx.permission_mode`` a cada lote de tool calls, sem estado de
+#: grafo compilado para carregar esse valor.
 _thread_permission_mode: dict[str, str] = {}
 
 #: (model, chat_mode, workspace_id) do último turno de cada thread —
-#: resume_chat precisa resolver o MESMO grafo que stream_chat usou (mesmo
-#: FallbackChatModel.primary_model_id embutido na compilação); sem isso,
-#: get_user_agent(resume_user_id) cai no grafo "__default__" e o resume roda
-#: com o provider padrão em vez do modelo que o usuário selecionou.
+#: resume_chat precisa resolver o MESMO ``NativeAgent`` (tools/subagentes) e
+#: o mesmo ``FallbackChatClient.primary_model_id`` que ``stream_chat`` usou
+#: nesse turno; sem isso, o resume roda com o modelo/toolset padrão em vez
+#: do que o usuário de fato selecionou.
 _thread_graph_selector: dict[str, dict[str, Any]] = {}
 
 # ---------------------------------------------------------------------------
@@ -386,6 +399,33 @@ async def _build_human_message(
     return HumanMessage(content=parts, additional_kwargs=metadata)
 
 
+def _to_vmessage(msg: Any) -> VMessage:
+    """Converte a ``HumanMessage`` do LangChain (produzida por
+    ``_build_human_message``/``_prepend_text_context``) para ``VMessage`` do
+    motor nativo — mesmo shape de ``content`` (string simples ou lista de
+    parts multimodais), só reempacotado como ``ContentBlock``. Metadados de
+    anexo (``additional_kwargs["attachments_meta"]``) não têm equivalente em
+    ``VMessage`` ainda — gap documentado em
+    ``backend/services/agent_factory.py::aget_thread_messages``: o anexo
+    continua enviado ao provider e persistido em disco, só a miniatura não
+    reaparece num reload de thread nativa.
+    """
+    content = getattr(msg, "content", "")
+    blocks: list[ContentBlock] = []
+    if isinstance(content, str):
+        blocks.append(ContentBlock(kind="text", text=content))
+    else:
+        for part in content:
+            if not isinstance(part, dict):
+                continue
+            if part.get("type") == "text":
+                blocks.append(ContentBlock(kind="text", text=part.get("text", "")))
+            elif part.get("type") == "image_url":
+                url = (part.get("image_url") or {}).get("url", "")
+                blocks.append(ContentBlock(kind="image_url", image_url=url))
+    return VMessage(role=MessageRole.USER, content=blocks)
+
+
 def _prepend_text_context(msg: Any, block: str) -> Any:
     """Prepende um bloco de texto de contexto à HumanMessage (str ou multimodal).
 
@@ -550,10 +590,9 @@ def _build_configurable(
     if user_name:
         configurable["user_name"] = user_name
     if config.fork_from_checkpoint_id:
-        # Chave reservada do LangGraph (mesmo nível de "thread_id") — resumir
-        # com um checkpoint_id anterior faz o grafo ramificar dali ao
-        # processar a nova mensagem, em vez de continuar do estado mais
-        # recente. Ver docs: oss/python/langgraph/checkpointers#replay.
+        # Alvo de fork (SessionStore.set_branch_head) — resumir a partir de
+        # um checkpoint_id anterior faz a thread ramificar dali ao processar
+        # a nova mensagem, em vez de continuar do fim da branch atual.
         configurable["checkpoint_id"] = config.fork_from_checkpoint_id
     return configurable
 
@@ -703,30 +742,36 @@ async def stream_chat(
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
                 )
 
+    # Troca de modelo por request: tools/subagentes/system prompt são
+    # cacheados por (user, chat_mode, workspace) — não por modelo (o
+    # ChatClient é resolvido por chamada via FallbackChatClient, dentro da
+    # closure `run` abaixo). O permission_mode NÃO afeta o cache (HITL
+    # dinâmico via ToolContext.permission_mode); guardamos o modo do turno
+    # só para o resume reidratar o mesmo contexto (ver resume_chat).
+    permission_mode = configurable.get("permission_mode", "ask")
+    _thread_permission_mode[thread_id] = permission_mode
+    selected_model = configurable.get("model", "")
+    _thread_graph_selector[thread_id] = {
+        "model": selected_model,
+        "chat_mode": chat_mode,
+        "workspace_id": workspace_id or None,
+    }
     try:
-        # Troca de modelo por request: o grafo é cacheado por modelo escolhido
-        # (configurable["model"] já normalizado para "provider:model"). Sem
-        # escolha, usa o grafo do modelo padrão. chat_mode usa um grafo separado
-        # com toolset conversacional (CHAT_TOOLS). O permission_mode NÃO afeta a
-        # escolha do grafo (HITL dinâmico via runtime.context); guardamos o modo
-        # do turno só para o resume reidratar o mesmo contexto (ver resume_chat).
-        permission_mode = configurable.get("permission_mode", "ask")
-        _thread_permission_mode[thread_id] = permission_mode
-        selected_model = configurable.get("model", "")
-        _thread_graph_selector[thread_id] = {
-            "model": selected_model,
-            "chat_mode": chat_mode,
-            "workspace_id": workspace_id or None,
-        }
-        graph = await agent_factory.get_user_agent(
-            user_id,
-            model=selected_model,
-            chat_mode=chat_mode,
-            workspace_id=workspace_id or None,
+        native_agent = await agent_factory.get_native_agent(
+            user_id, chat_mode=chat_mode, workspace_id=workspace_id or None
         )
+        session_store = await agent_factory.get_session_store()
     except Exception as exc:
-        logger.exception("api/chat: erro ao inicializar grafo")
+        logger.exception("api/chat: erro ao inicializar o motor nativo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    await session_store.create_session(
+        thread_id,
+        user_id=user_id,
+        workspace_id=workspace_id or None,
+        mode="chat" if chat_mode else "code",
+        permission_mode=permission_mode,
+    )
 
     # Registra thread em vectora_sessions e conta a mensagem do usuário —
     # é o usuário quem inicia a conversa, então a thread já é "real" (deve
@@ -797,17 +842,71 @@ async def stream_chat(
         except Exception:
             logger.warning("api/chat: falha ao injetar pinned_files", exc_info=True)
 
-    events = graph.astream_events(
-        {"messages": [human_msg]},
-        config=config,
-        context=ctx_from_config(config),
-        version="v2",
-    )
+    # Motor nativo relê o histórico da persistência a cada iteração do loop
+    # (backend/engine/conversation_loop.py) — a mensagem do usuário precisa
+    # estar gravada ANTES de `run_conversation` começar. Thread sem nenhuma
+    # mensagem ainda (`get_branch_head_id` devolve None) recebe o system
+    # prompt do agente como raiz da cadeia, mesmo padrão de
+    # `backend/engine/subagents.py::_run_subagent_once`.
+    user_msg = _to_vmessage(human_msg)
+    if request.config.fork_from_checkpoint_id:
+        # "Editar e reenviar"/"regenerar" — ramifica a partir de uma
+        # mensagem anterior em vez de continuar do fim da branch atual; a
+        # branch divergente anterior nunca é apagada (ver
+        # SessionStore.set_branch_head).
+        try:
+            await session_store.set_branch_head(
+                thread_id, int(request.config.fork_from_checkpoint_id)
+            )
+        except Exception:
+            logger.warning(
+                "api/chat: checkpoint_id de fork inválido para thread %s: %r",
+                thread_id,
+                request.config.fork_from_checkpoint_id,
+            )
+    parent_id = await session_store.get_branch_head_id(thread_id)
+    if parent_id is None:
+        parent_id = await session_store.append_message(
+            thread_id, text_message(MessageRole.SYSTEM, native_agent.system_prompt)
+        )
+    await session_store.append_message(thread_id, user_msg, parent_message_id=parent_id)
+
+    async def run(on_event: EventSink) -> str:
+        chat_client = FallbackChatClient(primary_model_id=configurable.get("model", ""))
+        run_ctx = ctx_from_config(config)
+        run_ctx.store = await agent_factory.get_store()
+        approval_gate = await agent_factory.get_approval_gate()
+        loop_config = LoopConfig(max_iterations=request.config.recursion_limit or 50)
+        if native_agent.subagent_catalog:
+            # `delegate_to_subagent` (backend/tools/subagent_delegate.py) lê
+            # essas dependências via ctx._extra — nunca aparecem no schema
+            # exposto ao LLM. Sem isso a tool devolve erro tipado em vez de
+            # delegar de verdade.
+            run_ctx._extra["subagent_deps"] = SubagentDeps(
+                catalog=native_agent.subagent_catalog,
+                session_store=session_store,
+                chat_client=chat_client,
+                config=loop_config,
+                on_event=on_event,
+                should_require_approval=should_require_approval,
+            )
+        result = await run_conversation(
+            session_store=session_store,
+            chat_client=chat_client,
+            tool_registry=native_agent.tool_registry,
+            ctx=run_ctx,
+            thread_id=thread_id,
+            config=loop_config,
+            on_event=on_event,
+            should_require_approval=should_require_approval,
+            approval_gate=approval_gate,
+        )
+        return result.stopped_reason
 
     return StreamingResponse(
-        adapt_stream(
-            events,
-            thread_id,
+        stream_engine_events(
+            run,
+            thread_id=thread_id,
             workspace_id=workspace_id or None,
             http_request=http_request,
             user_id=user_id,
@@ -836,43 +935,23 @@ async def resume_chat(
     - ``"reject"`` — cancela; o agente recebe feedback de rejeição
     - ``"edit:<args_json>"`` — executa com args modificados
     """
-    from langgraph.types import Command
-
     resume_user_id = _user_id_from_request(http_request)
     permission_mode = _thread_permission_mode.get(request.thread_id, "ask")
     selector = _thread_graph_selector.get(request.thread_id, {})
-    try:
-        graph = await agent_factory.get_user_agent(
-            resume_user_id,
-            model=selector.get("model", ""),
-            chat_mode=bool(selector.get("chat_mode", False)),
-            workspace_id=selector.get("workspace_id"),
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    selector_model = str(selector.get("model", "") or "")
+    selector_chat_mode = bool(selector.get("chat_mode", False))
+    selector_workspace_id = selector.get("workspace_id")
 
-    # permission_mode entra no configurable para que ctx_from_config o carregue
-    # ao runtime.context — o HITL dinâmico reavalia o gate no resume com o MESMO
-    # modo do turno original (senão uma 2ª tool destrutiva no mesmo turno seria
-    # avaliada como "ask" e pausaria indevidamente num turno em modo "plan").
-    config: dict[str, Any] = {
-        "configurable": {
-            "thread_id": request.thread_id,
-            "user_id": resume_user_id,
-            "permission_mode": permission_mode,
-        },
-        "recursion_limit": 50,
-    }
-
-    # Monta o Command de resume
     if request.decision == "approve":
-        resume_value = {"action": "approve"}
+        decision = "approve"
+        edited_args: dict[str, Any] | None = None
     elif request.decision == "reject":
-        resume_value = {"action": "reject"}
+        decision = "reject"
+        edited_args = None
     elif request.decision.startswith("edit:"):
+        decision = "edit"
         try:
             edited_args = json.loads(request.decision[5:])
-            resume_value = {"action": "edit", "args": edited_args}
         except json.JSONDecodeError as exc:
             raise HTTPException(
                 status_code=400, detail=f"Invalid edit args: {exc}"
@@ -882,18 +961,77 @@ async def resume_chat(
             status_code=400, detail=f"Unknown decision: {request.decision!r}"
         )
 
-    events = graph.astream_events(
-        Command(resume=resume_value),
-        config=config,
-        context=ctx_from_config(config),
-        version="v2",
-    )
+    try:
+        native_agent = await agent_factory.get_native_agent(
+            resume_user_id,
+            chat_mode=selector_chat_mode,
+            workspace_id=selector_workspace_id,
+        )
+        session_store = await agent_factory.get_session_store()
+        approval_gate = await agent_factory.get_approval_gate()
+    except Exception as exc:
+        logger.exception("api/chat: erro ao inicializar o motor nativo (resume)")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    # permission_mode entra no configurable para que ctx_from_config o carregue
+    # ao ToolContext — o HITL dinâmico reavalia o gate no resume com o MESMO
+    # modo do turno original (senão uma 2ª tool destrutiva no mesmo turno seria
+    # avaliada como "ask" e pausaria indevidamente num turno em modo "plan").
+    config: dict[str, Any] = {
+        "configurable": {
+            "thread_id": request.thread_id,
+            "user_id": resume_user_id,
+            "permission_mode": permission_mode,
+            "workspace_id": selector_workspace_id or "",
+            "model": selector_model,
+        },
+        "recursion_limit": 50,
+    }
+
+    async def run(on_event: EventSink) -> str:
+        run_ctx = ctx_from_config(config)
+        run_ctx.store = await agent_factory.get_store()
+        resumed = await resume_conversation(
+            session_store=session_store,
+            tool_registry=native_agent.tool_registry,
+            ctx=run_ctx,
+            thread_id=request.thread_id,
+            decision=decision,
+            edited_args=edited_args,
+            approval_gate=approval_gate,
+            on_event=on_event,
+        )
+        if not resumed:
+            return "noop"
+        chat_client = FallbackChatClient(primary_model_id=selector_model)
+        loop_config = LoopConfig(max_iterations=50)
+        if native_agent.subagent_catalog:
+            run_ctx._extra["subagent_deps"] = SubagentDeps(
+                catalog=native_agent.subagent_catalog,
+                session_store=session_store,
+                chat_client=chat_client,
+                config=loop_config,
+                on_event=on_event,
+                should_require_approval=should_require_approval,
+            )
+        result = await run_conversation(
+            session_store=session_store,
+            chat_client=chat_client,
+            tool_registry=native_agent.tool_registry,
+            ctx=run_ctx,
+            thread_id=request.thread_id,
+            config=loop_config,
+            on_event=on_event,
+            should_require_approval=should_require_approval,
+            approval_gate=approval_gate,
+        )
+        return result.stopped_reason
 
     return StreamingResponse(
-        adapt_stream(
-            events,
-            request.thread_id,
-            workspace_id=None,
+        stream_engine_events(
+            run,
+            thread_id=request.thread_id,
+            workspace_id=selector_workspace_id,
             http_request=http_request,
             user_id=resume_user_id,
         ),

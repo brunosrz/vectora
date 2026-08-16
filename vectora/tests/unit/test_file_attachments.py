@@ -9,7 +9,8 @@ Cobre:
 from __future__ import annotations
 
 import base64
-from typing import cast
+from contextlib import ExitStack
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -542,6 +543,49 @@ async def _collect_sse_body(response) -> str:
     )
 
 
+def _native_dispatch_patches() -> list[Any]:
+    """Patches pro motor nativo (`agent_factory.get_native_agent`/
+    `get_session_store`/`get_approval_gate`/`get_store` + `run_conversation`
+    dentro de `backend.api.handlers.chat`) — usados pelos testes que
+    precisam que `stream_chat` alcance o dispatch de verdade (fluxo "não
+    bloqueado") sem rodar o loop de conversa real."""
+    from backend.engine.conversation_loop import LoopResult
+    from backend.services.agent_factory import NativeAgent
+    from backend.tools.registry import ToolRegistry
+
+    fake_agent = NativeAgent(
+        tool_registry=ToolRegistry(), subagent_catalog={}, system_prompt="prompt"
+    )
+    session_store = AsyncMock()
+    session_store.create_session = AsyncMock()
+    session_store.get_branch_head_id = AsyncMock(return_value=1)
+    session_store.append_message = AsyncMock(return_value=2)
+    session_store.set_branch_head = AsyncMock()
+
+    return [
+        patch(
+            "backend.services.agent_factory.get_native_agent",
+            new=AsyncMock(return_value=fake_agent),
+        ),
+        patch(
+            "backend.services.agent_factory.get_session_store",
+            new=AsyncMock(return_value=session_store),
+        ),
+        patch(
+            "backend.services.agent_factory.get_approval_gate",
+            new=AsyncMock(return_value=AsyncMock()),
+        ),
+        patch(
+            "backend.services.agent_factory.get_store",
+            new=AsyncMock(return_value=None),
+        ),
+        patch(
+            "backend.api.handlers.chat.run_conversation",
+            new=AsyncMock(return_value=LoopResult(stopped_reason="stop")),
+        ),
+    ]
+
+
 class TestStreamChatBlocksImageForNonVisionProvider:
     """Regressão: imagem + Cohere estourava BadRequestError cru da API
     ('image content is not supported for this model'). Agora recusa antes
@@ -562,9 +606,9 @@ class TestStreamChatBlocksImageForNonVisionProvider:
     ) -> None:
         from backend.api.handlers import chat as chat_mod
 
-        mock_get_user_agent = AsyncMock()
+        mock_get_native_agent = AsyncMock()
         with patch(
-            "backend.services.agent_factory.get_user_agent", mock_get_user_agent
+            "backend.services.agent_factory.get_native_agent", mock_get_native_agent
         ):
             request = StreamChatRequest(
                 content="o que tem nessa imagem?",
@@ -577,7 +621,7 @@ class TestStreamChatBlocksImageForNonVisionProvider:
 
         body = await _collect_sse_body(response)
         assert '"code": "MODEL_NO_VISION"' in body
-        mock_get_user_agent.assert_not_called()
+        mock_get_native_agent.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_gemini_with_image_is_not_blocked(self) -> None:
@@ -585,23 +629,15 @@ class TestStreamChatBlocksImageForNonVisionProvider:
         confirma que a checagem é por provider, não um bloqueio geral."""
         from backend.api.handlers import chat as chat_mod
 
-        async def _empty_events(*_a: object, **_kw: object):
-            for _ in ():
-                yield
-
-        mock_graph = MagicMock()
-        mock_graph.astream_events = MagicMock(return_value=_empty_events())
-
-        with (
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(return_value=mock_graph),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                new=AsyncMock(),
-            ),
-        ):
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    new=AsyncMock(),
+                )
+            )
             request = StreamChatRequest(
                 content="o que tem nessa imagem?",
                 config=ChatConfig(model="google-genai:gemini-2.5-flash"),
@@ -610,8 +646,8 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)
             response = await chat_mod.stream_chat(request, http_request)
+            body = await _collect_sse_body(response)
 
-        body = await _collect_sse_body(response)
         assert "MODEL_NO_VISION" not in body
 
     @pytest.mark.asyncio
@@ -620,9 +656,11 @@ class TestStreamChatBlocksImageForNonVisionProvider:
         catálogo é bloqueado — igual a um provider direto sem visão."""
         from backend.api.handlers import chat as chat_mod
 
-        mock_get_user_agent = AsyncMock()
+        mock_get_native_agent = AsyncMock()
         with (
-            patch("backend.services.agent_factory.get_user_agent", mock_get_user_agent),
+            patch(
+                "backend.services.agent_factory.get_native_agent", mock_get_native_agent
+            ),
             patch(
                 "backend.api.handlers.provider_routing.openrouter_model_supports_image",
                 new=AsyncMock(return_value=False),
@@ -639,7 +677,7 @@ class TestStreamChatBlocksImageForNonVisionProvider:
 
         body = await _collect_sse_body(response)
         assert '"code": "MODEL_NO_VISION"' in body
-        mock_get_user_agent.assert_not_called()
+        mock_get_native_agent.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_openrouter_model_with_vision_is_not_blocked(self) -> None:
@@ -648,27 +686,21 @@ class TestStreamChatBlocksImageForNonVisionProvider:
         catálogo não pode ser bloqueado só por o provider ser "openrouter"."""
         from backend.api.handlers import chat as chat_mod
 
-        async def _empty_events(*_a: object, **_kw: object):
-            for _ in ():
-                yield
-
-        mock_graph = MagicMock()
-        mock_graph.astream_events = MagicMock(return_value=_empty_events())
-
-        with (
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(return_value=mock_graph),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                new=AsyncMock(),
-            ),
-            patch(
-                "backend.api.handlers.provider_routing.openrouter_model_supports_image",
-                new=AsyncMock(return_value=True),
-            ),
-        ):
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    new=AsyncMock(),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.provider_routing.openrouter_model_supports_image",
+                    new=AsyncMock(return_value=True),
+                )
+            )
             request = StreamChatRequest(
                 content="o que tem nessa imagem?",
                 config=ChatConfig(model="openrouter:openai/gpt-4o"),
@@ -677,8 +709,8 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)
             response = await chat_mod.stream_chat(request, http_request)
+            body = await _collect_sse_body(response)
 
-        body = await _collect_sse_body(response)
         assert "MODEL_NO_VISION" not in body
 
 
@@ -693,9 +725,9 @@ class TestStreamChatBlocksToolIncompatibleModelInCodeMode:
     ) -> None:
         from backend.api.handlers import chat as chat_mod
 
-        mock_get_user_agent = AsyncMock()
+        mock_get_native_agent = AsyncMock()
         with patch(
-            "backend.services.agent_factory.get_user_agent", mock_get_user_agent
+            "backend.services.agent_factory.get_native_agent", mock_get_native_agent
         ):
             request = StreamChatRequest(
                 content="cria um jogo da cobrinha em godot",
@@ -709,7 +741,7 @@ class TestStreamChatBlocksToolIncompatibleModelInCodeMode:
 
         body = await _collect_sse_body(response)
         assert '"code": "MODEL_NO_TOOL_CALLING"' in body
-        mock_get_user_agent.assert_not_called()
+        mock_get_native_agent.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_chat_mode_is_not_blocked(self) -> None:
@@ -717,23 +749,15 @@ class TestStreamChatBlocksToolIncompatibleModelInCodeMode:
         pelo produto no modo conversacional)."""
         from backend.api.handlers import chat as chat_mod
 
-        async def _empty_events(*_a: object, **_kw: object):
-            for _ in ():
-                yield
-
-        mock_graph = MagicMock()
-        mock_graph.astream_events = MagicMock(return_value=_empty_events())
-
-        with (
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(return_value=mock_graph),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                new=AsyncMock(),
-            ),
-        ):
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    new=AsyncMock(),
+                )
+            )
             request = StreamChatRequest(
                 content="oi",
                 config=ChatConfig(
@@ -743,8 +767,8 @@ class TestStreamChatBlocksToolIncompatibleModelInCodeMode:
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)
             response = await chat_mod.stream_chat(request, http_request)
+            body = await _collect_sse_body(response)
 
-        body = await _collect_sse_body(response)
         assert "MODEL_NO_TOOL_CALLING" not in body
 
 
@@ -761,7 +785,7 @@ class TestStreamChatEnforcesAllowedModels:
         from backend.workspace.workspace_config import AgentSection, WorkspaceConfig
 
         fake_ws = MagicMock(cwd="/fake/workspace")
-        mock_get_user_agent = AsyncMock()
+        mock_get_native_agent = AsyncMock()
         with (
             patch(
                 "backend.workspace.workspace.workspace_registry.get",
@@ -773,7 +797,9 @@ class TestStreamChatEnforcesAllowedModels:
                     agent=AgentSection(allowed_models=["anthropic:claude-sonnet-4-6"])
                 ),
             ),
-            patch("backend.services.agent_factory.get_user_agent", mock_get_user_agent),
+            patch(
+                "backend.services.agent_factory.get_native_agent", mock_get_native_agent
+            ),
         ):
             request = StreamChatRequest(
                 content="oi",
@@ -789,7 +815,7 @@ class TestStreamChatEnforcesAllowedModels:
 
         body = await _collect_sse_body(response)
         assert '"code": "MODEL_NOT_ALLOWED"' in body
-        mock_get_user_agent.assert_not_called()
+        mock_get_native_agent.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_model_inside_allowed_models_is_accepted(self) -> None:
@@ -798,35 +824,31 @@ class TestStreamChatEnforcesAllowedModels:
 
         fake_ws = MagicMock(cwd="/fake/workspace")
 
-        async def _empty_events(*_a: object, **_kw: object):
-            for _ in ():
-                yield
-
-        mock_graph = MagicMock()
-        mock_graph.astream_events = MagicMock(return_value=_empty_events())
-
-        with (
-            patch(
-                "backend.workspace.workspace.workspace_registry.get",
-                return_value=fake_ws,
-            ),
-            patch(
-                "backend.workspace.workspace_config.load_workspace_config",
-                return_value=WorkspaceConfig(
-                    agent=AgentSection(
-                        allowed_models=["google-genai:gemini-3-flash-preview"]
-                    )
-                ),
-            ),
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(return_value=mock_graph),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                new=AsyncMock(),
-            ),
-        ):
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace.workspace_registry.get",
+                    return_value=fake_ws,
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace_config.load_workspace_config",
+                    return_value=WorkspaceConfig(
+                        agent=AgentSection(
+                            allowed_models=["google-genai:gemini-3-flash-preview"]
+                        )
+                    ),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    new=AsyncMock(),
+                )
+            )
             request = StreamChatRequest(
                 content="oi",
                 config=ChatConfig(
@@ -838,8 +860,8 @@ class TestStreamChatEnforcesAllowedModels:
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)
             response = await chat_mod.stream_chat(request, http_request)
+            body = await _collect_sse_body(response)
 
-        body = await _collect_sse_body(response)
         assert "MODEL_NOT_ALLOWED" not in body
 
     @pytest.mark.asyncio
@@ -850,31 +872,27 @@ class TestStreamChatEnforcesAllowedModels:
 
         fake_ws = MagicMock(cwd="/fake/workspace")
 
-        async def _empty_events(*_a: object, **_kw: object):
-            for _ in ():
-                yield
-
-        mock_graph = MagicMock()
-        mock_graph.astream_events = MagicMock(return_value=_empty_events())
-
-        with (
-            patch(
-                "backend.workspace.workspace.workspace_registry.get",
-                return_value=fake_ws,
-            ),
-            patch(
-                "backend.workspace.workspace_config.load_workspace_config",
-                return_value=None,
-            ),
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(return_value=mock_graph),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                new=AsyncMock(),
-            ),
-        ):
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace.workspace_registry.get",
+                    return_value=fake_ws,
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace_config.load_workspace_config",
+                    return_value=None,
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    new=AsyncMock(),
+                )
+            )
             request = StreamChatRequest(
                 content="oi",
                 config=ChatConfig(
@@ -886,6 +904,6 @@ class TestStreamChatEnforcesAllowedModels:
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)
             response = await chat_mod.stream_chat(request, http_request)
+            body = await _collect_sse_body(response)
 
-        body = await _collect_sse_body(response)
         assert "MODEL_NOT_ALLOWED" not in body

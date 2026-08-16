@@ -185,6 +185,17 @@ async def ensure_sessions_table() -> None:
     await _ensure_schema(db)
 
 
+async def _get_session_store() -> Any:
+    """``SessionStore`` do motor nativo — fonte de verdade sobre EXISTÊNCIA
+    e DONO (``user_id``) de uma thread. ``vectora_sessions`` (acima) guarda
+    só metadados de UI (título, contagem de mensagens, fixação); nunca decide
+    sozinha se uma thread existe ou a quem pertence — todo endpoint protegido
+    confirma posse aqui antes de ler/escrever metadados."""
+    from backend.services import agent_factory
+
+    return await agent_factory.get_session_store()
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -241,6 +252,7 @@ async def _upsert_session(
     title: str | None = None,
     workspace_id: str | None = None,
     mode: str | None = None,
+    user_id: str | None = None,
 ) -> None:
     """Garante que thread_id existe em vectora_sessions (cria ou atualiza).
 
@@ -249,7 +261,22 @@ async def _upsert_session(
 
     O campo extra é mesclado: title, workspace_id e mode só são sobrescritos
     quando fornecidos, preservando os demais dados já gravados.
+
+    Quando ``user_id`` é passado, garante (idempotente) que a thread também
+    existe em ``SessionStore.sessions`` — fonte de verdade sobre posse — antes
+    de gravar os metadados de UI aqui. Chamadores que já registraram a posse
+    por conta própria (ex.: `stream_chat`, via `session_store.create_session`
+    direto) não precisam passar `user_id` de novo.
     """
+    if user_id is not None:
+        session_store = await _get_session_store()
+        await session_store.create_session(
+            thread_id,
+            user_id=user_id,
+            workspace_id=workspace_id,
+            mode=_normalize_mode(mode) if mode else "code",
+        )
+
     db = await _get_db()
     now = datetime.now(UTC).isoformat()
 
@@ -545,15 +572,24 @@ async def create_thread(body: CreateThreadRequest, http_request: Request) -> Thr
     db = await _get_db()
     thread_id = str(uuid.uuid4())[:8]
     now = datetime.now(UTC).isoformat()
+    user_id = _user_id(http_request)
 
     workspace_id = body.workspace_id
     if workspace_id:
         from backend.workspace.workspace import workspace_registry
 
         if workspace_registry.get(workspace_id) is not None:
-            workspace_registry.set_active(workspace_id, _user_id(http_request))
+            workspace_registry.set_active(workspace_id, user_id)
         else:
             workspace_id = ""
+
+    session_store = await _get_session_store()
+    await session_store.create_session(
+        thread_id,
+        user_id=user_id,
+        workspace_id=workspace_id or None,
+        mode="code",
+    )
 
     extra = json.dumps({"workspace_id": workspace_id} if workspace_id else {})
     await db.execute(
@@ -578,8 +614,36 @@ async def create_thread(body: CreateThreadRequest, http_request: Request) -> Thr
 # ---------------------------------------------------------------------------
 
 
+async def _assert_owns_thread(thread_id: str, http_request: Request | None) -> None:
+    """Confirma em ``SessionStore`` (fonte de verdade sobre posse) que
+    ``thread_id``, SE registrada lá, pertence ao usuário autenticado em
+    ``http_request``.
+
+    ``http_request`` ausente (chamada interna, sem contexto HTTP) pula a
+    checagem — mantém o comportamento pré-existente dos callers internos de
+    ``get_thread`` (GetHistory, GenerateTitle, histórico paginado), que já
+    resolvem a thread por outros meios. Thread sem registro nenhum em
+    ``SessionStore`` (legado, criada antes da posse ser rastreada lá) também
+    passa — ausência de registro não é prova de posse alheia. Levanta 404
+    (nunca 403) quando HÁ registro e o dono não bate — não distingue
+    "não existe" de "não é sua" pro caller, pra não vazar a existência de
+    threads de outro usuário."""
+    if http_request is None:
+        return
+    session_store = await _get_session_store()
+    session = await session_store.get_session(thread_id)
+    if session is None:
+        return
+    user_id = _user_id(http_request)
+    if session["user_id"] != user_id:
+        raise HTTPException(status_code=404, detail=f"Thread {thread_id!r} not found")
+
+
 @router.post("/vectora.chat.v1.ThreadService/GetThread")
-async def get_thread(request: GetThreadRequest) -> Thread:
+async def get_thread(
+    request: GetThreadRequest,
+    http_request: Request = None,  # ty: ignore[invalid-parameter-default]
+) -> Thread:
     db = await _get_db()
     async with db.execute(
         "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode, pinned "
@@ -591,6 +655,7 @@ async def get_thread(request: GetThreadRequest) -> Thread:
         raise HTTPException(
             status_code=404, detail=f"Thread {request.thread_id!r} not found"
         )
+    await _assert_owns_thread(request.thread_id, http_request)
     return _row_to_thread(row)
 
 
@@ -600,7 +665,10 @@ async def get_thread(request: GetThreadRequest) -> Thread:
 
 
 @router.post("/vectora.chat.v1.ThreadService/ListThreads")
-async def list_threads(request: ListThreadsRequest) -> ListThreadsResponse:
+async def list_threads(
+    request: ListThreadsRequest,
+    http_request: Request = None,  # ty: ignore[invalid-parameter-default]
+) -> ListThreadsResponse:
     limit = max(1, min(request.limit or 50, 200))
     db = await _get_db()
     cols = (
@@ -622,6 +690,15 @@ async def list_threads(request: ListThreadsRequest) -> ListThreadsResponse:
         params = (limit,)
     async with db.execute(query, params) as cur:
         rows = await cur.fetchall()
+
+    if http_request is not None:
+        session_store = await _get_session_store()
+        user_id = _user_id(http_request)
+        foreign_ids = await session_store.foreign_thread_ids(
+            [r[0] for r in rows], user_id
+        )
+        rows = [r for r in rows if r[0] not in foreign_ids]
+
     return ListThreadsResponse(threads=[_row_to_thread(r) for r in rows])
 
 
@@ -684,7 +761,11 @@ async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
 
 
 @router.post("/vectora.chat.v1.ThreadService/DeleteThread")
-async def delete_thread(request: DeleteThreadRequest) -> dict:
+async def delete_thread(
+    request: DeleteThreadRequest,
+    http_request: Request = None,  # ty: ignore[invalid-parameter-default]
+) -> dict:
+    await _assert_owns_thread(request.thread_id, http_request)
     db = await _get_db()
     await db.execute(
         "DELETE FROM vectora_sessions WHERE thread_id = ?",
@@ -700,12 +781,16 @@ async def delete_thread(request: DeleteThreadRequest) -> dict:
 
 
 @router.post("/vectora.chat.v1.ThreadService/UpdateThread")
-async def update_thread(request: UpdateThreadRequest) -> Thread:
+async def update_thread(
+    request: UpdateThreadRequest,
+    http_request: Request = None,  # ty: ignore[invalid-parameter-default]
+) -> Thread:
     """Atualiza metadados (title/pinned) de uma thread existente.
 
     Cada campo só é alterado quando enviado (não-``None``) — permite
     atualizações parciais (ex.: só fixar, sem tocar no título).
     """
+    await _assert_owns_thread(request.thread_id, http_request)
     db = await _get_db()
     async with db.execute(
         "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode, pinned "
@@ -824,13 +909,17 @@ async def _ai_title(user_text: str, assistant_text: str) -> str:
 
 
 @router.post("/vectora.chat.v1.ThreadService/GenerateTitle")
-async def generate_title(request: GenerateTitleRequest) -> GenerateTitleResponse:
+async def generate_title(
+    request: GenerateTitleRequest,
+    http_request: Request = None,  # ty: ignore[invalid-parameter-default]
+) -> GenerateTitleResponse:
     """Atribui (uma vez) um título gerado pela IA à sessão e persiste.
 
     Idempotente: se a sessão já tem título, devolve o existente sem nova chamada
     de LLM. Caso contrário, lê o 1º par usuário/assistente do histórico, gera o
     título e grava em ``vectora_sessions``.
     """
+    await _assert_owns_thread(request.thread_id, http_request)
     try:
         # Já tem título? Não regenera (título é estável após o 1º turno).
         db = await _get_db()

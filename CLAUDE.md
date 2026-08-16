@@ -178,11 +178,12 @@ tests` em verde.
 Sem `LegacyFoo`, `NewFoo`, `FooV2`. Quando renomeamos, renomeamos
 por completo.
 
-## 5. Integrações sempre via SDK oficial mais recente
+## 5. Integrações sempre via SDK/client oficial mais recente
 
-Toda LLM, embedding, vector store, cache e rerank entra via
-`langchain-<provider>` ou o SDK oficial **na última versão estável**.
-Nada de imports deprecados.
+Toda LLM, embedding, vector store, cache e rerank entra via SDK oficial do
+provider ou client HTTP nativo (`backend/llm/<provider>/client.py` +
+`chat_client.py`, implementando o Protocol `ChatClient`) **na última
+versão estável**. Nada de imports deprecados.
 
 ## 6. Chat-first significa schema-first
 

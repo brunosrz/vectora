@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS messages (
     tool_calls_json TEXT,
     tool_call_id TEXT,
     name TEXT,
+    is_error INTEGER NOT NULL DEFAULT 0,
     is_branch_head INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL
 );
@@ -66,7 +67,7 @@ def _now() -> str:
 
 def _message_to_row(
     msg: VMessage,
-) -> tuple[str, str, str | None, str | None, str | None]:
+) -> tuple[str, str, str | None, str | None, str | None, int]:
     data = msg.to_dict()
     content_json = json.dumps(data["content"], ensure_ascii=False)
     tool_calls_json = (
@@ -80,11 +81,14 @@ def _message_to_row(
         tool_calls_json,
         data["tool_call_id"],
         data["name"],
+        int(data["is_error"]),
     )
 
 
 def _row_to_message(row: Any) -> VMessage:
-    _id, _parent, role, content_json, tool_calls_json, tool_call_id, name = row
+    _id, _parent, role, content_json, tool_calls_json, tool_call_id, name, is_error = (
+        row
+    )
     data = {
         "role": role,
         "content": json.loads(content_json),
@@ -92,7 +96,7 @@ def _row_to_message(row: Any) -> VMessage:
         "tool_call_id": tool_call_id,
         "name": name,
         "finish_reason": None,
-        "is_error": False,
+        "is_error": bool(is_error),
     }
     return VMessage.from_dict(data)
 
@@ -160,13 +164,15 @@ class SessionStore:
         ponta ativa dessa thread."""
         await self.setup()
         agora = _now()
-        role, content_json, tool_calls_json, tool_call_id, name = _message_to_row(msg)
+        role, content_json, tool_calls_json, tool_call_id, name, is_error = (
+            _message_to_row(msg)
+        )
         async with self._pool.acquire() as conn:
             try:
                 cur = await conn.execute(
                     "INSERT INTO messages (thread_id, parent_message_id, role, "
-                    "content_json, tool_calls_json, tool_call_id, name, is_branch_head, "
-                    "created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)",
+                    "content_json, tool_calls_json, tool_call_id, name, is_error, "
+                    "is_branch_head, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)",
                     (
                         thread_id,
                         parent_message_id,
@@ -175,6 +181,7 @@ class SessionStore:
                         tool_calls_json,
                         tool_call_id,
                         name,
+                        is_error,
                         agora,
                     ),
                 )
@@ -221,6 +228,17 @@ class SessionStore:
         branch antiga sem apagar o que veio depois) até a raiz — reload/
         resume acontece por reconstrução da persistência, nunca por estado
         mantido só em memória (invariante do loop nativo)."""
+        pares = await self.get_history_with_ids(
+            thread_id, up_to_message_id=up_to_message_id
+        )
+        return [msg for _id, msg in pares]
+
+    async def get_history_with_ids(
+        self, thread_id: str, *, up_to_message_id: int | None = None
+    ) -> list[tuple[int, VMessage]]:
+        """Mesma reconstrução de `get_history`, mas devolve `(id, VMessage)` —
+        o `id` é o alvo de fork (`set_branch_head`) para "editar e reenviar"/
+        "regenerar", exposto pela API REST como `checkpoint_id`."""
         await self.setup()
         async with self._pool.acquire() as conn:
             if up_to_message_id is not None:
@@ -247,7 +265,7 @@ class SessionStore:
                 visitados.add(current_id)
                 cur = await conn.execute(
                     "SELECT id, parent_message_id, role, content_json, "
-                    "tool_calls_json, tool_call_id, name FROM messages "
+                    "tool_calls_json, tool_call_id, name, is_error FROM messages "
                     "WHERE thread_id = ? AND id = ?",
                     (thread_id, current_id),
                 )
@@ -258,7 +276,7 @@ class SessionStore:
                 current_id = row[1]
 
         cadeia.reverse()
-        return [_row_to_message(row) for row in cadeia]
+        return [(row[0], _row_to_message(row)) for row in cadeia]
 
     async def set_branch_head(self, thread_id: str, message_id: int) -> None:
         """Marca `message_id` como a ponta ativa da thread — fork explícito
@@ -288,6 +306,58 @@ class SessionStore:
             except Exception:
                 await conn.rollback()
                 raise
+
+    async def get_session(
+        self, thread_id: str, *, user_id: str | None = None
+    ) -> dict[str, Any] | None:
+        """Metadados de posse de uma sessão — fonte de verdade sobre a
+        EXISTÊNCIA e o DONO (`user_id`) de uma thread no motor nativo.
+
+        Quando `user_id` é passado, devolve `None` também quando a thread
+        pertence a outro usuário — não distingue "não existe" de "não é
+        sua" pro caller, evitando vazamento de existência em endpoints
+        protegidos (ex.: `GetThread`/`UpdateThread` de outra pessoa)."""
+        await self.setup()
+        async with self._pool.acquire() as conn:
+            cur = await conn.execute(
+                "SELECT thread_id, user_id, workspace_id, parent_thread_id, mode, "
+                "permission_mode, created_at, updated_at FROM sessions "
+                "WHERE thread_id = ?",
+                (thread_id,),
+            )
+            row = await cur.fetchone()
+        if row is None:
+            return None
+        session = {
+            "thread_id": row[0],
+            "user_id": row[1],
+            "workspace_id": row[2],
+            "parent_thread_id": row[3],
+            "mode": row[4],
+            "permission_mode": row[5],
+            "created_at": row[6],
+            "updated_at": row[7],
+        }
+        if user_id is not None and session["user_id"] != user_id:
+            return None
+        return session
+
+    async def foreign_thread_ids(self, thread_ids: list[str], user_id: str) -> set[str]:
+        """Subconjunto de `thread_ids` registrado em `sessions` com um dono
+        DIFERENTE de `user_id` — usado por `ListThreads` pra nunca vazar uma
+        thread de outro usuário, mesmo quando outra fonte de metadados (ex.:
+        cache de UI) ainda a lista. Threads sem registro nenhum em `sessions`
+        (legado, criadas antes da posse ser rastreada aqui) não entram no
+        resultado — ausência de registro não é o mesmo que posse alheia."""
+        if not thread_ids:
+            return set()
+        await self.setup()
+        placeholders = ",".join("?" for _ in thread_ids)
+        query = f"SELECT thread_id FROM sessions WHERE user_id != ? AND thread_id IN ({placeholders})"  # noqa: S608  # nosec B608
+        async with self._pool.acquire() as conn:
+            cur = await conn.execute(query, (user_id, *thread_ids))
+            rows = await cur.fetchall()
+        return {r[0] for r in rows}
 
     async def get_pending_approval(self, thread_id: str) -> dict[str, Any] | None:
         await self.setup()

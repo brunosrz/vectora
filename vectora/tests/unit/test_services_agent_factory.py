@@ -52,6 +52,21 @@ def _mock_history(chronological_steps: list[tuple[list[Any], str | None]]) -> li
     return list(reversed(snaps))
 
 
+@pytest.fixture(autouse=True)
+def _empty_native_session_store():
+    """``aget_thread_messages``/``aget_thread_todos``/
+    ``aget_thread_pending_interrupt`` tentam o ``SessionStore`` nativo
+    primeiro; este módulo testa especificamente o fallback pro checkpointer
+    deepagents legado (thread sem nenhuma mensagem/pendência nativa)."""
+    import backend.services.agent_factory as af
+
+    fake_store = MagicMock()
+    fake_store.get_history_with_ids = AsyncMock(return_value=[])
+    fake_store.get_pending_approval = AsyncMock(return_value=None)
+    with patch.object(af, "get_session_store", AsyncMock(return_value=fake_store)):
+        yield
+
+
 # ─────────────────────────── aget_thread_messages ────────────────────────────
 
 

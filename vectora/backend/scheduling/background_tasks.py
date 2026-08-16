@@ -26,7 +26,16 @@ from zoneinfo import ZoneInfo
 
 from croniter import croniter
 
+from backend.engine.conversation_loop import (
+    LoopConfig,
+    resume_conversation,
+    run_conversation,
+)
+from backend.engine.hitl import should_require_approval
+from backend.llm.fallback_chat_client import FallbackChatClient
 from backend.rbac.subscription import require_pro
+from backend.vtypes.context import ctx_from_config
+from backend.vtypes.message import MessageRole, text_message
 
 logger = logging.getLogger(__name__)
 
@@ -589,10 +598,10 @@ async def _get_or_create_subagent_anchor(
 ) -> BackgroundTask:
     """Tarefa-âncora ``kind="subagent"`` por (session, subagent_type).
 
-    Cada delegação via ``task()`` (deepagents ``SubAgentMiddleware``) roda
-    dentro do mesmo turno, sem persistência própria — a âncora é criada uma
-    vez e cada delegação vira um novo ``vectora_background_runs`` sob ela,
-    igual a uma tarefa agendada acumulando histórico de execuções.
+    Cada delegação via ``delegate_to_subagent`` roda dentro do mesmo turno,
+    sem persistência própria — a âncora é criada uma vez e cada delegação
+    vira um novo ``vectora_background_runs`` sob ela, igual a uma tarefa
+    agendada acumulando histórico de execuções.
     """
     for t in await list_tasks(session_id):
         if (
@@ -646,91 +655,34 @@ async def record_subagent_delegation(
 # ---------------------------------------------------------------------------
 
 
-def _extract_summary(result: Any) -> str:
-    """Texto da última mensagem do agente (resumo da run)."""
-    try:
-        msgs = result.get("messages") if isinstance(result, dict) else None
-        if not msgs:
-            return ""
-        last = msgs[-1]
-        content = getattr(last, "content", None)
-        if content is None and isinstance(last, dict):
-            content = last.get("content")
-        if isinstance(content, str):
-            return content[:2000]
-        if isinstance(content, list):
-            parts = [
-                str(b.get("text", ""))
-                for b in content
-                if isinstance(b, dict) and b.get("type") == "text"
-            ]
-            return "".join(parts)[:2000]
-    except Exception:
-        logger.debug("background_tasks: falha ao extrair resumo", exc_info=True)
-    return ""
+def _describe_pending_approval(pending: dict[str, Any] | None) -> str:
+    """Descrição curta e humana do que a run está esperando aprovar — lê
+    ``SessionStore.get_pending_approval``, que carrega uma única tool/args
+    por pendência (não uma lista de ações candidatas)."""
+    if not pending:
+        return "Aguardando aprovação."
+    return f"Aguardando aprovação: {pending.get('tool_name') or 'ação desconhecida'}"
 
 
-def _extract_usage(result: Any) -> dict[str, Any] | None:
-    """`usage_metadata` da última mensagem do agente (input/output/total
-    tokens), quando o provider expõe. `None` — não `{}` — quando não dá
-    pra saber, mesma distinção que `budget.py::estimate_cost_cents` já
-    documenta (custo desconhecido não é custo zero)."""
-    try:
-        msgs = result.get("messages") if isinstance(result, dict) else None
-        if not msgs:
-            return None
-        last = msgs[-1]
-        usage = getattr(last, "usage_metadata", None)
-        if usage is None and isinstance(last, dict):
-            usage = last.get("usage_metadata")
-        if isinstance(usage, dict) and usage:
-            return usage
-    except Exception:
-        logger.debug("background_tasks: falha ao extrair usage_metadata", exc_info=True)
-    return None
+def _soul_tool_registry(soul: Any, user_id: str | None) -> Any:
+    """``ToolRegistry`` nativo com só as tools da SOUL pedida — mesmo
+    filtro de RBAC (kill-switch global + ABAC por usuário) que
+    ``agent_factory._native_subagent_catalog`` aplica no catálogo de
+    delegação síncrona, replicado aqui pra execução agendada de uma SOUL
+    isolada (``trigger_config.subagent_type``, ver ``schedule_subagent_task``)."""
+    from backend.rbac import tool_policy
+    from backend.tools.registry import TOOL_REGISTRY, ToolRegistry
 
-
-def _extract_interrupt(result: Any) -> Any | None:
-    """Retorna o payload do 1º interrupt se a run pausou (HITL), senão ``None``.
-
-    O LangGraph devolve ``result["__interrupt__"]`` (lista de ``Interrupt``)
-    quando o grafo pausa numa tool sob HumanInTheLoopMiddleware, em vez de
-    levantar exceção. O ``.value`` do primeiro interrupt carrega o pedido de
-    aprovação (tool + args).
-    """
-    if not isinstance(result, dict):
-        return None
-    interrupts = result.get("__interrupt__")
-    if not interrupts:
-        return None
-    first = interrupts[0]
-    return getattr(first, "value", first)
-
-
-def _describe_interrupt(payload: Any) -> str:
-    """Descrição curta e humana do que a run está esperando aprovar.
-
-    O payload do HumanInTheLoopMiddleware costuma ser uma lista de pedidos de
-    ação (``action``/``tool``/``args``). Extrai os nomes das tools quando
-    possível; fallback para ``str`` truncado.
-    """
-    try:
-        items = payload if isinstance(payload, list) else [payload]
-        names: list[str] = []
-        for it in items:
-            if isinstance(it, dict):
-                name = (
-                    it.get("action")
-                    or it.get("tool")
-                    or (it.get("action_request") or {}).get("action")
-                )
-                if name:
-                    names.append(str(name))
-        if names:
-            return "Aguardando aprovação: " + ", ".join(names)
-    except Exception:
-        logger.debug("background_tasks: falha ao descrever interrupt", exc_info=True)
-    return ("Aguardando aprovação: " + str(payload))[:2000]
+    disabled = tool_policy.effective_disabled(user_id)
+    registry = ToolRegistry()
+    for lc_tool in soul.tools:
+        name = getattr(lc_tool, "name", "")
+        if not name or name in disabled:
+            continue
+        spec = TOOL_REGISTRY.get(name)
+        if spec is not None:
+            registry.register(spec)
+    return registry
 
 
 def _emit_run_event(
@@ -829,10 +781,8 @@ async def run_task(
     _emit_run_event("started", task, run_id, run_thread_id)
 
     try:
-        from langchain_core.messages import HumanMessage
-
         from backend.services import agent_factory
-        from backend.vtypes.context import ctx_from_config
+        from backend.tools.subagent_delegate import SubagentDeps
 
         prompt = task.instruction
         model_override: str | None = None
@@ -894,30 +844,73 @@ async def run_task(
         subagent_type = task.trigger_config.get("subagent_type")
         if subagent_type:
             from backend.agents.souls import SOUL_CATALOG
-            from backend.scheduling.subagent_runner import build_subagent_graph
 
             # Agendamento de SOUL específica — usa um worktree isolado quando
             # a SOUL edita filesystem/git e a task tem workspace (evita
             # concorrência com o workspace principal do usuário).
             soul = SOUL_CATALOG.get(subagent_type)
-            if soul is not None and soul.needs_worktree_isolation and task.workspace_id:
+            if soul is None:
+                msg = f"subagent_type inválido: {subagent_type!r}"
+                raise ValueError(msg)
+            if soul.needs_worktree_isolation and task.workspace_id:
                 configurable["workspace_id"] = await _worktree_workspace_id(
                     task.workspace_id, task.id
                 )
-
-            agent = await build_subagent_graph(subagent_type, user_id=task.user_id)
+            tool_registry = _soul_tool_registry(soul, task.user_id)
+            system_prompt = soul.system_prompt
+            subagent_catalog: dict[str, Any] = {}
         else:
-            agent = await agent_factory.get_user_agent(
+            native_agent = await agent_factory.get_native_agent(
                 user_id=task.user_id,
-                model=model_override or "",
+                chat_mode=False,
                 workspace_id=task.workspace_id,
             )
+            tool_registry = native_agent.tool_registry
+            system_prompt = native_agent.system_prompt
+            subagent_catalog = native_agent.subagent_catalog
 
-        config = {"configurable": configurable, "recursion_limit": 50}
-        result = await agent.ainvoke(
-            {"messages": [HumanMessage(content=prompt)]},
-            config=config,
-            context=ctx_from_config(config),
+        session_store = await agent_factory.get_session_store()
+        approval_gate = await agent_factory.get_approval_gate()
+        chat_client = FallbackChatClient(primary_model_id=model_override or "")
+        loop_config = LoopConfig(max_iterations=50)
+
+        run_ctx = ctx_from_config({"configurable": configurable})
+        run_ctx.store = await agent_factory.get_store()
+        if subagent_catalog:
+            run_ctx._extra["subagent_deps"] = SubagentDeps(
+                catalog=subagent_catalog,
+                session_store=session_store,
+                chat_client=chat_client,
+                config=loop_config,
+                should_require_approval=should_require_approval,
+            )
+
+        await session_store.create_session(
+            run_thread_id,
+            user_id=task.user_id,
+            workspace_id=configurable.get("workspace_id"),
+            parent_thread_id=task.session_id or None,
+            mode="background",
+            permission_mode=configurable.get("permission_mode", "auto"),
+        )
+        system_id = await session_store.append_message(
+            run_thread_id, text_message(MessageRole.SYSTEM, system_prompt)
+        )
+        await session_store.append_message(
+            run_thread_id,
+            text_message(MessageRole.USER, prompt),
+            parent_message_id=system_id,
+        )
+
+        result = await run_conversation(
+            session_store=session_store,
+            chat_client=chat_client,
+            tool_registry=tool_registry,
+            ctx=run_ctx,
+            thread_id=run_thread_id,
+            config=loop_config,
+            should_require_approval=should_require_approval,
+            approval_gate=approval_gate,
         )
 
         from backend.api.handlers.threads import (
@@ -932,46 +925,45 @@ async def run_task(
             workspace_id=task.workspace_id,
         )
         # message_count>0 faz a thread da run aparecer na sidebar (ListThreads
-        # filtra message_count>0). O histórico completo sai do checkpointer via
-        # GetHistory (o grafo roda com run_thread_id + checkpointer compartilhado).
+        # filtra message_count>0). O histórico completo sai de SessionStore via
+        # GetHistory (a run roda sob run_thread_id + SessionStore compartilhado).
         await _increment_message_count(run_thread_id)
 
-        # HITL: se o grafo pausou numa ação destrutiva, a run fica pendente de
-        # aprovação (não "done") — o interrupt está salvo no checkpointer e a
-        # run é retomável por resume_background_run.
-        interrupt_payload = _extract_interrupt(result)
-        if interrupt_payload is not None:
-            desc = _describe_interrupt(interrupt_payload)
+        # HITL: se o loop pausou numa ação destrutiva, a run fica pendente de
+        # aprovação (não "done") — a pendência está persistida em
+        # `pending_approvals` (SessionStore) e a run é retomável por
+        # resume_background_run.
+        if result.stopped_reason == "interrupted":
+            pending = await session_store.get_pending_approval(run_thread_id)
+            desc = _describe_pending_approval(pending)
             await _mark_run_awaiting(run_id, desc)
             await _touch_last_run(task.id)
             _emit_run_event("needs_approval", task, run_id, run_thread_id, desc)
             return run_thread_id
 
-        summary = _extract_summary(result)
+        summary = result.final_message.text() if result.final_message else ""
         await _finish_run(run_id, "done", summary)
 
-        # Custo real da run, gravado só agora que se sabe o resultado — sem
-        # isso, `check_budget`/`accumulated_cents` nunca via nada além de
-        # NULL e o corte automático de budget nunca disparava de verdade
-        # (achado desta sprint: o mecanismo existia, mas nada alimentava
-        # `estimated_cost_cents`). Liveness é puramente informativa — nunca
-        # bloqueia nem pausa a task sozinha.
+        # Custo real da run, gravado só agora que se sabe o resultado. O
+        # motor nativo ainda não expõe `usage_metadata` pro caller do loop
+        # (só o stream de chunks carrega `VMessageChunk.usage`, sem sink
+        # agregador aqui) — custo entra como "desconhecido" (`None`), nunca
+        # como zero, mesma distinção que `estimate_cost_cents` documenta.
+        # Liveness é puramente informativa — nunca bloqueia nem pausa a task.
         try:
             from backend.scheduling.budget import estimate_cost_cents, record_run_cost
             from backend.scheduling.liveness import classify_liveness
             from backend.workspace.runtime_settings import runtime_settings
 
-            usage = _extract_usage(result)
             resolved_model = model_override or (
                 f"{runtime_settings.active_provider.replace('-', '_')}:"
                 f"{runtime_settings.active_model}"
             )
-            cost_cents = estimate_cost_cents(resolved_model, usage)
-            tokens_used = usage.get("total_tokens") if usage else None
+            cost_cents = estimate_cost_cents(resolved_model, None)
             liveness = classify_liveness(summary)
             await record_run_cost(
                 run_id,
-                tokens_used=tokens_used,
+                tokens_used=None,
                 cost_cents=cost_cents,
                 liveness=liveness,
             )
@@ -1044,9 +1036,11 @@ async def _get_run(run_id: str) -> dict[str, Any] | None:
 async def resume_background_run(run_id: str, decision: str = "approve") -> str | None:
     """Retoma uma run de background pausada em HITL (``awaiting_approval``).
 
-    O interrupt está persistido no checkpointer compartilhado sob o
-    ``run_thread_id``, então resume o grafo com ``Command(resume=...)`` — mesmo
-    mecanismo do ResumeChat do chat síncrono.
+    A aprovação pendente está persistida em ``SessionStore.pending_approvals``
+    sob o ``run_thread_id`` — resume via ``resume_conversation`` (motor
+    nativo) e, se não houver mais pendência, continua o turno com
+    ``run_conversation`` — mesmo mecanismo de duas etapas do ResumeChat do
+    chat síncrono (``backend/api/handlers/chat.py``).
 
     Args:
         run_id: id da run em ``awaiting_approval``.
@@ -1065,17 +1059,18 @@ async def resume_background_run(run_id: str, decision: str = "approve") -> str |
         return None
 
     try:
-        from langgraph.types import Command
-
         from backend.services import agent_factory
-        from backend.vtypes.context import ctx_from_config
+        from backend.tools.subagent_delegate import SubagentDeps
 
         if decision == "approve":
-            resume_value: dict[str, Any] = {"action": "approve"}
+            resume_decision = "approve"
+            edited_args: dict[str, Any] | None = None
         elif decision == "reject":
-            resume_value = {"action": "reject"}
+            resume_decision = "reject"
+            edited_args = None
         elif decision.startswith("edit:"):
-            resume_value = {"action": "edit", "args": json.loads(decision[5:])}
+            resume_decision = "edit"
+            edited_args = json.loads(decision[5:])
         else:
             raise ValueError(f"decision inválida: {decision!r}")
 
@@ -1088,26 +1083,75 @@ async def resume_background_run(run_id: str, decision: str = "approve") -> str |
         }
         if task.workspace_id:
             configurable["workspace_id"] = task.workspace_id
-        config = {"configurable": configurable, "recursion_limit": 50}
 
-        agent = await agent_factory.get_user_agent(
-            user_id=task.user_id,
-            workspace_id=task.workspace_id,
+        subagent_type = task.trigger_config.get("subagent_type")
+        if subagent_type:
+            from backend.agents.souls import SOUL_CATALOG
+
+            soul = SOUL_CATALOG.get(subagent_type)
+            if soul is None:
+                msg = f"subagent_type inválido: {subagent_type!r}"
+                raise ValueError(msg)
+            tool_registry = _soul_tool_registry(soul, task.user_id)
+            subagent_catalog: dict[str, Any] = {}
+        else:
+            native_agent = await agent_factory.get_native_agent(
+                user_id=task.user_id,
+                chat_mode=False,
+                workspace_id=task.workspace_id,
+            )
+            tool_registry = native_agent.tool_registry
+            subagent_catalog = native_agent.subagent_catalog
+
+        session_store = await agent_factory.get_session_store()
+        approval_gate = await agent_factory.get_approval_gate()
+        chat_client = FallbackChatClient(primary_model_id="")
+        loop_config = LoopConfig(max_iterations=50)
+
+        run_ctx = ctx_from_config({"configurable": configurable})
+        run_ctx.store = await agent_factory.get_store()
+        if subagent_catalog:
+            run_ctx._extra["subagent_deps"] = SubagentDeps(
+                catalog=subagent_catalog,
+                session_store=session_store,
+                chat_client=chat_client,
+                config=loop_config,
+                should_require_approval=should_require_approval,
+            )
+
+        resumed = await resume_conversation(
+            session_store=session_store,
+            tool_registry=tool_registry,
+            ctx=run_ctx,
+            thread_id=run_thread_id,
+            decision=resume_decision,
+            edited_args=edited_args,
+            approval_gate=approval_gate,
         )
-        result = await agent.ainvoke(
-            Command(resume=resume_value),
-            config=config,
-            context=ctx_from_config(config),
+        if not resumed:
+            # Nenhuma pendência real (duplo-clique/retry) — idempotente,
+            # mesmo shape de retorno de "run não encontrada" acima.
+            return None
+
+        result = await run_conversation(
+            session_store=session_store,
+            chat_client=chat_client,
+            tool_registry=tool_registry,
+            ctx=run_ctx,
+            thread_id=run_thread_id,
+            config=loop_config,
+            should_require_approval=should_require_approval,
+            approval_gate=approval_gate,
         )
 
-        interrupt_payload = _extract_interrupt(result)
-        if interrupt_payload is not None:
-            desc = _describe_interrupt(interrupt_payload)
+        if result.stopped_reason == "interrupted":
+            pending = await session_store.get_pending_approval(run_thread_id)
+            desc = _describe_pending_approval(pending)
             await _mark_run_awaiting(run_id, desc)
             _emit_run_event("needs_approval", task, run_id, run_thread_id, desc)
             return "awaiting_approval"
 
-        summary = _extract_summary(result)
+        summary = result.final_message.text() if result.final_message else ""
         await _finish_run(run_id, "done", summary)
         _emit_run_event("done", task, run_id, run_thread_id, summary)
         await report_to_parent_session(task, run_thread_id, summary)
@@ -1139,10 +1183,14 @@ async def report_to_parent_session(
 ) -> bool:
     """Posta o resultado da run COMO MENSAGEM na sessão-mãe (Hermes/Paperclip).
 
-    Anexa uma ``AIMessage`` ao checkpoint da sessão que criou a task
-    (``task.session_id``) via ``graph.aupdate_state`` — o reducer de mensagens
-    do LangGraph acrescenta ao histórico, então o próximo turno do orquestrador
-    principal VÊ que a tarefa terminou (com resumo + link pra thread da run).
+    Anexa uma mensagem ASSISTANT ao histórico da sessão que criou a task
+    (``task.session_id``) via ``SessionStore.append_message`` — a próxima
+    leitura de histórico (`SessionStore.get_history`, relida a cada iteração
+    do loop nativo) já enxerga que a tarefa terminou (com resumo + link pra
+    thread da run). ``create_session`` é ``INSERT OR IGNORE``: se a
+    sessão-mãe ainda não existir em ``SessionStore`` (thread nunca tocada
+    pelo motor nativo), é criada aqui na hora, sem precisar migrar histórico
+    antigo.
 
     Best-effort: falha aqui nunca deve derrubar a conclusão da run. Retorna
     ``True`` se reportou, ``False`` se pulou (sem sessão-mãe) ou falhou.
@@ -1150,22 +1198,20 @@ async def report_to_parent_session(
     if not task.session_id or task.session_id == run_thread_id:
         return False
     try:
-        from langchain_core.messages import AIMessage
-
         from backend.services import agent_factory
 
-        graph = await agent_factory.get_user_agent(
-            user_id=task.user_id,
-            workspace_id=task.workspace_id,
-        )
+        session_store = await agent_factory.get_session_store()
         text = (
             f"🔔 Tarefa em segundo plano concluída — **{task.name}**\n\n"
             f"{summary or '(sem resumo)'}\n\n"
             f"_Histórico completo na thread `{run_thread_id}`._"
         )
-        await graph.aupdate_state(
-            {"configurable": {"thread_id": task.session_id}},
-            {"messages": [AIMessage(content=text)]},
+        await session_store.create_session(task.session_id, user_id=task.user_id)
+        parent_id = await session_store.get_branch_head_id(task.session_id)
+        await session_store.append_message(
+            task.session_id,
+            text_message(MessageRole.ASSISTANT, text),
+            parent_message_id=parent_id,
         )
         return True
     except Exception:

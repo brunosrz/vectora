@@ -59,6 +59,17 @@ async def _async_iter(items: list[_Snapshot]):
         yield item
 
 
+def _patch_empty_native_store(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``aget_thread_messages``/``aget_thread_todos`` tentam o ``SessionStore``
+    nativo primeiro; estes testes exercitam especificamente o fallback pro
+    checkpointer deepagents legado (thread sem nenhuma mensagem nativa)."""
+    fake_store = MagicMock()
+    fake_store.get_history_with_ids = AsyncMock(return_value=[])
+    monkeypatch.setattr(
+        agent_factory, "get_session_store", AsyncMock(return_value=fake_store)
+    )
+
+
 def _make_compiled(history_newest_first: list[_Snapshot]) -> MagicMock:
     """Retorna um CompiledStateGraph fake com aget_state_history fixo."""
     compiled = MagicMock()
@@ -73,6 +84,7 @@ async def test_aget_thread_messages_filters_tool_and_empty(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Filtra mensagens de tool e AI sem texto; mapeia human/ai → role correto."""
+    _patch_empty_native_store(monkeypatch)
     human = _Msg("human", "oi")
     rest = [
         _Msg("ai", [{"type": "text", "text": "olá"}]),
@@ -113,6 +125,7 @@ async def test_aget_thread_messages_empty_state(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Devolve lista vazia quando o histórico só tem estado sem mensagens."""
+    _patch_empty_native_store(monkeypatch)
     compiled = _make_compiled([_Snapshot([], None)])
 
     sentinel_checkpointer = object()
@@ -134,6 +147,7 @@ async def test_aget_thread_messages_no_checkpointer(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Devolve lista vazia quando _checkpointer é None (sem infra inicializada)."""
+    _patch_empty_native_store(monkeypatch)
     monkeypatch.setattr(agent_factory, "_checkpointer", None)
 
     async def _noop_ensure() -> None:
@@ -151,6 +165,7 @@ async def test_aget_thread_messages_timeout_loga_warning_e_devolve_vazio(
     """Regressão ao vivo: conversa muito longa (milhares de checkpoints —
     um por tool call/delegação/write_todos) travava sem limite de tempo.
     Timeout precisa aparecer no log (WARNING), não desaparecer em silêncio."""
+    _patch_empty_native_store(monkeypatch)
     import asyncio
 
     async def _hangs_forever(_config):
@@ -187,6 +202,7 @@ async def test_aget_thread_messages_falha_no_meio_loga_warning_nao_debug(
     """Antes: `logger.debug` engolia qualquer falha de leitura sem deixar
     rastro nos logs padrão (INFO/WARNING) — o histórico sumia sem pista
     nenhuma de por quê. Agora precisa aparecer em WARNING."""
+    _patch_empty_native_store(monkeypatch)
 
     async def _raises(_config):
         raise RuntimeError("checkpoint corrompido no meio da cadeia")

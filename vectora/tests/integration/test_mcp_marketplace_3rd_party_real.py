@@ -3,14 +3,14 @@
 Valida o fluxo do usuário ponta a ponta: registrar um servidor MCP de
 terceiro via o store funcional (``backend.workspace.plugins``, o mesmo que
 alimenta o marketplace) e confirmar que o Vectora, como cliente, LISTA as
-tools reais dele via ``get_user_mcp_tools`` → ``MultiServerMCPClient`` →
-LangGraph.
+tools reais dele via ``get_user_mcp_tools`` → ``VectoraMCPClient`` (SDK
+oficial ``mcp``, nativo).
 
 Usa o ``@modelcontextprotocol/server-filesystem`` (stdio via ``npx``) —
 servidor oficial, local (sem rede além do fetch do pacote pelo npx).
-Hermético: sem ``npx`` ou sem a lib de adapters, o teste é neutralizado com
-skip explícito; se o servidor não subir no tempo do health-check (download
-frio do npx), skipa com razão em vez de falhar falso.
+Hermético: sem ``npx``, o teste é neutralizado com skip explícito; se o
+servidor não subir no tempo do health-check (download frio do npx), skipa
+com razão em vez de falhar falso.
 """
 
 from __future__ import annotations
@@ -28,9 +28,6 @@ pytestmark = pytest.mark.asyncio
 )
 async def test_filesystem_mcp_3rd_party_lista_tools_reais(tmp_path, monkeypatch):
     from backend.workspace import plugins
-
-    if plugins.MultiServerMCPClient is None:
-        pytest.skip("langchain-mcp-adapters não instalado.")
 
     # Store funcional isolado (mesmo caminho que o marketplace usa para gravar).
     monkeypatch.setattr(plugins, "_plugins_dir", lambda: tmp_path / "mcp")

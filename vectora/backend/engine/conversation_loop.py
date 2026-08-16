@@ -28,7 +28,8 @@ vocabulário nativo.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+import time
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
@@ -38,7 +39,10 @@ from backend.engine.stream_events import (
     HitlRequested,
     MessageBreak,
     MessageChunk,
+    ToolActivity,
+    ToolCallStarted,
     ToolResult,
+    WorkbenchInvalidate,
 )
 from backend.engine.tool_batch import execute_tool_batch
 from backend.vtypes.message import ContentBlock, MessageRole, ToolCall, VMessage
@@ -235,6 +239,24 @@ async def run_conversation(
                     stopped_reason="interrupted", final_message=assistant_msg
                 )
 
+        tool_started_at: dict[str, float] = {}
+        for tc in tool_calls:
+            spec = tool_registry.get(tc.name)
+            extras = spec.extras if spec is not None else None
+            tool_started_at[tc.id] = time.monotonic()
+            await emit(
+                ToolCallStarted(
+                    tool_name=tc.name,
+                    tool_call_id=tc.id,
+                    args_json=json.dumps(tc.args, ensure_ascii=False),
+                    render_hint=extras.render_hint if extras else "json",
+                    category=extras.category if extras else "general",
+                    destructive=extras.destructive if extras else False,
+                    icon=extras.icon if extras else "tool",
+                )
+            )
+            await emit(ToolActivity(tool_name=tc.name, tool_call_id=tc.id))
+
         resultados = await execute_tool_batch(
             tool_calls, tool_registry=tool_registry, ctx=ctx, turn_budget=turn_budget
         )
@@ -242,13 +264,34 @@ async def run_conversation(
             parent_id = await session_store.append_message(
                 thread_id, resultado, parent_message_id=parent_id
             )
+            call_id = resultado.tool_call_id or ""
             await emit(
                 ToolResult(
-                    tool_call_id=resultado.tool_call_id or "",
+                    tool_call_id=call_id,
                     content_json=resultado.text(),
                     is_error=resultado.is_error,
                 )
             )
+            started_at = tool_started_at.pop(call_id, None)
+            elapsed_ms = (
+                int((time.monotonic() - started_at) * 1000)
+                if started_at is not None
+                else 0
+            )
+            await emit(
+                ToolActivity(
+                    tool_name=resultado.name or "",
+                    tool_call_id=call_id,
+                    elapsed_ms=elapsed_ms,
+                )
+            )
+            spec = tool_registry.get(resultado.name or "")
+            if spec is not None and spec.extras.invalidates:
+                await emit(
+                    WorkbenchInvalidate(
+                        tabs=spec.extras.invalidates, tool_name=resultado.name or ""
+                    )
+                )
 
         if turn_budget.exceeded is not None:
             await emit(
@@ -271,3 +314,118 @@ async def run_conversation(
         )
     )
     return LoopResult(stopped_reason="max_iterations")
+
+
+async def _execute_single_call(
+    tool_call: ToolCall, *, tool_registry: ToolRegistry, ctx: ToolContext
+) -> VMessage:
+    """Mesma lógica de execução de ``tool_batch._run_one``, sem
+    ``TurnBudget`` (o teto de volume é do turno que gerou o lote original,
+    já contabilizado ou não antes da pausa — reaplicá-lo no resume duplicaria
+    ou perderia contagem)."""
+    spec = tool_registry.get(tool_call.name)
+    if spec is None:
+        texto = f"Error: tool '{tool_call.name}' não encontrada no registry"
+        is_error = True
+    else:
+        texto = await spec.ainvoke(tool_call.args, ctx)
+        is_error = texto.startswith("Error:")
+    return VMessage(
+        role=MessageRole.TOOL,
+        content=[ContentBlock(kind="text", text=texto)],
+        tool_call_id=tool_call.id,
+        name=tool_call.name,
+        is_error=is_error,
+    )
+
+
+async def resume_conversation(
+    *,
+    session_store: SessionStore,
+    tool_registry: ToolRegistry,
+    ctx: ToolContext,
+    thread_id: str,
+    decision: str,
+    edited_args: dict[str, Any] | None = None,
+    approval_gate: ApprovalGate | None = None,
+    on_event: EventSink | None = None,
+) -> bool:
+    """Executa o lote de tool calls que ``run_conversation`` pausou —
+    ``decision`` é ``"approve"`` | ``"reject"`` | ``"edit"``, aplicada só à
+    tool call sinalizada em ``SessionStore.get_pending_approval`` (as
+    demais do MESMO lote, se houver, nunca foram a causa da pausa e
+    executam normalmente, como executariam se nenhuma delas exigisse
+    aprovação).
+
+    Não continua o loop de conversa sozinho — depois de persistir o(s)
+    resultado(s) de tool, o caller chama ``run_conversation`` normalmente
+    pra deixar o modelo reagir: a próxima iteração relê o histórico (agora
+    com o resultado da tool já presente) e segue dali, sem nenhum código de
+    "retomada" especial no loop principal.
+
+    Devolve ``False`` (nenhum efeito) se não havia aprovação pendente para
+    ``thread_id`` — resume idempotente diante de um duplo-clique/retry do
+    cliente. ``True`` quando o lote foi executado e a pendência resolvida.
+    """
+    emit = on_event or _noop_event
+    pending = await session_store.get_pending_approval(thread_id)
+    if pending is None:
+        return False
+
+    flagged_id = pending["tool_call_id"]
+    historico = await session_store.get_history(thread_id)
+    ultimo_assistant = next(
+        (
+            m
+            for m in reversed(historico)
+            if m.role == MessageRole.ASSISTANT and m.tool_calls
+        ),
+        None,
+    )
+    tool_calls = ultimo_assistant.tool_calls if ultimo_assistant is not None else []
+
+    parent_id = await session_store.get_branch_head_id(thread_id)
+    for tc in tool_calls:
+        if tc.id != flagged_id:
+            resultado = await _execute_single_call(
+                tc, tool_registry=tool_registry, ctx=ctx
+            )
+        elif decision == "reject":
+            resultado = VMessage(
+                role=MessageRole.TOOL,
+                content=[ContentBlock(kind="text", text="Usuário rejeitou esta ação.")],
+                tool_call_id=tc.id,
+                name=tc.name,
+                is_error=True,
+            )
+        else:
+            args = tc.args
+            if decision == "edit" and edited_args is not None:
+                args = edited_args
+            resultado = await _execute_single_call(
+                replace(tc, args=args), tool_registry=tool_registry, ctx=ctx
+            )
+
+        parent_id = await session_store.append_message(
+            thread_id, resultado, parent_message_id=parent_id
+        )
+        await emit(
+            ToolResult(
+                tool_call_id=resultado.tool_call_id or "",
+                content_json=resultado.text(),
+                is_error=resultado.is_error,
+            )
+        )
+        spec = tool_registry.get(resultado.name or "")
+        if spec is not None and spec.extras.invalidates:
+            await emit(
+                WorkbenchInvalidate(
+                    tabs=spec.extras.invalidates, tool_name=resultado.name or ""
+                )
+            )
+
+    if approval_gate is not None:
+        await approval_gate.resolve(thread_id)
+    else:
+        await session_store.clear_pending_approval(thread_id)
+    return True

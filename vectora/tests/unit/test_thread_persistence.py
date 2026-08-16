@@ -10,10 +10,56 @@ from __future__ import annotations
 
 import json
 import os
+from contextlib import ExitStack
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+
+def _native_dispatch_patches() -> list[Any]:
+    """Patches pro motor nativo — mesmo objetivo do helper equivalente em
+    `tests/unit/test_file_attachments.py`, mas alvo em
+    `backend.engine.conversation_loop.run_conversation` (a origem, não o
+    nome importado em `backend.api.handlers.chat`) — esta suíte faz
+    `importlib.reload(chat_mod)` depois de entrar nos patches, o que
+    reexecuta `from backend.engine.conversation_loop import run_conversation`
+    e desfaria um patch aplicado só no nome local do módulo reimportado."""
+    from backend.engine.conversation_loop import LoopResult
+    from backend.services.agent_factory import NativeAgent
+    from backend.tools.registry import ToolRegistry
+
+    fake_agent = NativeAgent(
+        tool_registry=ToolRegistry(), subagent_catalog={}, system_prompt="prompt"
+    )
+    session_store = AsyncMock()
+    session_store.create_session = AsyncMock()
+    session_store.get_branch_head_id = AsyncMock(return_value=1)
+    session_store.append_message = AsyncMock(return_value=2)
+    session_store.set_branch_head = AsyncMock()
+
+    return [
+        patch(
+            "backend.services.agent_factory.get_native_agent",
+            new=AsyncMock(return_value=fake_agent),
+        ),
+        patch(
+            "backend.services.agent_factory.get_session_store",
+            new=AsyncMock(return_value=session_store),
+        ),
+        patch(
+            "backend.services.agent_factory.get_approval_gate",
+            new=AsyncMock(return_value=AsyncMock()),
+        ),
+        patch(
+            "backend.services.agent_factory.get_store",
+            new=AsyncMock(return_value=None),
+        ),
+        patch(
+            "backend.engine.conversation_loop.run_conversation",
+            new=AsyncMock(return_value=LoopResult(stopped_reason="stop")),
+        ),
+    ]
 
 
 def _collect_route_paths(routes: list[Any]) -> list[str]:
@@ -250,13 +296,6 @@ class TestStreamChatRegistersThread:
         ) -> None:
             upsert_calls.append(thread_id)
 
-        async def _empty_events(*_a: object, **_kw: object):
-            return
-            yield  # async generator
-
-        mock_graph = MagicMock()
-        mock_graph.astream_events = MagicMock(return_value=_empty_events())
-
         from backend.api.schemas import StreamChatRequest
 
         mock_ws = MagicMock()
@@ -266,20 +305,21 @@ class TestStreamChatRegistersThread:
         mock_registry.get_active.return_value = None
         mock_registry.get_or_create_session_workspace.return_value = mock_ws
 
-        with (
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(return_value=mock_graph),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                side_effect=mock_upsert,
-            ),
-            patch(
-                "backend.workspace.workspace.workspace_registry",
-                mock_registry,
-            ),
-        ):
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    side_effect=mock_upsert,
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace.workspace_registry",
+                    mock_registry,
+                )
+            )
             import importlib
 
             import backend.api.handlers.chat as chat_mod
@@ -308,13 +348,6 @@ class TestStreamChatRegistersThread:
         ) -> None:
             upsert_calls.append(thread_id)
 
-        async def _empty_events(*_a: object, **_kw: object):
-            return
-            yield
-
-        mock_graph = MagicMock()
-        mock_graph.astream_events = MagicMock(return_value=_empty_events())
-
         from backend.api.schemas import StreamChatRequest
 
         mock_ws2 = MagicMock()
@@ -324,20 +357,21 @@ class TestStreamChatRegistersThread:
         mock_registry2.get_active.return_value = None
         mock_registry2.get_or_create_session_workspace.return_value = mock_ws2
 
-        with (
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(return_value=mock_graph),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                side_effect=mock_upsert,
-            ),
-            patch(
-                "backend.workspace.workspace.workspace_registry",
-                mock_registry2,
-            ),
-        ):
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    side_effect=mock_upsert,
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace.workspace_registry",
+                    mock_registry2,
+                )
+            )
             import importlib
 
             import backend.api.handlers.chat as chat_mod
@@ -355,7 +389,7 @@ class TestStreamChatRegistersThread:
 
     @pytest.mark.asyncio
     async def test_stream_chat_does_not_upsert_when_agent_init_fails(self):
-        """Erro/borda: quando `get_user_agent` falha (ex. sem provider
+        """Erro/borda: quando `get_native_agent` falha (ex. sem provider
         configurado), nem `_upsert_session` nem `_increment_message_count`
         podem ter rodado — persistir a thread nesse ponto criaria uma sessão
         com message_count > 0 sem mensagem real, invisível tanto ao filtro
@@ -386,7 +420,7 @@ class TestStreamChatRegistersThread:
 
         with (
             patch(
-                "backend.services.agent_factory.get_user_agent",
+                "backend.services.agent_factory.get_native_agent",
                 new=AsyncMock(side_effect=RuntimeError("sem provider configurado")),
             ),
             patch(
@@ -437,13 +471,6 @@ class TestStreamChatRegistersThread:
         async def mock_increment(thread_id: str) -> None:
             increment_calls.append(thread_id)
 
-        async def _empty_events(*_a: object, **_kw: object):
-            return
-            yield  # async generator sem nenhum evento — assistente nunca responde
-
-        mock_graph = MagicMock()
-        mock_graph.astream_events = MagicMock(return_value=_empty_events())
-
         from backend.api.schemas import StreamChatRequest
 
         mock_ws4 = MagicMock()
@@ -453,24 +480,27 @@ class TestStreamChatRegistersThread:
         mock_registry4.get_active.return_value = None
         mock_registry4.get_or_create_session_workspace.return_value = mock_ws4
 
-        with (
-            patch(
-                "backend.services.agent_factory.get_user_agent",
-                new=AsyncMock(return_value=mock_graph),
-            ),
-            patch(
-                "backend.api.handlers.threads._upsert_session",
-                new=AsyncMock(),
-            ),
-            patch(
-                "backend.api.handlers.threads._increment_message_count",
-                side_effect=mock_increment,
-            ),
-            patch(
-                "backend.workspace.workspace.workspace_registry",
-                mock_registry4,
-            ),
-        ):
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    new=AsyncMock(),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._increment_message_count",
+                    side_effect=mock_increment,
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace.workspace_registry",
+                    mock_registry4,
+                )
+            )
             import importlib
 
             import backend.api.handlers.chat as chat_mod

@@ -428,18 +428,34 @@ async def test_install_wires_into_functional_store_and_tools(
     assert any(s.name == _REGISTRY[0].id for s in servers)
 
     # E as tools do servidor entram no toolset via get_user_mcp_tools.
-    class _FakeTool:
-        def __init__(self, name):
-            self.name = name
+    from mcp.types import Tool as MCPTool
 
-    class _FakeClient:
-        def __init__(self, connections):
-            self.connections = connections
+    class _FakeVectoraMCPClient:
+        def __init__(self):
+            self._connected_to = None
 
-        async def get_tools(self):
-            return [_FakeTool("brave_web_search")]
+        async def connect(self, connections, *, strict=False):
+            self._connected_to = connections
 
-    monkeypatch.setattr(plugins, "MultiServerMCPClient", _FakeClient)
+        def tools(self):
+            return {
+                "brave_web_search": MCPTool(
+                    name="brave_web_search",
+                    description="busca na web",
+                    inputSchema={"type": "object", "properties": {}},
+                )
+            }
+
+        def tools_by_server(self):
+            return {"brave_web_search": _REGISTRY[0].id}
+
+        async def call_tool(self, tool_name, arguments):
+            return "ok"
+
+        async def aclose(self):
+            pass
+
+    monkeypatch.setattr(plugins, "VectoraMCPClient", _FakeVectoraMCPClient)
     tools = await plugins.get_user_mcp_tools("local")
     assert [t.name for t in tools] == ["brave_web_search"]
 

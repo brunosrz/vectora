@@ -8,15 +8,23 @@ from __future__ import annotations
 
 import pytest
 
-from backend.engine.conversation_loop import LoopConfig, run_conversation
+from backend.engine.conversation_loop import (
+    LoopConfig,
+    resume_conversation,
+    run_conversation,
+)
 from backend.engine.guardrails import LoopCapConfig
+from backend.engine.hitl import ApprovalGate
 from backend.engine.stream_events import (
     EngineEvent,
     ErrorSignal,
     HitlRequested,
     MessageBreak,
     MessageChunk,
+    ToolActivity,
+    ToolCallStarted,
     ToolResult,
+    WorkbenchInvalidate,
 )
 from backend.persistence.native.session_store import SessionStore
 from backend.storage.sqlite.pool import AsyncConnectionPool
@@ -492,6 +500,104 @@ class TestEmissaoDeEventos:
         assert hitl_eventos[0].args_json == "{}"
         assert hitl_eventos[0].interrupt_id  # gerado, não vazio
 
+    async def test_tool_call_started_e_activity_emitidos_antes_e_depois(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras(category="general", icon="wrench"))
+        async def somar3(a: int, b: int, ctx: ToolContext) -> str:
+            """soma dois números.
+            Args:
+                a: primeiro
+                b: segundo
+            """
+            return str(a + b)
+
+        registry = ToolRegistry()
+        _register(registry, "somar3")
+
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0, id="call_1", name="somar3", args='{"a":1,"b":2}'
+                    )
+                ],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        started = [e for e in eventos if isinstance(e, ToolCallStarted)]
+        assert started == [
+            ToolCallStarted(
+                tool_name="somar3",
+                tool_call_id="call_1",
+                args_json='{"a": 1, "b": 2}',
+                render_hint="default",
+                category="general",
+                destructive=False,
+                icon="wrench",
+            )
+        ]
+        activities = [e for e in eventos if isinstance(e, ToolActivity)]
+        # Um ToolActivity de início (sem elapsed_ms) e um de fim (com elapsed_ms).
+        assert len(activities) == 2
+        assert activities[0].elapsed_ms is None
+        assert activities[1].elapsed_ms is not None
+
+        # A tool não declara `invalidates` — nenhum WorkbenchInvalidate emitido.
+        assert not [e for e in eventos if isinstance(e, WorkbenchInvalidate)]
+
+    async def test_tool_com_invalidates_emite_workbench_invalidate(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras(invalidates=["files", "git"]))
+        async def escrever2(ctx: ToolContext) -> str:
+            """escreve algo."""
+            return "ok"
+
+        registry = ToolRegistry()
+        _register(registry, "escrever2")
+
+        client = _ScriptedChatClient(
+            [
+                [_tool_call_chunk(index=0, id="call_1", name="escrever2", args="{}")],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        invalidates = [e for e in eventos if isinstance(e, WorkbenchInvalidate)]
+        assert invalidates == [
+            WorkbenchInvalidate(tabs=["files", "git"], tool_name="escrever2")
+        ]
+
 
 class TestLoopCapGuardrail:
     async def test_estoura_teto_de_tool_calls_encerra_turno_sem_esgotar_max_iterations(
@@ -575,3 +681,118 @@ class TestLoopCapGuardrail:
         assert resultado.stopped_reason == "stop"
         sinais = [e for e in eventos if isinstance(e, ErrorSignal)]
         assert not any(e.code == "LOOP_CAP_EXCEEDED" for e in sinais)
+
+
+class TestResumeConversation:
+    async def test_aprovar_executa_a_tool_sinalizada_e_libera_a_pendencia(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras(destructive=True))
+        async def escrever_arquivo2(ctx: ToolContext) -> str:
+            """escreve um arquivo."""
+            return "escrito!"
+
+        registry = ToolRegistry()
+        _register(registry, "escrever_arquivo2")
+
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0, id="call_1", name="escrever_arquivo2", args="{}"
+                    )
+                ]
+            ]
+        )
+        gate = ApprovalGate(session_store)
+        resultado = await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            should_require_approval=lambda *_a: True,
+            approval_gate=gate,
+        )
+        assert resultado.stopped_reason == "interrupted"
+        assert await session_store.get_pending_approval("thread-1") is not None
+
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        resumiu = await resume_conversation(
+            session_store=session_store,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            decision="approve",
+            approval_gate=gate,
+            on_event=on_event,
+        )
+
+        assert resumiu is True
+        assert await session_store.get_pending_approval("thread-1") is None
+        historico = await session_store.get_history("thread-1")
+        assert historico[-1].role.value == "tool"
+        assert historico[-1].text() == "escrito!"
+        assert historico[-1].is_error is False
+        resultados = [e for e in eventos if isinstance(e, ToolResult)]
+        assert resultados == [
+            ToolResult(tool_call_id="call_1", content_json="escrito!", is_error=False)
+        ]
+
+    async def test_rejeitar_nao_executa_a_tool_e_persiste_mensagem_de_erro(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras(destructive=True))
+        async def deletar_tudo(ctx: ToolContext) -> str:
+            """deleta tudo — nunca deveria rodar quando rejeitado."""
+            return "NUNCA DEVERIA APARECER"
+
+        registry = ToolRegistry()
+        _register(registry, "deletar_tudo")
+
+        client = _ScriptedChatClient(
+            [[_tool_call_chunk(index=0, id="call_1", name="deletar_tudo", args="{}")]]
+        )
+        gate = ApprovalGate(session_store)
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            should_require_approval=lambda *_a: True,
+            approval_gate=gate,
+        )
+
+        resumiu = await resume_conversation(
+            session_store=session_store,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            decision="reject",
+            approval_gate=gate,
+        )
+
+        assert resumiu is True
+        historico = await session_store.get_history("thread-1")
+        assert historico[-1].role.value == "tool"
+        assert historico[-1].is_error is True
+        assert "rejeitou" in historico[-1].text().lower()
+
+    async def test_sem_pendencia_nao_faz_nada_e_devolve_false(self, session_store, ctx):
+        resumiu = await resume_conversation(
+            session_store=session_store,
+            tool_registry=ToolRegistry(),
+            ctx=ctx,
+            thread_id="thread-1",
+            decision="approve",
+        )
+
+        assert resumiu is False
+        assert await session_store.get_history("thread-1") == []

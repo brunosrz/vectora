@@ -134,6 +134,31 @@ class TestAppendMessageEGetHistory:
         ]
         assert [m.text() for m in branch_antiga] == ["primeira pergunta"]
 
+    async def test_get_history_with_ids_devolve_o_id_de_cada_mensagem(
+        self, store: SessionStore
+    ):
+        await store.create_session("thread-1", user_id="alice")
+        id1 = await store.append_message(
+            "thread-1", text_message(MessageRole.USER, "oi")
+        )
+        id2 = await store.append_message(
+            "thread-1",
+            text_message(MessageRole.ASSISTANT, "olá!"),
+            parent_message_id=id1,
+        )
+
+        pares = await store.get_history_with_ids("thread-1")
+
+        assert [pid for pid, _msg in pares] == [id1, id2]
+        assert [msg.text() for _pid, msg in pares] == ["oi", "olá!"]
+
+    async def test_get_history_with_ids_thread_sem_mensagem_devolve_lista_vazia(
+        self, store: SessionStore
+    ):
+        await store.create_session("thread-vazia", user_id="alice")
+
+        assert await store.get_history_with_ids("thread-vazia") == []
+
 
 class TestGetBranchHeadId:
     async def test_thread_sem_mensagem_devolve_none(self, store: SessionStore):
@@ -258,3 +283,71 @@ class TestPendingApprovals:
         assert pendente is not None
         assert pendente["interrupt_id"] == "int-2"
         assert pendente["tool_name"] == "terminal"
+
+
+class TestGetSession:
+    """``get_session`` é a fonte de verdade sobre existência/posse de uma
+    thread — usada pelos endpoints REST de threads pra nunca vazar uma
+    thread de outro usuário."""
+
+    async def test_devolve_metadados_da_sessao_existente(self, store: SessionStore):
+        await store.create_session(
+            "thread-1", user_id="alice", workspace_id="ws-1", mode="code"
+        )
+
+        session = await store.get_session("thread-1")
+
+        assert session is not None
+        assert session["thread_id"] == "thread-1"
+        assert session["user_id"] == "alice"
+        assert session["workspace_id"] == "ws-1"
+        assert session["mode"] == "code"
+
+    async def test_thread_inexistente_devolve_none(self, store: SessionStore):
+        assert await store.get_session("nao-existe") is None
+
+    async def test_com_user_id_correto_devolve_sessao(self, store: SessionStore):
+        await store.create_session("thread-1", user_id="alice")
+
+        assert await store.get_session("thread-1", user_id="alice") is not None
+
+    async def test_com_user_id_de_outro_dono_devolve_none(self, store: SessionStore):
+        """Erro/borda: passar `user_id` de outra pessoa não deve revelar a
+        sessão — mesmo resultado (`None`) de uma thread inexistente, pra não
+        vazar a quem ela pertence de verdade."""
+        await store.create_session("thread-1", user_id="alice")
+
+        assert await store.get_session("thread-1", user_id="bob") is None
+
+
+class TestForeignThreadIds:
+    """``foreign_thread_ids`` — usado por `ListThreads` pra excluir threads
+    de outro usuário do resultado, mesmo quando outra fonte de metadados
+    (`vectora_sessions`) ainda as lista."""
+
+    async def test_lista_vazia_devolve_conjunto_vazio(self, store: SessionStore):
+        assert await store.foreign_thread_ids([], "alice") == set()
+
+    async def test_exclui_apenas_threads_de_outro_dono(self, store: SessionStore):
+        await store.create_session("thread-mine", user_id="alice")
+        await store.create_session("thread-theirs", user_id="bob")
+
+        foreign = await store.foreign_thread_ids(
+            ["thread-mine", "thread-theirs"], "alice"
+        )
+
+        assert foreign == {"thread-theirs"}
+
+    async def test_thread_sem_registro_nao_e_considerada_alheia(
+        self, store: SessionStore
+    ):
+        """Erro/borda: uma thread nunca registrada em `sessions` (legado) não
+        pode ser tratada como pertencente a outro usuário — ausência de
+        registro não é prova de posse alheia."""
+        await store.create_session("thread-mine", user_id="alice")
+
+        foreign = await store.foreign_thread_ids(
+            ["thread-mine", "thread-sem-registro"], "alice"
+        )
+
+        assert foreign == set()

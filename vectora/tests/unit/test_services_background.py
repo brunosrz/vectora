@@ -1,8 +1,10 @@
-"""Tests for backend/services/background_tasks.py.
+"""Tests for backend/scheduling/background_tasks.py.
 
 Cobre o ciclo de vida das tarefas em segundo plano session-scoped: CRUD, execução
-real do agente (run_task), scheduler de interval e a ponte webhook→IA. Cada caminho
-feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
+real do agente via o motor nativo (run_task/resume_background_run rodam sobre
+`backend/engine/conversation_loop.py`, não mais o grafo deepagents), scheduler de
+interval e a ponte webhook→IA. Cada caminho feliz tem o par de erro/borda no
+mesmo teste (CLAUDE.md §18).
 """
 
 from __future__ import annotations
@@ -13,8 +15,15 @@ from typing import Any
 import pytest
 
 import backend
+from backend.engine.hitl import ApprovalGate
+from backend.persistence.native.session_store import SessionStore
 from backend.scheduling import background_tasks as bg
 from backend.services import agent_factory
+from backend.services.agent_factory import NativeAgent
+from backend.storage.sqlite.pool import AsyncConnectionPool
+from backend.tools.context import ToolContext
+from backend.tools.registry import ToolRegistry
+from backend.vtypes.message import ToolCallChunk, VMessageChunk
 
 _SCHEMA = (
     Path(backend.__file__).parent / "storage" / "migrations" / "sqlite" / "schema.sql"
@@ -60,51 +69,148 @@ def _pro_tier_by_default(monkeypatch):
     monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
 
 
-class _FakeAgent:
-    def __init__(self, result: Any = None, exc: Exception | None = None) -> None:
-        self.result = result
-        self.exc = exc
-        self.calls: list[dict[str, Any]] = []
-        self.state_updates: list[dict[str, Any]] = []
-
-    async def ainvoke(self, inp, config=None, context=None) -> Any:
-        self.calls.append({"input": inp, "config": config, "context": context})
-        if self.exc is not None:
-            raise self.exc
-        return self.result
-
-    async def aupdate_state(self, config, values) -> Any:
-        self.state_updates.append({"config": config, "values": values})
-        return None
-
-
-class _SeqAgent:
-    """Agente fake que devolve resultados em sequência (um por ainvoke)."""
-
-    def __init__(self, results: list[Any]) -> None:
-        self.results = list(results)
-        self.calls: list[dict[str, Any]] = []
-        self.state_updates: list[dict[str, Any]] = []
-
-    async def ainvoke(self, inp, config=None, context=None) -> Any:
-        self.calls.append({"input": inp, "config": config, "context": context})
-        return self.results.pop(0)
-
-    async def aupdate_state(self, config, values) -> Any:
-        self.state_updates.append({"config": config, "values": values})
-        return None
+@pytest.fixture
+async def native_session_store(tmp_path):
+    """``SessionStore`` real (sqlite à parte do banco de tasks/runs) — a
+    mesma infraestrutura que ``agent_factory.get_session_store()`` devolve
+    em produção, isolada por teste."""
+    pool = AsyncConnectionPool(
+        str(tmp_path / "native-sessions.db"), min_size=1, max_size=2
+    )
+    await pool.open()
+    store = SessionStore(pool)
+    await store.setup()
+    try:
+        yield store
+    finally:
+        await pool.close()
 
 
-def _patch_agent(monkeypatch, agent: Any) -> None:
-    async def _fake_get_agent(
+# ---------------------------------------------------------------------------
+# Fakes do motor nativo — equivalente, pro motor nativo, do antigo
+# _FakeAgent/_SeqAgent/_patch_agent (grafo deepagents).
+# ---------------------------------------------------------------------------
+
+
+def _require_spec(name: str) -> Any:
+    """`TOOL_REGISTRY.get(name)` sem o `| None` — os testes deste arquivo só
+    chamam isto depois de garantir que a tool foi registrada (`@vtool`),
+    então um `None` aqui é bug do próprio teste, não caso de borda real."""
+    from backend.tools.registry import TOOL_REGISTRY
+
+    spec = TOOL_REGISTRY.get(name)
+    if spec is None:
+        msg = f"tool '{name}' não registrada — setup do teste está errado"
+        raise AssertionError(msg)
+    return spec
+
+
+def _texto_chunk(texto: str) -> VMessageChunk:
+    return VMessageChunk(delta_text=texto)
+
+
+def _tool_call_chunk(*, index: int, id: str, name: str, args: str) -> VMessageChunk:  # noqa: A002
+    return VMessageChunk(
+        tool_call_chunks=[
+            ToolCallChunk(index=index, id=id, name=name, args_fragment=args)
+        ]
+    )
+
+
+class _ScriptedChatClient:
+    """Cliente de chat fake — cada `astream` consome o próximo turno
+    pré-roteirizado. Com `exc`, toda chamada levanta a exceção dada em vez
+    de produzir chunks (simula o provider fora do ar)."""
+
+    def __init__(
+        self,
+        turnos: list[list[VMessageChunk]] | None = None,
+        *,
+        exc: Exception | None = None,
+    ) -> None:
+        self._turnos = turnos or []
+        self.chamadas = 0
+        self._exc = exc
+
+    async def astream(self, messages, *, tools=None, temperature=None, max_tokens=None):
+        self.chamadas += 1
+        if self._exc is not None:
+            raise self._exc
+        turno = self._turnos[self.chamadas - 1]
+        for chunk in turno:
+            yield chunk
+
+    async def agenerate(
+        self, messages, *, tools=None, temperature=None, max_tokens=None
+    ):
+        msg = "não usado (astream-only)"
+        raise NotImplementedError(msg)
+
+
+class _RecordingChatClientFactory:
+    """Substitui ``FallbackChatClient`` em ``background_tasks.py`` —
+    registra o ``primary_model_id`` de cada chamada e devolve o próximo
+    cliente roteirizado da lista (o último se a lista for mais curta que o
+    número de chamadas)."""
+
+    def __init__(self, clients: Any) -> None:
+        self._clients = clients if isinstance(clients, list) else [clients]
+        self.calls: list[str] = []
+
+    def __call__(self, primary_model_id: str = "") -> Any:
+        self.calls.append(primary_model_id)
+        idx = min(len(self.calls) - 1, len(self._clients) - 1)
+        return self._clients[idx]
+
+
+def _patch_native_engine(
+    monkeypatch,
+    *,
+    session_store: SessionStore,
+    tool_registry: ToolRegistry | None = None,
+    subagent_catalog: dict[str, Any] | None = None,
+    system_prompt: str = "system prompt de teste",
+    chat_client: Any = None,
+) -> _RecordingChatClientFactory:
+    """Substitui as dependências que `run_task`/`resume_background_run`
+    resolvem via `agent_factory` (motor nativo) + o construtor de
+    `FallbackChatClient`."""
+    native_agent = NativeAgent(
+        tool_registry=tool_registry or ToolRegistry(),
+        subagent_catalog=subagent_catalog or {},
+        system_prompt=system_prompt,
+    )
+
+    async def _fake_get_native_agent(
         user_id: str | None = None,
-        model: str = "",
         chat_mode: bool = False,
         workspace_id: str | None = None,
-    ) -> Any:
-        return agent
+    ) -> NativeAgent:
+        return native_agent
 
-    monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_agent)
+    async def _fake_get_session_store() -> SessionStore:
+        return session_store
+
+    approval_gate = ApprovalGate(session_store)
+
+    async def _fake_get_approval_gate() -> ApprovalGate:
+        return approval_gate
+
+    async def _fake_get_store() -> None:
+        return None
+
+    monkeypatch.setattr(agent_factory, "get_native_agent", _fake_get_native_agent)
+    monkeypatch.setattr(agent_factory, "get_session_store", _fake_get_session_store)
+    monkeypatch.setattr(agent_factory, "get_approval_gate", _fake_get_approval_gate)
+    monkeypatch.setattr(agent_factory, "get_store", _fake_get_store)
+
+    factory = _RecordingChatClientFactory(
+        chat_client
+        if chat_client is not None
+        else _ScriptedChatClient([[_texto_chunk("ok")]])
+    )
+    monkeypatch.setattr(bg, "FallbackChatClient", factory)
+    return factory
 
 
 # ---------------------------------------------------------------------------
@@ -486,15 +592,17 @@ async def test_tick_pula_interval_atrasada_mas_executa_once_atrasada(db, monkeyp
 
 
 # ---------------------------------------------------------------------------
-# run_task — execução real do agente
+# run_task — execução real do agente (motor nativo)
 # ---------------------------------------------------------------------------
 
 
 async def test_run_task_invokes_agent_registers_session_and_records_run(
-    db, monkeypatch
+    db, native_session_store, monkeypatch
 ):
-    agent = _FakeAgent(result={"messages": [{"content": "Tudo certo hoje."}]})
-    _patch_agent(monkeypatch, agent)
+    client = _ScriptedChatClient([[_texto_chunk("Tudo certo hoje.")]])
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=client
+    )
 
     upserts: list[dict[str, Any]] = []
 
@@ -520,7 +628,7 @@ async def test_run_task_invokes_agent_registers_session_and_records_run(
 
     assert run_thread_id is not None
     assert run_thread_id.startswith(f"bg-{task.id}-")
-    assert len(agent.calls) == 1
+    assert client.chamadas == 1
     # A run criou uma thread visível na sidebar com título e workspace certos.
     assert upserts == [
         {"thread_id": run_thread_id, "title": "Rotina: Check", "workspace_id": "ws9"}
@@ -533,28 +641,33 @@ async def test_run_task_invokes_agent_registers_session_and_records_run(
     assert after is not None
     assert after.last_run_at is not None
 
+    # A run também gravou sua conversa em SessionStore, sob o run_thread_id.
+    historico = await native_session_store.get_history(run_thread_id)
+    assert [m.role.value for m in historico] == ["system", "user", "assistant"]
+    assert historico[-1].text() == "Tudo certo hoje."
 
-async def test_run_task_subagent_type_propaga_user_id_pro_tool_policy(db, monkeypatch):
+
+async def test_run_task_subagent_type_usa_soul_tool_registry_com_o_usuario_da_task(
+    db, native_session_store, monkeypatch
+):
     """Regressão do gap real (WS8): a execução de uma task com
     `trigger_config={"subagent_type": ...}` (agendada por
-    `schedule_subagent_task`) precisa passar `user_id` pra
-    `build_subagent_graph`, senão o filtro de tools desabilitadas
-    (kill-switch/ABAC) nunca se aplica a essa SOUL — diferente da
-    delegação síncrona, que já filtrava corretamente."""
-    from backend.scheduling import subagent_runner as subagent_runner_module
-
-    agent = _FakeAgent(result={"messages": [{"content": "feito"}]})
-    build_calls: list[dict[str, Any]] = []
-
-    async def _fake_build_subagent_graph(
-        subagent_type: str, model_id: str = "", user_id: str | None = None
-    ) -> Any:
-        build_calls.append({"subagent_type": subagent_type, "user_id": user_id})
-        return agent
-
-    monkeypatch.setattr(
-        subagent_runner_module, "build_subagent_graph", _fake_build_subagent_graph
+    `schedule_subagent_task`) precisa filtrar as tools da SOUL pelo
+    `user_id` da task (`_soul_tool_registry`) — diferente da delegação
+    síncrona, que já filtrava corretamente."""
+    client = _ScriptedChatClient([[_texto_chunk("feito")]])
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=client
     )
+
+    chamadas: list[tuple[str, str | None]] = []
+    original = bg._soul_tool_registry
+
+    def _spy(soul, user_id):
+        chamadas.append((soul.name, user_id))
+        return original(soul, user_id)
+
+    monkeypatch.setattr(bg, "_soul_tool_registry", _spy)
 
     task = await bg.create_task(
         session_id="sess-sub",
@@ -569,12 +682,34 @@ async def test_run_task_subagent_type_propaga_user_id_pro_tool_policy(db, monkey
 
     await bg.run_task(task, "manual")
 
-    assert build_calls == [{"subagent_type": "coder", "user_id": "uuid-owner"}]
+    assert chamadas == [("coder", "uuid-owner")]
+
+    # Erro/borda: subagent_type fora do catálogo vira erro tratado (run
+    # 'error'), nunca exceção crua propagada pro scheduler/runner.
+    task_invalido = await bg.create_task(
+        session_id="sess-sub",
+        user_id="uuid-owner",
+        kind="routine",
+        name="SOUL inexistente",
+        instruction="x",
+        trigger_type="manual",
+        trigger_config={"subagent_type": "nao-existe"},
+    )
+    resultado = await bg.run_task(task_invalido, "manual")
+    assert resultado is None
+    runs = await bg.list_runs("sess-sub")
+    erro = next(r for r in runs if r["task_id"] == task_invalido.id)
+    assert erro["status"] == "error"
+    assert "subagent_type inválido" in erro["summary"]
 
 
-async def test_run_task_error_path_records_error_and_skips_session(db, monkeypatch):
-    agent = _FakeAgent(exc=RuntimeError("LLM caiu"))
-    _patch_agent(monkeypatch, agent)
+async def test_run_task_error_path_records_error_and_skips_session(
+    db, native_session_store, monkeypatch
+):
+    client = _ScriptedChatClient(exc=RuntimeError("LLM caiu"))
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=client
+    )
 
     called: list[Any] = []
 
@@ -607,15 +742,20 @@ async def test_run_task_error_path_records_error_and_skips_session(db, monkeypat
 # ---------------------------------------------------------------------------
 
 
-async def test_run_task_incrementa_message_count_da_thread(db, monkeypatch):
+async def test_run_task_incrementa_message_count_da_thread(
+    db, native_session_store, monkeypatch
+):
     """A run bem-sucedida chama _increment_message_count(run_thread_id) — é o
     que faz ListThreads (filtra message_count>0) mostrá-la na sidebar.
 
     Testa o wiring com mock (o caminho real de I/O de sessão publica eventos
     que não isolam por event-loop nos testes; ListThreads+increment reais têm
     cobertura própria em test_threads_*)."""
-    agent = _FakeAgent(result={"messages": [{"content": "feito"}]})
-    _patch_agent(monkeypatch, agent)
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        chat_client=_ScriptedChatClient([[_texto_chunk("feito")]]),
+    )
 
     upserts: list[str] = []
     increments: list[str] = []
@@ -652,7 +792,11 @@ async def test_run_task_incrementa_message_count_da_thread(db, monkeypatch):
     # thread sem conteúdo não polui a sidebar.
     upserts.clear()
     increments.clear()
-    _patch_agent(monkeypatch, _FakeAgent(exc=RuntimeError("boom")))
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        chat_client=_ScriptedChatClient(exc=RuntimeError("boom")),
+    )
     task2 = await bg.create_task(
         session_id="sess-vis",
         user_id="u",
@@ -672,12 +816,17 @@ async def test_run_task_incrementa_message_count_da_thread(db, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-async def test_run_task_reporta_conclusao_na_sessao_mae(db, monkeypatch):
-    """Ao concluir, a run posta uma AIMessage no checkpoint da sessão que criou
-    a task (task.session_id) via graph.aupdate_state — o orquestrador principal
-    fica sabendo que a tarefa terminou."""
-    agent = _FakeAgent(result={"messages": [{"content": "3 arquivos alterados"}]})
-    _patch_agent(monkeypatch, agent)
+async def test_run_task_reporta_conclusao_na_sessao_mae(
+    db, native_session_store, monkeypatch
+):
+    """Ao concluir, a run posta uma mensagem ASSISTANT no histórico da sessão
+    que criou a task (task.session_id) via SessionStore.append_message — o
+    orquestrador principal fica sabendo que a tarefa terminou."""
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        chat_client=_ScriptedChatClient([[_texto_chunk("3 arquivos alterados")]]),
+    )
 
     async def _noop(*a, **k):
         return None
@@ -695,21 +844,23 @@ async def test_run_task_reporta_conclusao_na_sessao_mae(db, monkeypatch):
         trigger_config={},
     )
     run_thread_id = await bg.run_task(task, "manual")
+    assert run_thread_id is not None
 
-    assert len(agent.state_updates) == 1
-    upd = agent.state_updates[0]
-    assert upd["config"]["configurable"]["thread_id"] == "parent-sess"
-    msg = upd["values"]["messages"][0]
-    assert "Auditoria" in msg.content  # nome da task
-    assert "3 arquivos alterados" in msg.content  # resumo
-    assert run_thread_id in msg.content  # link pra thread da run
+    historico_mae = await native_session_store.get_history("parent-sess")
+    assert len(historico_mae) == 1
+    msg = historico_mae[0]
+    assert msg.role.value == "assistant"
+    assert "Auditoria" in msg.text()  # nome da task
+    assert "3 arquivos alterados" in msg.text()  # resumo
+    assert run_thread_id in msg.text()  # link pra thread da run
 
 
-async def test_report_to_parent_session_pula_sem_sessao_mae(db, monkeypatch):
+async def test_report_to_parent_session_pula_sem_sessao_mae(
+    db, native_session_store, monkeypatch
+):
     """Erro/borda: sem session_id (ou session_id == run_thread_id) não reporta
     — não há sessão-mãe distinta pra notificar."""
-    agent = _FakeAgent()
-    _patch_agent(monkeypatch, agent)
+    _patch_native_engine(monkeypatch, session_store=native_session_store)
 
     task_sem = bg.BackgroundTask(
         id="t",
@@ -721,7 +872,6 @@ async def test_report_to_parent_session_pula_sem_sessao_mae(db, monkeypatch):
         trigger_type="manual",
     )
     assert await bg.report_to_parent_session(task_sem, "bg-1", "resumo") is False
-    assert agent.state_updates == []
 
     task_self = bg.BackgroundTask(
         id="t",
@@ -733,6 +883,29 @@ async def test_report_to_parent_session_pula_sem_sessao_mae(db, monkeypatch):
         trigger_type="manual",
     )
     assert await bg.report_to_parent_session(task_self, "bg-1", "resumo") is False
+    assert await native_session_store.get_history("bg-1") == []
+
+
+async def test_report_to_parent_session_tolera_falha_do_session_store(db, monkeypatch):
+    """Erro/borda: SessionStore falhando (ex.: banco corrompido) não deve
+    propagar — report_to_parent_session é best-effort e devolve False."""
+
+    async def _boom_get_session_store():
+        raise RuntimeError("SessionStore indisponível")
+
+    monkeypatch.setattr(agent_factory, "get_session_store", _boom_get_session_store)
+
+    task = bg.BackgroundTask(
+        id="t-boom",
+        session_id="parent-boom",
+        user_id="u",
+        kind="routine",
+        name="X",
+        instruction="i",
+        trigger_type="manual",
+    )
+    ok = await bg.report_to_parent_session(task, "bg-boom", "resumo")
+    assert ok is False
 
 
 # ---------------------------------------------------------------------------
@@ -740,20 +913,42 @@ async def test_report_to_parent_session_pula_sem_sessao_mae(db, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-async def test_run_task_interrupt_marks_awaiting_and_resume_completes(db, monkeypatch):
+async def test_run_task_interrupt_marks_awaiting_and_resume_completes(
+    db, native_session_store, monkeypatch
+):
     """Uma run que pausa em HITL fica 'awaiting_approval' (não 'done') e o
-    resume_background_run a retoma até concluir. O interrupt é detectado pelo
-    ``__interrupt__`` no resultado do ainvoke (LangGraph pausa, não levanta)."""
-    from types import SimpleNamespace
+    resume_background_run a retoma até concluir."""
+    from backend.tools.context import ToolContext
+    from backend.tools.registry import TOOL_REGISTRY, ToolExtras, vtool
 
-    # 1º ainvoke (run_task) pausa; 2º ainvoke (resume) conclui.
-    agent = _SeqAgent(
+    if TOOL_REGISTRY.get("escrever_arquivo_bg") is None:
+
+        @vtool(extras=ToolExtras(destructive=True))
+        async def escrever_arquivo_bg(ctx: ToolContext) -> str:
+            """escreve um arquivo (fake)."""
+            return "arquivo escrito"
+
+    registry = ToolRegistry()
+    registry.register(_require_spec("escrever_arquivo_bg"))
+
+    monkeypatch.setattr(bg, "should_require_approval", lambda *_a, **_k: True)
+
+    client1 = _ScriptedChatClient(
         [
-            {"__interrupt__": [SimpleNamespace(value=[{"action": "file_write"}])]},
-            {"messages": [{"content": "arquivo escrito"}]},
+            [
+                _tool_call_chunk(
+                    index=0, id="call_1", name="escrever_arquivo_bg", args="{}"
+                )
+            ]
         ]
     )
-    _patch_agent(monkeypatch, agent)
+    client2 = _ScriptedChatClient([[_texto_chunk("arquivo escrito")]])
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry,
+        chat_client=[client1, client2],
+    )
 
     async def _fake_upsert(thread_id, title=None, workspace_id=None):
         return None
@@ -778,27 +973,34 @@ async def test_run_task_interrupt_marks_awaiting_and_resume_completes(db, monkey
     assert len(runs) == 1
     assert runs[0]["status"] == "awaiting_approval"
     assert runs[0]["finished_at"] is None  # não terminou — aguarda aprovação
-    assert "file_write" in runs[0]["summary"]
+    assert "escrever_arquivo_bg" in runs[0]["summary"]
     run_id = runs[0]["id"]
 
     # Resume aprovando → conclui.
     status = await bg.resume_background_run(run_id, "approve")
     assert status == "done"
-    assert len(agent.calls) == 2
-    from langgraph.types import Command
-
-    assert isinstance(agent.calls[1]["input"], Command)  # resume via Command
+    assert client1.chamadas == 1
+    assert client2.chamadas == 1
 
     runs2 = await bg.list_runs("sess-hitl")
     assert runs2[0]["status"] == "done"
     assert runs2[0]["summary"] == "arquivo escrito"
 
+    historico = await native_session_store.get_history(run_thread_id)
+    assert [m.role.value for m in historico[-3:]] == ["assistant", "tool", "assistant"]
+    assert historico[-2].text() == "arquivo escrito"  # resultado real da tool
 
-async def test_resume_background_run_rejects_unknown_or_finished_run(db, monkeypatch):
+
+async def test_resume_background_run_rejects_unknown_or_finished_run(
+    db, native_session_store, monkeypatch
+):
     """Erro/borda: resume de run inexistente ou já concluída devolve None sem
-    tocar no agente."""
-    agent = _SeqAgent([{"messages": [{"content": "x"}]}])
-    _patch_agent(monkeypatch, agent)
+    tocar no motor nativo."""
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        chat_client=_ScriptedChatClient([[_texto_chunk("x")]]),
+    )
 
     async def _fake_upsert(*a, **k):
         return None
@@ -824,74 +1026,146 @@ async def test_resume_background_run_rejects_unknown_or_finished_run(db, monkeyp
     assert await bg.resume_background_run(done_run["id"], "approve") is None
 
 
-async def test_resume_background_run_reject_and_edit_decisions(db, monkeypatch):
-    """decision='reject' e decision='edit:<json>' montam o Command(resume=...)
-    correto (action distinta dos demais); ambos concluem no fake agent."""
-    from langgraph.types import Command
+async def _run_task_ate_pausar(
+    monkeypatch, native_session_store, *, tool_name: str, session_id: str
+) -> tuple[Any, str]:
+    """Roda `run_task` até pausar em HITL (chamando `tool_name` sinalizada
+    como destrutiva) e devolve `(task, run_id)` — helper compartilhado pelos
+    testes de decision (reject/edit) de `resume_background_run`."""
+    from backend.tools.context import ToolContext
+    from backend.tools.registry import TOOL_REGISTRY, ToolExtras, vtool
 
-    task_reject = await bg.create_task(
-        session_id="sess-reject",
+    if TOOL_REGISTRY.get(tool_name) is None:
+
+        async def _anotar(ctx: ToolContext, valor: str = "") -> str:
+            """anota um valor (fake, registra em _CHAMADAS_ANOTAR)."""
+            _CHAMADAS_ANOTAR.append(valor)
+            return f"anotado: {valor}"
+
+        # `vtool` lê `fn.__name__` na hora da decoração — renomeia ANTES de
+        # decorar (chamada direta, sem `@`) pra registrar sob `tool_name`,
+        # não sob o nome literal `_anotar` de todo teste que usa este helper.
+        _anotar.__name__ = tool_name
+        vtool(extras=ToolExtras(destructive=True))(_anotar)
+
+    registry = ToolRegistry()
+    registry.register(_require_spec(tool_name))
+    monkeypatch.setattr(bg, "should_require_approval", lambda *_a, **_k: True)
+
+    client = _ScriptedChatClient(
+        [
+            [
+                _tool_call_chunk(
+                    index=0,
+                    id="call_1",
+                    name=tool_name,
+                    args='{"valor": "original"}',
+                )
+            ]
+        ]
+    )
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry,
+        chat_client=client,
+    )
+
+    async def _fake_upsert(*_a: Any, **_k: Any) -> None:
+        return None
+
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _fake_upsert)
+
+    task = await bg.create_task(
+        session_id=session_id,
         user_id="u",
         kind="routine",
-        name="R",
+        name="Decisão",
         instruction="i",
         trigger_type="manual",
         trigger_config={"permission_mode": "ask"},
     )
-    run_id_reject = "run-reject"
-    await bg._insert_run(run_id_reject, task_reject, "bg-reject", "manual")
-    await bg._mark_run_awaiting(run_id_reject, "aguardando terminal")
+    await bg.run_task(task, "manual")
+    # `list_runs_for_task` (não `list_runs(session_id)`) — vários testes
+    # reusam o mesmo `session_id` pra runs de tasks diferentes; filtrar por
+    # task_id evita pegar a run errada quando duas pausam na mesma sessão.
+    run_id = (await bg.list_runs_for_task(task.id))[0]["id"]
+    return task, run_id
 
-    agent = _SeqAgent([{"messages": [{"content": "rejeitado"}]}])
-    _patch_agent(monkeypatch, agent)
+
+_CHAMADAS_ANOTAR: list[str] = []
+
+
+async def test_resume_background_run_reject_and_edit_decisions(
+    db, native_session_store, monkeypatch
+):
+    """decision='reject' não executa a tool (fica registrado como rejeição);
+    decision='edit:<json>' executa com os args editados — ambos concluem."""
+    _CHAMADAS_ANOTAR.clear()
+
+    _task_reject, run_id_reject = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_reject",
+        session_id="sess-reject",
+    )
+    # A `tool_registry` do resume precisa incluir a tool sinalizada (senão
+    # `_execute_single_call` não a encontra) — reusa a mesma do pause.
+    from backend.tools.registry import TOOL_REGISTRY
+
+    registry_reject = ToolRegistry()
+    registry_reject.register(_require_spec("anotar_bg_reject"))
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry_reject,
+        chat_client=_ScriptedChatClient([[_texto_chunk("rejeitado")]]),
+    )
+
     status = await bg.resume_background_run(run_id_reject, "reject")
     assert status == "done"
-    assert isinstance(agent.calls[0]["input"], Command)
-    assert agent.calls[0]["input"].resume == {"action": "reject"}
+    assert _CHAMADAS_ANOTAR == []  # tool nunca executou
 
-    task_edit = await bg.create_task(
+    runs_reject = await bg.list_runs("sess-reject")
+    assert runs_reject[0]["summary"] == "rejeitado"
+
+    _task_edit, run_id_edit = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_edit",
         session_id="sess-edit",
-        user_id="u",
-        kind="routine",
-        name="E",
-        instruction="i",
-        trigger_type="manual",
-        trigger_config={"permission_mode": "ask"},
     )
-    run_id_edit = "run-edit"
-    await bg._insert_run(run_id_edit, task_edit, "bg-edit", "manual")
-    await bg._mark_run_awaiting(run_id_edit, "aguardando terminal")
+    registry_edit = ToolRegistry()
+    registry_edit.register(_require_spec("anotar_bg_edit"))
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry_edit,
+        chat_client=_ScriptedChatClient([[_texto_chunk("editado")]]),
+    )
 
-    agent2 = _SeqAgent([{"messages": [{"content": "editado"}]}])
-    _patch_agent(monkeypatch, agent2)
-    status2 = await bg.resume_background_run(run_id_edit, 'edit:{"cmd": "ls"}')
+    status2 = await bg.resume_background_run(run_id_edit, 'edit:{"valor": "editado"}')
     assert status2 == "done"
-    assert agent2.calls[0]["input"].resume == {"action": "edit", "args": {"cmd": "ls"}}
+    assert _CHAMADAS_ANOTAR == ["editado"]  # executou com o valor editado
 
 
-async def test_resume_background_run_invalid_decision_marks_error(db, monkeypatch):
+async def test_resume_background_run_invalid_decision_marks_error(
+    db, native_session_store, monkeypatch
+):
     """Erro/borda: decision desconhecida levanta ValueError, capturado pelo
     except geral — a run vira 'error' (não fica presa em awaiting_approval) e
     o resume devolve None."""
-    task = await bg.create_task(
+    _CHAMADAS_ANOTAR.clear()
+    _task, run_id = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_bad_decision",
         session_id="sess-bad-decision",
-        user_id="u",
-        kind="routine",
-        name="X",
-        instruction="i",
-        trigger_type="manual",
-        trigger_config={"permission_mode": "ask"},
     )
-    run_id = "run-bad-decision"
-    await bg._insert_run(run_id, task, "bg-bad", "manual")
-    await bg._mark_run_awaiting(run_id, "aguardando terminal")
-
-    agent = _SeqAgent([{"messages": [{"content": "nunca chega"}]}])
-    _patch_agent(monkeypatch, agent)
 
     status = await bg.resume_background_run(run_id, "banana")
     assert status is None
-    assert agent.calls == []  # nem chegou a invocar o agente
+    assert _CHAMADAS_ANOTAR == []  # nem chegou a resolver a pendência
 
     run = await bg._get_run(run_id)
     assert run is not None
@@ -899,28 +1173,40 @@ async def test_resume_background_run_invalid_decision_marks_error(db, monkeypatc
     assert "decision inválida" in run["summary"]
 
 
-async def test_resume_background_run_repauses_same_turn(db, monkeypatch):
+async def test_resume_background_run_repauses_same_turn(
+    db, native_session_store, monkeypatch
+):
     """Se o resume dispara OUTRA ação destrutiva no mesmo turno, a run continua
     'awaiting_approval' (não vira 'done') — retomável de novo."""
-    from types import SimpleNamespace
-
-    task = await bg.create_task(
+    _CHAMADAS_ANOTAR.clear()
+    _task, run_id = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_repause",
         session_id="sess-repause",
-        user_id="u",
-        kind="routine",
-        name="Y",
-        instruction="i",
-        trigger_type="manual",
-        trigger_config={"permission_mode": "ask"},
     )
-    run_id = "run-repause"
-    await bg._insert_run(run_id, task, "bg-repause", "manual")
-    await bg._mark_run_awaiting(run_id, "aguardando terminal")
+    from backend.tools.registry import TOOL_REGISTRY
 
-    agent = _SeqAgent(
-        [{"__interrupt__": [SimpleNamespace(value=[{"action": "terminal"}])]}]
+    registry = ToolRegistry()
+    registry.register(_require_spec("anotar_bg_repause"))
+    # 2º turno também pede a mesma tool destrutiva → pausa de novo.
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry,
+        chat_client=_ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0,
+                        id="call_2",
+                        name="anotar_bg_repause",
+                        args='{"valor": "de novo"}',
+                    )
+                ]
+            ]
+        ),
     )
-    _patch_agent(monkeypatch, agent)
 
     status = await bg.resume_background_run(run_id, "approve")
     assert status == "awaiting_approval"
@@ -928,27 +1214,31 @@ async def test_resume_background_run_repauses_same_turn(db, monkeypatch):
     run = await bg._get_run(run_id)
     assert run is not None
     assert run["status"] == "awaiting_approval"
-    assert "terminal" in run["summary"]
+    assert "anotar_bg_repause" in run["summary"]
 
 
-async def test_resume_background_run_ainvoke_exception_marks_error(db, monkeypatch):
-    """Erro/borda: exceção do agent.ainvoke durante o resume marca a run como
-    'error' (não fica presa em awaiting_approval) e devolve None."""
-    task = await bg.create_task(
+async def test_resume_background_run_run_conversation_exception_marks_error(
+    db, native_session_store, monkeypatch
+):
+    """Erro/borda: exceção durante o `run_conversation` pós-resume marca a
+    run como 'error' (não fica presa em awaiting_approval) e devolve None."""
+    _CHAMADAS_ANOTAR.clear()
+    _task, run_id = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_resume_exc",
         session_id="sess-resume-exc",
-        user_id="u",
-        kind="routine",
-        name="Z",
-        instruction="i",
-        trigger_type="manual",
-        trigger_config={"permission_mode": "ask"},
     )
-    run_id = "run-resume-exc"
-    await bg._insert_run(run_id, task, "bg-resume-exc", "manual")
-    await bg._mark_run_awaiting(run_id, "aguardando terminal")
+    from backend.tools.registry import TOOL_REGISTRY
 
-    agent = _FakeAgent(exc=RuntimeError("modelo indisponível"))
-    _patch_agent(monkeypatch, agent)
+    registry = ToolRegistry()
+    registry.register(_require_spec("anotar_bg_resume_exc"))
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry,
+        chat_client=_ScriptedChatClient(exc=RuntimeError("modelo indisponível")),
+    )
 
     status = await bg.resume_background_run(run_id, "approve")
     assert status is None
@@ -959,70 +1249,50 @@ async def test_resume_background_run_ainvoke_exception_marks_error(db, monkeypat
     assert "modelo indisponível" in run["summary"]
 
 
-async def test_resume_background_run_reporta_conclusao_na_sessao_mae(db, monkeypatch):
+async def test_resume_background_run_reporta_conclusao_na_sessao_mae(
+    db, native_session_store, monkeypatch
+):
     """report_to_parent_session também é chamado a partir do resume (não só de
     run_task) — a sessão-mãe recebe o aviso de conclusão pós-aprovação."""
-    task = await bg.create_task(
+    _CHAMADAS_ANOTAR.clear()
+    _task, run_id = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_report_resume",
         session_id="parent-resume",
-        user_id="u",
-        kind="routine",
-        name="Aprovada",
-        instruction="i",
-        trigger_type="manual",
-        trigger_config={"permission_mode": "ask"},
     )
-    run_id = "run-report-resume"
-    await bg._insert_run(run_id, task, "bg-report-resume", "manual")
-    await bg._mark_run_awaiting(run_id, "aguardando terminal")
+    from backend.tools.registry import TOOL_REGISTRY
 
-    agent = _SeqAgent([{"messages": [{"content": "ação concluída"}]}])
-    _patch_agent(monkeypatch, agent)
+    registry = ToolRegistry()
+    registry.register(_require_spec("anotar_bg_report_resume"))
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry,
+        chat_client=_ScriptedChatClient([[_texto_chunk("ação concluída")]]),
+    )
 
     status = await bg.resume_background_run(run_id, "approve")
     assert status == "done"
-    assert len(agent.state_updates) == 1
-    upd = agent.state_updates[0]
-    assert upd["config"]["configurable"]["thread_id"] == "parent-resume"
-    assert "ação concluída" in upd["values"]["messages"][0].content
+
+    historico_mae = await native_session_store.get_history("parent-resume")
+    assert len(historico_mae) == 1
+    assert "ação concluída" in historico_mae[0].text()
 
 
-async def test_describe_interrupt_non_list_payload_and_internal_exception():
-    """Erro/borda: payload que não é lista/dict cai no fallback str truncado;
-    um item cujo 'action_request' não é dict dispara o except interno (e
-    também cai no mesmo fallback, sem propagar)."""
-    assert bg._describe_interrupt("motivo qualquer") == (
-        "Aguardando aprovação: motivo qualquer"
+async def test_describe_pending_approval_sem_pendencia_e_com_pendencia():
+    """Erro/borda: sem pendência (`None`) cai no fallback genérico; com
+    pendência, a descrição carrega o nome da tool sinalizada."""
+    assert bg._describe_pending_approval(None) == "Aguardando aprovação."
+    assert (
+        bg._describe_pending_approval({"tool_name": "terminal"})
+        == "Aguardando aprovação: terminal"
     )
-
-    # action_request não-dict: `"oops".get(...)` estoura AttributeError,
-    # capturado pelo except interno de _describe_interrupt.
-    payload = [{"action_request": "oops"}]
-    desc = bg._describe_interrupt(payload)
-    assert desc.startswith("Aguardando aprovação: ")
-    assert "oops" in desc
-
-
-async def test_report_to_parent_session_tolera_falha_do_aupdate_state(db, monkeypatch):
-    """Erro/borda: aupdate_state falhando (ex.: sessão-mãe corrompida) não deve
-    propagar — report_to_parent_session é best-effort e devolve False."""
-
-    class _BoomAgent:
-        async def aupdate_state(self, config, values):
-            raise RuntimeError("checkpoint indisponível")
-
-    _patch_agent(monkeypatch, _BoomAgent())
-
-    task = bg.BackgroundTask(
-        id="t-boom",
-        session_id="parent-boom",
-        user_id="u",
-        kind="routine",
-        name="X",
-        instruction="i",
-        trigger_type="manual",
+    # tool_name vazio/ausente cai no rótulo genérico, não quebra.
+    assert (
+        bg._describe_pending_approval({"tool_name": ""})
+        == "Aguardando aprovação: ação desconhecida"
     )
-    ok = await bg.report_to_parent_session(task, "bg-boom", "resumo")
-    assert ok is False
 
 
 # ---------------------------------------------------------------------------
@@ -1155,7 +1425,9 @@ async def test_cancel_and_approve_task_action(db, monkeypatch):
     assert out2["status"] == "error"
 
 
-async def test_approve_task_action_approve_reject_edit(db, monkeypatch):
+async def test_approve_task_action_approve_reject_edit(
+    db, native_session_store, monkeypatch
+):
     """approve_task_action delega approve/reject/edit para resume_background_run
     (só 'cancel' tinha cobertura via tool até aqui)."""
     import json as _json
@@ -1163,50 +1435,70 @@ async def test_approve_task_action_approve_reject_edit(db, monkeypatch):
     from backend.tools.background import approve_task_action
     from backend.tools.context import ToolContext
 
-    task = await bg.create_task(
+    _CHAMADAS_ANOTAR.clear()
+
+    _task, run_approve = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_tool_approve",
         session_id="sess-approve-tool",
-        user_id="u",
-        kind="routine",
-        name="Perigosa",
-        instruction="i",
-        trigger_type="manual",
-        trigger_config={"permission_mode": "ask"},
+    )
+    from backend.tools.registry import TOOL_REGISTRY
+
+    registry = ToolRegistry()
+    registry.register(_require_spec("anotar_bg_tool_approve"))
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry,
+        chat_client=_ScriptedChatClient([[_texto_chunk("ok")]]),
     )
     ctx = ToolContext(thread_id="sess-approve-tool", user_id="u")
-
-    run_approve = "run-tool-approve"
-    await bg._insert_run(run_approve, task, "sess-approve-tool", "manual")
-    await bg._mark_run_awaiting(run_approve, "aguardando terminal")
-    agent = _SeqAgent([{"messages": [{"content": "ok"}]}])
-    _patch_agent(monkeypatch, agent)
     out_approve = _json.loads(
         await approve_task_action(run_id=run_approve, decision="approve", ctx=ctx)
     )
     assert out_approve == {"status": "ok", "run_status": "done"}
 
-    run_reject = "run-tool-reject"
-    await bg._insert_run(run_reject, task, "sess-approve-tool", "manual")
-    await bg._mark_run_awaiting(run_reject, "aguardando terminal")
-    agent2 = _SeqAgent([{"messages": [{"content": "recusado"}]}])
-    _patch_agent(monkeypatch, agent2)
+    _task_reject, run_reject = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_tool_reject",
+        session_id="sess-approve-tool",
+    )
+    registry_reject = ToolRegistry()
+    registry_reject.register(_require_spec("anotar_bg_tool_reject"))
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry_reject,
+        chat_client=_ScriptedChatClient([[_texto_chunk("recusado")]]),
+    )
     out_reject = _json.loads(
         await approve_task_action(run_id=run_reject, decision="reject", ctx=ctx)
     )
     assert out_reject == {"status": "ok", "run_status": "done"}
-    assert agent2.calls[0]["input"].resume == {"action": "reject"}
 
-    run_edit = "run-tool-edit"
-    await bg._insert_run(run_edit, task, "sess-approve-tool", "manual")
-    await bg._mark_run_awaiting(run_edit, "aguardando terminal")
-    agent3 = _SeqAgent([{"messages": [{"content": "editado"}]}])
-    _patch_agent(monkeypatch, agent3)
+    _task_edit, run_edit = await _run_task_ate_pausar(
+        monkeypatch,
+        native_session_store,
+        tool_name="anotar_bg_tool_edit",
+        session_id="sess-approve-tool",
+    )
+    registry_edit = ToolRegistry()
+    registry_edit.register(_require_spec("anotar_bg_tool_edit"))
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        tool_registry=registry_edit,
+        chat_client=_ScriptedChatClient([[_texto_chunk("editado")]]),
+    )
     out_edit = _json.loads(
         await approve_task_action(
-            run_id=run_edit, decision='edit:{"path": "x"}', ctx=ctx
+            run_id=run_edit, decision='edit:{"valor": "x"}', ctx=ctx
         )
     )
     assert out_edit == {"status": "ok", "run_status": "done"}
-    assert agent3.calls[0]["input"].resume == {"action": "edit", "args": {"path": "x"}}
+    assert "x" in _CHAMADAS_ANOTAR
 
 
 # ---------------------------------------------------------------------------
@@ -1385,7 +1677,7 @@ async def test_issue_opened_reentrega_atualiza_em_vez_de_duplicar(db):
 async def test_issue_closed_moves_card_to_done_without_llm(db, monkeypatch):
     calls: list[Any] = []
     monkeypatch.setattr(
-        agent_factory, "get_user_agent", lambda *a, **k: calls.append((a, k))
+        agent_factory, "get_native_agent", lambda *a, **k: calls.append((a, k))
     )
 
     await _make_issue_sync_anchor()
@@ -1477,7 +1769,7 @@ async def _make_observability_sync_anchor(**overrides: Any) -> Any:
 async def test_alerta_critico_cria_card_em_triage_sem_llm(db, monkeypatch):
     calls: list[Any] = []
     monkeypatch.setattr(
-        agent_factory, "get_user_agent", lambda *a, **k: calls.append((a, k))
+        agent_factory, "get_native_agent", lambda *a, **k: calls.append((a, k))
     )
     await _make_observability_sync_anchor()
 
@@ -1688,13 +1980,18 @@ async def test_create_task_manual_sem_next_run_nasce_ready(db):
     assert task.status == "ready"
 
 
-async def test_run_task_recorrente_volta_pra_ready_ao_concluir(db, monkeypatch):
+async def test_run_task_recorrente_volta_pra_ready_ao_concluir(
+    db, native_session_store, monkeypatch
+):
     """Tarefa recorrente nunca termina — `done` seria um estado terminal
     errado pra algo que roda de novo amanhã."""
     from backend.scheduling import kanban
 
-    agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
-    _patch_agent(monkeypatch, agent)
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        chat_client=_ScriptedChatClient([[_texto_chunk("ok")]]),
+    )
 
     async def _noop_upsert(*_a, **_k) -> None:
         return None
@@ -1718,11 +2015,16 @@ async def test_run_task_recorrente_volta_pra_ready_ao_concluir(db, monkeypatch):
     assert estado["status"] == "ready"
 
 
-async def test_run_task_unica_vira_done_ao_concluir(db, monkeypatch):
+async def test_run_task_unica_vira_done_ao_concluir(
+    db, native_session_store, monkeypatch
+):
     from backend.scheduling import kanban
 
-    agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
-    _patch_agent(monkeypatch, agent)
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        chat_client=_ScriptedChatClient([[_texto_chunk("ok")]]),
+    )
 
     async def _noop_upsert(*_a, **_k) -> None:
         return None
@@ -1746,15 +2048,18 @@ async def test_run_task_unica_vira_done_ao_concluir(db, monkeypatch):
 
 
 async def test_run_task_erro_vira_blocked_transient_em_vez_de_travar_em_running(
-    db, monkeypatch
+    db, native_session_store, monkeypatch
 ):
     """Erro/borda: uma run que lança marca o card como `blocked` (motivo
     `transient`, com a mensagem do erro) em vez de deixá-lo preso em
     `running` para sempre."""
     from backend.scheduling import kanban
 
-    agent = _FakeAgent(exc=RuntimeError("LLM caiu"))
-    _patch_agent(monkeypatch, agent)
+    _patch_native_engine(
+        monkeypatch,
+        session_store=native_session_store,
+        chat_client=_ScriptedChatClient(exc=RuntimeError("LLM caiu")),
+    )
 
     task = await bg.create_task(
         session_id="s1",
@@ -1774,14 +2079,18 @@ async def test_run_task_erro_vira_blocked_transient_em_vez_de_travar_em_running(
     assert "LLM caiu" in (estado["block_reason"] or "")
 
 
-async def test_run_task_nao_duplica_quando_claim_ja_foi_tomado(db, monkeypatch):
+async def test_run_task_nao_duplica_quando_claim_ja_foi_tomado(
+    db, native_session_store, monkeypatch
+):
     """Erro/borda de corrida: duas chamadas de `run_task` pra mesma task
     (tick do scheduler + disparo manual quase simultâneo) — a segunda não
     cria uma 2ª run."""
     from backend.scheduling import kanban
 
-    agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
-    _patch_agent(monkeypatch, agent)
+    client = _ScriptedChatClient([[_texto_chunk("ok")]])
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=client
+    )
 
     async def _noop_upsert(*_a, **_k) -> None:
         return None
@@ -1804,7 +2113,7 @@ async def test_run_task_nao_duplica_quando_claim_ja_foi_tomado(db, monkeypatch):
     resultado = await bg.run_task(task, "manual")
 
     assert resultado is None
-    assert len(agent.calls) == 0
+    assert client.chamadas == 0
     runs = await bg.list_runs("s1")
     assert runs == []
 
@@ -1857,11 +2166,9 @@ class TestRunTaskComPerfilDeAgente:
     """Task com `agent_profile_id` roda com a instrução/modelo do perfil em
     vez do comportamento padrão do orchestrator."""
 
-    async def test_model_override_do_perfil_e_passado_ao_get_user_agent(
-        self, db, monkeypatch
+    async def test_model_override_do_perfil_e_passado_ao_chat_client(
+        self, db, native_session_store, monkeypatch
     ):
-        from unittest.mock import AsyncMock
-
         import aiosqlite
 
         from backend.services import agent_profiles
@@ -1881,21 +2188,16 @@ class TestRunTaskComPerfilDeAgente:
         profiles = await agent_profiles.list_profiles("u1")
         profile_id = profiles[0].id
 
-        agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
-        # get_user_agent é chamado mais de uma vez por run_task (ex.
-        # report_to_parent_session chama de novo, com model default, ao
-        # concluir) — grava a lista inteira e checa a PRIMEIRA chamada, que
-        # é a que roda o turno de verdade.
-        chamadas: list[str] = []
+        factory = _patch_native_engine(
+            monkeypatch,
+            session_store=native_session_store,
+            chat_client=_ScriptedChatClient([[_texto_chunk("ok")]]),
+        )
 
-        async def _fake_get_agent(
-            user_id=None, model="", chat_mode=False, workspace_id=None
-        ):
-            chamadas.append(model)
-            return agent
+        async def _noop(*a, **k):
+            return None
 
-        monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_agent)
-        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _noop)
 
         task = await bg.create_task(
             session_id="sess-perfil",
@@ -1910,24 +2212,25 @@ class TestRunTaskComPerfilDeAgente:
 
         await bg.run_task(task, "manual")
 
-        assert chamadas[0] == "openrouter:gpt-4o"
+        # FallbackChatClient é construído com o model_override do perfil —
+        # 1ª chamada é a que roda o turno de verdade.
+        assert factory.calls[0] == "openrouter:gpt-4o"
 
-    async def test_task_sem_perfil_nao_muda_comportamento(self, db, monkeypatch):
+    async def test_task_sem_perfil_nao_muda_comportamento(
+        self, db, native_session_store, monkeypatch
+    ):
         """Task sem agent_profile_id nunca chama get_profile nem altera o
         model passado."""
-        from unittest.mock import AsyncMock
+        factory = _patch_native_engine(
+            monkeypatch,
+            session_store=native_session_store,
+            chat_client=_ScriptedChatClient([[_texto_chunk("ok")]]),
+        )
 
-        agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
-        chamadas: list[str] = []
+        async def _noop(*a, **k):
+            return None
 
-        async def _fake_get_agent(
-            user_id=None, model="", chat_mode=False, workspace_id=None
-        ):
-            chamadas.append(model)
-            return agent
-
-        monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_agent)
-        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _noop)
 
         task = await bg.create_task(
             session_id="sess-sem-perfil",
@@ -1941,16 +2244,14 @@ class TestRunTaskComPerfilDeAgente:
 
         await bg.run_task(task, "manual")
 
-        assert chamadas[0] == ""
+        assert factory.calls[0] == ""
 
     async def test_perfil_apagado_degrada_para_comportamento_padrao(
-        self, db, monkeypatch
+        self, db, native_session_store, monkeypatch
     ):
         """Erro/borda: agent_profile_id aponta pra um perfil que não existe
         mais (apagado) — a run continua normalmente, sem instrução/modelo
         extra, em vez de falhar."""
-        from unittest.mock import AsyncMock
-
         import aiosqlite
 
         from backend.services import agent_profiles
@@ -1964,11 +2265,16 @@ class TestRunTaskComPerfilDeAgente:
 
         monkeypatch.setattr(agent_profiles, "_get_db", _connect_profiles)
 
-        agent = _FakeAgent(result={"messages": [{"content": "ok"}]})
-        monkeypatch.setattr(
-            agent_factory, "get_user_agent", _fake_get_agent_factory(agent)
+        _patch_native_engine(
+            monkeypatch,
+            session_store=native_session_store,
+            chat_client=_ScriptedChatClient([[_texto_chunk("ok")]]),
         )
-        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+
+        async def _noop(*a, **k):
+            return None
+
+        monkeypatch.setattr("backend.api.handlers.threads._upsert_session", _noop)
 
         task = await bg.create_task(
             session_id="sess-perfil-sumiu",
@@ -1984,12 +2290,3 @@ class TestRunTaskComPerfilDeAgente:
         run_thread_id = await bg.run_task(task, "manual")
 
         assert run_thread_id is not None
-
-
-def _fake_get_agent_factory(agent):
-    async def _fake_get_agent(
-        user_id=None, model="", chat_mode=False, workspace_id=None
-    ):
-        return agent
-
-    return _fake_get_agent

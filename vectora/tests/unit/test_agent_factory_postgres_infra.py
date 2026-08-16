@@ -25,22 +25,32 @@ def _reset_infra_singletons():
     agent_factory._checkpointer = None
     agent_factory._store = None
     agent_factory._store_ctx = None
+    agent_factory._session_store_pool = None
+    agent_factory._session_store = None
+    agent_factory._approval_gate = None
     yield
     agent_factory._checkpointer_ctx = None
     agent_factory._checkpointer = None
     agent_factory._store = None
     agent_factory._store_ctx = None
+    agent_factory._session_store_pool = None
+    agent_factory._session_store = None
+    agent_factory._approval_gate = None
 
 
 @pytest.mark.asyncio
-async def test_ensure_infra_uses_postgres_checkpointer_and_store_in_complete_mode():
+async def test_ensure_infra_uses_postgres_checkpointer_and_store_in_complete_mode(
+    tmp_path,
+):
     fake_pool = MagicMock()
     fake_checkpointer = MagicMock()
     fake_checkpointer.setup = AsyncMock()
     fake_store = MagicMock()
     fake_store.setup = AsyncMock()
 
-    fake_settings = MagicMock(storage_mode="complete", postgres_dsn="postgresql://x/y")
+    fake_settings = MagicMock(
+        storage_mode="complete", postgres_dsn="postgresql://x/y", vectora_home=tmp_path
+    )
 
     with (
         patch("backend.settings.settings", fake_settings),
