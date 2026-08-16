@@ -8,47 +8,7 @@
 
 ---
 
-## 0. Achado de conduta desta rodada — corrigir antes de tudo
-
-A tarefa de tracking do projeto marca **"Sprint 23: liveness ativa de subagente (heartbeat + cancelamento real)"** como `completed`. A revalidação de código real (2026-08-16) encontrou que isso **não é verdade**: `backend/engine/subagents.py` (o motor nativo, ainda não ligado ao dispatch de produção — ver `Sprint 29` do plano) continua com `LivenessConfig(heartbeat_interval_s=30, max_stalled_heartbeats=3)` + `_watch_liveness()` que só cancela por **timeout de inatividade** — não há cancelamento real sob pedido explícito (nenhum equivalente a `request_hard_interrupt()` do Hermes), e o comentário do próprio código de Vectora (`backend/scheduling/liveness.py:1-10`) reconhece que `classify_liveness` é regex leve, puramente informativo, mais fraco que o próprio watchdog de `subagents.py`. A parte de "validação formal de escopo RBAC do subagente" da mesma sprint está sim entregue (`_tools_outside_user_scope()`), então não é uma sprint 100% falsa — é uma sprint **parcialmente reportada como concluída sem sê-lo**, o mesmo padrão que motivou a crise do LangChain (ver `Sprint 29`). Corrigido na seção "Pendências conhecidas" do plano de desenvolvimento e nos itens da Fase 1 da `Sprint 29`.
-
----
-
-## 1. Hermes Agent — trajetória desde a última rodada (release notes + issues, ago/2026)
-
-Ritmo de release mantido alto: de v0.13.0 (07/mai) a v0.20.1 (13/ago), 8
-releases em ~3 meses. Destaques de arquitetura desde a comparação anterior:
-
-- **v0.20.0 "The Herald"** (03/ago): voz conversacional em tempo real
-  (streaming TTS, barge-in, wake words on-device), citações de pesquisa
-  "grounded" com fact-checking, **protocolo A2A v1.0** (agent-to-agent),
-  webhooks assinados de saída, artifacts renderizados no desktop com live
-  preview.
-- **v0.19.0 "The Quicksilver"** (20/jul): -80% no tempo do primeiro token,
-  app desktop 14× mais rápido em streaming de markdown, integração de
-  secrets (Bitwarden/1Password), ledger de entrega durável a crash.
-- **v0.18.0 "The Judgment"** (01/jul): zero P0/P1 abertas (marco de
-  segurança), Mixture-of-Agents como modelo selecionável de primeira
-  classe, comando `/learn` pra criar skills reutilizáveis a partir de
-  demonstrações.
-- **v0.15.0 "The Velocity"** (28/mai): Kanban evoluiu pra plataforma
-  multi-agente com auto-decomposição e swarm topology (o Vectora só fechou
-  a parte de decomposição via `Sprint 20`, sem swarm topology).
-- **v0.13.0 "The Tenacity"** (07/mai): comando `/goal` (Ralph loop) e
-  correção de 8 vulnerabilidades P0 com redação (redaction) ligada por
-  padrão.
-
-**Issues abertas relevantes** (`P1`+`area/auth`: só 2, ambas bug em OAuth
-existente, não feature nova; `type/feature`: 12, majoritariamente P3 —
-provider MAIA Router, UI de imagem no desktop, limite de workers
-concorrentes no Kanban, grupos de sessão com auto-agrupamento por IA,
-recall assíncrono oportunista de memória). Nenhuma delas é um gap estrutural
-que mude a priorização deste documento — a maior parte é polimento de
-produto específico do domínio de mensageria do Hermes.
-
----
-
-## 2. Matriz-resumo por área (revalidada)
+## 1. Matriz-resumo por área (revalidada)
 
 | Área                                               | Quem lidera hoje                                      | Mudou desde 2026-08-14?                                                                                                                                                           |
 | -------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -77,7 +37,7 @@ produto específico do domínio de mensageria do Hermes.
 
 ---
 
-## 3. Auth / Multi-tenant (revalidado 2026-08-16)
+## 2. Auth / Multi-tenant (revalidado 2026-08-16)
 
 | Capacidade                                     | Hermes                                                                                                        | Vectora                                                                                                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -91,7 +51,7 @@ produto específico do domínio de mensageria do Hermes.
 
 ---
 
-## 4. Sandbox / Segurança (revalidado 2026-08-16)
+## 3. Sandbox / Segurança (revalidado 2026-08-16)
 
 **Correção de premissa importante desta rodada**: o Hermes **não tem** nenhum
 equivalente a `bwrap.rs`/`landlock.rs`/`seatbelt.rs` — não há isolamento de
@@ -114,7 +74,7 @@ nesta área é ainda maior do que o documento anterior registrava.
 
 ---
 
-## 5. Memória / RAG / Context-Graph (revalidado 2026-08-16)
+## 4. Memória / RAG / Context-Graph (revalidado 2026-08-16)
 
 | Capacidade                                       | Hermes                                                                                          | Vectora                                                                                                                                                                                    |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -128,7 +88,7 @@ nesta área é ainda maior do que o documento anterior registrava.
 
 ---
 
-## 6. Subagentes / Orquestração (revalidado 2026-08-16)
+## 5. Subagentes / Orquestração (revalidado 2026-08-16)
 
 | Capacidade                                            | Hermes                                                                                                                    | Vectora                                                                                                                                                                                                                                                                                                                     |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -142,7 +102,7 @@ nesta área é ainda maior do que o documento anterior registrava.
 
 ---
 
-## 7. MCP / Tools / Marketplace (revalidado 2026-08-16)
+## 6. MCP / Tools / Marketplace (revalidado 2026-08-16)
 
 | Capacidade                                                    | Hermes                                                                                                              | Vectora                                                                                                                                                                       |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -154,7 +114,7 @@ nesta área é ainda maior do que o documento anterior registrava.
 
 ---
 
-## 8. Streaming / UI / Workbench (revalidado 2026-08-16)
+## 7. Streaming / UI / Workbench (revalidado 2026-08-16)
 
 | Capacidade                             | Hermes                                                                                             | Vectora                                                                                                                                                                                             |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -170,7 +130,7 @@ nesta área é ainda maior do que o documento anterior registrava.
 
 ---
 
-## 8.5. Correção — plugins MCP contados como capacidade nativa do Hermes
+## 7.5. Correção — plugins MCP contados como capacidade nativa do Hermes
 
 O usuário apontou, corretamente, que 4 projetos locais (`C:\Users\Machi\Desktop\vectora\{graphify-8,omskills-main,chrome-devtools-mcp-main,ragflow-main}`) são conectáveis ao Hermes como servidores MCP — e que tratá-los como "ausentes no Hermes" nas seções 5, 7 e 8 acima é injusto, já que o Hermes é cliente MCP e pode plugá-los. 4 agentes leram os 4 projetos e confirmaram, com ressalvas reais por projeto — nem tudo vira paridade automática:
 
@@ -188,7 +148,7 @@ Nenhuma dessas 4 correções inverte a conclusão de que o Vectora lidera nas á
 
 ---
 
-## 9. O que fazer a seguir
+## 8. O que fazer a seguir
 
 Ver `Sprint 29` (remoção de LangChain, agora também absorvendo o hardening
 do motor nativo de subagentes — capability token, dedup, liveness ativa —
