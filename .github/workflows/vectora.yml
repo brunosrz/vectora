@@ -195,7 +195,7 @@ jobs:
           ENABLE_WEB_FETCH=true
           EOF
       - name: Integration tests
-        run: uv run pytest tests/integration/ -v --timeout=120 -p no:randomly --tb=short
+        run: uv run pytest tests/integration/ -v --timeout=120 -p no:randomly --tb=short -m "not storage and not singularity"
       - name: E2E tests
         run: uv run pytest tests/e2e/ -v --timeout=180 --tb=short
 

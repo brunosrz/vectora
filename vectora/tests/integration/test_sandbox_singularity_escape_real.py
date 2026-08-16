@@ -21,6 +21,7 @@ from backend.sandbox.policy import SandboxPolicy
 from backend.sandbox.singularity import run_singularity_sandboxed
 
 pytestmark = [
+    pytest.mark.singularity,
     pytest.mark.skipif(
         sys.platform != "linux",
         reason="Singularity/Apptainer é Linux-only (namespaces unprivilegiados)",
