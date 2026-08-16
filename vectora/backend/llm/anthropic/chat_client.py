@@ -59,6 +59,40 @@ def _to_anthropic_tool(spec: ToolSpec) -> dict:
     }
 
 
+def _anthropic_image_block(data_uri: str) -> dict:
+    """`data:` URI (formato que `ContentBlock.image_url` sempre carrega,
+    montado em ``api/handlers/chat.py``) vira bloco `base64`; qualquer outra
+    string (URL http já assinada) vira bloco `url` — a Messages API aceita
+    os dois `source.type`."""
+    if data_uri.startswith("data:") and ";base64," in data_uri:
+        media_type, _, dado = data_uri.partition(";base64,")
+        return {
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": media_type[len("data:") :],
+                "data": dado,
+            },
+        }
+    return {"type": "image", "source": {"type": "url", "url": data_uri}}
+
+
+def _to_anthropic_content(content: list[ContentBlock]) -> str | list[dict]:
+    """Bloco `text` vira string simples (caso comum, evita envelope de lista
+    desnecessário); qualquer bloco `image_url` presente força o formato de
+    lista de blocos tipados da Messages API — nunca descarta a imagem só
+    porque `msg.text()` só concatena texto."""
+    if not any(b.kind == "image_url" for b in content):
+        return "".join(b.text or "" for b in content if b.kind == "text")
+    partes: list[dict] = []
+    for bloco in content:
+        if bloco.kind == "text" and bloco.text:
+            partes.append({"type": "text", "text": bloco.text})
+        elif bloco.kind == "image_url" and bloco.image_url:
+            partes.append(_anthropic_image_block(bloco.image_url))
+    return partes
+
+
 def _assistant_content_blocks(msg: VMessage) -> list[dict]:
     blocos: list[dict] = []
     texto = msg.text()
@@ -113,7 +147,7 @@ def _to_anthropic_messages(messages: list[VMessage]) -> tuple[str | None, list[d
             )
             continue
 
-        traduzidas.append({"role": role, "content": msg.text()})
+        traduzidas.append({"role": role, "content": _to_anthropic_content(msg.content)})
 
     system = "\n\n".join(partes_system) if partes_system else None
     return system, traduzidas

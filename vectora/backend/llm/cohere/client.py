@@ -8,7 +8,12 @@ para quem consumir ``embed()`` não assumir o contrário.
 
 from __future__ import annotations
 
+import json
+import logging
+from collections.abc import AsyncIterator
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://api.cohere.com"
 
@@ -179,3 +184,50 @@ class CohereClient:
             msg = "Cohere devolveu `results` ausente/inválido em /v2/rerank"
             raise CohereResponseError(msg)
         return resultados
+
+    async def chat(self, payload: dict) -> dict:
+        """``POST /v2/chat`` sem streaming."""
+        return await self._post_json("/v2/chat", {**payload, "stream": False})
+
+    async def stream_chat(self, payload: dict) -> AsyncIterator[dict]:
+        """Consome o stream SSE de ``/v2/chat``.
+
+        Cada evento tem um campo `type` (``message-start``, ``content-delta``,
+        ``tool-call-start``, ``tool-call-delta``, ``tool-call-end``,
+        ``message-end``, etc). Linha malformada é descartada com aviso em vez
+        de abortar o turno inteiro.
+        """
+        client = await self._ensure_client()
+        corpo = {**payload, "stream": True}
+        async with client.stream(
+            "POST",
+            f"{self._base_url}/v2/chat",
+            json=corpo,
+            headers={"Accept": "text/event-stream", **self._headers()},
+        ) as resp:
+            if resp.status_code >= 400:
+                await resp.aread()
+                try:
+                    erro = resp.json()
+                except Exception:
+                    erro = None
+                self._raise_for_status(resp.status_code, erro)
+            async for bruta in resp.aiter_lines():
+                linha = bruta.strip()
+                if not linha or not linha.startswith("data:"):
+                    continue
+                dado = linha[len("data:") :].strip()
+                if not dado:
+                    continue
+                try:
+                    evento = json.loads(dado)
+                except json.JSONDecodeError:
+                    logger.warning(
+                        "cohere: chunk SSE malformado descartado",
+                        extra={"trecho": dado[:120]},
+                    )
+                    continue
+                if isinstance(evento, dict):
+                    yield evento
+                    if evento.get("type") == "message-end":
+                        return

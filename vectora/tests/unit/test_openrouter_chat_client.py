@@ -123,6 +123,33 @@ class TestConversaoDeMensagens:
         with pytest.raises(ValueError, match="extraterrestre"):
             await _client(handler).agenerate([estranha])
 
+    async def test_bloco_de_imagem_nao_e_descartado(self):
+        """Regressão: `_to_openrouter_message` usava `msg.text()`, que só
+        concatena blocos `text` — um anexo de imagem desaparecia do payload
+        sem erro nem log."""
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            capturado.update(json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        mensagem = VMessage(
+            role=MessageRole.USER,
+            content=[
+                ContentBlock(kind="text", text="olha essa imagem"),
+                ContentBlock(kind="image_url", image_url="data:image/png;base64,abc"),
+            ],
+        )
+
+        await _client(handler).agenerate([mensagem])
+
+        partes = capturado["messages"][0]["content"]
+        assert {"type": "text", "text": "olha essa imagem"} in partes
+        assert {
+            "type": "image_url",
+            "image_url": {"url": "data:image/png;base64,abc"},
+        } in partes
+
 
 class TestToolCalling:
     async def test_tool_spec_vira_schema_openai_no_payload(self):

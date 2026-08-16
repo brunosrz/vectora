@@ -30,20 +30,10 @@ from backend.tools import git as _git_module
 from backend.tools import github as _github_module
 from backend.tools import mcp as _mcp_module
 from backend.tools import memory as _memory_module
+from backend.tools import native as _native_module
 from backend.tools import rag as _rag_module
 from backend.tools import web as _web_module
 from backend.tools.langchain_bridge import as_langchain_tool
-from backend.tools.native import (
-    base64_decode,
-    base64_encode,
-    hash_text,
-    http_request,
-    json_query,
-    jwt_decode,
-    regex_test,
-    time_now,
-    time_parse,
-)
 from backend.tools.registry import TOOL_REGISTRY
 
 logger = logging.getLogger(__name__)
@@ -52,8 +42,9 @@ logger = logging.getLogger(__name__)
 def _bridge(name: str) -> BaseTool:
     """Envolve uma tool nativa (`@vtool`, ``backend/tools/registry.py``) num
     adapter compatível — mesmo padrão de ``backend/nodes/tools.py``,
-    necessário aqui porque este módulo ainda expõe ``TOOLS``/``TOOLS_BY_NAME``
-    tipados como ``BaseTool`` para compatibilidade retroativa."""
+    necessário aqui porque este módulo ainda re-exporta as tools tipadas
+    como ``BaseTool`` para compatibilidade retroativa com quem importa
+    direto de ``backend.tools``."""
     spec = TOOL_REGISTRY.get(name)
     if spec is None:
         msg = f"tool nativa '{name}' não registrada — módulo não importado?"
@@ -87,6 +78,15 @@ browser_click = _bridge("browser_click")
 browser_scroll = _bridge("browser_scroll")
 browser_fill = _bridge("browser_fill")
 browser_read_dom = _bridge("browser_read_dom")
+time_now = _bridge("time_now")
+time_parse = _bridge("time_parse")
+hash_text = _bridge("hash_text")
+base64_encode = _bridge("base64_encode")
+base64_decode = _bridge("base64_decode")
+regex_test = _bridge("regex_test")
+json_query = _bridge("json_query")
+jwt_decode = _bridge("jwt_decode")
+http_request = _bridge("http_request")
 
 
 def _build_tools_list() -> list[BaseTool]:
@@ -151,13 +151,7 @@ def get_tools() -> list[BaseTool]:
     return _build_tools_list()
 
 
-# Singletons usados pelo grafo e pelos nós
-TOOLS: list[BaseTool] = _build_tools_list()
-TOOLS_BY_NAME: dict[str, BaseTool] = {t.name: t for t in TOOLS}
-
 __all__ = [
-    "TOOLS",
-    "TOOLS_BY_NAME",
     "base64_decode",
     "base64_encode",
     "browser_click",

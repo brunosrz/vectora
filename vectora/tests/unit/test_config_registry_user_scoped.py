@@ -97,7 +97,7 @@ class TestMemoryAdapter:
             async def asearch(self, ns, *, query=None, limit=100):
                 return [_Item(key, val["content"]) for key, val in store_rows.items()]
 
-        monkeypatch.setattr("backend.tools.memory._get_store", _FakeStore)
+        monkeypatch.setattr("backend.tools.memory._get_store", lambda ctx: _FakeStore())
         adapter = MemoryAdapter()
         items = await adapter.list_items("user-1")
         assert {i["key"] for i in items} == {"k1", "k2"}
@@ -114,7 +114,7 @@ class TestMemoryAdapter:
             async def aput(self, ns, key, value):
                 calls.append((ns, key, value))
 
-        monkeypatch.setattr(mem_mod, "_get_store", _FakeStore)
+        monkeypatch.setattr(mem_mod, "_get_store", lambda ctx: _FakeStore())
         adapter = MemoryAdapter()
         result = await adapter.add({"user_id": "u1", "key": "k", "content": "v"})
         assert result == {"key": "k", "content": "v"}

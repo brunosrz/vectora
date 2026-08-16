@@ -3,10 +3,17 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from langchain.tools import tool
+from backend.tools.registry import ToolExtras, vtool
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="native",
+        destructive=False,
+        icon="clock",
+    )
+)
 async def time_now(timezone: str = "UTC") -> str:
     """Retorna data/hora atual no timezone especificado.
 

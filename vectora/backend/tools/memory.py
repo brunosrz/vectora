@@ -1,7 +1,9 @@
 """Memory tools: persistência de memórias entre sessões.
 
-Acessa o store persistente injetado no motor de execução via
-``_get_store()`` — mesmo store usado por ``backend.services.agent_factory``.
+Acessa o store persistente via ``_get_store(ctx)`` — prioriza
+``ctx.store`` (injeção direta pelo motor de execução nativo) e cai no
+contextvar do LangGraph enquanto o dispatch de produção não o popula.
+Mesmo store usado por ``backend.services.agent_factory``.
 
 As memórias são isoladas por usuário no namespace ``("user", <user_id>, "memories")``,
 garantindo isolamento entre usuários e compatibilidade com o StoreBackend do
@@ -68,8 +70,9 @@ async def list_fact_contents(user_id: str) -> list[str]:
 
     Usa `backend.services.agent_factory.get_store()` (mesma instância
     injetada no grafo do agente via `create_deep_agent(store=...)`), não
-    `_get_store()` — o caller roda fire-and-forget depois do turno já
-    terminado, fora do contexto de execução que `_get_store()` exige."""
+    `_get_store(ctx)` — o caller roda fire-and-forget depois do turno já
+    terminado, sem um `ToolContext` populado nem contextvar do grafo
+    disponíveis."""
     from backend.services.agent_factory import get_store as get_agent_store
 
     store = await get_agent_store()
@@ -78,13 +81,22 @@ async def list_fact_contents(user_id: str) -> list[str]:
     return [item.value.get("content", "") for item in items]
 
 
-def _get_store() -> Any:
-    """Obtém o store persistente do contexto de execução atual, via
-    contextvar injetado pelo motor de execução ainda em produção.
+def _get_store(ctx: ToolContext) -> Any:
+    """Obtém o store persistente da execução atual.
+
+    Prioriza ``ctx.store`` (injeção direta via ``ToolContext`` — caminho do
+    motor de execução nativo, ``backend/engine/``). Enquanto o dispatch de
+    produção ainda não popula esse campo, cai no fallback via contextvar do
+    LangGraph (``langgraph.config.get_store()``), único caminho válido hoje
+    dentro de um nó do grafo em execução.
 
     Raises:
-        RuntimeError: Se chamado fora de uma execução com store configurado.
+        RuntimeError: Se chamado fora de uma execução com store configurado
+            (nem ``ctx.store`` nem contextvar do grafo disponíveis).
     """
+    if ctx.store is not None:
+        return ctx.store
+
     from langgraph.config import get_store
 
     return get_store()
@@ -129,7 +141,7 @@ async def save_memory(
         JSON com status saved/failed
     """
     try:
-        store = _get_store()
+        store = _get_store(ctx)
         ns = _memory_namespace(ctx)
         now = datetime.now(UTC).isoformat()
 
@@ -186,7 +198,7 @@ async def get_memory(ctx: ToolContext, key: str | None = None) -> str:
         JSON com conteúdo da memória ou lista de memórias
     """
     try:
-        store = _get_store()
+        store = _get_store(ctx)
         ns = _memory_namespace(ctx)
 
         if key is not None:
@@ -257,7 +269,7 @@ async def search_memory(ctx: ToolContext, query: str, limit: int = 5) -> str:
         JSON com lista de memórias ordenadas por relevância semântica
     """
     try:
-        store = _get_store()
+        store = _get_store(ctx)
         ns = _memory_namespace(ctx)
 
         items = await store.asearch(ns, query=query, limit=limit)
@@ -311,7 +323,7 @@ async def delete_memory(ctx: ToolContext, key: str) -> str:
         JSON com status deleted/not_found/failed
     """
     try:
-        store = _get_store()
+        store = _get_store(ctx)
         ns = _memory_namespace(ctx)
 
         # Verifica se existe antes de deletar

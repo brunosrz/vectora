@@ -1,12 +1,18 @@
 """Tool: parse datetime from string."""
 
-from datetime import datetime
-
 from dateutil import parser
-from langchain.tools import tool
+
+from backend.tools.registry import ToolExtras, vtool
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="native",
+        destructive=False,
+        icon="calendar",
+    )
+)
 async def time_parse(date_string: str, format_hint: str = "iso") -> str:
     """Parse string para datetime (ISO ou human-readable).
 

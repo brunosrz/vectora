@@ -145,6 +145,55 @@ class TestNamespaceIsolation:
 
 
 # ---------------------------------------------------------------------------
+# _get_store — injeção via ToolContext.store com fallback pro contextvar
+# do LangGraph, enquanto o dispatch nativo não popula ctx.store.
+# ---------------------------------------------------------------------------
+
+
+class TestGetStorePrioritizesCtx:
+    def test_usa_ctx_store_quando_presente(self):
+        """Caminho novo: `ctx.store` já populado (motor de execução
+        nativo) — usado direto, sem tocar no contextvar do LangGraph."""
+        from backend.tools.memory import _get_store
+
+        injected_store = InMemoryStore()
+        ctx = ToolContext(store=injected_store)
+
+        result = _get_store(ctx)
+
+        assert result is injected_store
+
+    def test_cai_no_contextvar_do_langgraph_quando_ctx_store_e_none(self, monkeypatch):
+        """Retrocompatibilidade: sem `ctx.store` (dispatch ainda não
+        migrado), cai no `langgraph.config.get_store()` — mesmo caminho
+        de antes da injeção via ToolContext existir."""
+        from backend.tools.memory import _get_store
+
+        fallback_store = InMemoryStore()
+        monkeypatch.setattr("langgraph.config.get_store", lambda: fallback_store)
+        ctx = ToolContext()  # store=None por padrão
+
+        result = _get_store(ctx)
+
+        assert result is fallback_store
+
+    def test_sem_ctx_store_e_sem_contextvar_propaga_erro(self, monkeypatch):
+        """Erro/borda: nem `ctx.store` nem contextvar do grafo disponíveis
+        — mesmo RuntimeError que `langgraph.config.get_store()` já
+        levantava fora de um nó em execução, sem engolir a exceção."""
+        from backend.tools.memory import _get_store
+
+        def _boom() -> None:
+            raise RuntimeError("Called get_config outside of a runnable context")
+
+        monkeypatch.setattr("langgraph.config.get_store", _boom)
+        ctx = ToolContext()
+
+        with pytest.raises(RuntimeError, match="outside of a runnable context"):
+            _get_store(ctx)
+
+
+# ---------------------------------------------------------------------------
 # save_memory/get_memory com `category` (gotcha/decision/preference/rule):
 # campo opcional, persistido dentro do `value` já existente no store — sem
 # migração de schema.
@@ -154,7 +203,7 @@ class TestNamespaceIsolation:
 @pytest.fixture
 def store(monkeypatch):
     real_store = InMemoryStore()
-    monkeypatch.setattr("backend.tools.memory._get_store", lambda: real_store)
+    monkeypatch.setattr("backend.tools.memory._get_store", lambda ctx: real_store)
 
     async def _fake_agent_store() -> InMemoryStore:
         return real_store

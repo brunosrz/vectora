@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any
 
-from langchain.tools import tool
+from backend.tools.registry import ToolExtras, vtool
 
 try:
     import jwt as _jwt
@@ -16,7 +16,14 @@ except ImportError:
     jwt = None
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="native",
+        destructive=False,
+        icon="hash",
+    )
+)
 async def hash_text(text: str, algorithm: str = "sha256") -> str:
     """Hash de string (md5/sha256/sha512)."""
     try:
@@ -27,7 +34,14 @@ async def hash_text(text: str, algorithm: str = "sha256") -> str:
         return f"error: {e}"
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="native",
+        destructive=False,
+        icon="lock",
+    )
+)
 async def base64_encode(text: str) -> str:
     """Encode base64."""
     try:
@@ -36,7 +50,14 @@ async def base64_encode(text: str) -> str:
         return f"error: {e}"
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="native",
+        destructive=False,
+        icon="unlock",
+    )
+)
 async def base64_decode(encoded: str) -> str:
     """Decode base64."""
     try:
@@ -45,7 +66,14 @@ async def base64_decode(encoded: str) -> str:
         return f"error: {e}"
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="json",
+        category="native",
+        destructive=False,
+        icon="key",
+    )
+)
 async def jwt_decode(token: str, verify: bool = False) -> str:
     """Decodifica JWT (sem verificar assinatura por padrão)."""
     if not jwt:
@@ -59,7 +87,14 @@ async def jwt_decode(token: str, verify: bool = False) -> str:
         return f"error: {e}"
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="native",
+        destructive=False,
+        icon="regex",
+    )
+)
 async def regex_test(pattern: str, text: str) -> str:
     """Testa regex pattern em text."""
     try:
@@ -70,7 +105,14 @@ async def regex_test(pattern: str, text: str) -> str:
         return f"error: {e}"
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="native",
+        destructive=False,
+        icon="braces",
+    )
+)
 async def json_query(json_str: str, path: str) -> str:
     """Extrai valor de JSON via dot notation (a.b[0].c)."""
     try:

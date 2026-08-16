@@ -8,22 +8,41 @@ gravado — testado com o mesmo `_ScriptedChatClient` de
 from __future__ import annotations
 
 import asyncio
+import time
+from dataclasses import replace
 
 import pytest
 
 from backend.engine.guardrails import LoopCapConfig, TurnBudget
 from backend.engine.stream_events import SubagentOutput
 from backend.engine.subagents import (
+    _ACTIVE_CONVERSATION_TASKS,
     LivenessConfig,
     SubagentSpec,
+    request_hard_interrupt,
     run_subagent,
     spawn_subagent_background,
+    subagent_capability_token,
 )
 from backend.persistence.native.session_store import SessionStore
 from backend.storage.sqlite.pool import AsyncConnectionPool
 from backend.tools.context import ToolContext
 from backend.tools.registry import TOOL_REGISTRY, ToolExtras, vtool
 from backend.vtypes.message import ToolCallChunk, VMessageChunk
+
+
+async def _aguarda_task_ativa(correlation_id: str, prazo_s: float = 2.0):
+    """Espera `_ACTIVE_CONVERSATION_TASKS[correlation_id]` existir e ainda
+    estar rodando — evita corrida entre o teste disparar `run_subagent` em
+    background e a task de conversa ainda não ter sido registrada."""
+    deadline = time.monotonic() + prazo_s
+    while time.monotonic() < deadline:
+        task = _ACTIVE_CONVERSATION_TASKS.get(correlation_id)
+        if task is not None and not task.done():
+            return task
+        await asyncio.sleep(0.01)
+    msg = f"task de '{correlation_id}' nunca ficou ativa"
+    raise AssertionError(msg)
 
 
 class _HangingChatClient:
@@ -421,3 +440,119 @@ class TestEscopoRBACDoSubagente:
         assert "fora do escopo RBAC" in resultado
         assert "tool_fora_do_escopo" in resultado
         assert client.chamadas == 0
+
+
+class TestDedupPorCorrelationId:
+    async def test_correlation_id_duplicado_reaproveita_a_delegacao_em_andamento(
+        self, session_store, ctx
+    ):
+        """Duas delegações concorrentes com o mesmo `correlation_id` não
+        criam duas sessões/chamadas ao chat client — a segunda reaproveita
+        o resultado da primeira, já em andamento. Erro/borda coberto por
+        `TestHardInterruptRealNaoPassivo` (correlation_id sem delegação
+        ativa nunca cancela nada)."""
+        client = _ScriptedChatClient([[_texto_chunk("resultado único")]])
+        spec = replace(_spec(), correlation_id="corr-dedup-1")
+
+        resultados = await asyncio.gather(
+            run_subagent(
+                spec,
+                "faça algo",
+                session_store=session_store,
+                chat_client=client,
+                ctx=ctx,
+                parent_thread_id="thread-pai",
+            ),
+            run_subagent(
+                spec,
+                "faça algo de novo",
+                session_store=session_store,
+                chat_client=client,
+                ctx=ctx,
+                parent_thread_id="thread-pai",
+            ),
+        )
+
+        assert resultados == ["resultado único", "resultado único"]
+        assert client.chamadas == 1
+
+    async def test_correlation_id_diferente_roda_delegacoes_independentes(
+        self, session_store, ctx
+    ):
+        """Erro/borda simétrico: ids diferentes nunca deduplicam — cada
+        delegação roda e chama o chat client separadamente."""
+        client = _ScriptedChatClient(
+            [[_texto_chunk("resultado 1")], [_texto_chunk("resultado 2")]]
+        )
+        spec_a = replace(_spec(), correlation_id="corr-a")
+        spec_b = replace(_spec(), correlation_id="corr-b")
+
+        resultado_a = await run_subagent(
+            spec_a,
+            "tarefa a",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+        )
+        resultado_b = await run_subagent(
+            spec_b,
+            "tarefa b",
+            session_store=session_store,
+            chat_client=client,
+            ctx=ctx,
+            parent_thread_id="thread-pai",
+        )
+
+        assert resultado_a == "resultado 1"
+        assert resultado_b == "resultado 2"
+        assert client.chamadas == 2
+
+
+class TestHardInterruptRealNaoPassivo:
+    async def test_token_valido_cancela_a_task_de_verdade_invalido_e_rejeitado(
+        self, session_store, ctx
+    ):
+        """Erro/borda: token HMAC inválido nunca cancela nada, mesmo com o
+        `correlation_id` certo e o subagente realmente em execução — só o
+        token correto (`subagent_capability_token`) autoriza. Prova de que
+        o cancelamento é ATIVO (chama `Task.cancel()` de verdade), não só
+        uma flag: `task_interna.cancelled()` fica `True` depois do
+        interrupt, distinto do watchdog de liveness (timeout passivo,
+        testado em `TestLivenessAtiva`)."""
+        client = _HangingChatClient()
+        spec = replace(_spec(), correlation_id="corr-hard-1")
+
+        task = asyncio.create_task(
+            run_subagent(
+                spec,
+                "trabalhe para sempre",
+                session_store=session_store,
+                chat_client=client,
+                ctx=ctx,
+                parent_thread_id="thread-pai",
+            )
+        )
+
+        task_interna = await _aguarda_task_ativa("corr-hard-1")
+
+        assert request_hard_interrupt("corr-hard-1", "token-errado") is False
+        assert not task_interna.cancelled()
+        assert not task_interna.done()
+
+        token_valido = subagent_capability_token("corr-hard-1")
+        assert request_hard_interrupt("corr-hard-1", token_valido) is True
+
+        resultado = await task
+
+        assert task_interna.cancelled()
+        assert "pedido explícito" in resultado
+
+    async def test_sem_task_em_execucao_devolve_false_mesmo_com_token_valido(
+        self, session_store, ctx
+    ):
+        """Erro/borda: `correlation_id` que nunca teve (ou já terminou) uma
+        delegação em execução nunca é achado pra cancelar — mesmo com o
+        token correto."""
+        token_valido = subagent_capability_token("corr-inexistente")
+        assert request_hard_interrupt("corr-inexistente", token_valido) is False

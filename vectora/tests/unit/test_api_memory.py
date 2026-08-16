@@ -153,7 +153,7 @@ class TestMemorySharedStoreWithAgent:
         from backend.tools.context import ToolContext
         from backend.tools.memory import save_memory
 
-        monkeypatch.setattr("backend.tools.memory._get_store", lambda: store)
+        monkeypatch.setattr("backend.tools.memory._get_store", lambda ctx: store)
 
         await save_memory(
             ctx=ToolContext(user_id="local"),
@@ -172,7 +172,7 @@ class TestMemorySharedStoreWithAgent:
         from backend.tools.context import ToolContext
         from backend.tools.memory import get_memory
 
-        monkeypatch.setattr("backend.tools.memory._get_store", lambda: store)
+        monkeypatch.setattr("backend.tools.memory._get_store", lambda ctx: store)
 
         client.post("/memory", json={"key": "from_api", "content": "salvo pelo painel"})
 

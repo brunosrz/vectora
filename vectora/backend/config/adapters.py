@@ -197,8 +197,9 @@ class MemoryAdapter:
     async def list_items(self, user_id: str) -> list[dict[str, object]]:
         try:
             import backend.tools.memory as mem
+            from backend.tools.context import ToolContext
 
-            store = mem._get_store()
+            store = mem._get_store(ToolContext(user_id=user_id))
         except Exception as exc:  # RuntimeError: fora de um grafo ativo
             import logging
 
@@ -225,8 +226,11 @@ class MemoryAdapter:
         user_id = str(item["user_id"])
         key = str(item["key"])
         content = str(item["content"])
+        from backend.tools.context import ToolContext
+
+        ctx = ToolContext(user_id=user_id)
         try:
-            store = mem._get_store()
+            store = mem._get_store(ctx)
         except Exception as exc:  # RuntimeError: fora de uma execução ativa
             import logging
 
@@ -238,10 +242,9 @@ class MemoryAdapter:
             return None
         import datetime
 
-        from backend.tools.context import ToolContext
         from backend.tools.memory import _memory_namespace
 
-        ns = _memory_namespace(ToolContext(user_id=user_id))
+        ns = _memory_namespace(ctx)
         value = {
             "key": key,
             "content": content,
@@ -254,7 +257,8 @@ class MemoryAdapter:
 
     async def remove(self, user_id: str, item_id: str) -> None:
         import backend.tools.memory as mem
+        from backend.tools.context import ToolContext
 
-        store = mem._get_store()
+        store = mem._get_store(ToolContext(user_id=user_id))
         ns = ("user", user_id, "memories")
         await store.adelete(ns, item_id)

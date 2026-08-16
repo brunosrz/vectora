@@ -92,6 +92,28 @@ def _to_google_tool(spec: ToolSpec) -> dict:
     }
 
 
+def _google_image_part(data_uri: str) -> dict:
+    """`data:` URI (formato que `ContentBlock.image_url` sempre carrega,
+    montado em ``api/handlers/chat.py``) vira `inlineData` base64; qualquer
+    outra string vira `fileData` — o Gemini aceita os dois formatos de part."""
+    if data_uri.startswith("data:") and ";base64," in data_uri:
+        mime_type, _, dado = data_uri.partition(";base64,")
+        return {"inlineData": {"mimeType": mime_type[len("data:") :], "data": dado}}
+    return {"fileData": {"fileUri": data_uri}}
+
+
+def _to_google_user_parts(content: list[ContentBlock]) -> list[dict]:
+    """Traduz o content multimodal de uma mensagem `user` — bloco `image_url`
+    nunca é descartado só porque `msg.text()` só concatena texto."""
+    partes: list[dict] = []
+    for bloco in content:
+        if bloco.kind == "text" and bloco.text:
+            partes.append({"text": bloco.text})
+        elif bloco.kind == "image_url" and bloco.image_url:
+            partes.append(_google_image_part(bloco.image_url))
+    return partes or [{"text": ""}]
+
+
 def _assistant_parts(msg: VMessage) -> list[dict]:
     partes: list[dict] = []
     texto = msg.text()
@@ -119,7 +141,9 @@ def _to_google_contents(messages: list[VMessage]) -> tuple[dict | None, list[dic
             continue
 
         if msg.role == MessageRole.USER:
-            contents.append({"role": "user", "parts": [{"text": msg.text()}]})
+            contents.append(
+                {"role": "user", "parts": _to_google_user_parts(msg.content)}
+            )
             continue
 
         if msg.role == MessageRole.TOOL:

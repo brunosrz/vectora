@@ -61,14 +61,11 @@ def _candidates(primary_model_id: str, *, has_images: bool) -> list[str]:
     ]
 
 
-def load_chat_client(model_id: str) -> ChatClient:
+def load_chat_client(model_id: str) -> ChatClient:  # noqa: PLR0911
     """Resolve `"provider:model"` pro chat client nativo do provider.
 
     Espelha `backend/services/utils.py::_build_concrete_model`, mas devolve
-    um `ChatClient` (Protocol nativo) em vez de `BaseChatModel`. Cohere não
-    tem chat client nativo (só embedding/reranker, Sprint 13) — cai no
-    branch de provider desconhecido, mesmo tratamento de qualquer provider
-    não suportado.
+    um `ChatClient` (Protocol nativo) em vez de `BaseChatModel`.
     """
     import os
 
@@ -97,6 +94,14 @@ def load_chat_client(model_id: str) -> ChatClient:
             return AnthropicChatClient(
                 model=model_name,
                 client=AnthropicClient(api_key=get_env("ANTHROPIC_API_KEY")),
+            )
+        case "cohere":
+            from backend.llm.cohere.chat_client import CohereChatClient
+            from backend.llm.cohere.client import CohereClient
+
+            return CohereChatClient(
+                model=model_name,
+                client=CohereClient(api_key=get_env("COHERE_API_KEY")),
             )
         case "google_genai":
             from backend.llm.google.chat_client import GoogleChatClient
@@ -155,7 +160,8 @@ def load_chat_client(model_id: str) -> ChatClient:
         case _:
             msg = (
                 f"Provider de LLM nativo desconhecido: {provider!r}. Suportados: "
-                "openai, anthropic, google_genai, ollama, openrouter, nine_router."
+                "openai, anthropic, google_genai, cohere, ollama, openrouter, "
+                "nine_router."
             )
             raise ValueError(msg)
 

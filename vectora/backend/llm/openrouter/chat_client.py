@@ -52,13 +52,32 @@ _ROLE_POR_TIPO = {
 }
 
 
+def _to_openrouter_content(content: list[ContentBlock]) -> str | list[dict]:
+    """Bloco `text` vira string simples (caso comum); qualquer bloco
+    `image_url` presente força o formato de lista de partes Chat-Completions
+    (`image_url` aninhado) — nunca descarta a imagem só porque `msg.text()`
+    só concatena texto."""
+    if not any(b.kind == "image_url" for b in content):
+        return "".join(b.text or "" for b in content if b.kind == "text")
+    partes: list[dict] = []
+    for bloco in content:
+        if bloco.kind == "text" and bloco.text:
+            partes.append({"type": "text", "text": bloco.text})
+        elif bloco.kind == "image_url" and bloco.image_url:
+            partes.append({"type": "image_url", "image_url": {"url": bloco.image_url}})
+    return partes
+
+
 def _to_openrouter_message(msg: VMessage) -> dict:
     role = _ROLE_POR_TIPO.get(msg.role)
     if role is None:
         erro = f"Mensagem de role {msg.role!r} não tem equivalente no OpenRouter"
         raise ValueError(erro)
 
-    saida: dict[str, Any] = {"role": role, "content": msg.text()}
+    saida: dict[str, Any] = {
+        "role": role,
+        "content": _to_openrouter_content(msg.content),
+    }
 
     if role == "tool":
         # Obrigatório no formato OpenAI-compatível — sem ele o provider

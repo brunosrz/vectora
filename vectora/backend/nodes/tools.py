@@ -70,6 +70,9 @@ from backend.tools import (
     memory as _memory_module,
 )
 from backend.tools import (
+    native as _native_module,
+)
+from backend.tools import (
     notion as _notion_module,
 )
 from backend.tools import (
@@ -91,17 +94,6 @@ from backend.tools import (
     workspace as _workspace_module,
 )
 from backend.tools.langchain_bridge import as_langchain_tool
-from backend.tools.native import (
-    base64_decode,
-    base64_encode,
-    hash_text,
-    http_request,
-    json_query,
-    jwt_decode,
-    regex_test,
-    time_now,
-    time_parse,
-)
 from backend.tools.registry import TOOL_REGISTRY
 
 if TYPE_CHECKING:
@@ -257,6 +249,15 @@ gh_issue_view = _bridge("gh_issue_view")
 gh_issue_comment = _bridge("gh_issue_comment")
 workspace_describe = _bridge("workspace_describe")
 workspace_list = _bridge("workspace_list")
+time_now = _bridge("time_now")
+time_parse = _bridge("time_parse")
+hash_text = _bridge("hash_text")
+base64_encode = _bridge("base64_encode")
+base64_decode = _bridge("base64_decode")
+regex_test = _bridge("regex_test")
+json_query = _bridge("json_query")
+jwt_decode = _bridge("jwt_decode")
+http_request = _bridge("http_request")
 bucket_summary = _bridge("bucket_summary")
 get_workbench_context = _bridge("get_workbench_context")
 web_search = _bridge("web_search")

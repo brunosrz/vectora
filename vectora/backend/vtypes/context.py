@@ -16,6 +16,7 @@ sem transformação extra.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -55,6 +56,16 @@ class VectoraContext:
     — permite ao HITL dinâmico (`backend/services/middleware.py`) distinguir
     uma task se auto-atualizando (`kanban_update_status` no próprio id, sem
     aprovação) de uma task tentando mudar o status de OUTRA."""
+
+    store: Any = None
+    """Store persistente injetado pelo motor de execução (mesma instância
+    de ``backend.services.agent_factory.get_store()``). ``Any`` porque o
+    shape depende do backend ativo (``InMemoryStore``, Postgres/Qdrant via
+    ``CompositeBackend``) — todo consumidor chama só ``aget``/``aput``/
+    ``asearch``/``adelete``, contrato comum a qualquer implementação.
+    ``None`` até o dispatch nativo (``backend/engine/``) passar a
+    populá-lo; enquanto isso, tools que precisam do store caem no fallback
+    de ``langgraph.config.get_store()`` (contextvar do grafo em produção)."""
 
     _extra: dict = field(default_factory=dict, repr=False, compare=False)
     """Campos adicionais não cobertos pelos atributos tipados acima."""

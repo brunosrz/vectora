@@ -183,13 +183,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     """
     logger.info("api/server: startup")
 
-    # LangSmith tracing opt-in (ativado se langsmith_tracing=true + api_key).
+    # Telemetria nativa de execução do agente (turnos, tool calls, erros).
     try:
-        from backend.persistence.tracer import enable_langsmith_tracing
+        from backend.persistence.telemetry import telemetry
 
-        enable_langsmith_tracing()
+        telemetry.configure()
     except Exception as exc:
-        logger.warning("api/server: falha ao configurar LangSmith tracing: %s", exc)
+        logger.warning("api/server: falha ao configurar telemetria nativa: %s", exc)
 
     # Setup wizard: avisa o operador se ainda não há usuários cadastrados
     try:

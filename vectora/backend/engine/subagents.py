@@ -38,14 +38,40 @@ effective_disabled(ctx.user_id)`` permite pro usuário/sessão que está
 delegando — mesmo filtro que ``agent_factory._subagent_specs()`` já aplica
 no catálogo em produção (kill-switch global + ABAC por usuário), replicado
 aqui pro motor nativo não abrir uma segunda porta sem esse filtro.
+
+Dedup por ``correlation_id`` (``SubagentSpec.correlation_id``): delegações
+concorrentes com o mesmo ``correlation_id`` REAPROVEITAM a execução já em
+andamento em vez de duplicar — a primeira chamada a alcançar
+``run_subagent`` registra um ``asyncio.Future`` em
+``_IN_FLIGHT_BY_CORRELATION`` antes de qualquer ``await`` (sem ponto de
+troca de contexto entre o check e o registro, então não há corrida real
+mesmo com duas chamadas concorrentes via ``asyncio.gather``); qualquer
+chamada seguinte com o mesmo id só espera esse ``Future`` em vez de gastar
+sessão/turn budget/chamada ao chat client de novo. Reaproveitar (em vez de
+rejeitar) foi a escolha porque o caso de uso real é retry/race do próprio
+LLM (mesma intenção reemitida), não dois pedidos legitimamente distintos
+que colidiram por acaso no id.
+
+Interrupção real (``request_hard_interrupt``): cada ``conversation_task``
+de um subagente delegado com ``correlation_id`` fica registrada em
+``_ACTIVE_CONVERSATION_TASKS`` enquanto roda. ``request_hard_interrupt``
+exige um capability token HMAC (``subagent_capability_token`` — mesma
+chave de assinatura de sessão que ``backend/tools/background.py::
+_capability_token`` já usa) e, se válido, chama ``Task.cancel()`` de
+verdade na task em execução — não uma flag checada em algum loop
+periódico. Distinto do watchdog de liveness (``_watch_liveness``, ainda
+só timeout de inatividade): aqui a cancelação é imediata e sob pedido
+explícito de quem tem o token, a qualquer momento da execução.
 """
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
+import hmac
 import time
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
@@ -76,6 +102,12 @@ class SubagentSpec:
     description: str
     system_prompt: str
     tools: list[ToolSpec]
+    correlation_id: str | None = field(default=None)
+    """Identificador opcional da intenção de delegação. Duas chamadas com o
+    mesmo valor reaproveitam a mesma execução (`_IN_FLIGHT_BY_CORRELATION`)
+    em vez de rodar o subagente duas vezes, e habilitam
+    `request_hard_interrupt(correlation_id, token)` a cancelar essa
+    execução especificamente."""
 
 
 @dataclass(slots=True)
@@ -88,6 +120,55 @@ class LivenessConfig:
 
     heartbeat_interval_s: float = 30.0
     max_stalled_heartbeats: int = 3
+
+
+_IN_FLIGHT_BY_CORRELATION: dict[str, asyncio.Future[str]] = {}
+"""Delegações em andamento por `correlation_id` — chave só existe entre o
+início e o fim de `run_subagent`; usada pra reaproveitar (nunca duplicar)
+uma delegação concorrente com o mesmo id."""
+
+_ACTIVE_CONVERSATION_TASKS: dict[str, asyncio.Task[Any]] = {}
+"""`conversation_task` de cada subagente em execução com `correlation_id`
+definido — só existe enquanto a task roda; é o alvo real de
+`request_hard_interrupt`."""
+
+
+def subagent_capability_token(correlation_id: str) -> str:
+    """HMAC(secret, correlation_id) — mesma chave de assinatura de sessão
+    que ``backend/tools/background.py::_capability_token`` já usa (auto-
+    gerada por instalação via ``backend.rbac.auth._get_secret``, sempre
+    disponível mesmo sem VECTORA_TOKEN/Pro configurado). Recomputável a
+    qualquer momento a partir só do ``correlation_id`` — não precisa ser
+    persistido."""
+    from backend.rbac.auth import _get_secret
+
+    return hmac.new(
+        _get_secret().encode(), correlation_id.encode(), hashlib.sha256
+    ).hexdigest()
+
+
+def request_hard_interrupt(correlation_id: str, capability_token: str) -> bool:
+    """Cancela DE VERDADE (``asyncio.Task.cancel()``) a execução do
+    subagente associado a ``correlation_id``, se ``capability_token`` bater
+    com ``subagent_capability_token(correlation_id)``.
+
+    Distinto do watchdog de liveness (``_watch_liveness``): aquele só
+    dispara por timeout de inatividade; este cancela imediatamente sob
+    pedido explícito de quem tem o token, a qualquer momento da execução.
+
+    Devolve ``False`` tanto para token inválido quanto para nenhum
+    subagente em execução com esse id (já terminou ou nunca existiu) — o
+    mesmo shape de retorno pros dois casos não vaza qual dos dois
+    aconteceu pra quem não tem autorização."""
+    if not hmac.compare_digest(
+        subagent_capability_token(correlation_id), capability_token or ""
+    ):
+        return False
+    task = _ACTIVE_CONVERSATION_TASKS.get(correlation_id)
+    if task is None or task.done():
+        return False
+    task.cancel()
+    return True
 
 
 def _sub_thread_id(parent_thread_id: str, subagent_name: str) -> str:
@@ -138,9 +219,82 @@ async def run_subagent(
     liveness: LivenessConfig | None = None,
 ) -> str:
     """Roda `spec` até completar (ou pausar em HITL) e devolve o texto
-    final — instância nova e isolada do motor, sessão própria com
-    `parent_thread_id` gravado (rastreabilidade), sem herdar o histórico do
-    chamador.
+    final. Sem `spec.correlation_id`, delega direto pra
+    `_run_subagent_once`. Com `spec.correlation_id`, deduplica: a primeira
+    chamada regista um `Future` em `_IN_FLIGHT_BY_CORRELATION` e roda
+    normalmente; qualquer chamada concorrente com o mesmo id só espera
+    esse `Future` em vez de rodar `_run_subagent_once` de novo — nenhum
+    ponto de `await` entre o check e o registro, então duas chamadas via
+    `asyncio.gather` nunca duplicam."""
+    if not spec.correlation_id:
+        return await _run_subagent_once(
+            spec,
+            prompt,
+            session_store=session_store,
+            chat_client=chat_client,
+            ctx=ctx,
+            parent_thread_id=parent_thread_id,
+            config=config,
+            on_event=on_event,
+            should_require_approval=should_require_approval,
+            turn_budget=turn_budget,
+            liveness=liveness,
+        )
+
+    correlation_id = spec.correlation_id
+    existente = _IN_FLIGHT_BY_CORRELATION.get(correlation_id)
+    if existente is not None:
+        return await existente
+
+    future: asyncio.Future[str] = asyncio.get_running_loop().create_future()
+    _IN_FLIGHT_BY_CORRELATION[correlation_id] = future
+    try:
+        resultado = await _run_subagent_once(
+            spec,
+            prompt,
+            session_store=session_store,
+            chat_client=chat_client,
+            ctx=ctx,
+            parent_thread_id=parent_thread_id,
+            config=config,
+            on_event=on_event,
+            should_require_approval=should_require_approval,
+            turn_budget=turn_budget,
+            liveness=liveness,
+        )
+    except BaseException as exc:
+        if not future.done():
+            future.set_exception(exc)
+        raise
+    else:
+        if not future.done():
+            future.set_result(resultado)
+        return resultado
+    finally:
+        _IN_FLIGHT_BY_CORRELATION.pop(correlation_id, None)
+
+
+async def _run_subagent_once(
+    spec: SubagentSpec,
+    prompt: str,
+    *,
+    session_store: SessionStore,
+    chat_client: ChatClient,
+    ctx: ToolContext,
+    parent_thread_id: str,
+    config: LoopConfig | None = None,
+    on_event: EventSink | None = None,
+    should_require_approval: Callable[
+        [str, ToolContext, dict[str, Any], list[VMessage]], bool
+    ]
+    | None = None,
+    turn_budget: TurnBudget | None = None,
+    liveness: LivenessConfig | None = None,
+) -> str:
+    """Roda `spec` uma única vez até completar (ou pausar em HITL) e
+    devolve o texto final — instância nova e isolada do motor, sessão
+    própria com `parent_thread_id` gravado (rastreabilidade), sem herdar o
+    histórico do chamador.
 
     `turn_budget`, quando fornecido, é o mesmo objeto do turno do agente
     pai (`backend/engine/guardrails.py::TurnBudget`) — o spawn é registrado
@@ -153,6 +307,11 @@ async def run_subagent(
     `heartbeat_interval_s * max_stalled_heartbeats` segundos, a task é
     cancelada e o resultado vira `status="cancelled"`. Sem `liveness`
     (default), o subagente roda até completar normalmente, sem watchdog.
+
+    Se `spec.correlation_id` estiver definido, a `conversation_task` fica
+    registrada em `_ACTIVE_CONVERSATION_TASKS` enquanto roda — alvo de
+    `request_hard_interrupt`, que cancela essa task de verdade a qualquer
+    momento, distinto do watchdog de liveness (só timeout de inatividade).
 
     Erro/borda: `spec.tools` pedindo tool fora do escopo RBAC do usuário
     (`ctx.user_id`, via `backend.rbac.tool_policy.effective_disabled`) é
@@ -225,21 +384,50 @@ async def run_subagent(
         )
     )
 
-    if liveness is not None:
-        watchdog_task = asyncio.create_task(
-            _watch_liveness(conversation_task, liveness, last_activity)
-        )
-        await asyncio.wait(
-            {conversation_task, watchdog_task}, return_when=asyncio.FIRST_COMPLETED
-        )
-        if not conversation_task.done():
-            conversation_task.cancel()
+    if spec.correlation_id:
+        _ACTIVE_CONVERSATION_TASKS[spec.correlation_id] = conversation_task
+
+    try:
+        if liveness is not None:
+            watchdog_task = asyncio.create_task(
+                _watch_liveness(conversation_task, liveness, last_activity)
+            )
+            await asyncio.wait(
+                {conversation_task, watchdog_task}, return_when=asyncio.FIRST_COMPLETED
+            )
+            if not conversation_task.done():
+                conversation_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await conversation_task
+                texto_cancelado = (
+                    f"Subagente '{spec.name}' cancelado por inatividade — sem "
+                    f"progresso por "
+                    f"{liveness.heartbeat_interval_s * liveness.max_stalled_heartbeats:.0f}s."
+                )
+                if on_event is not None:
+                    await on_event(
+                        SubagentOutput(
+                            subagent_type=spec.name,
+                            status="cancelled",
+                            content=texto_cancelado,
+                        )
+                    )
+                return texto_cancelado
+            watchdog_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
-                await conversation_task
+                await watchdog_task
+
+        try:
+            resultado = await conversation_task
+        except asyncio.CancelledError:
+            # `request_hard_interrupt` cancelou a `conversation_task` de
+            # verdade (`Task.cancel()`) — distinto do ramo de liveness
+            # acima, que já consome a `CancelledError` sozinho ao cancelar
+            # por inatividade. Chegar aqui significa cancelamento sob
+            # pedido explícito, a qualquer momento da execução.
             texto_cancelado = (
-                f"Subagente '{spec.name}' cancelado por inatividade — sem "
-                f"progresso por "
-                f"{liveness.heartbeat_interval_s * liveness.max_stalled_heartbeats:.0f}s."
+                f"Subagente '{spec.name}' cancelado por pedido explícito "
+                f"(hard interrupt)."
             )
             if on_event is not None:
                 await on_event(
@@ -250,11 +438,9 @@ async def run_subagent(
                     )
                 )
             return texto_cancelado
-        watchdog_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await watchdog_task
-
-    resultado = await conversation_task
+    finally:
+        if spec.correlation_id:
+            _ACTIVE_CONVERSATION_TASKS.pop(spec.correlation_id, None)
 
     texto = resultado.final_message.text() if resultado.final_message else ""
 

@@ -147,6 +147,59 @@ class TestConversaoDeMensagens:
         with pytest.raises(ValueError, match="extraterrestre"):
             await _client(handler).agenerate([estranha])
 
+    async def test_bloco_de_imagem_nao_e_descartado(self):
+        """Regressão: `_to_anthropic_messages` usava `msg.text()` pra
+        mensagens `user`/`assistant`, que só concatena blocos `text` — um
+        anexo de imagem desaparecia do payload sem erro nem log."""
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            import json as _json
+
+            capturado.update(_json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        mensagem = VMessage(
+            role=MessageRole.USER,
+            content=[
+                ContentBlock(kind="text", text="olha essa imagem"),
+                ContentBlock(kind="image_url", image_url="data:image/png;base64,abc"),
+            ],
+        )
+
+        await _client(handler).agenerate([mensagem])
+
+        partes = capturado["messages"][0]["content"]
+        assert {"type": "text", "text": "olha essa imagem"} in partes
+        assert {
+            "type": "image",
+            "source": {"type": "base64", "media_type": "image/png", "data": "abc"},
+        } in partes
+
+    async def test_imagem_com_url_direta_vira_bloco_source_url(self):
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            import json as _json
+
+            capturado.update(_json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        mensagem = VMessage(
+            role=MessageRole.USER,
+            content=[
+                ContentBlock(kind="image_url", image_url="https://exemplo.com/a.png"),
+            ],
+        )
+
+        await _client(handler).agenerate([mensagem])
+
+        partes = capturado["messages"][0]["content"]
+        assert {
+            "type": "image",
+            "source": {"type": "url", "url": "https://exemplo.com/a.png"},
+        } in partes
+
 
 class TestToolCalling:
     async def test_tool_spec_vira_schema_nativo_anthropic(self):

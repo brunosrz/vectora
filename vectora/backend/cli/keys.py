@@ -159,14 +159,10 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
         )
 
     if provider_id == "cohere":
-        from langchain_cohere import ChatCohere
-        from pydantic import SecretStr
+        from backend.llm.cohere.chat_client import CohereChatClient
+        from backend.llm.cohere.client import CohereClient
 
-        # NÃO usar SecretStr — causa 401 (langchain-core str(SecretStr) → "**********").
-        return ChatCohere(
-            cohere_api_key=SecretStr(api_key or ""),
-            model=model,
-        )
+        return CohereChatClient(model=model, client=CohereClient(api_key=api_key or ""))
 
     if provider_id == "ollama":
         from backend.llm.ollama.chat import VectoraOllamaChat
@@ -192,11 +188,23 @@ async def _test_connection(
         with console.status(
             "[bold cyan]Conectando ao LLM...[/bold cyan]", spinner="dots"
         ):
-            response = await llm.ainvoke("Say 'Connected!' in one word.")
+            if hasattr(llm, "ainvoke"):
+                response = await llm.ainvoke("Say 'Connected!' in one word.")
+                resposta_texto = response.content
+            else:
+                # ChatClient nativo (Protocol, ex. CohereChatClient) — sem
+                # `ainvoke`, opera sobre `VMessage`/`agenerate` em vez do
+                # `BaseChatModel` dos demais providers testados aqui.
+                from backend.vtypes.message import MessageRole, text_message
+
+                resultado = await llm.agenerate(
+                    [text_message(MessageRole.USER, "Say 'Connected!' in one word.")]
+                )
+                resposta_texto = resultado.text()
         console.print(
             Panel(
                 f"[green]✓ Conexão bem-sucedida![/green]\n"
-                f"[cyan]Resposta: {response.content}[/cyan]",
+                f"[cyan]Resposta: {resposta_texto}[/cyan]",
                 title="[bold green]Teste de Conexão[/bold green]",
                 style="green",
                 expand=False,

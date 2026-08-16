@@ -144,6 +144,49 @@ class TestConversaoDeMensagens:
         with pytest.raises(ValueError, match="extraterrestre"):
             await _client(handler).agenerate([estranha])
 
+    async def test_bloco_de_imagem_nao_e_descartado(self):
+        """Regressão: `_to_google_contents` usava `msg.text()` pra mensagens
+        `user`, que só concatena blocos `text` — um anexo de imagem
+        desaparecia do payload sem erro nem log."""
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            capturado.update(json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        mensagem = VMessage(
+            role=MessageRole.USER,
+            content=[
+                ContentBlock(kind="text", text="olha essa imagem"),
+                ContentBlock(kind="image_url", image_url="data:image/png;base64,abc"),
+            ],
+        )
+
+        await _client(handler).agenerate([mensagem])
+
+        partes = capturado["contents"][0]["parts"]
+        assert {"text": "olha essa imagem"} in partes
+        assert {"inlineData": {"mimeType": "image/png", "data": "abc"}} in partes
+
+    async def test_imagem_com_url_direta_vira_filedata(self):
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            capturado.update(json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        mensagem = VMessage(
+            role=MessageRole.USER,
+            content=[
+                ContentBlock(kind="image_url", image_url="https://exemplo.com/a.png"),
+            ],
+        )
+
+        await _client(handler).agenerate([mensagem])
+
+        partes = capturado["contents"][0]["parts"]
+        assert {"fileData": {"fileUri": "https://exemplo.com/a.png"}} in partes
+
 
 class TestToolCalling:
     async def test_tool_spec_vira_functiondeclarations_sem_additionalproperties(self):

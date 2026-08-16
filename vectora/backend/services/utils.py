@@ -121,6 +121,14 @@ def _build_concrete_model(  # noqa: PLR0911
             # ChatCohere aceita a key como SecretStr (o SDK do chat resolve
             # internamente); o CohereEmbeddings exige string crua — ver
             # backend/embedding/background.py.
+            #
+            # Permanece em ChatCohere (não `CohereChatClient`, backend/llm/
+            # cohere/chat_client.py) porque `load_llm()` logo abaixo exige
+            # `bind_tools`/`invoke`/`with_config` (contrato `BaseChatModel`
+            # que `create_deep_agent` consome) — o Protocol `ChatClient` não
+            # tem essa API. Migrar este ponto exige um `VectoraCohereChat`
+            # (BaseChatModel) equivalente ao dos outros 5 providers, ainda
+            # não escrito.
             return ChatCohere(
                 cohere_api_key=SecretStr(api_key),
                 model=model_name,

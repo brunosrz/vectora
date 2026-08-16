@@ -1,10 +1,20 @@
 """Tool: HTTP GET/POST/PUT requests (async)."""
 
+import json
+
 import httpx
-from langchain.tools import tool
+
+from backend.tools.registry import ToolExtras, vtool
 
 
-@tool
+@vtool(
+    extras=ToolExtras(
+        render_hint="text",
+        category="native",
+        destructive=False,
+        icon="globe",
+    )
+)
 async def http_request(
     method: str, url: str, body: str | None = None, headers: str | None = None
 ) -> str:
@@ -23,8 +33,6 @@ async def http_request(
         async with httpx.AsyncClient(timeout=10) as client:
             req_headers = {}
             if headers:
-                import json
-
                 req_headers = json.loads(headers)
             req_body = None
             if body:
