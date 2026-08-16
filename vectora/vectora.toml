@@ -14,7 +14,7 @@ port = 3000 # Exemplo de porta para API local
 # (opt-in); sem esta seção, comportamento atual (sem sandbox) é preservado.
 [sandbox]
 enabled = false          # true liga o worker jailado pra este workspace
-backend = "local"        # "local" (bwrap, Linux) | "docker" | "ssh" | "modal"
+backend = "local"        # "local" (bwrap/Landlock, Linux) | "macos" (sandbox-exec/Seatbelt) | "singularity" (Apptainer, HPC/cluster sem daemon Docker) | "docker" | "ssh" | "modal"
 rw_paths = []             # paths extras montados read-write além do workspace
 ro_paths = []             # paths extras montados read-only (ex. libs compartilhadas)
 mask = [                  # paths sempre ocultos (tmpfs vazio), mesmo se dentro do workspace

@@ -127,14 +127,51 @@ class TestReportSandboxStatus:
     aqui)."""
 
     @pytest.mark.asyncio
-    async def test_no_linux_nao_faz_nada(self, monkeypatch):
-        # bwrap é nativo aqui — não há o que diagnosticar.
+    async def test_no_linux_sem_singularity_nao_imprime_nada(self, monkeypatch):
+        # bwrap é nativo aqui — sem singularity/apptainer, nada a diagnosticar.
         monkeypatch.setattr(doctor.sys, "platform", "linux")
+        monkeypatch.setattr(doctor.shutil, "which", lambda _name: None)
         console = MagicMock()
 
         await doctor._report_sandbox_status(console)
 
         console.print.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_no_linux_com_singularity_informa_alternativa(self, monkeypatch):
+        """Com `singularity` instalado, o doctor reporta o backend alternativo
+        pro `bwrap` (útil em ambientes HPC/cluster sem daemon Docker)."""
+        monkeypatch.setattr(doctor.sys, "platform", "linux")
+        monkeypatch.setattr(
+            doctor.shutil,
+            "which",
+            lambda name: "/usr/bin/singularity" if name == "singularity" else None,
+        )
+        console = MagicMock()
+
+        await doctor._report_sandbox_status(console)
+
+        printed = " ".join(str(c.args[0]) for c in console.print.call_args_list)
+        assert "singularity" in printed
+        assert 'backend = "singularity"' in printed
+
+    @pytest.mark.asyncio
+    async def test_no_linux_com_apptainer_informa_alternativa(self, monkeypatch):
+        """`apptainer` (rebrand do Singularity) também é detectado, não só o
+        binário `singularity` original."""
+        monkeypatch.setattr(doctor.sys, "platform", "linux")
+        monkeypatch.setattr(
+            doctor.shutil,
+            "which",
+            lambda name: "/usr/bin/apptainer" if name == "apptainer" else None,
+        )
+        console = MagicMock()
+
+        await doctor._report_sandbox_status(console)
+
+        printed = " ".join(str(c.args[0]) for c in console.print.call_args_list)
+        assert "apptainer" in printed
+        assert 'backend = "singularity"' in printed
 
     @pytest.mark.asyncio
     async def test_macos_sem_sandbox_exec_recomenda_alternativas(self, monkeypatch):

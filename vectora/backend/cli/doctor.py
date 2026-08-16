@@ -78,12 +78,12 @@ def find_nats_server_pids() -> list[int]:
 async def _report_sandbox_status(console: Console) -> None:
     """Diagnóstico do sandbox por plataforma.
 
-    Linux: `bwrap` é nativo, nada a checar aqui — `backend = "singularity"`
-    continua disponível como alternativa (ambientes HPC/cluster sem daemon
-    Docker). macOS: `backend = "macos"` (Seatbelt via `sandbox-exec`) é o
-    caminho nativo no host — reporta se o binário está disponível (interface
-    legada da Apple, pode sumir numa versão futura sem aviso). Windows:
-    depende de WSL2, checado abaixo.
+    Linux: `bwrap` é nativo, sempre disponível — reporta só se
+    `singularity`/`apptainer` também está instalado, como alternativa em
+    ambientes HPC/cluster sem daemon Docker. macOS: `backend = "macos"`
+    (Seatbelt via `sandbox-exec`) é o caminho nativo no host — reporta se o
+    binário está disponível (interface legada da Apple, pode sumir numa
+    versão futura sem aviso). Windows: depende de WSL2, checado abaixo.
     """
     if sys.platform == "darwin":
         console.print("\n[bold]Sandbox:[/bold]")
@@ -98,6 +98,17 @@ async def _report_sandbox_status(console: Console) -> None:
                 "[yellow]✖ sandbox-exec não encontrado neste macOS — "
                 "backend 'macos' indisponível. Use `backend = \"docker\"` "
                 "(ou 'ssh'/'modal') no [sandbox] do vectora.toml.[/yellow]"
+            )
+        return
+    if sys.platform == "linux":
+        singularity_bin = shutil.which("singularity") or shutil.which("apptainer")
+        if singularity_bin is not None:
+            console.print("\n[bold]Sandbox:[/bold]")
+            console.print(
+                f"[green]✔ {singularity_bin} disponível[/green] — use "
+                '`backend = "singularity"` no [sandbox] do vectora.toml como '
+                "alternativa ao bwrap em ambientes HPC/cluster sem daemon "
+                "Docker."
             )
         return
     if sys.platform != "win32":
