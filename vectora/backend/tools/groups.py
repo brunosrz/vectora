@@ -280,3 +280,26 @@ register_tool_group(
         tool_names=["ask_parent_agent"],
     )
 )
+
+# Aliases compatíveis com nomes antigos ainda usados por SOULs/callers.
+register_tool_group(
+    ToolGroupSpec(
+        name="browser-qa",
+        description="Alias compatível de browser.",
+        includes=["browser"],
+    )
+)
+register_tool_group(
+    ToolGroupSpec(
+        name="fs-readonly",
+        description="Alias compatível de fs_readonly.",
+        includes=["fs_readonly"],
+    )
+)
+register_tool_group(
+    ToolGroupSpec(
+        name="planner",
+        description="Alias compatível de artifact.",
+        includes=["artifact"],
+    )
+)

@@ -400,7 +400,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "reporting success. A screenshot or console log is worth more in "
             "your report than a description of what you expect to be true.",
         ),
-        tool_groups=["browser-qa", "fs-readonly"],
+        tool_groups=["browser", "fs_readonly"],
         needs_worktree_isolation=False,
     ),
     "planner": Soul(
