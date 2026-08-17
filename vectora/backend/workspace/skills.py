@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import shutil
 import subprocess  # nosec B404 — git clone controlado, sem shell=True
@@ -164,6 +165,57 @@ def list_skills(user_id: str) -> list[Skill]:
 def list_skill_paths(user_id: str) -> list[Path]:
     """Paths absolutos das skills instaladas — consumido pelo agent_factory."""
     return [Path(s.path) for s in _load_index(user_id) if Path(s.path).is_dir()]
+
+
+# ---------------------------------------------------------------------------
+# Catálogo well-known — segunda fonte de discovery, local e sem rede
+# ---------------------------------------------------------------------------
+
+
+def _wellknown_dir() -> Path:
+    override = os.getenv("VECTORA_SKILLS_WELLKNOWN_DIR", "").strip()
+    if override:
+        return Path(override).expanduser()
+    return Path.home() / ".vectora" / "skills-wellknown"
+
+
+def list_wellknown_catalog(directory: Path | None = None) -> list[dict]:
+    """Catálogo local de skills — segunda fonte de discovery do agregador em
+    ``backend/api/handlers/skills.py::get_skills_catalog``, independente do
+    registry remoto (D1). Cada subpasta de ``directory`` (default
+    ``~/.vectora/skills-wellknown/``, configurável via
+    ``VECTORA_SKILLS_WELLKNOWN_DIR``) segue o mesmo layout de uma skill
+    instalada — ``SKILL.md`` com frontmatter ``name``/``description``.
+
+    Nunca levanta exceção: pasta ausente devolve lista vazia; subpasta sem
+    ``SKILL.md`` válido é pulada e logada, sem derrubar as demais entradas.
+    """
+    root = directory if directory is not None else _wellknown_dir()
+    if not root.is_dir():
+        return []
+    entries: list[dict] = []
+    for child in sorted(root.iterdir()):
+        if not child.is_dir():
+            continue
+        try:
+            name, description = _read_skill_metadata(child)
+            fm = _parse_frontmatter((child / "SKILL.md").read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.debug("skills: entrada well-known ignorada (%s): %s", child, exc)
+            continue
+        tags_raw = fm.get("tags", "")
+        tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw else []
+        entries.append(
+            {
+                "id": _slugify(name),
+                "name": name,
+                "description": description,
+                "source": str(child),
+                "category": fm.get("category", "local"),
+                "tags": tags,
+            }
+        )
+    return entries
 
 
 def _is_git_url(source: str) -> bool:

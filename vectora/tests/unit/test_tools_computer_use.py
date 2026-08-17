@@ -152,24 +152,15 @@ class TestAprovacaoSempreObrigatoria:
         """Invariante de maior risco do plano: nenhuma tool além desta
         ignora o `permission_mode` da sessão — `bypass`/`auto` normalmente
         nunca pausam, mas `computer_use` sempre pausa."""
-        from langchain.agents.middleware.types import ToolCallRequest
-        from langchain_core.messages import HumanMessage
+        from backend.engine.hitl import _mode_should_interrupt
 
-        from backend.services.middleware import _mode_should_interrupt
-
-        req = ToolCallRequest(
-            tool_call={"name": "computer_use", "args": {}, "id": "x"},
-            tool=None,
-            state={"messages": [HumanMessage(content="tira um print")]},
-            runtime=None,  # ty: ignore[invalid-argument-type]
-        )
         for modo in ("bypass", "auto", "ask", "accept_edits", "plan"):
-            assert _mode_should_interrupt(modo, "computer_use", req) is True
+            assert _mode_should_interrupt(modo, "computer_use", []) is True
 
     def test_esta_em_require_approval(self):
-        from backend.services.middleware import _REQUIRE_APPROVAL
+        from backend.engine.hitl import REQUIRE_APPROVAL
 
-        assert "computer_use" in _REQUIRE_APPROVAL
+        assert "computer_use" in REQUIRE_APPROVAL
 
     def test_registrada_em_all_tools(self):
         from backend.nodes.tools import ALL_TOOLS

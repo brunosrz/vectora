@@ -20,29 +20,12 @@ filesystem/git roda numa git worktree isolada quando a task tem workspace.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Any
 
 import backend.tools.aitl
 from backend.agents._identity import VECTORA_IDENTITY
-from backend.nodes.tools import (
-    BROWSER_TOOLS,
-    FS_TOOLS,
-    GIT_TOOLS,
-    MEMORY_TOOLS,
-    RAG_TOOLS,
-    SEARCH_TOOLS,
-    create_artifact,
-    file_edit,
-    file_read,
-    file_write,
-    git_branch,
-    git_diff,
-    git_log,
-    git_status,
-    grep,
-    list_dir,
-    terminal,
-)
+from backend.tools.groups import resolve_tool_group
 from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.registry import TOOL_REGISTRY
 
@@ -50,17 +33,27 @@ from backend.tools.registry import TOOL_REGISTRY
 @dataclass(frozen=True)
 class Soul:
     """Spec de uma SOUL — traduzida para o dict `SubAgent` do deepagents
-    em ``agent_factory._subagent_specs()``."""
+    em ``agent_factory._subagent_specs()``.
+
+    ``tool_groups`` nomeia grupos de ``backend.tools.groups.TOOL_GROUPS``;
+    ``tools`` resolve esses nomes pro registry nativo e envolve cada
+    ``ToolSpec`` em adapter langchain (``as_langchain_tool``) só no
+    primeiro acesso — mesmo shape ``list[BaseTool]`` que
+    ``agent_factory.py`` já consome, sem mudar o contrato dos callers."""
 
     name: str
     description: str
     system_prompt: str
-    tools: list[Any]
+    tool_groups: list[str]
     needs_worktree_isolation: bool
 
-
-_GIT_READONLY_TOOLS = [git_status, git_log, git_diff, git_branch]
-_FS_READONLY_TOOLS = [file_read, grep, list_dir]
+    @cached_property
+    def tools(self) -> list[Any]:
+        specs: dict[str, Any] = {}
+        for group_name in self.tool_groups:
+            for spec in resolve_tool_group(group_name):
+                specs[spec.name] = spec
+        return [as_langchain_tool(spec) for spec in specs.values()]
 
 
 def _prompt(role_title: str, body: str) -> str:
@@ -233,7 +226,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "indexing/embedding folders (ingest_docs)."
         ),
         system_prompt=_CODER_PROMPT,
-        tools=FS_TOOLS + GIT_TOOLS + MEMORY_TOOLS + RAG_TOOLS + BROWSER_TOOLS,
+        tool_groups=["fs", "git", "memory", "rag", "browser", "aitl"],
         needs_worktree_isolation=True,
     ),
     "search": Soul(
@@ -245,8 +238,8 @@ SOUL_CATALOG: dict[str, Soul] = {
             "verificar notícias ou dados recentes."
         ),
         system_prompt=_SEARCH_PROMPT,
-        # SEARCH_TOOLS já inclui todas as tools de RAG_TOOLS.
-        tools=SEARCH_TOOLS + MEMORY_TOOLS,
+        # grupo "search" já inclui "rag" via includes.
+        tool_groups=["search", "memory", "aitl"],
         needs_worktree_isolation=False,
     ),
     "reviewer": Soul(
@@ -270,7 +263,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "orchestrator delegates to the Coder Agent if the user wants it "
             "applied.",
         ),
-        tools=_GIT_READONLY_TOOLS + _FS_READONLY_TOOLS + RAG_TOOLS,
+        tool_groups=["git_readonly", "fs_readonly", "rag", "aitl"],
         needs_worktree_isolation=False,
     ),
     "tester": Soul(
@@ -293,7 +286,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "not a result. Report the actual pass/fail output, not a summary "
             "of what you expect it to say.",
         ),
-        tools=FS_TOOLS + GIT_TOOLS + MEMORY_TOOLS,
+        tool_groups=["fs", "git", "memory", "aitl"],
         needs_worktree_isolation=True,
     ),
     "devops": Soul(
@@ -313,7 +306,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "fails silently or expensively when guessed rather than verified "
             "against what's actually there.",
         ),
-        tools=FS_TOOLS + GIT_TOOLS,
+        tool_groups=["fs", "git", "aitl"],
         needs_worktree_isolation=True,
     ),
     "writer-docs": Soul(
@@ -336,16 +329,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "you haven't verified in the actual source — read the file with "
             "`file_read` first.",
         ),
-        tools=[
-            file_read,
-            file_edit,
-            file_write,
-            grep,
-            list_dir,
-            create_artifact,
-            *RAG_TOOLS,
-            *MEMORY_TOOLS,
-        ],
+        tool_groups=["fs_write", "rag", "memory", "aitl"],
         needs_worktree_isolation=False,
     ),
     "data-analyst": Soul(
@@ -369,7 +353,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "estimate — if a script didn't run or a file didn't parse, say so "
             "instead of guessing at the answer.",
         ),
-        tools=[*RAG_TOOLS, terminal, *_FS_READONLY_TOOLS, *MEMORY_TOOLS],
+        tool_groups=["rag", "terminal_only", "fs_readonly", "memory", "aitl"],
         needs_worktree_isolation=False,
     ),
     "security-auditor": Soul(
@@ -392,7 +376,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "without a reproducible scenario is a hunch, not an audit result — "
             "state your confidence honestly instead of padding the list.",
         ),
-        tools=_GIT_READONLY_TOOLS + _FS_READONLY_TOOLS + RAG_TOOLS,
+        tool_groups=["git_readonly", "fs_readonly", "rag", "aitl"],
         needs_worktree_isolation=False,
     ),
     "browser-qa": Soul(
@@ -416,7 +400,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "reporting success. A screenshot or console log is worth more in "
             "your report than a description of what you expect to be true.",
         ),
-        tools=BROWSER_TOOLS + _FS_READONLY_TOOLS,
+        tool_groups=["browser-qa", "fs-readonly"],
         needs_worktree_isolation=False,
     ),
     "planner": Soul(
@@ -438,7 +422,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "the goal. Flag genuine open questions instead of guessing an "
             "answer to sound complete.",
         ),
-        tools=RAG_TOOLS + MEMORY_TOOLS + [create_artifact],
+        tool_groups=["rag", "memory", "planner"],
         needs_worktree_isolation=False,
     ),
 }

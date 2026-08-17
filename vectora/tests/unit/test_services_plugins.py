@@ -87,7 +87,24 @@ def test_build_connection_stdio():
     conn = build_connection(
         McpServer(name="x", transport="stdio", command="cmd", args=["--a"])
     )
-    assert conn == {"transport": "stdio", "command": "cmd", "args": ["--a"]}
+    assert conn == {
+        "transport": "stdio",
+        "command": "cmd",
+        "args": ["--a"],
+        "env_vars": [],
+    }
+
+
+def test_build_connection_stdio_repassa_env_vars_declaradas():
+    conn = build_connection(
+        McpServer(
+            name="x",
+            transport="stdio",
+            command="cmd",
+            env_vars=["MEU_TOKEN_DE_SERVICO"],
+        )
+    )
+    assert conn["env_vars"] == ["MEU_TOKEN_DE_SERVICO"]
 
 
 def test_build_connection_sse():

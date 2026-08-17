@@ -4,7 +4,6 @@ configurado e que os componentes-chave funcionam como esperado.
 Cobertura:
     - VectoraContext: construção correta a partir de config dict
     - Middleware stack: HITL + Summarization montados na ordem certa
-    - HarnessProfiles: anthropic/google_genai/ollama registrados
     - FilesystemPermission: regras DENY/ALLOW/INTERRUPT
     - Memory tools: namespace correto + store API
     - backends.build_store: InMemoryStore sem index quando sem API key
@@ -73,71 +72,6 @@ class TestVectoraContext:
 
         ctx = ctx_from_config({"configurable": {"language": "en-US"}})
         assert ctx.locale == "en-US"
-
-
-# ---------------------------------------------------------------------------
-# Middleware stack
-# ---------------------------------------------------------------------------
-
-
-class TestMiddlewareStack:
-    def test_stack_sempre_tem_hitl_dinamico(self):
-        """HITL dinâmico: o stack SEMPRE inclui HumanInTheLoopMiddleware — não há
-        mais variação por modo na compilação. O gate por modo (incluindo
-        auto/bypass que não pausam) acontece em runtime no _dynamic_hitl_when
-        (coberto em test_services_middleware.py)."""
-        from backend.services.middleware import build_middleware_stack
-
-        stack = build_middleware_stack()
-        names = [type(m).__name__ for m in stack]
-        assert "HumanInTheLoopMiddleware" in names
-
-    def test_stack_nao_aceita_permission_mode(self):
-        """Erro/borda: build_middleware_stack não recebe mais permission_mode —
-        passá-lo é TypeError (protege contra caller compile-time ressurgir)."""
-        import pytest
-
-        from backend.services.middleware import build_middleware_stack
-
-        with pytest.raises(TypeError):
-            build_middleware_stack(permission_mode="bypass")  # type: ignore[call-arg]  # ty: ignore[unknown-argument]
-
-    def test_no_duplicate_summarization_middleware(self):
-        """build_middleware_stack não adiciona SummarizationMiddleware —
-        create_deep_agent já o inclui incondicionalmente no stack base, e
-        adicionar outro causa AssertionError de middleware duplicado."""
-        from backend.services.middleware import build_middleware_stack
-
-        stack = build_middleware_stack()
-        names = [type(m).__name__ for m in stack]
-        assert not any("ummariz" in n for n in names)
-
-
-# ---------------------------------------------------------------------------
-# HarnessProfiles
-# ---------------------------------------------------------------------------
-
-
-class TestHarnessProfiles:
-    def test_register_profiles_idempotent(self):
-        """_register_profiles() pode ser chamado múltiplas vezes sem erro."""
-        from backend.workspace.profiles import _register_profiles
-
-        _register_profiles()
-        _register_profiles()  # segunda chamada: sem exceção
-
-    def test_profiles_cover_providers(self):
-        """Os três providers principais devem ter perfis registrados."""
-        from backend.workspace.profiles import _register_profiles
-
-        with patch("deepagents.register_harness_profile") as mock_reg:
-            _register_profiles()
-        keys = [call.args[0] for call in mock_reg.call_args_list]
-        assert "anthropic" in keys
-        # Chave deve bater com o provider resolvido pelo LangChain
-        # (ChatGoogleGenerativeAI → "google_genai"), não com o id de settings.
-        assert "google_genai" in keys
-        assert "ollama" in keys
 
 
 # ---------------------------------------------------------------------------
@@ -367,14 +301,14 @@ class TestSubagentSpecs:
                 name="coder",
                 description="d",
                 system_prompt="s",
-                tools=[fake_tool, fake_tool2],
+                tool_groups=[],
                 needs_worktree_isolation=True,
             ),
             "search": Soul(
                 name="search",
                 description="d",
                 system_prompt="s",
-                tools=[],
+                tool_groups=[],
                 needs_worktree_isolation=False,
             ),
         }
@@ -411,14 +345,14 @@ class TestSubagentSpecs:
                 name="coder",
                 description="d",
                 system_prompt="s",
-                tools=[fake_tool, fake_tool2],
+                tool_groups=[],
                 needs_worktree_isolation=True,
             ),
             "search": Soul(
                 name="search",
                 description="d",
                 system_prompt="s",
-                tools=[],
+                tool_groups=[],
                 needs_worktree_isolation=False,
             ),
         }

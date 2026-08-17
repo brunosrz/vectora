@@ -66,6 +66,10 @@ class PtySession:
     processo encerra.
     """
 
+    #: Tamanho máximo do scrollback retido por sessão — limita memória por PTY
+    #: de longa duração sem truncar o replay em reconexões normais.
+    SCROLLBACK_MAX_BYTES = 64 * 1024
+
     def __init__(
         self,
         terminal_id: str,
@@ -82,6 +86,10 @@ class PtySession:
         # filas registradas, garantindo que múltiplas abas no mesmo
         # terminal_id recebam a saída de forma independente.
         self._subscribers: list[asyncio.Queue[bytes | None]] = []
+        # Buffer circular do output já emitido — permite que um WS que
+        # reconecta (reload de página, troca de aba) receba o scroll-back
+        # acumulado antes de passar a receber broadcast ao vivo.
+        self._scrollback = bytearray()
         self._closed = False
         self._read_task: asyncio.Task | None = None
 
@@ -195,14 +203,29 @@ class PtySession:
             await self._broadcast(None)
 
     async def _broadcast(self, data: bytes | None) -> None:
+        if data is not None:
+            self._scrollback.extend(data)
+            overflow = len(self._scrollback) - self.SCROLLBACK_MAX_BYTES
+            if overflow > 0:
+                del self._scrollback[:overflow]
         for q in self._subscribers:
             with contextlib.suppress(asyncio.QueueFull):
                 q.put_nowait(data)
 
     def subscribe(self) -> asyncio.Queue[bytes | None]:
         """Registra um novo consumidor — cada WS conectado a este terminal
-        chama isso pra ganhar sua própria fila (broadcast, não round-robin)."""
+        chama isso pra ganhar sua própria fila (broadcast, não round-robin).
+
+        Se já há scroll-back acumulado (reconexão a uma sessão que já
+        produziu output), o snapshot atual do buffer entra como primeiro
+        item da fila — o consumidor lê o histórico antes de qualquer chunk
+        ao vivo. A captura e o registro acontecem sem `await` entre eles,
+        então nenhum broadcast concorrente pode intercalar duplicando ou
+        pulando bytes.
+        """
         q: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=4096)
+        if self._scrollback:
+            q.put_nowait(bytes(self._scrollback))
         self._subscribers.append(q)
         return q
 

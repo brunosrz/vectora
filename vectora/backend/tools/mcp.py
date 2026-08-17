@@ -9,7 +9,10 @@ por-usuário (servidores configurados via marketplace).
 
 Subprocess stdio nunca herda `os.environ` inteiro do processo pai — só um
 allowlist mínimo (`_SAFE_SUBPROCESS_ENV_KEYS`) é repassado, fechando o vazamento
-de API keys de LLM/tokens pro servidor MCP local.
+de API keys de LLM/tokens pro servidor MCP local. Um servidor específico pode
+declarar variáveis extras necessárias via `env_vars` na conexão (`McpServer.env_vars`
+em `backend/workspace/plugins.py` ou `settings.mcp_command_env_vars`) — só essas,
+por nome, se somam ao allowlist mínimo.
 """
 
 from __future__ import annotations
@@ -55,9 +58,14 @@ _SAFE_SUBPROCESS_ENV_KEYS = frozenset(
 )
 
 
-def _safe_subprocess_env() -> dict[str, str]:
-    """Allowlist do ambiente do processo pai — nunca `os.environ` cru."""
-    return {k: v for k, v in os.environ.items() if k in _SAFE_SUBPROCESS_ENV_KEYS}
+def _safe_subprocess_env(extra_keys: frozenset[str] | None = None) -> dict[str, str]:
+    """Allowlist do ambiente do processo pai — nunca `os.environ` cru.
+
+    `extra_keys` é a lista de variáveis que o servidor MCP específico
+    declarou precisar (``McpServer.env_vars`` / `settings.mcp_command_env_vars`)
+    — só essas, além do mínimo pra o subprocess rodar, atravessam."""
+    keys = _SAFE_SUBPROCESS_ENV_KEYS | (extra_keys or frozenset())
+    return {k: v for k, v in os.environ.items() if k in keys}
 
 
 class VectoraMCPClient:
@@ -112,10 +120,11 @@ class VectoraMCPClient:
     ) -> ClientSession:
         transport = cfg["transport"]
         if transport == "stdio":
+            extra_keys = frozenset(cfg.get("env_vars") or ())
             params = StdioServerParameters(
                 command=cfg["command"],
                 args=cfg.get("args") or [],
-                env=_safe_subprocess_env(),
+                env=_safe_subprocess_env(extra_keys),
             )
             read, write = await self._stack.enter_async_context(stdio_client(params))
         elif transport == "sse":
@@ -207,6 +216,7 @@ def _build_connections() -> dict[str, dict[str, Any]]:
             "transport": "stdio",
             "command": settings.mcp_command,
             "args": settings.mcp_command_args or [],
+            "env_vars": settings.mcp_command_env_vars or [],
         }
 
     return connections

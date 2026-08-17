@@ -50,6 +50,17 @@ class TestSafeSubprocessEnv:
         assert "VECTORA_ANTHROPIC_API_KEY" not in env
         assert "PATH" in env
 
+    def test_extra_keys_declaradas_passam_mas_sensivel_nao_declarada_nao_vaza(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("MEU_TOKEN_DE_SERVICO", "valor-necessario")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-nao-deveria-vazar")
+        monkeypatch.setenv("PATH", "/usr/bin")
+        env = _safe_subprocess_env(frozenset({"MEU_TOKEN_DE_SERVICO"}))
+        assert env["MEU_TOKEN_DE_SERVICO"] == "valor-necessario"
+        assert "PATH" in env
+        assert "OPENAI_API_KEY" not in env
+
 
 class TestVectoraMCPClientReal:
     """Conecta de verdade num subprocesso stdio (dummy_mcp_server.py)."""
@@ -97,6 +108,35 @@ class TestVectoraMCPClientReal:
                 "read_env_var", {"name": "VECTORA_SEGREDO_DE_TESTE"}
             )
             assert result == "ausente"
+        finally:
+            await client.aclose()
+
+    async def test_env_vars_declaradas_atravessam_mas_outra_sensivel_nao(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("MEU_TOKEN_DE_SERVICO", "valor-necessario")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-nao-deveria-vazar")
+        client = VectoraMCPClient()
+        try:
+            await client.connect(
+                {
+                    "dummy": {
+                        "transport": "stdio",
+                        "command": sys.executable,
+                        "args": [_DUMMY_SERVER],
+                        "env_vars": ["MEU_TOKEN_DE_SERVICO"],
+                    }
+                }
+            )
+            result_declarada = await client.call_tool(
+                "read_env_var", {"name": "MEU_TOKEN_DE_SERVICO"}
+            )
+            assert result_declarada == "valor-necessario"
+
+            result_sensivel = await client.call_tool(
+                "read_env_var", {"name": "OPENAI_API_KEY"}
+            )
+            assert result_sensivel == "ausente"
         finally:
             await client.aclose()
 

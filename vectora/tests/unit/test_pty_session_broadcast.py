@@ -57,17 +57,32 @@ async def test_dois_subscribers_recebem_todos_os_chunks() -> None:
 
 
 @pytest.mark.asyncio
-async def test_subscriber_tardio_nao_recebe_chunks_anteriores() -> None:
-    """subscribe() depois do read-loop já ter rodado não recebe nada — a
-    fila é criada vazia, sem replay do histórico (mesma limitação que já
-    existia com o leitor único)."""
+async def test_subscriber_tardio_recebe_scrollback_acumulado() -> None:
+    """subscribe() depois do read-loop já ter rodado recebe o scroll-back
+    acumulado como primeiro item da fila — cobre o caso de reconexão (reload
+    de página) a uma sessão PTY que já produziu output. Borda: o buffer é
+    limitado a `SCROLLBACK_MAX_BYTES`, então output que excede o limite é
+    truncado a partir do início (mantém só o mais recente)."""
     session = _make_session([b"a", b"b"])
     q1 = session.subscribe()
     await session._read_loop()
     await _drain(q1)
 
     q2 = session.subscribe()
-    assert q2.empty()
+    assert await q2.get() == b"ab"
+
+    scrollback_max_bytes = 64 * 1024
+    big_session = _make_session([b"x" * scrollback_max_bytes, b"y"])
+    q3 = big_session.subscribe()
+    await big_session._read_loop()
+    await _drain(q3)
+
+    q4 = big_session.subscribe()
+    replayed = await q4.get()
+    assert replayed is not None
+    assert len(replayed) == scrollback_max_bytes
+    assert replayed.endswith(b"y")
+    assert not replayed.startswith(b"x" * scrollback_max_bytes)
 
 
 @pytest.mark.asyncio

@@ -84,18 +84,18 @@ class TestCrawlEMapExigemAprovacao:
     def test_estao_em_require_approval(self):
         """Varrer um site inteiro gasta créditos por página e bate no alvo —
         é caro o suficiente pra pedir confirmação."""
-        from backend.services.middleware import _REQUIRE_APPROVAL
+        from backend.engine.hitl import REQUIRE_APPROVAL
 
-        assert "web_crawl" in _REQUIRE_APPROVAL
-        assert "web_map" in _REQUIRE_APPROVAL
+        assert "web_crawl" in REQUIRE_APPROVAL
+        assert "web_map" in REQUIRE_APPROVAL
 
     def test_busca_simples_continua_sem_hitl(self):
         """Erro/borda: HITL em `web_search`/`fetch_url` seria fricção sem
         ganho — são baratas e o agente as usa o tempo todo."""
-        from backend.services.middleware import _REQUIRE_APPROVAL
+        from backend.engine.hitl import REQUIRE_APPROVAL
 
-        assert "web_search" not in _REQUIRE_APPROVAL
-        assert "fetch_url" not in _REQUIRE_APPROVAL
+        assert "web_search" not in REQUIRE_APPROVAL
+        assert "fetch_url" not in REQUIRE_APPROVAL
 
 
 class TestResearchAssincrono:

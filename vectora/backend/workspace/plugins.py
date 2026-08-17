@@ -79,6 +79,10 @@ class McpServer(BaseModel):
     command: str = ""  # usado por stdio
     args: list[str] = []
     url: str = ""  # usado por sse/http
+    env_vars: list[str] = []
+    """Nomes de variáveis de ambiente do processo Vectora repassadas ao
+    subprocess stdio deste servidor, além do allowlist mínimo (PATH/HOME/
+    etc.). Ignorado por sse/http."""
 
 
 # ---------------------------------------------------------------------------
@@ -150,6 +154,7 @@ def build_connection(server: McpServer) -> dict:
             "transport": "stdio",
             "command": server.command,
             "args": list(server.args),
+            "env_vars": list(server.env_vars),
         }
     if server.transport == "sse":
         return {"transport": "sse", "url": server.url}

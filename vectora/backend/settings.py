@@ -536,6 +536,12 @@ class Settings(BaseSettings):
     mcp_command_args: list[str] | None = None
     """MCP server command arguments."""
 
+    mcp_command_env_vars: list[str] | None = None
+    """Nomes de variáveis de ambiente do processo Vectora repassadas ao
+    subprocess MCP stdio, além do allowlist mínimo (PATH/HOME/etc.). Só as
+    variáveis explicitamente listadas aqui atravessam — nunca `os.environ`
+    inteiro."""
+
     mcp_timeout: int = 30
     """MCP request timeout in seconds."""
 
