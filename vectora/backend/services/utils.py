@@ -25,6 +25,8 @@ if TYPE_CHECKING:
 
     from langchain_core.language_models.base import BaseLanguageModel
 
+    from backend.llm.base import ChatClient
+
 
 def _get_env_with_default(name: str, default: str) -> str:
     """Get environment variable with a default value."""
@@ -304,6 +306,64 @@ def load_llm(model_id: str = "") -> BaseLanguageModel:
         raise TypeError(msg)
 
     return model
+
+
+def load_native_llm(model_id: str = "") -> ChatClient:
+    """Carrega o ``ChatClient`` nativo do provider ativo.
+
+    Mesma resolução de provider/modelo que ``load_llm`` (env > runtime_settings
+    > defaults), mas devolve um ``ChatClient`` (``backend/llm/base.py``) em vez
+    de ``BaseChatModel`` — o dispatch nativo já consome ``ChatClient``, e os
+    caminhos auxiliares (título de thread, curator, consolidação de memória,
+    context graph, learning, smart approval) migram pra cá até ``load_llm``
+    não ter mais consumidor e ser removido junto com os 5 ``chat.py`` legados.
+    """
+    import os
+
+    from backend.workspace.runtime_settings import runtime_settings
+
+    if model_id:
+        prov, _sep, name = model_id.partition(":")
+        provider = prov.replace("-", "_")
+        spec = _PROVIDER_SPEC.get(provider)
+        env_var = spec[0] if spec else ""
+        model_name = (
+            name
+            or (os.getenv(env_var) if env_var else None)
+            or (spec[1] if spec else "")
+        )
+    else:
+        provider = (
+            os.getenv("LLM_PROVIDER") or runtime_settings.active_provider
+        ).replace("-", "_")
+        spec = _PROVIDER_SPEC.get(provider)
+        if spec is None:
+            msg = (
+                f"LLM_PROVIDER desconhecido: {provider!r}. Suportados: "
+                "google_genai, openai, anthropic, cohere, ollama, openrouter"
+            )
+            raise ValueError(msg)
+        env_var, default_model = spec
+        active = (
+            runtime_settings.active_model
+            if runtime_settings.active_provider.replace("-", "_") == provider
+            else ""
+        )
+        model_name = os.getenv(env_var) or active or default_model
+
+    if not model_name and provider == "nine_router":
+        from backend.settings import settings
+
+        model_name = settings.nine_router_default_model or ""
+
+    if not model_name:
+        msg = f"Modelo de LLM não resolvido para provider {provider!r}."
+        raise ValueError(msg)
+
+    mid = f"{provider}:{model_name}"
+    from backend.llm.fallback_chat_client import load_chat_client
+
+    return load_chat_client(mid)
 
 
 @asynccontextmanager

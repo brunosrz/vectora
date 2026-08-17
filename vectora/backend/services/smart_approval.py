@@ -109,16 +109,17 @@ def is_allowlisted(workspace_id: str, tool_name: str, args: dict) -> bool:
 
 async def _default_ask_llm(tool_name: str, args: dict) -> bool:
     """Avaliador auxiliar de verdade — modelo leve classifica o comando."""
-    from backend.services.utils import load_llm
+    from backend.services.utils import load_native_llm
+    from backend.vtypes.message import MessageRole, text_message
 
-    model = load_llm()
-    resposta = await model.ainvoke(
+    model = load_native_llm()
+    resposta = await model.agenerate(
         [
-            ("system", _PROMPT_SISTEMA),
-            ("human", f"tool: {tool_name}\nargs: {args}"),
+            text_message(MessageRole.SYSTEM, _PROMPT_SISTEMA),
+            text_message(MessageRole.USER, f"tool: {tool_name}\nargs: {args}"),
         ]
     )
-    texto = str(getattr(resposta, "content", "") or "").strip().upper()
+    texto = resposta.text().strip().upper()
     return texto.startswith("SAFE")
 
 

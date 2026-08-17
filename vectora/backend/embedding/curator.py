@@ -14,6 +14,10 @@ A recuperação/decisão/reranking do RAG em runtime mora nas tools
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from backend.llm.base import ChatClient
 
 logger = logging.getLogger(__name__)
 
@@ -42,16 +46,16 @@ async def _list_collections() -> list[str]:
 # RAG Curator (B4)
 # ---------------------------------------------------------------------------
 
-_curator_llm = None
+_curator_llm: ChatClient | None = None
 
 
-def _get_curator_llm() -> object:
-    """LLM singleton para síntese do curator (plain, sem structured output)."""
+def _get_curator_llm() -> ChatClient:
+    """LLM singleton para síntese do curator (plain, ChatClient nativo)."""
     global _curator_llm
     if _curator_llm is None:
-        from backend.services.utils import load_llm
+        from backend.services.utils import load_native_llm
 
-        _curator_llm = load_llm()
+        _curator_llm = load_native_llm()
         logger.debug("curator LLM inicializado")
     return _curator_llm
 
@@ -109,22 +113,23 @@ async def curate_workspace_knowledge(workspace_id: str) -> str:
 
         # Chamada ao LLM (1 call por flush)
         llm = _get_curator_llm()
-        from langchain_core.messages import HumanMessage, SystemMessage
+        from backend.vtypes.message import MessageRole, text_message
 
-        result = await llm.ainvoke(  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+        result = await llm.agenerate(
             [
-                SystemMessage(
-                    content=(
+                text_message(
+                    MessageRole.SYSTEM,
+                    (
                         "Você é o curator de conhecimento do Vectora. "
                         "Sua tarefa é manter o MANIFEST.md do workspace atualizado "
                         "com um resumo claro do que está indexado na base de conhecimento. "
                         "Seja conciso, preciso e em português."
-                    )
+                    ),
                 ),
-                HumanMessage(content=prompt),
+                text_message(MessageRole.USER, prompt),
             ]
         )
-        manifest_content = str(getattr(result, "content", "") or "").strip()
+        manifest_content = result.text().strip()
         if not manifest_content:
             return f"workspace {workspace_id}: LLM não retornou conteúdo"
 

@@ -126,13 +126,12 @@ async def _fetch_recent_threads(
 
 
 async def _invoke_llm(prompt: str) -> Any:
-    """Invoca o LLM padrão com o prompt de consolidação."""
-    from langchain_core.messages import HumanMessage
+    """Invoca o LLM padrão com o prompt de consolidação — retorna VMessage nativo."""
+    from backend.services.utils import load_native_llm
+    from backend.vtypes.message import MessageRole, text_message
 
-    from backend.services.utils import load_llm
-
-    llm = load_llm()
-    return await llm.ainvoke([HumanMessage(content=prompt)])
+    llm = load_native_llm()
+    return await llm.agenerate([text_message(MessageRole.USER, prompt)])
 
 
 # ---------------------------------------------------------------------------
@@ -281,7 +280,7 @@ async def consolidate_memory(user_id: str) -> None:
 
         prompt = _build_consolidation_prompt(message_lists)
         response = await _invoke_llm(prompt)
-        raw = _parse_llm_output(getattr(response, "content", "") or "")
+        raw = _parse_llm_output(response.text())
 
         if not raw:
             logger.warning(

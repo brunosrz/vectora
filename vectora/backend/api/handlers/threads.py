@@ -879,11 +879,10 @@ async def _ai_title(user_text: str, assistant_text: str) -> str:
     """
     fallback = " ".join(user_text.split()[:6]).strip(" .\"'") or "Nova conversa"
     try:
-        from langchain_core.messages import HumanMessage, SystemMessage
+        from backend.services.utils import load_native_llm
+        from backend.vtypes.message import MessageRole, text_message
 
-        from backend.services.utils import load_llm
-
-        llm = load_llm()
+        llm = load_native_llm()
         prompt = (
             "Gere um título curto (no máximo 6 palavras, sem aspas e sem ponto "
             "final) que resuma o tema desta conversa, no mesmo idioma do "
@@ -892,13 +891,15 @@ async def _ai_title(user_text: str, assistant_text: str) -> str:
             f"Assistente: {assistant_text[:500]}\n\n"
             "Título:"
         )
-        resp = await llm.ainvoke(
+        resp = await llm.agenerate(
             [
-                SystemMessage(content="Você nomeia conversas de forma concisa."),
-                HumanMessage(content=prompt),
+                text_message(
+                    MessageRole.SYSTEM, "Você nomeia conversas de forma concisa."
+                ),
+                text_message(MessageRole.USER, prompt),
             ]
         )
-        raw = resp.content if isinstance(resp.content, str) else str(resp.content)
+        raw = resp.text()
         title = raw.strip().strip("\"'").splitlines()[0].strip()
         # Limita a 6 palavras e remove pontuação final.
         title = " ".join(title.split()[:6]).strip(" .\"'")

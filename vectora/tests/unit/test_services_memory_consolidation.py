@@ -191,10 +191,10 @@ class TestApplyConsolidationSections:
 # ---------------------------------------------------------------------------
 
 
-def _fake_llm_response(content: str) -> MagicMock:
-    response = MagicMock()
-    response.content = content
-    return response
+def _fake_llm_response(content: str):
+    from backend.vtypes.message import MessageRole, text_message
+
+    return text_message(MessageRole.ASSISTANT, content)
 
 
 @pytest.mark.asyncio
