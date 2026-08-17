@@ -25,6 +25,11 @@ from typing import Any
 from backend.sandbox.dry_run import build_bwrap_command
 from backend.sandbox.linux import build_seccomp_filter
 from backend.sandbox.policy import SandboxPolicy, detect_wsl2
+from backend.sandbox.windows import (
+    assign_job_object_kill_on_close,
+    build_soft_env,
+    close_job_handle,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +89,9 @@ class JailedWorker:
     last_used: float = field(default_factory=time.monotonic)
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     _next_id: int = field(default=0, init=False)
+    #: Handle do Job Object do Windows no modo "soft" (fallback sem bwrap) —
+    #: fechado em `close()`/`_kill_now()` pra derrubar a árvore de processos.
+    job_handle: int | None = None
 
     async def request(
         self, op: str, timeout_s: float = DEFAULT_REQUEST_TIMEOUT_S, **kwargs: Any
@@ -123,6 +131,8 @@ class JailedWorker:
                 self.proc.kill()
             with contextlib.suppress(Exception):
                 await self.proc.wait()
+        close_job_handle(self.job_handle)
+        self.job_handle = None
 
     def is_alive(self) -> bool:
         return self.proc.returncode is None
@@ -135,6 +145,8 @@ class JailedWorker:
             except TimeoutError:
                 self.proc.kill()
                 await self.proc.wait()
+        close_job_handle(self.job_handle)
+        self.job_handle = None
 
 
 class WorkspaceJailManager:
@@ -161,35 +173,55 @@ class WorkspaceJailManager:
     async def _spawn(
         self, workspace_id: str, workspace_dir: str, policy: SandboxPolicy
     ) -> JailedWorker:
+        soft_env: dict[str, str] | None = None
+        cwd: str | None = None
+
         if _is_windows():
-            argv = await self._build_wsl2_argv(workspace_dir, policy)
+            try:
+                argv = await self._build_wsl2_argv(workspace_dir, policy)
+            except WorkerSpawnError as exc:
+                # Sem WSL2 elegível ou sem bwrap dentro da distro: em vez de
+                # bloquear edição/execução, degrada pro sandbox "soft" nativo
+                # do Windows (menos isolamento, melhor que nada).
+                logger.warning(
+                    "sandbox: %s — degradando pro sandbox soft nativo do "
+                    "Windows (menos isolamento, mas não bloqueia edição/execução)",
+                    exc,
+                )
+                argv = [sys.executable, "-m", "backend.sandbox.worker"]
+                cwd = workspace_dir
+                soft_env = build_soft_env(self._soft_worker_env(policy))
         else:
             argv = build_bwrap_command(
                 policy,
                 workspace_dir,
                 [sys.executable, "-m", "backend.sandbox.worker"],
             )
-        # Filtro seccomp real (0.4) — negando DENIED_SYSCALLS via libseccomp,
-        # não só documental. `None` (libseccomp ausente) roda sem o filtro,
-        # namespaces do bwrap continuam valendo (never blocks execution).
+
+        # seccomp (libseccomp) só faz sentido no caminho bwrap (Linux/WSL2);
+        # o sandbox soft do Windows não tem libseccomp nem syscall equivalente.
         seccomp_fd: int | None = None
-        try:
-            bpf = build_seccomp_filter()
-        except Exception:
-            logger.warning("sandbox: falha ao compilar filtro seccomp — ignorando")
-            bpf = None
-        if bpf is not None:
-            read_fd, write_fd = os.pipe()
-            os.write(write_fd, bpf)
-            os.close(write_fd)
-            seccomp_fd = read_fd
-            argv = [argv[0], "--seccomp", str(read_fd), *argv[1:]]
+        if soft_env is None:
+            try:
+                bpf = build_seccomp_filter()
+            except Exception:
+                logger.warning("sandbox: falha ao compilar filtro seccomp — ignorando")
+                bpf = None
+            if bpf is not None:
+                read_fd, write_fd = os.pipe()
+                os.write(write_fd, bpf)
+                os.close(write_fd)
+                seccomp_fd = read_fd
+                argv = [argv[0], "--seccomp", str(read_fd), *argv[1:]]
+
         try:
             proc = await asyncio.create_subprocess_exec(
                 *argv,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                cwd=cwd,
+                env=soft_env,
                 pass_fds=(seccomp_fd,) if seccomp_fd is not None else (),
             )
         except FileNotFoundError as exc:
@@ -208,7 +240,20 @@ class WorkspaceJailManager:
             if seccomp_fd is not None:
                 with contextlib.suppress(OSError):
                     os.close(seccomp_fd)
-        return JailedWorker(workspace_id=workspace_id, proc=proc)
+
+        job_handle: int | None = None
+        if soft_env is not None and proc.pid:
+            job_handle = assign_job_object_kill_on_close(proc.pid)
+        return JailedWorker(workspace_id=workspace_id, proc=proc, job_handle=job_handle)
+
+    @staticmethod
+    def _soft_worker_env(policy: SandboxPolicy) -> dict[str, str]:
+        """Env do worker "soft" do Windows — sinaliza o modo soft e propaga o
+        perfil de lockdown (rlimits é no-op no Windows, mas mantém o contrato)."""
+        return {
+            "VECTORA_SANDBOX_SOFT": "1",
+            "VECTORA_SANDBOX_LOCKDOWN": "1" if policy.lockdown else "0",
+        }
 
     async def _build_wsl2_argv(
         self, workspace_dir: str, policy: SandboxPolicy

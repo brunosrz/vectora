@@ -242,35 +242,54 @@ class TestWsl2Spawn:
         assert wj.sys.executable not in argv
 
     @pytest.mark.asyncio
-    async def test_sem_wsl2_disponivel_falha_com_mensagem_acionavel(self, monkeypatch):
-        spawn_mock = AsyncMock()
+    async def test_sem_wsl2_faz_fallback_pro_sandbox_soft(self, monkeypatch):
+        """Sem WSL2 elegível: não bloqueia — degrada pro sandbox soft nativo
+        do Windows (worker em subprocess puro, env limpo, cwd no workspace)."""
+        proc = _fake_proc()
+        spawn_mock = AsyncMock(return_value=proc)
         monkeypatch.setattr(wj.asyncio, "create_subprocess_exec", spawn_mock)
         monkeypatch.setattr(wj, "detect_wsl2", AsyncMock(return_value=None))
+        monkeypatch.setattr(wj, "assign_job_object_kill_on_close", lambda pid: 1234)
         manager = wj.WorkspaceJailManager()
 
-        with pytest.raises(wj.WorkerSpawnError, match="WSL2"):
-            await manager.get_or_spawn(
-                "ws-1", r"C:\Users\dev\projeto", SandboxPolicy(enabled=True)
-            )
-        spawn_mock.assert_not_awaited()
+        worker = await manager.get_or_spawn(
+            "ws-1", r"C:\Users\dev\projeto", SandboxPolicy(enabled=True)
+        )
+
+        assert spawn_mock.await_args is not None
+        argv = spawn_mock.await_args.args
+        assert argv[0] == wj.sys.executable
+        assert argv[1:3] == ("-m", "backend.sandbox.worker")
+        assert "bwrap" not in argv
+        kwargs = spawn_mock.await_args.kwargs
+        assert kwargs["cwd"] == r"C:\Users\dev\projeto"
+        assert kwargs["env"]["VECTORA_SANDBOX_SOFT"] == "1"
+        assert kwargs["pass_fds"] == ()
+        assert worker.job_handle == 1234
 
     @pytest.mark.asyncio
-    async def test_wsl2_disponivel_mas_sem_bwrap_dentro_da_distro_falha_com_mensagem_acionavel(
+    async def test_wsl2_sem_bwrap_dentro_da_distro_faz_fallback_pro_soft(
         self, monkeypatch
     ):
-        spawn_mock = AsyncMock()
+        """WSL2 presente mas sem bwrap: idem — fallback soft em vez de bloquear."""
+        proc = _fake_proc()
+        spawn_mock = AsyncMock(return_value=proc)
         monkeypatch.setattr(wj.asyncio, "create_subprocess_exec", spawn_mock)
         monkeypatch.setattr(wj, "detect_wsl2", AsyncMock(return_value="Ubuntu"))
         monkeypatch.setattr(
             wj, "_bwrap_available_in_distro", AsyncMock(return_value=False)
         )
+        monkeypatch.setattr(wj, "assign_job_object_kill_on_close", lambda pid: 5678)
         manager = wj.WorkspaceJailManager()
 
-        with pytest.raises(wj.WorkerSpawnError, match="bubblewrap"):
-            await manager.get_or_spawn(
-                "ws-1", r"C:\Users\dev\projeto", SandboxPolicy(enabled=True)
-            )
-        spawn_mock.assert_not_awaited()
+        worker = await manager.get_or_spawn(
+            "ws-1", r"C:\Users\dev\projeto", SandboxPolicy(enabled=True)
+        )
+
+        assert spawn_mock.await_args is not None
+        kwargs = spawn_mock.await_args.kwargs
+        assert kwargs["env"]["VECTORA_SANDBOX_SOFT"] == "1"
+        assert worker.job_handle == 5678
 
 
 @pytest.mark.asyncio
