@@ -13,19 +13,20 @@ from __future__ import annotations
 
 import logging
 
-from backend.nodes.tools import ALL_TOOLS
+from backend.nodes.tools import ALL_TOOL_SPECS
 from backend.rbac import tool_policy
+from backend.tools.registry import ToolSpec
 from backend.workspace.plugins import get_user_mcp_tools
 
 logger = logging.getLogger(__name__)
 
 
-async def resolve_tools(user_id: str | None) -> list:
+async def resolve_tools(user_id: str | None) -> list[ToolSpec]:
     """Retorna o toolset efetivo do usuário (built-ins permitidas + MCP)."""
     if not user_id or user_id == "local":
-        return list(ALL_TOOLS)
+        return list(ALL_TOOL_SPECS)
 
-    builtins = [t for t in ALL_TOOLS if tool_policy.is_allowed(user_id, t.name)]
+    builtins = [t for t in ALL_TOOL_SPECS if tool_policy.is_allowed(user_id, t.name)]
 
     try:
         mcp_tools = await get_user_mcp_tools(user_id)

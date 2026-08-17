@@ -19,7 +19,7 @@ class _FakeTool:
 @pytest.fixture
 def fake_all_tools(monkeypatch):
     tools = [_FakeTool("file_read"), _FakeTool("terminal"), _FakeTool("grep")]
-    monkeypatch.setattr(tool_resolver, "ALL_TOOLS", tools)
+    monkeypatch.setattr(tool_resolver, "ALL_TOOL_SPECS", tools)
     return tools
 
 

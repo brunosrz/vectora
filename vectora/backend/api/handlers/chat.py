@@ -1061,23 +1061,19 @@ async def get_tools(http_request: Request) -> GetToolsResponse:
         return GetToolsResponse(tools=[])
 
     tools: list[ToolSchema] = []
-    for t in resolved:
-        meta = getattr(t, "extras", None) or getattr(t, "metadata", None) or {}
-        render_hint = meta.get("render_hint", "json")
-
+    for spec in resolved:
         args_schema = "{}"
-        if hasattr(t, "args_schema") and t.args_schema:
-            with contextlib.suppress(Exception):
-                args_schema = json.dumps(t.args_schema.model_json_schema())
+        with contextlib.suppress(Exception):
+            args_schema = json.dumps(spec.args_model.model_json_schema())
 
         tools.append(
             ToolSchema(
-                name=t.name,
-                description=t.description or "",
-                render_hint=render_hint,
-                category=meta.get("category", "general"),
-                destructive=bool(meta.get("destructive", False)),
-                icon=meta.get("icon", "tool"),
+                name=spec.name,
+                description=spec.description or "",
+                render_hint=spec.extras.render_hint,
+                category=spec.extras.category,
+                destructive=bool(spec.extras.destructive),
+                icon=spec.extras.icon,
                 args_schema_json=args_schema,
             )
         )

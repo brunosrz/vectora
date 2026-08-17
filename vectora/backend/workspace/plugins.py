@@ -16,7 +16,6 @@ from typing import Any
 
 from pydantic import BaseModel, create_model
 
-from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.mcp import VectoraMCPClient
 from backend.tools.registry import ToolExtras, ToolSpec
 
@@ -243,9 +242,8 @@ def _remote_tool_spec(server_name: str, connection: dict, mcp_tool: Any) -> Tool
     )
 
 
-async def get_user_mcp_tools(user_id: str) -> list:
-    """Carrega as tools (``BaseTool``, via ``as_langchain_tool``) dos
-    servidores MCP do usuário.
+async def get_user_mcp_tools(user_id: str) -> list[ToolSpec]:
+    """Carrega as tools (``ToolSpec`` nativa) dos servidores MCP do usuário.
 
     Cacheado por ``(user_id, version)`` — só reconecta quando o usuário muda
     seus servidores. Sem servidores configurados → lista vazia. Falha de um
@@ -277,11 +275,7 @@ async def get_user_mcp_tools(user_id: str) -> list:
         await client.aclose()
 
     tools = [
-        as_langchain_tool(
-            _remote_tool_spec(
-                tools_by_server[name], connections[tools_by_server[name]], t
-            )
-        )
+        _remote_tool_spec(tools_by_server[name], connections[tools_by_server[name]], t)
         for name, t in remote_tools.items()
     ]
 
