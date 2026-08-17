@@ -696,10 +696,17 @@ CHAT_TOOLS: list[BaseTool] = [
     http_request,
 ]
 
+# Vista nativa dos nomes do modo Chat (mesmos nomes de CHAT_TOOLS, sem a
+# ponte BaseTool) — usada por `agent_factory._native_tool_registry`.
+CHAT_TOOL_NAMES: frozenset[str] = frozenset(t.name for t in CHAT_TOOLS)
+
 __all__ = [
     "ALL_TOOLS",
+    "ALL_TOOL_NAMES",
+    "ALL_TOOL_SPECS",
     "BROWSER_TOOLS",
     "CHAT_TOOLS",
+    "CHAT_TOOL_NAMES",
     "FS_TOOLS",
     "GIT_TOOLS",
     "GRAPH_TOOLS",

@@ -711,17 +711,15 @@ def _check_global_tools_version() -> None:
 
 
 def _native_tool_registry(chat_mode: bool, user_id: str | None) -> ToolRegistry:
-    """Registry nativo com as mesmas tools que ``ALL_TOOLS``/``CHAT_TOOLS``
-    expõem hoje (por nome), resolvidas direto do ``TOOL_REGISTRY`` nativo —
-    sem o adapter ``as_langchain_tool`` que ``backend/nodes/tools.py`` usa
-    pro dispatch deepagents ainda em produção (ver nota de escopo no topo
-    do módulo). Importar ``backend.nodes.tools`` aqui é o que garante que
-    todo módulo de tool (``@vtool``) já foi importado e registrado no
-    ``TOOL_REGISTRY`` antes da resolução por nome abaixo."""
-    from backend.nodes.tools import ALL_TOOLS, CHAT_TOOLS
+    """Registry nativo com os mesmos nomes que ``ALL_TOOLS``/``CHAT_TOOLS``
+    expõem, resolvidos direto do ``TOOL_REGISTRY`` — sem o adapter
+    ``as_langchain_tool``. Importar ``backend.nodes.tools`` aqui é o que
+    garante que todo módulo de tool (``@vtool``) já foi importado e
+    registrado no ``TOOL_REGISTRY`` antes da resolução por nome abaixo."""
+    from backend.nodes.tools import ALL_TOOL_NAMES, CHAT_TOOL_NAMES
     from backend.tools.registry import TOOL_REGISTRY, ToolRegistry
 
-    names = {t.name for t in (CHAT_TOOLS if chat_mode else ALL_TOOLS)}
+    names = CHAT_TOOL_NAMES if chat_mode else ALL_TOOL_NAMES
     disabled = tool_policy.effective_disabled(user_id)
     registry = ToolRegistry()
     for name in sorted(names):
