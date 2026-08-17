@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from langchain_core.messages import AIMessage, HumanMessage
-
 from backend.services.text import text_service
 
 
@@ -22,19 +20,12 @@ class TestTextService:
         result = text_service.split("")
         assert isinstance(result, list)
 
-    def test_count_messages_tokens_returns_int(self):
-        msgs = [HumanMessage(content="olá"), AIMessage(content="oi")]
-        count = text_service.count_messages_tokens(msgs)
+    def test_count_tokens_returns_int(self):
+        count = text_service.count_tokens("olá")
         assert isinstance(count, int)
         assert count > 0
 
     def test_count_tokens_increases_with_length(self):
-        short = [HumanMessage(content="oi")]
-        long = [HumanMessage(content="palavra " * 100)]
-        assert text_service.count_messages_tokens(
-            long
-        ) > text_service.count_messages_tokens(short)
-
-    def test_count_empty_messages(self):
-        count = text_service.count_messages_tokens([])
-        assert count == 0
+        short = text_service.count_tokens("oi")
+        long = text_service.count_tokens("palavra " * 100)
+        assert long > short

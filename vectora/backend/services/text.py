@@ -6,33 +6,147 @@ não espalhada por tools ou nodes.
 
 Design:
 - TextService é um singleton leve: criado uma vez, reutilizado em todo o processo.
-- O splitter usa tiktoken (cl100k_base) via langchain-text-splitters — sem
-  HuggingFace Hub, sem download em runtime.
+- O splitter usa tiktoken (cl100k_base) e um split recursivo por separadores
+  (``["\\n\\n", "\\n", " ", ""]``) — substitui o ``RecursiveCharacterTextSplitter``
+  do ``langchain_text_splitters``, sem dependência externa além do tiktoken.
 - O token_counter usa o mesmo encoding para consistência com o splitter:
   trim_messages() e ingest_docs() falam a mesma língua de tokens.
 
 Usage:
-    from vectora.services.text import text_service
+    from backend.services.text import text_service
 
     chunks = text_service.split(long_text)
     n_tokens = text_service.count_tokens("hello world")
-    trimmed = text_service.count_messages_tokens(messages)
 """
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 import tiktoken
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from langchain_core.messages import BaseMessage
 
 logger = logging.getLogger(__name__)
+
+#: Separadores do split recursivo — mesmo conjunto que o
+#: ``RecursiveCharacterTextSplitter`` usava (do mais grosseiro ao mais fino).
+_SEPARATORS = ("\n\n", "\n", " ", "")
+
+
+def _split_with_separator(text: str, separator: str) -> list[str]:
+    """Divide por `separator`; `""` divide por caractere."""
+    if separator:
+        return text.split(separator)
+    return list(text)
+
+
+def _join(parts: list[str], separator: str) -> str:
+    return separator.join(parts)
+
+
+def _merge_splits(
+    splits: list[str],
+    separator: str,
+    *,
+    token_len,
+    chunk_size: int,
+    chunk_overlap: int,
+) -> list[str]:
+    """Junta splits consecutivos em chunks ≤ ``chunk_size`` tokens, com
+    ``chunk_overlap`` tokens de sobreposição entre chunks adjacentes."""
+    docs: list[str] = []
+    current: list[str] = []
+    total = 0
+    sep_len = token_len(separator)
+
+    for piece in splits:
+        piece_len = token_len(piece)
+        overhead = sep_len if current else 0
+        if total + piece_len + overhead > chunk_size:
+            if current:
+                docs.append(_join(current, separator))
+                # Encolhe `current` do início até caber no overlap.
+                while current and (
+                    total > chunk_overlap or total + piece_len > chunk_size
+                ):
+                    removed = current.pop(0)
+                    total -= token_len(removed) + (sep_len if current else 0)
+        if piece_len > chunk_size:
+            # Piece único que sozinho excede o teto — anexa do jeito que está
+            # (sem conseguir respeitar o limite; é um chunk indivisível).
+            if current:
+                docs.append(_join(current, separator))
+                current = []
+                total = 0
+            docs.append(piece)
+            continue
+        current.append(piece)
+        total += piece_len + (sep_len if len(current) > 1 else 0)
+
+    if current:
+        docs.append(_join(current, separator))
+    return docs
+
+
+def _recursive_split(
+    text: str,
+    separators: list[str],
+    *,
+    token_len,
+    chunk_size: int,
+    chunk_overlap: int,
+) -> list[str]:
+    final: list[str] = []
+
+    # Escolhe o primeiro separador presente no texto (fallback: o último).
+    separator = separators[-1]
+    next_separators: list[str] = []
+    for i, sep in enumerate(separators):
+        if sep == "" or sep in text:
+            separator = sep
+            next_separators = separators[i + 1 :]
+            break
+
+    splits = _split_with_separator(text, separator)
+    good: list[str] = []
+    for piece in splits:
+        if token_len(piece) < chunk_size:
+            good.append(piece)
+        else:
+            if good:
+                final.extend(
+                    _merge_splits(
+                        good,
+                        separator,
+                        token_len=token_len,
+                        chunk_size=chunk_size,
+                        chunk_overlap=chunk_overlap,
+                    )
+                )
+                good = []
+            if not next_separators:
+                final.append(piece)
+            else:
+                final.extend(
+                    _recursive_split(
+                        piece,
+                        next_separators,
+                        token_len=token_len,
+                        chunk_size=chunk_size,
+                        chunk_overlap=chunk_overlap,
+                    )
+                )
+
+    if good:
+        final.extend(
+            _merge_splits(
+                good,
+                separator,
+                token_len=token_len,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            )
+        )
+    return final
 
 
 class TextService:
@@ -63,13 +177,6 @@ class TextService:
         # Encoding tiktoken — carregado uma vez, cacheado pelo próprio tiktoken
         self._enc = tiktoken.get_encoding(encoding_name)
 
-        # Splitter configurado com o mesmo encoding para consistência
-        self._splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            encoding_name=encoding_name,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-
         logger.debug(
             "TextService initialized",
             extra={
@@ -79,60 +186,35 @@ class TextService:
             },
         )
 
+    def _token_len(self, text: str) -> int:
+        return len(self._enc.encode(text))
+
     # ── Chunking ─────────────────────────────────────────────────────────────
 
     def split(self, text: str) -> list[str]:
         """Divide texto em chunks respeitando limites de tokens.
 
-        Args:
-            text: Texto a dividir.
-
         Returns:
-            Lista de chunks, cada um com no máximo `chunk_size` tokens.
+            Lista de chunks, cada um com no máximo ``chunk_size`` tokens.
         """
-        return self._splitter.split_text(text)
+        return _recursive_split(
+            text,
+            list(_SEPARATORS),
+            token_len=self._token_len,
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap,
+        )
 
     # ── Token counting ────────────────────────────────────────────────────────
 
     def count_tokens(self, text: str) -> int:
-        """Conta tokens em uma string usando tiktoken.
-
-        Args:
-            text: Texto para contar tokens.
-
-        Returns:
-            Número de tokens.
-        """
-        return len(self._enc.encode(text))
-
-    def count_messages_tokens(self, messages: Sequence[BaseMessage]) -> int:
-        """Conta tokens em uma lista de mensagens LangChain.
-
-        Usado pelo trim_messages() em nodes/engine.py como token_counter.
-        Suporta content como str ou lista de blocos (multimodal).
-
-        Args:
-            messages: Lista de BaseMessage (HumanMessage, AIMessage, etc.).
-
-        Returns:
-            Total de tokens em todas as mensagens.
-        """
-        total = 0
-        for msg in messages:
-            content = msg.content or ""
-            if isinstance(content, str):
-                total += len(self._enc.encode(content))
-            elif isinstance(content, list):
-                # Mensagens multimodais: cada bloco pode ter "text"
-                for block in content:
-                    if isinstance(block, dict) and "text" in block:
-                        total += len(self._enc.encode(str(block["text"])))
-        return total
+        """Conta tokens em uma string usando tiktoken."""
+        return self._token_len(text)
 
 
 # ── Singleton ─────────────────────────────────────────────────────────────────
 # Criado uma vez na importação do módulo, guiado pelos Settings.
-# Importar de outros módulos: `from vectora.services.text import text_service`
+# Importar de outros módulos: `from backend.services.text import text_service`
 
 
 def _build() -> TextService:

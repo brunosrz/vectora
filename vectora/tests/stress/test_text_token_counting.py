@@ -1,8 +1,8 @@
 """Stress test 3 — TextService: contagem de tokens sob carga.
 
-count_tokens() e count_messages_tokens() são chamados em toda invocação do LLM
-pelo trim_messages(). Em conversas longas ou pipelines de ingestão com muitos
-chunks, essas funções precisam ser rápidas e corretas sob chamadas em rajada.
+count_tokens() é chamado em toda invocação do LLM pelo trim_messages().
+Em conversas longas ou pipelines de ingestão com muitos chunks, essa
+função precisa ser rápida e correta sob chamadas em rajada.
 
 Verifica:
   - 10 000 chamadas de count_tokens() completam em menos de 5 s
@@ -15,7 +15,6 @@ from __future__ import annotations
 import time
 
 import pytest
-from langchain_core.messages import AIMessage, HumanMessage
 
 from backend.services.text import text_service
 
@@ -50,27 +49,24 @@ def test_token_counting_throughput():
 
 
 @pytest.mark.stress
-def test_message_token_counting_large_history():
-    """Histórico de 500 mensagens — contagem total em menos de 1 s."""
-    messages = []
+def test_large_text_token_counting():
+    """Texto grande (~500 mensagens de conversa) — contagem em menos de 1 s."""
+    parts = []
     for i in range(250):
-        messages.append(HumanMessage(content=f"Pergunta número {i}: o que é RAG?"))
-        messages.append(
-            AIMessage(
-                content=f"Resposta {i}: RAG é Retrieval Augmented Generation, "
-                "que combina busca vetorial com geração de texto."
-            )
+        parts.append(f"Pergunta número {i}: o que é RAG?")
+        parts.append(
+            f"Resposta {i}: RAG é Retrieval Augmented Generation, "
+            "que combina busca vetorial com geração de texto."
         )
-
-    assert len(messages) == 500
+    big_text = "\n".join(parts)
 
     t0 = time.perf_counter()
-    total_tokens = text_service.count_messages_tokens(messages)
+    total_tokens = text_service.count_tokens(big_text)
     elapsed = time.perf_counter() - t0
 
     assert total_tokens > 0
-    # Budget: 500 mensagens contadas em menos de 1 s
-    assert elapsed < 1.0, f"Contagem de 500 msgs levou {elapsed:.3f}s"
+    # Budget: ~500 falas contadas em menos de 1 s
+    assert elapsed < 1.0, f"Contagem de texto grande levou {elapsed:.3f}s"
 
 
 @pytest.mark.stress
