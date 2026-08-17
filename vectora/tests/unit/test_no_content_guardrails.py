@@ -16,52 +16,34 @@ from pathlib import Path
 
 import pytest
 
-from backend.services.utils import _build_concrete_model
-
-
-class _FakeChatModel:
-    """Captura os kwargs recebidos, sem chamar a API real."""
-
-    last_kwargs: dict | None = None
-
-    def __init__(self, **kwargs):
-        _FakeChatModel.last_kwargs = kwargs
-
-
-@pytest.fixture(autouse=True)
-def _reset_capture():
-    _FakeChatModel.last_kwargs = None
+from backend.llm.fallback_chat_client import load_chat_client
 
 
 class TestGeminiSafetySettings:
     def test_gemini_usa_client_nativo_com_safety_settings_permissivos(
         self, monkeypatch
     ):
-        """`_build_concrete_model("google_genai", ...)` produz
-        `VectoraGoogleChat` — o comportamento em si (`safetySettings` com
-        `BLOCK_NONE` em todas as categorias) é testado diretamente em
-        `test_google_chat.py::test_safety_settings_permissivos_em_todas_categorias`,
-        sem duplicar aqui."""
-        from backend.llm.google.chat import VectoraGoogleChat
+        """``load_chat_client("google_genai:...")`` produz ``GoogleChatClient``
+        — o comportamento em si (``safetySettings`` com ``BLOCK_NONE`` em todas
+        as categorias) é testado em ``test_google_chat_client.py``."""
+        from backend.llm.google.chat_client import GoogleChatClient
 
         monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
 
-        modelo = _build_concrete_model("google_genai", "gemini-2.5-flash", 0.7)
+        modelo = load_chat_client("google_genai:gemini-2.5-flash")
 
-        assert isinstance(modelo, VectoraGoogleChat)
-        assert _FakeChatModel.last_kwargs is None
+        assert isinstance(modelo, GoogleChatClient)
 
     def test_provider_sem_suporte_nao_recebe_safety_settings(self, monkeypatch):
-        """Erro/borda: `safety_settings` é kwarg do SDK do Google — outro
-        provider recebendo o kwarg estouraria na instanciação. O client
-        nativo do OpenRouter nem aceita esse parâmetro."""
-        from backend.llm.openrouter.chat import VectoraOpenRouterChat
+        """Erro/borda: o client nativo do OpenRouter nem aceita
+        ``safety_settings`` — diferentemente do SDK do Google."""
+        from backend.llm.openrouter.chat_client import OpenRouterChatClient
 
         monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
 
-        modelo = _build_concrete_model("openrouter", "openrouter/auto", 0.7)
+        modelo = load_chat_client("openrouter:openrouter/auto")
 
-        assert isinstance(modelo, VectoraOpenRouterChat)
+        assert isinstance(modelo, OpenRouterChatClient)
         assert not hasattr(modelo, "safety_settings")
 
 

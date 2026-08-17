@@ -940,15 +940,16 @@ async def test_api_key(request: Request, body: TestApiKeyBody) -> dict:
 
     async def _test_google() -> tuple[bool, str]:
         try:
-            from backend.llm.google.chat import VectoraGoogleChat
+            from backend.llm.google.chat_client import GoogleChatClient
             from backend.llm.google.client import GoogleGenAIClient
             from backend.settings import settings as _s
+            from backend.vtypes.message import MessageRole, text_message
 
-            llm = VectoraGoogleChat(
+            llm = GoogleChatClient(
                 model=_s.google_model,
                 client=GoogleGenAIClient(api_key=api_key),
             )
-            await llm.ainvoke("hi")
+            await llm.agenerate([text_message(MessageRole.USER, "hi")])
             return True, ""
         except Exception as exc:
             return False, str(exc)

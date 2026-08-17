@@ -135,26 +135,24 @@ def _save_provider_to_settings(provider_id: str, model: str) -> None:
 def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any:
     """Instancia o LLM correto para o teste de conexão."""
     if provider_id == "google-genai":
-        from backend.llm.google.chat import VectoraGoogleChat
+        from backend.llm.google.chat_client import GoogleChatClient
         from backend.llm.google.client import GoogleGenAIClient
 
-        return VectoraGoogleChat(
+        return GoogleChatClient(
             model=model, client=GoogleGenAIClient(api_key=api_key or "")
         )
 
     if provider_id == "openai":
-        from backend.llm.openai.chat import VectoraOpenAIChat
+        from backend.llm.openai.chat_client import OpenAIChatClient
         from backend.llm.openai.client import OpenAIClient
 
-        return VectoraOpenAIChat(
-            model=model, client=OpenAIClient(api_key=api_key or "")
-        )
+        return OpenAIChatClient(model=model, client=OpenAIClient(api_key=api_key or ""))
 
     if provider_id == "anthropic":
-        from backend.llm.anthropic.chat import VectoraAnthropicChat
+        from backend.llm.anthropic.chat_client import AnthropicChatClient
         from backend.llm.anthropic.client import AnthropicClient
 
-        return VectoraAnthropicChat(
+        return AnthropicChatClient(
             model=model, client=AnthropicClient(api_key=api_key or "")
         )
 
@@ -165,10 +163,10 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
         return CohereChatClient(model=model, client=CohereClient(api_key=api_key or ""))
 
     if provider_id == "ollama":
-        from backend.llm.ollama.chat import VectoraOllamaChat
+        from backend.llm.ollama.chat_client import OllamaChatClient
         from backend.llm.ollama.client import OllamaClient
 
-        return VectoraOllamaChat(model=model, client=OllamaClient())
+        return OllamaChatClient(model=model, client=OllamaClient())
 
     msg = f"Provider desconhecido: {provider_id}"
     raise ValueError(msg)

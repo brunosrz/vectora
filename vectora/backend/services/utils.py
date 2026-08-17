@@ -1,37 +1,22 @@
 """Utility Functions and Multi-Provider LLM Loading.
 
-Provides LLM factory function supporting Google Gemini, OpenAI, Anthropic,
-Cohere, Ollama e OpenRouter:
-    google-genai  → cliente nativo           (VectoraGoogleChat, generateContent)
-    openai        → cliente nativo           (VectoraOpenAIChat, Responses API)
-    anthropic     → cliente nativo           (VectoraAnthropicChat, Messages API)
-    cohere        → langchain-cohere        (ChatCohere; embeddings/rerank já
-                                             nativos — ver backend/llm/cohere/)
-    ollama        → cliente nativo           (VectoraOllamaChat, /api/chat)
-    openrouter    → cliente nativo           (VectoraOpenRouterChat)
+``load_native_llm()`` resolve o provider ativo (env > runtime_settings >
+defaults) e devolve o ``ChatClient`` nativo do provider — Google Gemini,
+OpenAI, Anthropic, Cohere, Ollama e OpenRouter — via
+``backend/llm/fallback_chat_client.load_chat_client``.
 
-Inclui async context managers e helpers de variáveis de ambiente.
+Inclui o async context manager de ciclo de vida da aplicação.
 """
 
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, cast
-
-from backend.services.env import get_env
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from langchain_core.language_models.base import BaseLanguageModel
-
     from backend.llm.base import ChatClient
-
-
-def _get_env_with_default(name: str, default: str) -> str:
-    """Get environment variable with a default value."""
-    value = get_env(name, strict=False)
-    return value if value is not None else default
 
 
 # provider canônico (underscore) → (env var do modelo, modelo default).
@@ -47,276 +32,14 @@ _PROVIDER_SPEC: dict[str, tuple[str, str]] = {
 }
 
 
-def _build_concrete_model(  # noqa: PLR0911
-    provider: str, model_name: str, temperature: float
-) -> Any:
-    """Constrói o ``BaseChatModel`` concreto do provider (SDK oficial LangChain).
-
-    Concreto de propósito — **não** um modelo configurável: o deepagents
-    (``create_deep_agent`` → ``resolve_model``) só aceita um ``BaseChatModel``
-    instanciado (ou uma string de spec). Um ``_ConfigurableModel`` quebra o
-    ``apply_provider_profile`` dele (trata o objeto como string e chama
-    ``.count(":")``). A troca de modelo por request é feita uma camada acima
-    (``agent_factory`` cacheia um grafo por modelo), não por configurable aqui.
-    """
-    import os
-
-    match provider:
-        case "google_genai":
-            from backend.llm.google.chat import VectoraGoogleChat
-            from backend.llm.google.client import GoogleGenAIClient
-
-            # Cliente nativo, não `ChatGoogleGenerativeAI`: monta o mesmo
-            # `safetySettings` permissivo em todas as categorias direto no
-            # payload REST (`_safety_settings_permissivos()` no chat.py),
-            # sem depender dos enums `HarmCategory`/`HarmBlockThreshold` do
-            # SDK LangChain.
-            return VectoraGoogleChat(
-                model=model_name,
-                client=GoogleGenAIClient(api_key=get_env("GOOGLE_API_KEY")),
-                temperature=temperature,
-            )
-        case "openai":
-            from backend.llm.openai.chat import VectoraOpenAIChat
-            from backend.llm.openai.client import OpenAIClient
-
-            # Cliente nativo, não `ChatOpenAI`: controla o timeout HTTP
-            # diretamente (sem o timeout de 120s entre chunks que o SDK
-            # aplicava por padrão) e usa a Responses API (sucessora
-            # recomendada da Chat Completions desde 2026).
-            return VectoraOpenAIChat(
-                model=model_name,
-                client=OpenAIClient(
-                    api_key=get_env("OPENAI_API_KEY"),
-                    organization=os.getenv("OPENAI_ORGANIZATION") or None,
-                    project=os.getenv("OPENAI_PROJECT") or None,
-                ),
-                temperature=temperature,
-            )
-        case "anthropic":
-            from backend.llm.anthropic.chat import VectoraAnthropicChat
-            from backend.llm.anthropic.client import AnthropicClient
-
-            # Cliente nativo, não `ChatAnthropic`: prompt caching é GA na
-            # Messages API via `cache_control: ephemeral` no bloco de system
-            # prompt — não depende mais do header `anthropic-beta` que a
-            # geração original do recurso exigia.
-            prompt_cache = os.getenv("ANTHROPIC_PROMPT_CACHE", "true").lower() not in {
-                "false",
-                "0",
-                "no",
-            }
-            return VectoraAnthropicChat(
-                model=model_name,
-                client=AnthropicClient(api_key=get_env("ANTHROPIC_API_KEY")),
-                temperature=temperature,
-                cache_system_prompt=prompt_cache,
-            )
-        case "cohere":
-            from langchain_cohere import ChatCohere
-            from pydantic import SecretStr
-
-            api_key = get_env("COHERE_API_KEY")
-            if not api_key:
-                msg = "COHERE_API_KEY não configurado. Adicione ao seu .env para usar o provider cohere."
-                raise ValueError(msg)
-            # ChatCohere aceita a key como SecretStr (o SDK do chat resolve
-            # internamente); o CohereEmbeddings exige string crua — ver
-            # backend/embedding/background.py.
-            #
-            # Permanece em ChatCohere (não `CohereChatClient`, backend/llm/
-            # cohere/chat_client.py) porque `load_llm()` logo abaixo exige
-            # `bind_tools`/`invoke`/`with_config` (contrato `BaseChatModel`
-            # que `create_deep_agent` consome) — o Protocol `ChatClient` não
-            # tem essa API. Migrar este ponto exige um `VectoraCohereChat`
-            # (BaseChatModel) equivalente ao dos outros 5 providers, ainda
-            # não escrito.
-            return ChatCohere(
-                cohere_api_key=SecretStr(api_key),
-                model=model_name,
-            )
-        case "ollama":
-            from backend.llm.ollama.chat import VectoraOllamaChat
-            from backend.llm.ollama.client import OllamaClient
-
-            # Cliente nativo, não `init_chat_model`: o `/api/chat` expõe
-            # `message.thinking` em campo próprio, `images` por mensagem
-            # (vision) e os contadores de token — a camada LangChain esconde
-            # os três.
-            return VectoraOllamaChat(
-                model=model_name,
-                client=OllamaClient(
-                    base_url=_get_env_with_default(
-                        "OLLAMA_BASE_URL", "http://127.0.0.1:11434"
-                    ),
-                    api_key=os.getenv("OLLAMA_API_KEY", ""),
-                ),
-                temperature=temperature,
-            )
-        case "openrouter":
-            from backend.llm.openrouter.chat import VectoraOpenRouterChat
-            from backend.llm.openrouter.client import OpenRouterClient
-
-            api_key = get_env("OPENROUTER_API_KEY")
-            if not api_key:
-                msg = "OPENROUTER_API_KEY não configurado. Adicione ao seu .env para usar o provider openrouter."
-                raise ValueError(msg)
-            # Cliente nativo, não `ChatOpenAI` com base_url trocado: a API é
-            # OpenAI-compatível, mas o cliente da OpenAI descarta `usage.cost`,
-            # o bloco `provider` de roteamento e o `reasoning` do delta. Ids de
-            # modelo usam "/" (ex.: "openai/gpt-4o"), nunca colidem com o split
-            # por ":" de model_id em load_llm().
-            return VectoraOpenRouterChat(
-                model=model_name,
-                client=OpenRouterClient(api_key=api_key),
-                temperature=temperature,
-            )
-        case "nine_router":
-            from backend.llm.openrouter.chat import VectoraOpenRouterChat
-            from backend.llm.openrouter.client import OpenRouterClient
-            from backend.settings import settings
-
-            base_url = settings.nine_router_base_url
-            api_key = settings.nine_router_api_key
-            if not base_url or not api_key:
-                msg = (
-                    "9Router não configurado. Defina nine_router_base_url e "
-                    "nine_router_api_key nas Settings (Environment Router) "
-                    "para usar o provider nine_router."
-                )
-                raise ValueError(msg)
-            # Reusa o client/adapter do OpenRouter com base_url trocada: o
-            # 9Router fala exatamente o mesmo protocolo OpenAI-compatível
-            # (POST .../chat/completions, streaming SSE, tool calling) que
-            # VectoraOpenRouterChat já implementa nativamente — não é a
-            # Responses API que VectoraOpenAIChat consome. Campos exclusivos
-            # do OpenRouter (usage.cost, bloco provider, reasoning) ficam
-            # ausentes na resposta do 9Router e são tratados como opcionais
-            # em todo o adapter, sem quebrar.
-            return VectoraOpenRouterChat(
-                model=model_name,
-                client=OpenRouterClient(api_key=api_key, base_url=base_url),
-                temperature=temperature,
-            )
-        case _:
-            msg = (
-                f"Provider de LLM desconhecido: {provider!r}. Suportados: "
-                "google_genai, openai, anthropic, cohere, ollama, openrouter, "
-                "nine_router"
-            )
-            raise ValueError(msg)
-
-
-def load_llm(model_id: str = "") -> BaseLanguageModel:
-    """Carrega o LLM de acordo com as configurações de ambiente.
-
-    ``model_id`` (opcional, formato ``"provider:model"``) sobrepõe o
-    provider/modelo padrão — usado pela troca de modelo por request (o
-    ``agent_factory`` cacheia um grafo por ``model_id``). Vazio = padrão de
-    env/settings.
-
-    A precedência é: variáveis de ambiente > ``~/.vectora/settings.json``
-    (runtime_settings) > defaults.
-
-    Provedores suportados (``LLM_PROVIDER``):
-        google-genai  — Google Gemini (padrão)
-        openai        — OpenAI Chat
-        anthropic     — Anthropic Claude, com prompt caching habilitado
-        cohere        — Cohere Command
-        ollama        — Ollama local
-
-    Variáveis de ambiente:
-        LLM_PROVIDER          — provider (google-genai | openai | anthropic |
-                                 cohere | ollama)
-        GOOGLE_API_KEY        — chave Google Gemini
-        GOOGLE_MODEL          — modelo (default: gemini-2.5-flash)
-        OPENAI_API_KEY        — chave OpenAI
-        OPENAI_MODEL          — modelo (default: gpt-4o)
-        ANTHROPIC_API_KEY     — chave Anthropic
-        ANTHROPIC_MODEL       — modelo (default: claude-opus-4-1)
-        ANTHROPIC_PROMPT_CACHE — habilita prompt caching (default: true)
-        COHERE_API_KEY        — chave Cohere
-        COHERE_CHAT_MODEL     — modelo (default: command-a-03-2025)
-        OLLAMA_BASE_URL       — URL do servidor Ollama (default:
-                                 http://127.0.0.1:11434)
-        OLLAMA_MODEL          — modelo (default: gpt-oss:20b)
-        LLM_TEMPERATURE       — temperatura (default: 0.2)
-    """
-    import os
-
-    from backend.workspace.runtime_settings import runtime_settings
-
-    temperature = float(_get_env_with_default("LLM_TEMPERATURE", "0.2"))
-
-    if model_id:
-        # Override por request: "provider:model" (o provider já vem normalizado
-        # p/ underscore em handlers/chat.py::_build_configurable; aceitamos
-        # hífen por robustez). O nome do modelo do request tem precedência.
-        prov, _sep, name = model_id.partition(":")
-        provider = prov.replace("-", "_")
-        spec = _PROVIDER_SPEC.get(provider)
-        env_var = spec[0] if spec else ""
-        model_name = (
-            name
-            or (os.getenv(env_var) if env_var else None)
-            or (spec[1] if spec else "")
-        )
-    else:
-        provider = (
-            os.getenv("LLM_PROVIDER") or runtime_settings.active_provider
-        ).replace("-", "_")
-        spec = _PROVIDER_SPEC.get(provider)
-        if spec is None:
-            msg = (
-                f"LLM_PROVIDER desconhecido: {provider!r}. Suportados: "
-                "google_genai, openai, anthropic, cohere, ollama"
-            )
-            raise ValueError(msg)
-        env_var, default_model = spec
-        # active_model só vale se o provider ativo bater com o resolvido.
-        active = (
-            runtime_settings.active_model
-            if runtime_settings.active_provider.replace("-", "_") == provider
-            else ""
-        )
-        model_name = os.getenv(env_var) or active or default_model
-
-    if not model_name and provider == "nine_router":
-        from backend.settings import settings
-
-        model_name = settings.nine_router_default_model or ""
-
-    if not model_name:
-        msg = f"Modelo de LLM não resolvido para provider {provider!r}."
-        raise ValueError(msg)
-
-    model: BaseLanguageModel = cast(
-        "BaseLanguageModel",
-        _build_concrete_model(provider, model_name, temperature),
-    )
-
-    if not hasattr(model, "bind_tools"):
-        msg = "Model must support bind_tools"
-        raise TypeError(msg)
-    if not hasattr(model, "invoke"):
-        msg = "Model must support invoke"
-        raise TypeError(msg)
-    if not hasattr(model, "with_config"):
-        msg = "Model must support with_config"
-        raise TypeError(msg)
-
-    return model
-
-
 def load_native_llm(model_id: str = "") -> ChatClient:
     """Carrega o ``ChatClient`` nativo do provider ativo.
 
-    Mesma resolução de provider/modelo que ``load_llm`` (env > runtime_settings
-    > defaults), mas devolve um ``ChatClient`` (``backend/llm/base.py``) em vez
-    de ``BaseChatModel`` — o dispatch nativo já consome ``ChatClient``, e os
-    caminhos auxiliares (título de thread, curator, consolidação de memória,
-    context graph, learning, smart approval) migram pra cá até ``load_llm``
-    não ter mais consumidor e ser removido junto com os 5 ``chat.py`` legados.
+    Mesma resolução de provider/modelo que o antigo ``load_llm`` (env >
+    runtime_settings > defaults), mas devolve um ``ChatClient``
+    (``backend/llm/base.py``) em vez de ``BaseChatModel``. ``model_id``
+    (opcional, formato ``"provider:model"``) sobrepõe o provider/modelo
+    padrão — usado pela troca de modelo por request.
     """
     import os
 
