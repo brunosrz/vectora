@@ -307,41 +307,36 @@ def _persist_image_attachment(thread_id: str, att: Attachment) -> str | None:
         return None
 
 
-async def _build_human_message(
+async def _build_user_vmessage(
     content: str, attachments: list[Attachment], thread_id: str
-) -> Any:
-    """Constrói HumanMessage com suporte a conteúdo multimodal.
+) -> VMessage:
+    """Constrói VMessage com suporte a conteúdo multimodal.
 
-    - Sem attachments → ``HumanMessage(content=str)`` simples
-    - Imagem → content list com ``type=image_url`` (formato OpenAI); o
-      arquivo também é copiado pra disco (`_persist_image_attachment`) pra
-      sobreviver a um restart do backend, já que o inline base64 só existe
-      dentro do checkpoint do LangGraph, que a API REST de histórico não lê.
-    - Áudio → transcrito via Whisper (STT) e injetado como texto
-    - Código/PDF/texto → injetado como bloco de código ou texto no content list
-
-    O formato de ``content`` como lista é compatível com a maioria dos provedores
-    multimodais (OpenAI, Anthropic, Google Gemini via LangChain).
+    - Sem attachments → ``VMessage`` com um ``ContentBlock`` de texto.
+    - Imagem → ``ContentBlock(kind="image_url")`` com base64 inline; o
+      arquivo é persistido em disco (``_persist_image_attachment``) para
+      sobreviver a um restart do backend.
+    - Áudio → transcrito via Whisper (STT) e injetado como texto.
+    - Código/PDF/texto → injetado como bloco de texto.
     """
-    from langchain_core.messages import HumanMessage
 
     if not attachments:
-        return HumanMessage(content=content)
+        return VMessage(
+            role=MessageRole.USER,
+            content=[ContentBlock(kind="text", text=content)],
+        )
 
-    parts: list[str | dict[str, Any]] = [{"type": "text", "text": content}]
-    persisted_urls: dict[int, str | None] = {}
+    blocks: list[ContentBlock] = [ContentBlock(kind="text", text=content)]
 
     for att in attachments:
         if att.kind == AttachmentKind.IMAGE:
             # Log de diagnóstico para imagens grandes
             try:
-                # Truncamento defensivo: se a imagem for absurdamente grande (> 5MB),
-                # logamos um erro e avisamos que pode haver instabilidade.
-                # O limite do schema é 10MB, mas 5MB já é arriscado para o SQLite.
                 img_size = len(base64.b64decode(att.base64_data))
                 if img_size > 5 * 1024 * 1024:
                     logger.error(
-                        "chat: imagem MUITO grande recebida: %s (%d bytes). Isso pode corromper o checkpointer SQLite.",
+                        "chat: imagem MUITO grande recebida: %s (%d bytes). "
+                        "Isso pode corromper o checkpointer SQLite.",
                         att.name,
                         img_size,
                     )
@@ -354,18 +349,18 @@ async def _build_human_message(
             except Exception:
                 pass
 
-            persisted_urls[id(att)] = _persist_image_attachment(thread_id, att)
+            _persist_image_attachment(thread_id, att)
 
-            parts.append(
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:{att.mime_type};base64,{att.base64_data}"
-                    },
-                }
+            blocks.append(
+                ContentBlock(
+                    kind="image_url",
+                    image_url=f"data:{att.mime_type};base64,{att.base64_data}",
+                )
             )
         elif att.kind == AttachmentKind.AUDIO:
-            parts.append({"type": "text", "text": await _transcribe_attachment(att)})
+            blocks.append(
+                ContentBlock(kind="text", text=await _transcribe_attachment(att))
+            )
         else:
             # Código, PDF ou texto — decodifica e injeta como texto
             try:
@@ -377,69 +372,21 @@ async def _build_human_message(
 
             lang = _mime_to_lang(att.name)
             if lang:
-                block = f"\n[Arquivo: {att.name}]\n```{lang}\n{decoded}\n```"
+                block_text = f"\n[Arquivo: {att.name}]\n```{lang}\n{decoded}\n```"
             else:
-                block = f"\n[Arquivo: {att.name}]\n{decoded}"
+                block_text = f"\n[Arquivo: {att.name}]\n{decoded}"
 
-            parts.append({"type": "text", "text": block})
+            blocks.append(ContentBlock(kind="text", text=block_text))
 
-    metadata = {}
-    if attachments:
-        metadata["attachments_meta"] = [
-            {
-                "name": att.name,
-                "mimeType": att.mime_type,
-                "kind": att.kind.value,
-                "size": len(base64.b64decode(att.base64_data)),
-                "url": persisted_urls.get(id(att)),
-            }
-            for att in attachments
-        ]
-
-    return HumanMessage(content=parts, additional_kwargs=metadata)
-
-
-def _to_vmessage(msg: Any) -> VMessage:
-    """Converte a ``HumanMessage`` do LangChain (produzida por
-    ``_build_human_message``/``_prepend_text_context``) para ``VMessage`` do
-    motor nativo — mesmo shape de ``content`` (string simples ou lista de
-    parts multimodais), só reempacotado como ``ContentBlock``. Metadados de
-    anexo (``additional_kwargs["attachments_meta"]``) não têm equivalente em
-    ``VMessage`` ainda — gap documentado em
-    ``backend/services/agent_factory.py::aget_thread_messages``: o anexo
-    continua enviado ao provider e persistido em disco, só a miniatura não
-    reaparece num reload de thread nativa.
-    """
-    content = getattr(msg, "content", "")
-    blocks: list[ContentBlock] = []
-    if isinstance(content, str):
-        blocks.append(ContentBlock(kind="text", text=content))
-    else:
-        for part in content:
-            if not isinstance(part, dict):
-                continue
-            if part.get("type") == "text":
-                blocks.append(ContentBlock(kind="text", text=part.get("text", "")))
-            elif part.get("type") == "image_url":
-                url = (part.get("image_url") or {}).get("url", "")
-                blocks.append(ContentBlock(kind="image_url", image_url=url))
     return VMessage(role=MessageRole.USER, content=blocks)
 
 
-def _prepend_text_context(msg: Any, block: str) -> Any:
-    """Prepende um bloco de texto de contexto à HumanMessage (str ou multimodal).
-
-    Preserva o conteúdo original: para texto puro, concatena; para conteúdo
-    multimodal (lista de parts), insere uma part de texto no início.
-    """
-    from langchain_core.messages import HumanMessage
-
-    content = getattr(msg, "content", None)
-    if isinstance(content, str):
-        return HumanMessage(content=f"{block}\n\n{content}")
-    if isinstance(content, list):
-        return HumanMessage(content=[{"type": "text", "text": block}, *content])
-    return msg
+def _prepend_text_context(msg: VMessage, block: str) -> VMessage:
+    """Prepende um bloco de texto de contexto ao ``VMessage`` (multimodal)."""
+    return VMessage(
+        role=msg.role,
+        content=[ContentBlock(kind="text", text=block), *msg.content],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -809,11 +756,11 @@ async def stream_chat(
         "recursion_limit": request.config.recursion_limit or 50,
     }
 
-    human_msg = await _build_human_message(
+    user_vmsg = await _build_user_vmessage(
         request.content, request.attachments, thread_id
     )
 
-    # Planning mode: injeta instrução de planejamento no HumanMessage
+    # Planning mode: injeta instrução de planejamento no VMessage
     if planning_mode:
         planning_prefix = (
             "[PLANNING MODE ACTIVE] Before executing anything:\n"
@@ -824,7 +771,7 @@ async def stream_chat(
             "3. Update each todo's status via `write_todos` as you progress — "
             "mark items completed immediately after finishing them, never batch.\n\n"
         )
-        human_msg = _prepend_text_context(human_msg, planning_prefix)
+        user_vmsg = _prepend_text_context(user_vmsg, planning_prefix)
 
     # Injeta o conteúdo dos arquivos fixados (pins) no turno, para que
     # "fixar" mantenha o arquivo no contexto do agente. Só em modo Dev (chat
@@ -838,7 +785,7 @@ async def stream_chat(
             if ws is not None:
                 pinned = await build_pinned_context(thread_id, ws.cwd)
                 if pinned:
-                    human_msg = _prepend_text_context(human_msg, pinned)
+                    user_vmsg = _prepend_text_context(user_vmsg, pinned)
         except Exception:
             logger.warning("api/chat: falha ao injetar pinned_files", exc_info=True)
 
@@ -848,7 +795,7 @@ async def stream_chat(
     # mensagem ainda (`get_branch_head_id` devolve None) recebe o system
     # prompt do agente como raiz da cadeia, mesmo padrão de
     # `backend/engine/subagents.py::_run_subagent_once`.
-    user_msg = _to_vmessage(human_msg)
+    user_msg = user_vmsg
     if request.config.fork_from_checkpoint_id:
         # "Editar e reenviar"/"regenerar" — ramifica a partir de uma
         # mensagem anterior em vez de continuar do fim da branch atual; a

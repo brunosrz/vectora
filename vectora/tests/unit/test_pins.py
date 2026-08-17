@@ -317,45 +317,52 @@ class TestBuildPinnedContext:
 
 
 # ---------------------------------------------------------------------------
-# _prepend_text_context (chat.py) — injeção na HumanMessage
+# _prepend_text_context (chat.py) — injeção no VMessage
 # ---------------------------------------------------------------------------
 
 
 class TestPrependTextContext:
-    def test_str_content_prepended(self):
-        from langchain_core.messages import HumanMessage
-
+    def test_prepends_text_block(self):
         from backend.api.handlers.chat import _prepend_text_context
+        from backend.vtypes.message import ContentBlock, MessageRole, VMessage
 
-        out = _prepend_text_context(HumanMessage(content="pergunta"), "CTX")
-        assert out.content == "CTX\n\npergunta"
+        msg = VMessage(
+            role=MessageRole.USER,
+            content=[ContentBlock(kind="text", text="pergunta")],
+        )
+        out = _prepend_text_context(msg, "CTX")
+        assert len(out.content) == 2
+        assert out.content[0].kind == "text"
+        assert out.content[0].text == "CTX"
+        assert out.content[1].text == "pergunta"
 
-    def test_list_content_text_part_first(self):
-        from langchain_core.messages import HumanMessage
-
+    def test_text_part_first_preserves_multimodal(self):
         from backend.api.handlers.chat import _prepend_text_context
+        from backend.vtypes.message import ContentBlock, MessageRole, VMessage
 
-        original = [
-            {"type": "text", "text": "oi"},
-            {"type": "image_url", "image_url": {}},
-        ]
-        out = _prepend_text_context(HumanMessage(content=list(original)), "CTX")
-        assert isinstance(out.content, list)
-        assert out.content[0] == {"type": "text", "text": "CTX"}
-        assert out.content[1:] == original
+        msg = VMessage(
+            role=MessageRole.USER,
+            content=[
+                ContentBlock(kind="text", text="oi"),
+                ContentBlock(kind="image_url", image_url="data:image/png;base64,x"),
+            ],
+        )
+        out = _prepend_text_context(msg, "CTX")
+        assert out.content[0].kind == "text"
+        assert out.content[0].text == "CTX"
+        assert out.content[1].kind == "text"
+        assert out.content[1].text == "oi"
+        assert out.content[2].kind == "image_url"
 
-    def test_list_preserves_all_parts(self):
-        from langchain_core.messages import HumanMessage
-
+    def test_preserves_all_parts(self):
         from backend.api.handlers.chat import _prepend_text_context
+        from backend.vtypes.message import ContentBlock, MessageRole, VMessage
 
-        parts = [{"type": "text", "text": str(i)} for i in range(5)]
-        out = _prepend_text_context(HumanMessage(content=list(parts)), "C")
+        msg = VMessage(
+            role=MessageRole.USER,
+            content=[ContentBlock(kind="text", text=str(i)) for i in range(5)],
+        )
+        out = _prepend_text_context(msg, "C")
         assert len(out.content) == 6
-        assert out.content[1:] == parts
-
-    def test_non_message_returned_unchanged(self):
-        from backend.api.handlers.chat import _prepend_text_context
-
-        sentinel = object()
-        assert _prepend_text_context(sentinel, "CTX") is sentinel
+        assert out.content[0].text == "C"
+        assert [b.text for b in out.content[1:]] == [str(i) for i in range(5)]
