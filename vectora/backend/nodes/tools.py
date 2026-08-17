@@ -10,8 +10,6 @@ a lista canônica consumida pelo agente principal.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from backend.tools import (
     background as _background_module,
 )
@@ -93,23 +91,21 @@ from backend.tools import (
 from backend.tools import (
     workspace as _workspace_module,
 )
-from backend.tools.langchain_bridge import as_langchain_tool
 from backend.tools.registry import TOOL_REGISTRY, ToolSpec
 
-if TYPE_CHECKING:
-    from langchain_core.tools import BaseTool
 
+def _bridge(name: str) -> ToolSpec:
+    """Resolve ``name`` no ``TOOL_REGISTRY`` e devolve o ``ToolSpec`` nativo.
 
-def _bridge(name: str) -> BaseTool:
-    """Resolve `name` no TOOL_REGISTRY nativo e envolve num adapter
-    compatível com o motor de execução ainda em produção — tools já
-    migradas pro `@vtool` entram nas listas deste módulo por aqui em vez
-    de import direto."""
+    As listas que este módulo expõe (``ALL_TOOLS``, ``CHAT_TOOLS``,
+    ``FS_TOOLS`` …) são ``list[ToolSpec]`` — o dispatch de produção já
+    consome ``ToolSpec`` direto (``agent_factory._native_tool_registry``).
+    """
     spec = TOOL_REGISTRY.get(name)
     if spec is None:
         msg = f"tool nativa '{name}' não registrada — módulo não importado?"
         raise RuntimeError(msg)
-    return as_langchain_tool(spec)
+    return spec
 
 
 sequential_thinking = _bridge("sequential_thinking")
@@ -282,7 +278,7 @@ analyze_video = _bridge("analyze_video")
 # ---------------------------------------------------------------------------
 
 #: Ferramentas de busca e pesquisa
-SEARCH_TOOLS: list[BaseTool] = [
+SEARCH_TOOLS: list[ToolSpec] = [
     web_search,
     fetch_url,
     web_crawl,
@@ -294,7 +290,7 @@ SEARCH_TOOLS: list[BaseTool] = [
 ]
 
 #: Ferramentas de filesystem, terminal e artifacts
-FS_TOOLS: list[BaseTool] = [
+FS_TOOLS: list[ToolSpec] = [
     file_read,
     file_edit,
     file_write,
@@ -307,7 +303,7 @@ FS_TOOLS: list[BaseTool] = [
 ]
 
 #: Ferramentas de browser: navegação livre + automação + dev server
-BROWSER_TOOLS: list[BaseTool] = [
+BROWSER_TOOLS: list[ToolSpec] = [
     browser_navigate,
     browser_screenshot,
     browser_click,
@@ -345,7 +341,7 @@ BROWSER_TOOLS: list[BaseTool] = [
 ]
 
 #: Ferramentas de memória — inclui busca semântica e o loop de aprendizado (Remember)
-MEMORY_TOOLS: list[BaseTool] = [
+MEMORY_TOOLS: list[ToolSpec] = [
     save_memory,
     get_memory,
     delete_memory,
@@ -358,7 +354,7 @@ MEMORY_TOOLS: list[BaseTool] = [
 
 #: Ferramentas da Library: auto-instalar MCP/Skills/Memory Library, invocar
 #: MCP externo já conectado
-LIBRARY_TOOLS: list[BaseTool] = [
+LIBRARY_TOOLS: list[ToolSpec] = [
     call_mcp_tool,
     list_mcp_catalog,
     list_skills_catalog,
@@ -375,7 +371,7 @@ LIBRARY_TOOLS: list[BaseTool] = [
 ]
 
 #: Ferramentas de workspace e manifests
-WORKSPACE_TOOLS: list[BaseTool] = [
+WORKSPACE_TOOLS: list[ToolSpec] = [
     workspace_describe,
     workspace_list,
     bucket_summary,
@@ -397,7 +393,7 @@ WORKSPACE_TOOLS: list[BaseTool] = [
 ]
 
 #: Ferramentas do Context Graph (grafo de conhecimento do workspace)
-GRAPH_TOOLS: list[BaseTool] = [
+GRAPH_TOOLS: list[ToolSpec] = [
     build_knowledge_graph,
     graph_query,
     graph_explain,
@@ -408,10 +404,10 @@ GRAPH_TOOLS: list[BaseTool] = [
 ]
 
 #: Ferramentas RAG de ingestão e gestão
-RAG_TOOLS: list[BaseTool] = [vector_search, embedding, ingest_docs, manage_retriever]
+RAG_TOOLS: list[ToolSpec] = [vector_search, embedding, ingest_docs, manage_retriever]
 
 #: Utilitários nativos (sem API externa, exceto http_request)
-NATIVE_TOOLS: list[BaseTool] = [
+NATIVE_TOOLS: list[ToolSpec] = [
     time_now,
     time_parse,
     hash_text,
@@ -424,7 +420,7 @@ NATIVE_TOOLS: list[BaseTool] = [
 ]
 
 #: Ferramentas git e GitHub CLI
-GIT_TOOLS: list[BaseTool] = [
+GIT_TOOLS: list[ToolSpec] = [
     git_status,
     git_log,
     git_diff,
@@ -465,7 +461,7 @@ GIT_TOOLS: list[BaseTool] = [
 # O comportamento diferenciado vem do system prompt e do contexto, não
 # da restrição de acesso às ferramentas.
 
-_all: dict[str, BaseTool] = {}
+_all: dict[str, ToolSpec] = {}
 for _t in [
     web_search,
     fetch_url,
@@ -641,7 +637,7 @@ for _t in [
 ]:
     _all[_t.name] = _t
 
-ALL_TOOLS: list[BaseTool] = list(_all.values())
+ALL_TOOLS: list[ToolSpec] = list(_all.values())
 
 # ── Vistas nativas do toolset principal (mesmos nomes de ALL_TOOLS) ──────
 # Consumidores que só precisam de `name`/`description`/`extras` (validação,
@@ -658,7 +654,7 @@ ALL_TOOL_SPECS: list[ToolSpec] = [
 # Sem filesystem/git/terminal/workspace: só conversa, web, RAG (retrieval),
 # memória e integrações externas. Usado quando chat_mode=True no agent_factory.
 
-CHAT_TOOLS: list[BaseTool] = [
+CHAT_TOOLS: list[ToolSpec] = [
     web_search,
     fetch_url,
     web_crawl,

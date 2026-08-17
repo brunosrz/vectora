@@ -19,8 +19,8 @@ do orquestrador (ele não tem "pai" a quem perguntar).
 
 Primeira tool migrada pro registry nativo (`@vtool`/`ToolSpec`) — usa
 `FallbackChatClient` (native `ChatClient`) em vez de `FallbackChatModel`
-(LangChain). `souls.py` consome via `backend.tools.langchain_bridge.
-as_langchain_tool` até o corte de dispatch acontecer.
+(LangChain). `souls.py` consome o `ToolSpec` nativo direto (sem ponte
+LangChain).
 """
 
 from __future__ import annotations

@@ -249,8 +249,6 @@ class TestAprovacaoHumana:
         pro schema OpenAI-function exposto ao LLM/providers — um parâmetro
         `Any` sem `type` resolvido quebra o Cohere v2, que exige `type`
         sempre presente (string ou array de strings)."""
-        from langchain_core.utils.function_calling import convert_to_openai_function
-
         from backend.nodes.tools import ALL_TOOLS
 
         alvo = {
@@ -263,7 +261,7 @@ class TestAprovacaoHumana:
         assert len(tools) == 4
 
         for tool in tools:
-            schema = convert_to_openai_function(tool)
+            schema = tool.openai_schema()["function"]
             properties = schema.get("parameters", {}).get("properties", {})
             assert "http_client" not in properties
             for pname, pdef in properties.items():
