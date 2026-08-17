@@ -3,7 +3,7 @@
 Tudo relacionado a "como o Vectora fala com o provider de LLM": montagem do
 ``CompositeBackend`` (``backends.py``), cache global (``cache_llm.py``),
 wrappers de fallback entre providers em caso de quota/erro
-(``fallback_chat_model.py``, ``fallback_embeddings.py``,
+(``fallback_chat_client.py``, ``fallback_embeddings.py``,
 ``fallback_reranker.py``, ``provider_fallback.py``), e o cache auxiliar de
 LLM já bindado por usuário (``llm_tools.py``).
 
@@ -15,17 +15,12 @@ específico é necessário.
 from __future__ import annotations
 
 __all__ = [
-    "FallbackChatModel",
     "build_backend_lazy",
     "init_llm_cache",
 ]
 
 
 def __getattr__(name: str) -> object:
-    if name == "FallbackChatModel":
-        from backend.llm.fallback_chat_model import FallbackChatModel
-
-        return FallbackChatModel
     if name == "build_backend_lazy":
         from backend.llm.backends import build_backend_lazy
 

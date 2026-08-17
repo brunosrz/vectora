@@ -52,8 +52,11 @@ class FallbackReranker:
     async def acompress_documents(
         self, documents: Any, query: str, callbacks: Any = None
     ) -> Any:
-        from backend.llm.fallback_chat_model import _emit_switch
-        from backend.llm.provider_fallback import is_quota_error, record_switch
+        from backend.llm.provider_fallback import (
+            emit_model_switch_event,
+            is_quota_error,
+            record_switch,
+        )
 
         try:
             return await self.primary.acompress_documents(documents, query, callbacks)
@@ -61,7 +64,7 @@ class FallbackReranker:
             if not is_quota_error(exc):
                 raise
             record_switch(self.primary_id, self.secondary_id)
-            await _emit_switch(self.primary_id, self.secondary_id)
+            await emit_model_switch_event(self.primary_id, self.secondary_id)
             logger.warning(
                 "reranker provider switch por quota (async)",
                 extra={"from": self.primary_id, "to": self.secondary_id},
