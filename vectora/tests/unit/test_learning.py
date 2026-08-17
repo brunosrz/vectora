@@ -14,6 +14,24 @@ from backend.services.learning import (
     dedupe_skill_drafts,
     distill_transcript,
 )
+from backend.vtypes.message import MessageRole, text_message
+
+
+def _fake_native_llm(json_text: str) -> MagicMock:
+    """Fake de ChatClient nativo: agenerate devolve VMessage com JSON."""
+    llm = MagicMock()
+    llm.agenerate = AsyncMock(
+        return_value=text_message(MessageRole.ASSISTANT, json_text)
+    )
+    return llm
+
+
+def _distill_json(skills: list | None = None, facts: list | None = None) -> str:
+    import json
+
+    return json.dumps(
+        {"skills": skills or [], "facts": facts or []}, ensure_ascii=False
+    )
 
 
 @pytest.mark.asyncio
@@ -21,7 +39,7 @@ async def test_distill_transcript_empty_input_returns_empty_result_without_llm_c
     monkeypatch,
 ):
     load_llm_mock = MagicMock()
-    monkeypatch.setattr("backend.services.utils.load_llm", load_llm_mock)
+    monkeypatch.setattr("backend.services.utils.load_native_llm", load_llm_mock)
 
     result = await distill_transcript("   ")
 
@@ -41,11 +59,20 @@ async def test_distill_transcript_happy_path_returns_skills_and_facts(monkeypatc
         ],
         facts=["Usuário prefere respostas em português brasileiro"],
     )
-    structured = MagicMock()
-    structured.ainvoke = AsyncMock(return_value=expected)
-    llm = MagicMock()
-    llm.with_structured_output.return_value = structured
-    monkeypatch.setattr("backend.services.utils.load_llm", MagicMock(return_value=llm))
+    json_text = _distill_json(
+        skills=[
+            {
+                "name": "Debug de streaming duplicado",
+                "description": "Use quando tokens SSE duplicarem",
+                "content": "1. Verifique o fallback model\n2. Confira reasoning blocks",
+            }
+        ],
+        facts=["Usuário prefere respostas em português brasileiro"],
+    )
+    monkeypatch.setattr(
+        "backend.services.utils.load_native_llm",
+        MagicMock(return_value=_fake_native_llm(json_text)),
+    )
 
     result = await distill_transcript("user: bug no streaming\nassistant: corrigido")
 
@@ -55,8 +82,10 @@ async def test_distill_transcript_happy_path_returns_skills_and_facts(monkeypatc
 @pytest.mark.asyncio
 async def test_distill_transcript_llm_failure_degrades_to_empty_result(monkeypatch):
     llm = MagicMock()
-    llm.with_structured_output.side_effect = RuntimeError("modelo indisponível")
-    monkeypatch.setattr("backend.services.utils.load_llm", MagicMock(return_value=llm))
+    llm.agenerate = AsyncMock(side_effect=RuntimeError("modelo indisponível"))
+    monkeypatch.setattr(
+        "backend.services.utils.load_native_llm", MagicMock(return_value=llm)
+    )
 
     result = await distill_transcript("user: oi\nassistant: olá")
 
@@ -128,7 +157,7 @@ async def test_distill_transcript_whitespace_only_never_touches_llm(monkeypatch)
     # Borda adicional: transcript só com quebras de linha/tabs — mesmo
     # tratamento de vazio, sem chamar load_llm.
     load_llm_mock = MagicMock()
-    monkeypatch.setattr("backend.services.utils.load_llm", load_llm_mock)
+    monkeypatch.setattr("backend.services.utils.load_native_llm", load_llm_mock)
 
     result = await distill_transcript("\n\t  \n")
 
@@ -142,11 +171,10 @@ async def test_distill_transcript_llm_returns_no_reusable_pattern_yields_empty_l
 ):
     # "Se o transcript não tiver nenhum padrão reutilizável... devolva
     # listas vazias — isso é um resultado válido, não uma falha."
-    structured = MagicMock()
-    structured.ainvoke = AsyncMock(return_value=DistillationResult(skills=[], facts=[]))
-    llm = MagicMock()
-    llm.with_structured_output.return_value = structured
-    monkeypatch.setattr("backend.services.utils.load_llm", MagicMock(return_value=llm))
+    monkeypatch.setattr(
+        "backend.services.utils.load_native_llm",
+        MagicMock(return_value=_fake_native_llm(_distill_json())),
+    )
 
     result = await distill_transcript("user: oi\nassistant: oi, tudo bem?")
 
@@ -158,18 +186,16 @@ async def test_distill_transcript_llm_returns_no_reusable_pattern_yields_empty_l
 async def test_distill_transcript_llm_returns_dict_is_validated_into_result(
     monkeypatch,
 ):
-    # Nem todo provider devolve a instância Pydantic diretamente — um dict
-    # bruto deve ser validado via model_validate, não rejeitado.
-    structured = MagicMock()
-    structured.ainvoke = AsyncMock(
-        return_value={
-            "skills": [{"name": "X", "description": "y", "content": "z"}],
-            "facts": ["fato"],
-        }
+    # Nem todo provider devolve JSON limpo — dict bruto deve validar via
+    # model_validate, não rejeitado.
+    json_text = _distill_json(
+        skills=[{"name": "X", "description": "y", "content": "z"}],
+        facts=["fato"],
     )
-    llm = MagicMock()
-    llm.with_structured_output.return_value = structured
-    monkeypatch.setattr("backend.services.utils.load_llm", MagicMock(return_value=llm))
+    monkeypatch.setattr(
+        "backend.services.utils.load_native_llm",
+        MagicMock(return_value=_fake_native_llm(json_text)),
+    )
 
     result = await distill_transcript("user: teste\nassistant: ok")
 
@@ -181,13 +207,12 @@ async def test_distill_transcript_llm_returns_dict_is_validated_into_result(
 async def test_distill_transcript_llm_returns_malformed_payload_degrades_to_empty(
     monkeypatch,
 ):
-    # Payload malformado (não valida contra DistillationResult) — não
-    # propaga ValidationError, degrada como qualquer outra falha de LLM.
-    structured = MagicMock()
-    structured.ainvoke = AsyncMock(return_value={"skills": "não é uma lista"})
-    llm = MagicMock()
-    llm.with_structured_output.return_value = structured
-    monkeypatch.setattr("backend.services.utils.load_llm", MagicMock(return_value=llm))
+    # Payload malformado (JSON com shape errado) — não propaga
+    # ValidationError, degrada como qualquer outra falha de LLM.
+    monkeypatch.setattr(
+        "backend.services.utils.load_native_llm",
+        MagicMock(return_value=_fake_native_llm('{"skills": "não é uma lista"}')),
+    )
 
     result = await distill_transcript("user: teste\nassistant: ok")
 
@@ -199,30 +224,30 @@ async def test_distill_transcript_truncates_input_beyond_20000_chars(monkeypatch
     huge_transcript = "a" * 25000
     captured_messages: list = []
 
-    structured = MagicMock()
-
-    async def _fake_ainvoke(messages):
-        captured_messages.extend(messages)
-        return DistillationResult()
-
-    structured.ainvoke = _fake_ainvoke
     llm = MagicMock()
-    llm.with_structured_output.return_value = structured
-    monkeypatch.setattr("backend.services.utils.load_llm", MagicMock(return_value=llm))
+
+    async def _fake_agenerate(messages, **_kwargs):
+        captured_messages.extend(messages)
+        return text_message(MessageRole.ASSISTANT, _distill_json())
+
+    llm.agenerate = _fake_agenerate
+    monkeypatch.setattr(
+        "backend.services.utils.load_native_llm", MagicMock(return_value=llm)
+    )
 
     await distill_transcript(huge_transcript)
 
     human_message = captured_messages[-1]
-    assert len(human_message.content) == 20000
+    assert human_message.text() == "a" * 20000
 
 
 @pytest.mark.asyncio
 async def test_distill_transcript_llm_timeout_degrades_to_empty_result(monkeypatch):
-    structured = MagicMock()
-    structured.ainvoke = AsyncMock(side_effect=TimeoutError("llm demorou demais"))
     llm = MagicMock()
-    llm.with_structured_output.return_value = structured
-    monkeypatch.setattr("backend.services.utils.load_llm", MagicMock(return_value=llm))
+    llm.agenerate = AsyncMock(side_effect=TimeoutError("llm demorou demais"))
+    monkeypatch.setattr(
+        "backend.services.utils.load_native_llm", MagicMock(return_value=llm)
+    )
 
     result = await distill_transcript("user: teste\nassistant: ok")
 
@@ -269,12 +294,9 @@ async def test_distill_transcript_transcript_so_com_um_caractere_ainda_chama_llm
 ):
     # Borda: um único caractere não-vazio passa pela checagem `.strip()`
     # e chega a chamar o LLM — só string vazia/whitespace pula a chamada.
-    structured = MagicMock()
-    structured.ainvoke = AsyncMock(return_value=DistillationResult())
-    llm = MagicMock()
-    llm.with_structured_output.return_value = structured
+    llm = _fake_native_llm(_distill_json())
     load_llm_mock = MagicMock(return_value=llm)
-    monkeypatch.setattr("backend.services.utils.load_llm", load_llm_mock)
+    monkeypatch.setattr("backend.services.utils.load_native_llm", load_llm_mock)
 
     await distill_transcript("x")
 

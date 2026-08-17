@@ -44,33 +44,52 @@ class DistillationResult(BaseModel):
 
 
 async def distill_transcript(transcript_text: str) -> DistillationResult:
-    """Extrai skills/fatos do `transcript_text` via LLM estruturado.
+    """Extrai skills/fatos do `transcript_text` via LLM com saída JSON.
 
     Defensivo: transcript vazio ou falha do LLM (rede, parse, timeout)
     devolve `DistillationResult()` vazio — nunca propaga exceção pro
-    caller (tool `learn_from_session`)."""
+    caller (tool `learn_from_session`). Sem structured output nativo
+    (os ChatClient não têm `with_structured_output`), pedimos JSON no
+    prompt e validamos com `DistillationResult.model_validate`.
+    """
     if not transcript_text.strip():
         return DistillationResult()
 
     try:
-        from langchain_core.messages import HumanMessage, SystemMessage
+        from backend.services.utils import load_native_llm
+        from backend.vtypes.message import MessageRole, text_message
 
-        from backend.services.utils import load_llm
-
-        llm = load_llm()
-        structured = llm.with_structured_output(DistillationResult)
-        result = await structured.ainvoke(
+        llm = load_native_llm()
+        system = (
+            _DISTILL_SYSTEM_PROMPT
+            + "\n\nResponda APENAS com JSON válido, sem texto fora do JSON, no formato:\n"
+            '{"skills": [{"name": "...", "description": "...", "content": "..."}], '
+            '"facts": ["..."]}'
+        )
+        result = await llm.agenerate(
             [
-                SystemMessage(content=_DISTILL_SYSTEM_PROMPT),
-                HumanMessage(content=transcript_text[:20000]),
+                text_message(MessageRole.SYSTEM, system),
+                text_message(MessageRole.USER, transcript_text[:20000]),
             ]
         )
-        if isinstance(result, DistillationResult):
-            return result
-        return DistillationResult.model_validate(result)
+        return _parse_distillation(result.text())
     except Exception as exc:
         logger.warning("learning: falha ao destilar transcript — %s", exc)
         return DistillationResult()
+
+
+def _parse_distillation(raw: str) -> DistillationResult:
+    """Extrai o JSON da resposta do LLM (tolerando ```json fences) e valida."""
+    import json
+
+    text = raw.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.startswith("json"):
+            text = text[4:]
+        text = text.strip()
+    data = json.loads(text)
+    return DistillationResult.model_validate(data)
 
 
 def dedupe_skill_drafts(
