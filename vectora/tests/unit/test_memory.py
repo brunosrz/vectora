@@ -145,15 +145,14 @@ class TestNamespaceIsolation:
 
 
 # ---------------------------------------------------------------------------
-# _get_store — injeção via ToolContext.store com fallback pro contextvar
-# do LangGraph, enquanto o dispatch nativo não popula ctx.store.
+# _get_store — injeção via ToolContext.store; o fallback pro contextvar do
+# LangGraph saiu junto com o corte do dispatch.
 # ---------------------------------------------------------------------------
 
 
-class TestGetStorePrioritizesCtx:
+class TestGetStore:
     def test_usa_ctx_store_quando_presente(self):
-        """Caminho novo: `ctx.store` já populado (motor de execução
-        nativo) — usado direto, sem tocar no contextvar do LangGraph."""
+        """Happy: `ctx.store` populado pelo motor nativo — usado direto."""
         from backend.tools.memory import _get_store
 
         injected_store = InMemoryStore()
@@ -163,33 +162,14 @@ class TestGetStorePrioritizesCtx:
 
         assert result is injected_store
 
-    def test_cai_no_contextvar_do_langgraph_quando_ctx_store_e_none(self, monkeypatch):
-        """Retrocompatibilidade: sem `ctx.store` (dispatch ainda não
-        migrado), cai no `langgraph.config.get_store()` — mesmo caminho
-        de antes da injeção via ToolContext existir."""
+    def test_sem_ctx_store_levanta_runtime_error(self):
+        """Erro/borda: sem `ctx.store` (execução fora do motor nativo) →
+        RuntimeError tipado, nunca import do LangGraph."""
         from backend.tools.memory import _get_store
 
-        fallback_store = InMemoryStore()
-        monkeypatch.setattr("langgraph.config.get_store", lambda: fallback_store)
         ctx = ToolContext()  # store=None por padrão
 
-        result = _get_store(ctx)
-
-        assert result is fallback_store
-
-    def test_sem_ctx_store_e_sem_contextvar_propaga_erro(self, monkeypatch):
-        """Erro/borda: nem `ctx.store` nem contextvar do grafo disponíveis
-        — mesmo RuntimeError que `langgraph.config.get_store()` já
-        levantava fora de um nó em execução, sem engolir a exceção."""
-        from backend.tools.memory import _get_store
-
-        def _boom() -> None:
-            raise RuntimeError("Called get_config outside of a runnable context")
-
-        monkeypatch.setattr("langgraph.config.get_store", _boom)
-        ctx = ToolContext()
-
-        with pytest.raises(RuntimeError, match="outside of a runnable context"):
+        with pytest.raises(RuntimeError, match="store não injetado"):
             _get_store(ctx)
 
 

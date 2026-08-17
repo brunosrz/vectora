@@ -1,9 +1,9 @@
 """Memory tools: persistência de memórias entre sessões.
 
-Acessa o store persistente via ``_get_store(ctx)`` — prioriza
-``ctx.store`` (injeção direta pelo motor de execução nativo) e cai no
-contextvar do LangGraph enquanto o dispatch de produção não o popula.
-Mesmo store usado por ``backend.services.agent_factory``.
+Acessa o store persistente via ``_get_store(ctx)`` — sempre via
+``ctx.store``, injetado pelo motor de execução nativo antes do turno
+(``backend/api/handlers/chat.py`` popula ``run_ctx.store``). O fallback
+via contextvar do LangGraph foi removido junto com o corte do dispatch.
 
 As memórias são isoladas por usuário no namespace ``("user", <user_id>, "memories")``,
 garantindo isolamento entre usuários e compatibilidade com o StoreBackend do
@@ -82,24 +82,22 @@ async def list_fact_contents(user_id: str) -> list[str]:
 
 
 def _get_store(ctx: ToolContext) -> Any:
-    """Obtém o store persistente da execução atual.
+    """Obtém o store persistente da execução atual — via ``ctx.store``.
 
-    Prioriza ``ctx.store`` (injeção direta via ``ToolContext`` — caminho do
-    motor de execução nativo, ``backend/engine/``). Enquanto o dispatch de
-    produção ainda não popula esse campo, cai no fallback via contextvar do
-    LangGraph (``langgraph.config.get_store()``), único caminho válido hoje
-    dentro de um nó do grafo em execução.
+    O motor de execução nativo sempre popula ``ctx.store`` antes do turno
+    (``backend/api/handlers/chat.py``), então este é o único caminho. O
+    fallback via contextvar do LangGraph saiu junto com o corte do dispatch.
 
     Raises:
-        RuntimeError: Se chamado fora de uma execução com store configurado
-            (nem ``ctx.store`` nem contextvar do grafo disponíveis).
+        RuntimeError: Se chamado fora do motor nativo (``ctx.store`` nulo).
     """
     if ctx.store is not None:
         return ctx.store
-
-    from langgraph.config import get_store
-
-    return get_store()
+    msg = (
+        "store não injetado no ToolContext — a tool de memória só é "
+        "executável dentro do motor nativo, que popula ctx.store antes do turno"
+    )
+    raise RuntimeError(msg)
 
 
 # ---------------------------------------------------------------------------
