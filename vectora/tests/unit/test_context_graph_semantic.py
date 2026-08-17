@@ -13,6 +13,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from backend.vtypes.message import MessageRole, text_message
+
 
 class TestNeutraliseInjectionSentinels:
     def test_neutralises_untrusted_source_tag(self):
@@ -314,14 +316,15 @@ class TestExtractSemantic:
         f = tmp_path / "main.py"
         f.write_text("def foo(): pass\n", encoding="utf-8")
 
-        fake_response = MagicMock()
-        fake_response.content = '{"nodes": [{"id": "main_foo", "label": "foo"}], "edges": [], "hyperedges": []}'
-        fake_response.response_metadata = {}
+        fake_response = text_message(
+            MessageRole.ASSISTANT,
+            '{"nodes": [{"id": "main_foo", "label": "foo"}], "edges": [], "hyperedges": []}',
+        )
 
         mock_llm = AsyncMock()
-        mock_llm.ainvoke = AsyncMock(return_value=fake_response)
+        mock_llm.agenerate = AsyncMock(return_value=fake_response)
 
-        with patch("backend.services.utils.load_llm", return_value=mock_llm):
+        with patch("backend.services.utils.load_native_llm", return_value=mock_llm):
             result = await extract_semantic([f], tmp_path, model_id="test:model")
 
         assert any(n.get("id") == "main_foo" for n in result["nodes"])
@@ -334,9 +337,9 @@ class TestExtractSemantic:
         f.write_text("print('hello')\n", encoding="utf-8")
 
         mock_llm = AsyncMock()
-        mock_llm.ainvoke = AsyncMock(side_effect=Exception("LLM unavailable"))
+        mock_llm.agenerate = AsyncMock(side_effect=Exception("LLM unavailable"))
 
-        with patch("backend.services.utils.load_llm", return_value=mock_llm):
+        with patch("backend.services.utils.load_native_llm", return_value=mock_llm):
             result = await extract_semantic([f], tmp_path, model_id="test:model")
 
         assert result["nodes"] == []
@@ -351,12 +354,12 @@ class TestExtractSemantic:
         f.write_text("print('hello')\n", encoding="utf-8")
 
         mock_llm = AsyncMock()
-        mock_llm.ainvoke = AsyncMock(
+        mock_llm.agenerate = AsyncMock(
             side_effect=Exception("429 RESOURCE_EXHAUSTED quota")
         )
 
         with (
-            patch("backend.services.utils.load_llm", return_value=mock_llm),
+            patch("backend.services.utils.load_native_llm", return_value=mock_llm),
             patch(
                 "backend.llm.provider_fallback.get_fallback_chain",
                 return_value=[],
@@ -372,14 +375,14 @@ class TestExtractSemantic:
         f = tmp_path / "doc.py"
         f.write_text("# empty\n", encoding="utf-8")
 
-        fake_response = MagicMock()
-        fake_response.content = '{"nodes": [], "edges": [], "hyperedges": []}'
-        fake_response.response_metadata = {}
+        fake_response = text_message(
+            MessageRole.ASSISTANT, '{"nodes": [], "edges": [], "hyperedges": []}'
+        )
 
         mock_llm = AsyncMock()
-        mock_llm.ainvoke = AsyncMock(return_value=fake_response)
+        mock_llm.agenerate = AsyncMock(return_value=fake_response)
 
-        with patch("backend.services.utils.load_llm", return_value=mock_llm):
+        with patch("backend.services.utils.load_native_llm", return_value=mock_llm):
             result = await extract_semantic(
                 [f], tmp_path, model_id="test:model", max_bisect_depth=0
             )
@@ -396,9 +399,9 @@ class TestCallLlmAsyncQuota:
         from backend.llm.provider_fallback import QuotaExhaustedError
 
         llm = MagicMock()
-        llm.ainvoke = AsyncMock(side_effect=Exception("429 RESOURCE_EXHAUSTED"))
+        llm.agenerate = AsyncMock(side_effect=Exception("429 RESOURCE_EXHAUSTED"))
         with (
-            patch("backend.services.utils.load_llm", return_value=llm),
+            patch("backend.services.utils.load_native_llm", return_value=llm),
             patch(
                 "backend.llm.provider_fallback.get_fallback_chain",
                 return_value=[],
@@ -414,8 +417,8 @@ class TestCallLlmAsyncQuota:
         from backend.context_graph import semantic
 
         llm = MagicMock()
-        llm.ainvoke = AsyncMock(side_effect=ValueError("network boom"))
-        with patch("backend.services.utils.load_llm", return_value=llm):
+        llm.agenerate = AsyncMock(side_effect=ValueError("network boom"))
+        with patch("backend.services.utils.load_native_llm", return_value=llm):
             out = await semantic._call_llm_async(
                 "msg", model_id="google-genai:gemini-2.5-flash"
             )
@@ -426,22 +429,21 @@ class TestCallLlmAsyncQuota:
     async def test_quota_then_fallback_succeeds(self):
         from backend.context_graph import semantic
 
-        resp = MagicMock()
-        resp.content = (
-            '{"nodes": [{"id": "n1", "label": "X"}], "edges": [], "hyperedges": []}'
+        resp = text_message(
+            MessageRole.ASSISTANT,
+            '{"nodes": [{"id": "n1", "label": "X"}], "edges": [], "hyperedges": []}',
         )
-        resp.response_metadata = {}
 
         def loader(mid):
             llm = MagicMock()
             if mid == "google-genai:gemini-2.5-flash":
-                llm.ainvoke = AsyncMock(side_effect=Exception("quota exceeded"))
+                llm.agenerate = AsyncMock(side_effect=Exception("quota exceeded"))
             else:
-                llm.ainvoke = AsyncMock(return_value=resp)
+                llm.agenerate = AsyncMock(return_value=resp)
             return llm
 
         with (
-            patch("backend.services.utils.load_llm", side_effect=loader),
+            patch("backend.services.utils.load_native_llm", side_effect=loader),
             patch(
                 "backend.llm.provider_fallback.get_fallback_chain",
                 return_value=["openai:gpt-4o"],

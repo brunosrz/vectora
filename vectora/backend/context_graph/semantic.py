@@ -334,19 +334,21 @@ async def _call_llm_async(
     deep: bool = False,
 ) -> dict[str, Any]:
     """Chama o LLM do Vectora de forma assíncrona e parseia o resultado."""
-    from langchain_core.messages import HumanMessage, SystemMessage
-
     from backend.llm.provider_fallback import (
         QuotaExhaustedError,
         try_with_fallback,
     )
-    from backend.services.utils import load_llm
+    from backend.services.utils import load_native_llm
+    from backend.vtypes.message import MessageRole, text_message
 
     system = _extraction_system(deep=deep)
-    messages = [SystemMessage(content=system), HumanMessage(content=user_msg)]
+    messages = [
+        text_message(MessageRole.SYSTEM, system),
+        text_message(MessageRole.USER, user_msg),
+    ]
 
     async def _invoke(mid: str) -> Any:
-        return await load_llm(mid).ainvoke(messages)
+        return await load_native_llm(mid).agenerate(messages)
 
     try:
         # Em 429/quota, tenta os outros providers configurados (fallback_order).
@@ -369,21 +371,13 @@ async def _call_llm_async(
             "finish_reason": "error",
         }
 
-    raw_content: str = ""
-    if hasattr(response, "content"):
-        raw_content = response.content if isinstance(response.content, str) else ""
+    raw_content: str = response.text()
 
-    # Tokens de usage (se disponíveis)
+    # Tokens de usage: o VMessage nativo não carrega response_metadata — o
+    # tracking de input/output tokens do semantic extractor fica 0 até o
+    # ChatClient nativo expor usage (gap de paridade com o BaseChatModel antigo).
     input_tokens = 0
     output_tokens = 0
-    usage = getattr(response, "response_metadata", {}) or {}
-    if isinstance(usage, dict):
-        tok = usage.get("token_usage") or usage.get("usage") or {}
-        if isinstance(tok, dict):
-            input_tokens = tok.get("prompt_tokens") or tok.get("input_tokens") or 0
-            output_tokens = (
-                tok.get("completion_tokens") or tok.get("output_tokens") or 0
-            )
 
     parsed = _parse_llm_json(raw_content)
     parsed.setdefault("nodes", [])

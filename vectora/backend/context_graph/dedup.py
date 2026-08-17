@@ -481,9 +481,8 @@ def _llm_tiebreak(
     """Batch-resolve ambiguous pairs (score in [low, high)) via the Vectora LLM."""
     import asyncio
 
-    from langchain_core.messages import HumanMessage, SystemMessage
-
-    from backend.services.utils import load_llm
+    from backend.services.utils import load_native_llm
+    from backend.vtypes.message import MessageRole, text_message
 
     ambiguous: list[tuple[dict, dict, float]] = []
     for i, node in enumerate(candidates):
@@ -527,7 +526,7 @@ def _llm_tiebreak(
         return
 
     try:
-        llm = load_llm(backend)
+        llm = load_native_llm(backend)
     except Exception as exc:
         logger.warning("--dedup-llm: cannot load LLM %r (%s); skipping.", backend, exc)
         return
@@ -545,14 +544,16 @@ def _llm_tiebreak(
         )
         try:
             response = asyncio.get_event_loop().run_until_complete(
-                llm.ainvoke(
+                llm.agenerate(
                     [
-                        SystemMessage(content="You are a deduplication assistant."),
-                        HumanMessage(content=prompt),
+                        text_message(
+                            MessageRole.SYSTEM, "You are a deduplication assistant."
+                        ),
+                        text_message(MessageRole.USER, prompt),
                     ]
                 )
             )
-            lines = (response.content or "").strip().splitlines()
+            lines = response.text().strip().splitlines()
             for line in lines:
                 line = line.strip()
                 if not line:
