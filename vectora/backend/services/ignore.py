@@ -45,6 +45,13 @@ ALWAYS_SKIP_DIRS: frozenset[str] = frozenset(
     }
 )
 
+#: A pasta `.vectora` (planos/memória do Vectora) é sempre acessível — a
+#: obediência ao `.gitignore` nunca pode escondê-la ou bloquear o acesso,
+#: mesmo que `.vectora/` esteja listada no `.gitignore` do projeto. Ela é o
+#: estado de runtime do próprio Vectora (plans/memory), não artefato de build
+#: ou dependência a ignorar.
+ALWAYS_ALLOW_DIRS: frozenset[str] = frozenset({".vectora"})
+
 
 def load_vectoraignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
     """Carrega o .vectoraignore mais próximo e retorna um PathSpec gitwildmatch.
@@ -154,6 +161,11 @@ def is_ignored(path: Path, base_dir: Path, spec: pathspec.PathSpec | None) -> bo
     Returns:
         True se o arquivo deve ser ignorado, False caso contrário.
     """
+    # Camada 0 — exceção do estado do Vectora: `.vectora` (plans/memory) é
+    # sempre acessível, nunca ignorada por .gitignore/.vectoraignore.
+    if any(part in ALWAYS_ALLOW_DIRS for part in path.parts):
+        return False
+
     # Camada 1 — dirs hardcoded (mais rápido, sem I/O)
     for part in path.parts:
         if part in ALWAYS_SKIP_DIRS:
@@ -226,6 +238,16 @@ def walk_files(
         # Poda in-place: os.walk não desce em dirs removidos de dirnames.
         kept: list[str] = []
         for d in dirnames:
+            # `.vectora` (estado do Vectora) e tudo que está DENTRO dela é
+            # sempre varrido — nunca podado por .gitignore/.vectoraignore,
+            # mesmo que `.vectora/` esteja listada neles. Cobre tanto o
+            # diretório `.vectora` em si quanto os subdirs (plans/, memory/)
+            # que ficam por baixo dele.
+            if d in ALWAYS_ALLOW_DIRS or ".vectora" in current.parts:
+                kept.append(d)
+                if include_dirs:
+                    results.append(current / d)
+                continue
             if d in ALWAYS_SKIP_DIRS:
                 skipped += 1
                 continue

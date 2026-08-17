@@ -274,3 +274,66 @@ class TestWalkFilesPruning:
 
         files, _ = walk_files(tmp_path, "**/*.py", None)
         assert files == [tmp_path / "a.py"]
+
+
+class TestVectoraStateDirExemption:
+    """A pasta `.vectora` (plans/memory) é SEMPRE acessível — a obediência
+    ao `.gitignore` nunca pode escondê-la, mesmo que `.vectora/` esteja
+    listada no `.gitignore` do projeto."""
+
+    def test_is_ignored_false_mesmo_com_gitignore_listando_vectora(self, tmp_path):
+        from backend.services.ignore import is_ignored, load_ignore_spec
+
+        (tmp_path / ".gitignore").write_text(".vectora/\n")
+        spec = load_ignore_spec(tmp_path)
+
+        plan = tmp_path / ".vectora" / "plans" / "plan.md"
+        assert is_ignored(plan, tmp_path, spec) is False
+
+    def test_is_ignored_false_sem_spec_tambem(self, tmp_path):
+        """Sem .gitignore nenhum, `.vectora` obviamente continua acessível."""
+        from backend.services.ignore import is_ignored
+
+        plan = tmp_path / ".vectora" / "memory" / "MEMORY.md"
+        assert is_ignored(plan, tmp_path, None) is False
+
+    def test_walk_desce_em_vectora_mesmo_gitignorada(self, tmp_path, monkeypatch):
+        """`walk_files` varre o interior de `.vectora` mesmo com `.vectora/`
+        no `.gitignore` — o plano/memória do Vectora nunca é podado."""
+        import os as os_module
+
+        (tmp_path / ".gitignore").write_text(".vectora/\n")
+        plan_dir = tmp_path / ".vectora" / "plans"
+        plan_dir.mkdir(parents=True)
+        (plan_dir / "plan.md").write_text("x")
+        (tmp_path / "README.md").write_text("x")
+
+        visited: list[str] = []
+        original_walk = os_module.walk
+
+        def spy_walk(top, *args, **kwargs):
+            for dirpath, dirnames, filenames in original_walk(top, *args, **kwargs):
+                visited.append(str(dirpath))
+                yield dirpath, dirnames, filenames
+
+        monkeypatch.setattr("os.walk", spy_walk)
+
+        from backend.services.ignore import iter_files, load_ignore_spec
+
+        spec = load_ignore_spec(tmp_path)
+        files = iter_files(tmp_path, "**/*.md", spec)
+        assert plan_dir / "plan.md" in files
+        assert tmp_path / "README.md" in files
+        assert any(".vectora" in v for v in visited), (
+            "walk não desceu em .vectora — exceção de estado não aplicada"
+        )
+
+    def test_outro_dir_gitignorado_continua_sendo_podado(self, tmp_path):
+        """A exceção é só pro `.vectora` — outros dirs gitignorados seguem
+        bloqueados normalmente."""
+        from backend.services.ignore import is_ignored, load_ignore_spec
+
+        (tmp_path / ".gitignore").write_text("generated/\n")
+        spec = load_ignore_spec(tmp_path)
+
+        assert is_ignored(tmp_path / "generated" / "out.md", tmp_path, spec) is True
