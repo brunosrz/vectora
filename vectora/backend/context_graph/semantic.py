@@ -1,8 +1,9 @@
 """Extração semântica do Context Graph via LLM do Vectora.
 
-Substitui o transporte LLM do context graph (llm) pela stack nativa do
-Vectora: load_llm() + ainvoke() async. Mantém o prompt de extração, o parsing
-robusto de JSON, o chunking por tokens e o retry/bisect adaptativo.
+Substitui o transporte LLM do context graph pela stack nativa do Vectora:
+``load_native_llm()`` + ``agenerate()`` async, com ``VMessage``. Mantém o
+prompt de extração, o parsing robusto de JSON, o chunking por tokens e o
+retry/bisect adaptativo.
 
 Segurança (CLAUDE.md §12): cada arquivo é embrulhado em <untrusted_source>; o
 sistema instrui o LLM a tratar o conteúdo como dado inerte, nunca como instrução.

@@ -48,9 +48,9 @@ async def distill_transcript(transcript_text: str) -> DistillationResult:
 
     Defensivo: transcript vazio ou falha do LLM (rede, parse, timeout)
     devolve `DistillationResult()` vazio — nunca propaga exceção pro
-    caller (tool `learn_from_session`). Sem structured output nativo
-    (os ChatClient não têm `with_structured_output`), pedimos JSON no
-    prompt e validamos com `DistillationResult.model_validate`.
+    caller (tool `learn_from_session`). Sem structured output nativo no
+    ChatClient, pedimos JSON no prompt e validamos com
+    `DistillationResult.model_validate`.
     """
     if not transcript_text.strip():
         return DistillationResult()
