@@ -569,27 +569,21 @@ def create_app(serve_static: bool = True) -> FastAPI:
     # ── Discovery Layer — schema das tools ─────────────────────────────────
     @app.get("/api/tools/schema")
     async def tools_schema() -> dict:
-        from backend.nodes.tools import ALL_TOOLS
+        from backend.nodes.tools import ALL_TOOL_SPECS
 
         tools_data = []
-        for t in ALL_TOOLS:
+        for spec in ALL_TOOL_SPECS:
             schema: dict = {}
             try:
-                args_schema = getattr(t, "args_schema", None)
-                if args_schema is not None and hasattr(
-                    args_schema, "model_json_schema"
-                ):
-                    schema = args_schema.model_json_schema()
+                schema = spec.args_model.model_json_schema()
             except Exception:
                 pass
             tools_data.append(
                 {
-                    "name": t.name,
-                    "description": (t.description or "").split("\n")[0][:200],
+                    "name": spec.name,
+                    "description": (spec.description or "").split("\n")[0][:200],
                     "args_schema": schema,
-                    "render_hint": (getattr(t, "extras", None) or {}).get(
-                        "render_hint", "json"
-                    ),
+                    "render_hint": spec.extras.render_hint,
                 }
             )
         return {"version": "1", "tool_count": len(tools_data), "tools": tools_data}

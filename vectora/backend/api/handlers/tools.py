@@ -30,9 +30,9 @@ def _user_id(request: Request) -> str:
 
 
 def _all_tool_names() -> list[str]:
-    from backend.nodes.tools import ALL_TOOLS
+    from backend.nodes.tools import ALL_TOOL_NAMES
 
-    return [t.name for t in ALL_TOOLS]
+    return sorted(ALL_TOOL_NAMES)
 
 
 @router.get("/policy")

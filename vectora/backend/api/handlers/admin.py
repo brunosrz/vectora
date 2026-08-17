@@ -255,12 +255,12 @@ async def get_user_tools(request: Request, user_id: str) -> dict:
     """Política de tools de um usuário (override ABAC)."""
     user = _get_user(request)
     require_admin(user)
-    from backend.nodes.tools import ALL_TOOLS
+    from backend.nodes.tools import ALL_TOOL_NAMES
     from backend.rbac import tool_policy
 
     return {
         "disabled": tool_policy.get_disabled(user_id),
-        "available": [t.name for t in ALL_TOOLS],
+        "available": sorted(ALL_TOOL_NAMES),
     }
 
 
@@ -271,10 +271,10 @@ async def set_user_tools(
     """Define as tools desabilitadas de um usuário (admin override)."""
     user = _get_user(request)
     require_admin(user)
-    from backend.nodes.tools import ALL_TOOLS
+    from backend.nodes.tools import ALL_TOOL_NAMES
     from backend.rbac import tool_policy
 
-    valid = {t.name for t in ALL_TOOLS}
+    valid = ALL_TOOL_NAMES
     unknown = [n for n in body.disabled if n not in valid]
     if unknown:
         raise HTTPException(
@@ -376,23 +376,19 @@ async def list_tools_admin(request: Request) -> dict:
     require_admin(user)
 
     try:
-        from backend.nodes.tools import ALL_TOOLS
+        from backend.nodes.tools import ALL_TOOL_SPECS
         from backend.rbac import tool_policy
 
         disabled_global = set(tool_policy.get_disabled(tool_policy.GLOBAL_SCOPE))
         tools = [
             {
-                "name": t.name,
-                "description": t.description or "",
-                "category": (getattr(t, "metadata", None) or {}).get(
-                    "category", "general"
-                ),
-                "destructive": bool(
-                    (getattr(t, "metadata", None) or {}).get("destructive", False)
-                ),
-                "enabled": t.name not in disabled_global,
+                "name": spec.name,
+                "description": spec.description or "",
+                "category": spec.extras.category,
+                "destructive": bool(spec.extras.destructive),
+                "enabled": spec.name not in disabled_global,
             }
-            for t in ALL_TOOLS
+            for spec in ALL_TOOL_SPECS
         ]
         return {"tools": tools, "total": len(tools)}
     except Exception as exc:
@@ -411,10 +407,10 @@ async def toggle_tool(request: Request, tool_name: str, body: ToolToggleBody) ->
     user = _get_user(request)
     require_admin(user)
 
-    from backend.nodes.tools import ALL_TOOLS
+    from backend.nodes.tools import ALL_TOOL_NAMES
     from backend.rbac import tool_policy
 
-    valid = {t.name for t in ALL_TOOLS}
+    valid = ALL_TOOL_NAMES
     if tool_name not in valid:
         raise HTTPException(status_code=404, detail=f"Tool desconhecida: {tool_name}")
 

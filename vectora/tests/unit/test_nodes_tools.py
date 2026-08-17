@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from backend.nodes.tools import ALL_TOOLS, FS_TOOLS, MEMORY_TOOLS, SEARCH_TOOLS
+from backend.nodes.tools import (
+    ALL_TOOL_NAMES,
+    ALL_TOOL_SPECS,
+    ALL_TOOLS,
+    FS_TOOLS,
+    MEMORY_TOOLS,
+    SEARCH_TOOLS,
+)
 
 
 def test_fs_tools_not_empty():
@@ -21,6 +28,15 @@ def test_all_tools_is_union():
     assert len(ALL_TOOLS) >= len(SEARCH_TOOLS)
     assert len(ALL_TOOLS) >= len(FS_TOOLS)
     assert len(ALL_TOOLS) >= len(MEMORY_TOOLS)
+
+
+def test_native_views_espelham_all_tools():
+    """ALL_TOOL_NAMES/ALL_TOOL_SPECS são a visão nativa do MESMO toolset de
+    ALL_TOOLS (BaseTool) — nomes idênticos, sem a ponte LangChain. Garante que
+    a migração dos consumidores leves não muda o conjunto exposto."""
+    legacy_names = {t.name for t in ALL_TOOLS}
+    assert ALL_TOOL_NAMES == legacy_names
+    assert {spec.name for spec in ALL_TOOL_SPECS} == ALL_TOOL_NAMES
 
 
 def test_tools_have_names():

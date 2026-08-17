@@ -94,7 +94,7 @@ from backend.tools import (
     workspace as _workspace_module,
 )
 from backend.tools.langchain_bridge import as_langchain_tool
-from backend.tools.registry import TOOL_REGISTRY
+from backend.tools.registry import TOOL_REGISTRY, ToolSpec
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
@@ -642,6 +642,15 @@ for _t in [
     _all[_t.name] = _t
 
 ALL_TOOLS: list[BaseTool] = list(_all.values())
+
+# ── Vistas nativas do toolset principal (mesmos nomes de ALL_TOOLS) ──────
+# Consumidores que só precisam de `name`/`description`/`extras` (validação,
+# discovery, metadados de UI) usam estas — não precisam do adapter BaseTool
+# que `ALL_TOOLS` monta pro dispatch deepagents ainda em produção.
+ALL_TOOL_NAMES: frozenset[str] = frozenset(_all)
+ALL_TOOL_SPECS: list[ToolSpec] = [
+    spec for spec in TOOL_REGISTRY.all() if spec.name in ALL_TOOL_NAMES
+]
 
 # ---------------------------------------------------------------------------
 # CHAT_TOOLS — modo Chat (conversacional puro, sem workspace/folders)

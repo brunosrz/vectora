@@ -182,16 +182,15 @@ def _get_tool_meta(tool_name: str) -> dict:
     """Retorna metadados de UI da tool (render_hint, category, destructive, icon, invalidates)."""
     if not _tool_meta_cache:
         try:
-            from backend.nodes.tools import ALL_TOOLS
+            from backend.nodes.tools import ALL_TOOL_SPECS
 
-            for t in ALL_TOOLS:
-                meta = getattr(t, "extras", None) or getattr(t, "metadata", None) or {}
-                _tool_meta_cache[t.name] = {
-                    "render_hint": meta.get("render_hint", "json"),
-                    "category": meta.get("category", "general"),
-                    "destructive": bool(meta.get("destructive", False)),
-                    "icon": meta.get("icon", "tool"),
-                    "invalidates": meta.get("invalidates", []),
+            for spec in ALL_TOOL_SPECS:
+                _tool_meta_cache[spec.name] = {
+                    "render_hint": spec.extras.render_hint,
+                    "category": spec.extras.category,
+                    "destructive": bool(spec.extras.destructive),
+                    "icon": spec.extras.icon,
+                    "invalidates": spec.extras.invalidates,
                 }
         except Exception:
             pass

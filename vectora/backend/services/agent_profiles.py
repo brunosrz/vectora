@@ -88,10 +88,9 @@ def _validate(
     if budget_cents is not None and budget_cents < 0:
         raise ValueError("budget_cents não pode ser negativo")
 
-    from backend.nodes.tools import ALL_TOOLS
+    from backend.nodes.tools import ALL_TOOL_NAMES
 
-    known = {t.name for t in ALL_TOOLS}
-    unknown = [t for t in tool_scope if t not in known]
+    unknown = [t for t in tool_scope if t not in ALL_TOOL_NAMES]
     if unknown:
         raise ValueError(f"tool_scope contém tools inexistentes: {sorted(unknown)}")
 
