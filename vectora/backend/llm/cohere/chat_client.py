@@ -1,12 +1,8 @@
 """``CohereChatClient`` — chat nativo do Cohere (Chat API v2, `/v2/chat`),
 implementa o Protocol ``ChatClient`` (``backend/llm/base.py``).
 
-Substitui ``langchain_cohere.ChatCohere`` nos pontos que só precisam do
-Protocol ``ChatClient`` (``backend/llm/fallback_chat_client.py`` e o
-teste de conexão do CLI) — não é um `BaseChatModel`, então não serve pro
-dispatch do `create_deep_agent` (que exige `bind_tools`/`with_config`);
-isso segue via `langchain_cohere.ChatCohere` até existir um wrapper
-`chat.py` equivalente aos outros 5 providers.
+Substitui ``langchain_cohere.ChatCohere`` — o Cohere agora é falado 100%
+nativamente, como os outros 5 providers, sem BaseChatModel.
 
 Peculiaridades da Chat API v2 que o parser respeita:
 - Tool result (papel `tool` no `VMessage`) vira uma mensagem de role `tool`

@@ -31,7 +31,7 @@ usuário — exige endpoint + key juntos (não há serviço/key fixo como o
 OpenRouter), descobertos via {base_url}/models (endpoint OpenAI-compatible
 padrão, sem validação prévia como a do OpenRouter — o proxy não expõe um
 endpoint dedicado de "auth/key"). Em todos os casos,
-`load_llm("ollama:<tag>" | "openrouter:<id>" | "nine_router:<id>")`
+`load_native_llm("ollama:<tag>" | "openrouter:<id>" | "nine_router:<id>")`
 (backend/services/utils.py) já resolve o id dinâmico — este módulo só cuida
 de descoberta/validação e da lista de modelos escolhida pelo usuário.
 """
