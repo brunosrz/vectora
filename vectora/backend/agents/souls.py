@@ -13,7 +13,7 @@ prompt do usuário peça.
 filesystem/git roda numa git worktree isolada quando a task tem workspace.
 
 ``SOUL_CATALOG`` é o ponto único de verdade consumido por
-``agent_factory._subagent_specs()`` (grafo do orquestrador) e
+``agent_factory._native_subagent_catalog()`` (catálogo nativo de delegação) e
 ``subagent_runner.py`` (execuções agendadas via ``schedule_subagent_task``).
 """
 
@@ -21,25 +21,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Any
 
 import backend.tools.aitl
 from backend.agents._identity import VECTORA_IDENTITY
 from backend.tools.groups import resolve_tool_group
-from backend.tools.langchain_bridge import as_langchain_tool
-from backend.tools.registry import TOOL_REGISTRY
+from backend.tools.registry import TOOL_REGISTRY, ToolSpec
 
 
 @dataclass(frozen=True)
 class Soul:
-    """Spec de uma SOUL — traduzida para o dict `SubAgent` do deepagents
-    em ``agent_factory._subagent_specs()``.
+    """Spec de uma SOUL — traduzida para ``SubagentSpec`` nativa em
+    ``agent_factory._native_subagent_catalog``.
 
     ``tool_groups`` nomeia grupos de ``backend.tools.groups.TOOL_GROUPS``;
-    ``tools`` resolve esses nomes pro registry nativo e envolve cada
-    ``ToolSpec`` em adapter langchain (``as_langchain_tool``) só no
-    primeiro acesso — mesmo shape ``list[BaseTool]`` que
-    ``agent_factory.py`` já consome, sem mudar o contrato dos callers."""
+    ``tools`` resolve esses nomes pro ``ToolSpec`` nativo do registry — sem
+    a ponte ``as_langchain_tool`` (o dispatch deepagents legado saiu).
+    Resolução é **lazy** (``cached_property``): nunca avaliada na importação
+    do módulo, só no primeiro acesso — evita que ``resolve_tool_group`` rode
+    antes dos módulos de tool terem sido importados e registrados."""
 
     name: str
     description: str
@@ -48,12 +47,12 @@ class Soul:
     needs_worktree_isolation: bool
 
     @cached_property
-    def tools(self) -> list[Any]:
-        specs: dict[str, Any] = {}
+    def tools(self) -> list[ToolSpec]:
+        specs: dict[str, ToolSpec] = {}
         for group_name in self.tool_groups:
             for spec in resolve_tool_group(group_name):
                 specs[spec.name] = spec
-        return [as_langchain_tool(spec) for spec in specs.values()]
+        return list(specs.values())
 
 
 def _prompt(role_title: str, body: str) -> str:
@@ -400,7 +399,7 @@ SOUL_CATALOG: dict[str, Soul] = {
             "reporting success. A screenshot or console log is worth more in "
             "your report than a description of what you expect to be true.",
         ),
-        tool_groups=["browser", "fs_readonly"],
+        tool_groups=["browser", "fs_readonly", "aitl"],
         needs_worktree_isolation=False,
     ),
     "planner": Soul(
@@ -422,21 +421,17 @@ SOUL_CATALOG: dict[str, Soul] = {
             "the goal. Flag genuine open questions instead of guessing an "
             "answer to sound complete.",
         ),
-        tool_groups=["rag", "memory", "planner"],
+        tool_groups=["rag", "memory", "planner", "aitl"],
         needs_worktree_isolation=False,
     ),
 }
 
-# AITL: toda SOUL ganha ask_parent_agent — só faz sentido dentro de uma
-# delegação (pedir algo ao pai), nunca no orquestrador (que não tem pai).
-# `ask_parent_agent` é uma tool do registry nativo (`backend.tools.aitl`,
-# `@vtool`) — o dispatch ainda em produção consome a versão envolvida em
-# adapter compatível via `as_langchain_tool`.
+# AITL: toda SOUL ganha ask_parent_agent via o grupo `aitl` nos `tool_groups`
+# (só faz sentido dentro de uma delegação — pedir algo ao pai). A checagem
+# abaixo garante que `ask_parent_agent` foi registrado (via `import
+# backend.tools.aitl` no topo), mas NÃO anexa nada no import — a resolução é
+# lazy no `Soul.tools`, sem avaliação ansiosa de `resolve_tool_group`.
 _ask_parent_agent_spec = TOOL_REGISTRY.get("ask_parent_agent")
 if _ask_parent_agent_spec is None:
     msg = "ask_parent_agent não registrado — backend.tools.aitl não foi importado"
     raise RuntimeError(msg)
-_ask_parent_agent_lc = as_langchain_tool(_ask_parent_agent_spec)
-for _soul in SOUL_CATALOG.values():
-    _soul.tools.append(_ask_parent_agent_lc)
-del _soul

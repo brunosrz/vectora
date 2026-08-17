@@ -79,6 +79,24 @@ class TestGetNativeAgent:
         assert a1 is not a3
 
 
+class TestNativeSubagentCatalogAbac:
+    def test_disabled_tools_filtradas_do_catalogo(self, monkeypatch):
+        """ABAC/kill-switch: tools desabilitadas saem das specs nativas de
+        subagente (substitui a cobertura do antigo _subagent_specs legado)."""
+        from backend.rbac import tool_policy
+
+        monkeypatch.setattr(
+            tool_policy, "effective_disabled", lambda user_id: {"file_write"}
+        )
+
+        catalog = af._native_subagent_catalog(user_id="u1")
+        coder_tools = {t.name for t in catalog["coder"].tools}
+        assert "file_write" not in coder_tools
+        assert "terminal" in coder_tools
+        # ask_parent_agent continua presente (via grupo `aitl`).
+        assert "ask_parent_agent" in coder_tools
+
+
 class TestAgetThreadMessagesNativePrimeiro:
     async def test_thread_com_historico_nativo_usa_sessionstore(
         self, session_store: SessionStore

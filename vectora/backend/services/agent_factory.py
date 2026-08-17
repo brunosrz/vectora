@@ -216,61 +216,6 @@ Acknowledge him based on this system prompt — no RAG, no web search.
 """
 
 # ---------------------------------------------------------------------------
-# Subagent specs
-# ---------------------------------------------------------------------------
-
-
-def _subagent_specs(
-    user_id: str | None = None, middleware: list[Any] | None = None
-) -> list[Any]:
-    """Retorna a lista de SubAgent specs (dict do deepagents) a partir do
-    catálogo de SOULs, filtrada pela política de tools.
-
-    Importações lazy evitam circular imports e carregamento desnecessário
-    em contextos que não instanciam o grafo (CLI, testes unitários).
-
-    As tools de cada subagent são filtradas removendo as que constam em
-    ``tool_policy.effective_disabled(user_id)`` — união do disable global
-    (admin kill-switch) com o ABAC por usuário. O disable global se aplica
-    mesmo sem ``user_id`` (sessão local sem auth).
-
-    ``middleware``, quando passado, é atribuído a cada spec — mesma stack do
-    agente principal (inclui o HITL dinâmico). Sem isso, tools destrutivas
-    chamadas dentro de uma delegação nunca pausam pra aprovação, mesmo em
-    ``permission_mode="ask"``: deepagents só herda o `interrupt_on`
-    top-level de ``create_deep_agent`` (nunca setado aqui), não o
-    ``middleware=`` do agente pai.
-
-    As specs base vêm de ``backend.agents.souls.SOUL_CATALOG`` — ponto único
-    de verdade para nome, descrição, prompt e tools de cada SOUL.
-    """
-    from backend.agents.souls import SOUL_CATALOG
-
-    disabled = tool_policy.effective_disabled(user_id)
-    specs: list[Any] = []
-    for soul in SOUL_CATALOG.values():
-        tools = [t for t in soul.tools if t.name not in disabled]
-        spec: dict[str, Any] = {
-            "name": soul.name,
-            "description": soul.description,
-            "system_prompt": soul.system_prompt,
-            "tools": tools,
-        }
-        if middleware is not None:
-            spec["middleware"] = middleware
-        specs.append(spec)
-
-    if disabled:
-        logger.debug(
-            "agent_factory: subagent tools filtradas user=%s disabled=%s",
-            user_id,
-            disabled,
-        )
-
-    return specs
-
-
-# ---------------------------------------------------------------------------
 # Context loader — injetado no system prompt por turno
 # ---------------------------------------------------------------------------
 
