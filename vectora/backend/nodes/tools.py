@@ -650,8 +650,7 @@ ALL_TOOLS: list[ToolSpec] = list(_all.values())
 
 # ── Vistas nativas do toolset principal (mesmos nomes de ALL_TOOLS) ──────
 # Consumidores que só precisam de `name`/`description`/`extras` (validação,
-# discovery, metadados de UI) usam estas — não precisam do adapter BaseTool
-# que `ALL_TOOLS` monta pro dispatch deepagents ainda em produção.
+# discovery, metadados de UI) usam estas.
 ALL_TOOL_NAMES: frozenset[str] = frozenset(_all)
 ALL_TOOL_SPECS: list[ToolSpec] = [
     spec for spec in TOOL_REGISTRY.all() if spec.name in ALL_TOOL_NAMES

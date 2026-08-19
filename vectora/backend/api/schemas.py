@@ -41,9 +41,10 @@ class ChatConfig(BaseModel):
     # vazio, o agente segue a heurística "adapte ao idioma da conversa".
     language: str = ""
     # Fork de checkpoint (editar mensagem / regenerar resposta): checkpoint_id
-    # pai da mensagem alvo (ver HistoryMessage.checkpoint_id). Resumir o grafo
-    # a partir dele faz o LangGraph ramificar dali — o histórico original
-    # continua intacto, só deixa de ser o branch "atual" da thread.
+    # pai da mensagem alvo (ver HistoryMessage.checkpoint_id). Retomar a
+    # partir dele ramifica o histórico ali (SessionStore.set_branch_head) —
+    # o histórico original continua intacto, só deixa de ser o branch
+    # "atual" da thread.
     fork_from_checkpoint_id: str = ""
 
 

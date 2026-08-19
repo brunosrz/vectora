@@ -2,8 +2,7 @@
 
 Acessa o store persistente via ``_get_store(ctx)`` — sempre via
 ``ctx.store``, injetado pelo motor de execução nativo antes do turno
-(``backend/api/handlers/chat.py`` popula ``run_ctx.store``). O fallback
-via contextvar do LangGraph foi removido junto com o corte do dispatch.
+(``backend/api/handlers/chat.py`` popula ``run_ctx.store``).
 
 As memórias são isoladas por usuário no namespace ``("user", <user_id>, "memories")``,
 garantindo isolamento entre usuários e compatibilidade com o StoreBackend do
@@ -85,8 +84,7 @@ def _get_store(ctx: ToolContext) -> Any:
     """Obtém o store persistente da execução atual — via ``ctx.store``.
 
     O motor de execução nativo sempre popula ``ctx.store`` antes do turno
-    (``backend/api/handlers/chat.py``), então este é o único caminho. O
-    fallback via contextvar do LangGraph saiu junto com o corte do dispatch.
+    (``backend/api/handlers/chat.py``), então este é o único caminho.
 
     Raises:
         RuntimeError: Se chamado fora do motor nativo (``ctx.store`` nulo).

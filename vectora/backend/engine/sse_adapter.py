@@ -1,10 +1,7 @@
 """``to_sse_line`` — serializa um ``EngineEvent`` nativo (``stream_events.py``)
-pra uma linha SSE. Substitui ``backend/api/adapters.py::adapt_stream``
-como fonte do stream — mesmo
-alvo de paridade: os schemas Pydantic existentes em ``backend/api/
+pra uma linha SSE, usando os schemas Pydantic existentes em ``backend/api/
 schemas.py`` (``ThreadEvent``, ``TokenEvent``, etc.) e o `encode_event()`
-que já serializa esse envelope. Só a origem dos dados muda (motor nativo
-em vez de ``astream_events`` do LangGraph) — o shape que chega ao frontend
+que já serializa esse envelope — o shape que chega ao frontend
 (``data: {"type": ..., ...}\\n\\n``) é idêntico, byte a byte por campo.
 
 Mapeamento 1:1 — cada `EngineEvent` vira exatamente o schema Pydantic

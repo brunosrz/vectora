@@ -91,15 +91,15 @@ Vectora is a full-stack application: a **FastAPI backend** that runs the agent
 engine and exposes the API, and a **React frontend** (Vite + TanStack Router)
 served by the backend itself.
 
-Each conversation is a **thread** with checkpointing: graph state is saved on
-every turn to SQLite via `AsyncSqliteSaver`, so context survives restarts.
+Each conversation is a **thread**: turn state is saved on every step to
+SQLite via the native `SessionStore`, so context survives restarts.
 Sessions and history live in `vectora_sessions`.
 
-The reasoning engine is a **stateful multi-agent LangGraph graph**:
+The reasoning engine is a **native multi-agent loop**:
 1. The **Orchestrator** receives the message, analyzes intent, and decides
    which specialized agent to invoke.
 2. The chosen agent runs the necessary tools and returns the result.
-3. The result flows back up the graph to the final chat response.
+3. The result flows back to the final chat response.
 
 Document indexing is **fire-and-forget**: `ingest_docs` or `embedding` queue
 work on the `BackgroundEmbeddingWorker` (token bucket, 90 calls/min by
@@ -108,8 +108,8 @@ after each batch, describing what's indexed — that manifest is automatically
 injected into the agent's context.
 
 ### Tech stack
-- **LangChain** — LLM, tool, and chain orchestration
-- **LangGraph** — state graph with orchestrator + specialized subagents
+- **Native engine** (`backend/engine/`) — imperative conversation loop with
+  orchestrator + specialized subagents, no compiled graph
 - **LanceDB** — local, file-based, serverless vector store for RAG
 - **Cohere** — embeddings (`embed-multilingual-v3.0`) and reranker
   (`rerank-multilingual-v3.0`)

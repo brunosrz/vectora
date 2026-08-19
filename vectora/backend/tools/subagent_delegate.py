@@ -1,6 +1,6 @@
-"""Tool nativa de delegação a subagente — equivalente ao ``task()`` do
-deepagents, mas roda inteiramente no motor nativo (``run_subagent``,
-``backend/engine/subagents.py``) em vez de compilar um grafo LangGraph.
+"""Tool nativa de delegação a subagente — roda inteiramente no motor
+nativo (``run_subagent``, ``backend/engine/subagents.py``), sem grafo
+compilado.
 
 ``run_subagent`` precisa de infraestrutura do turno (``session_store``,
 ``chat_client``, o catálogo de ``SubagentSpec`` por nome, etc.) que não
@@ -91,8 +91,7 @@ async def delegate_to_subagent(
     correlation_id: str | None = None,
 ) -> str:
     """Delega uma tarefa a uma SOUL do catálogo, rodando isolada no motor
-    nativo (`run_subagent`) — mesma função que `task()` cumpria no
-    deepagents.
+    nativo (`run_subagent`).
 
     Args:
         subagent_type: nome da SOUL no catálogo desta sessão.

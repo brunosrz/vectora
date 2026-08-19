@@ -506,10 +506,9 @@ class BackgroundEmbeddingWorker:
         # embed_query — como era feito antes — degrada o recall porque grava
         # o documento no espaço errado.
         # Os clients nativos (Cohere/Voyage/Ollama/OpenRouter) são async por
-        # baixo (httpx.AsyncClient) — sem SDK LangChain aqui, não há mais o
-        # retry interno de 429 com backoff longo que travava a thread do
-        # to_thread; aembed_documents propaga o erro na hora e o circuit
-        # breaker do worker assume.
+        # baixo (httpx.AsyncClient) — sem retry interno de 429 com backoff
+        # longo travando a thread do to_thread; aembed_documents propaga o
+        # erro na hora e o circuit breaker do worker assume.
         vectors = await embeddings_model.aembed_documents([text])
         return vectors[0]
 

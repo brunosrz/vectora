@@ -1,13 +1,9 @@
 """``ChatClient`` — Protocol nativo que os 5 clients de chat de provider
-implementam. Substitui ``langchain_core.language_models.chat_models.
-BaseChatModel``.
+implementam.
 
-Diferença central em relação ao ``BaseChatModel``: não existe mais
-``bind_tools()`` produzindo uma instância nova imutável com as tools
+Sem ``bind_tools()`` produzindo uma instância nova imutável com as tools
 "presas" — cada chamada de ``astream``/``agenerate`` recebe ``tools=``
-diretamente como parâmetro. Isso elimina o hack de
-``RunnableBinding``/``_unwrap_binding`` que ``FallbackChatModel`` precisava
-antes só pra contornar essa abstração do LangChain.
+diretamente como parâmetro.
 """
 
 from __future__ import annotations
@@ -23,7 +19,7 @@ if TYPE_CHECKING:
 class Embeddings(Protocol):
     """Interface comum aos clients de embedding nativos (cohere/voyage/
     ollama/openrouter) e ao ``FallbackEmbeddings`` que orquestra fallback
-    entre eles. Substitui ``langchain_core.embeddings.Embeddings``."""
+    entre eles."""
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         """Vetoriza um lote de documentos (indexação)."""

@@ -34,8 +34,7 @@ class Soul:
     ``agent_factory._native_subagent_catalog``.
 
     ``tool_groups`` nomeia grupos de ``backend.tools.groups.TOOL_GROUPS``;
-    ``tools`` resolve esses nomes pro ``ToolSpec`` nativo do registry — sem
-    a ponte ``as_langchain_tool`` (o dispatch deepagents legado saiu).
+    ``tools`` resolve esses nomes direto pro ``ToolSpec`` nativo do registry.
     Resolução é **lazy** (``cached_property``): nunca avaliada na importação
     do módulo, só no primeiro acesso — evita que ``resolve_tool_group`` rode
     antes dos módulos de tool terem sido importados e registrados."""

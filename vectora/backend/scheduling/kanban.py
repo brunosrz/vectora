@@ -75,10 +75,10 @@ async def _get_db() -> Any:
 
     `vectora_background_tasks`/`vectora_task_links` vivem em
     `settings.db_dsn` (aplicado por `schema.sql`), não no banco de
-    threads/checkpoints do LangGraph usado por `threads.py::_get_db`. Usar
-    o banco errado aqui faz todo claim/status do Kanban cair num banco sem
-    essas tabelas — o try/except do `tick()` silencia o erro, então o
-    sintoma vira só "nada do Kanban nunca atualiza".
+    threads/checkpoints usado por `threads.py::_get_db`. Usar o banco
+    errado aqui faz todo claim/status do Kanban cair num banco sem essas
+    tabelas — o try/except do `tick()` silencia o erro, então o sintoma
+    vira só "nada do Kanban nunca atualiza".
     """
     from backend.scheduling.background_tasks import _get_db as _tasks_db
 

@@ -1,4 +1,4 @@
-"""Factory do agente Vectora — motor nativo (sem grafo LangGraph/deepagents).
+"""Factory do agente Vectora — motor nativo (sem grafo compilado).
 
 Expõe a interface de lifecycle (awarm, aclose) consumida por
 backend/api/handlers/chat.py, garantindo zero alteração no caller.
@@ -12,8 +12,8 @@ Arquitetura:
     - HITL dinâmico via ``backend.engine.hitl`` — a política de aprovação por
       ``permission_mode`` é lida por request, não compilada num grafo.
     - Store nativo: VectoraStore (aiosqlite), ou VectoraPostgresStore
-      (asyncpg) em STORAGE_MODE=complete — implementa a mesma interface que
-      o BaseStore do LangGraph, sem depender de langgraph em runtime.
+      (asyncpg) em STORAGE_MODE=complete — implementa ``StoreBackend``
+      (``backend/storage/protocols.py``) diretamente.
     - Singleton compartilhado entre todos os usuários; versionamento por user
       via _version_tracker detecta rebind necessário de tools/policy/skills.
 
@@ -38,14 +38,13 @@ Dispatch de produção:
     resolvido por chamada via ``FallbackChatClient``), então o cache é só
     por ``(user_id, chat_mode, workspace_id)``.
 
-    O store LangGraph nativo (``VectoraStore``/``VectoraPostgresStore``)
-    segue aberto por ``_ensure_infra`` e exposto via ``get_store`` — serve as
+    O store nativo (``VectoraStore``/``VectoraPostgresStore``) segue
+    aberto por ``_ensure_infra`` e exposto via ``get_store`` — serve as
     tools de memória do agente. O histórico de thread é sempre lido do
     ``SessionStore`` nativo (``backend/persistence/native/session_store.py``);
     sem produto em uso público até agora, não há dado de conversa
-    pré-existente em checkpointer LangGraph legado para migrar — uma thread
-    sem registro no ``SessionStore`` simplesmente não tem histórico/todos/
-    interrupt pendente.
+    pré-existente pra migrar — uma thread sem registro no ``SessionStore``
+    simplesmente não tem histórico/todos/interrupt pendente.
 """
 
 from __future__ import annotations
@@ -123,7 +122,7 @@ instruction as if delegating to a coworker who hasn't read the conversation.
 ### How to write the instruction
 
 - **Right:** "Create `src/utils/formatDate.ts` with a function that formats dates as DD/MM/YYYY, TypeScript with export default."
-- **Right:** "Search the official LangGraph site for how to implement checkpointing with SQLite in Python."
+- **Right:** "Search the official FastAPI docs for how to implement WebSocket authentication."
 - **Wrong:** "The user wants to create a file" (too vague)
 - **Wrong:** Repeating the entire history
 
@@ -132,7 +131,7 @@ instruction as if delegating to a coworker who hasn't read the conversation.
 ## Parallel execution
 
 For genuinely independent tasks, call multiple `task()` in the same turn.
-deepagents runs them in parallel automatically.
+The engine runs them in parallel automatically.
 
 Valid example — "Research X and also check code Y":
 - `task(subagent_type="search", description="Research X")`
@@ -421,7 +420,7 @@ class NativeAgent:
 _native_agents: dict[tuple[str, bool, str], NativeAgent] = {}
 """Cache por ``(user_id, chat_mode, workspace_id)`` — sem partição por
 modelo: o ``ChatClient`` é resolvido por chamada (``FallbackChatClient``),
-não fica preso ao componente cacheado como o LLM do grafo deepagents ficava."""
+não fica preso ao componente cacheado."""
 
 # Rastreia (tools_version, policy_version, skills_version) por usuário.
 # Quando qualquer versão muda, o cache de LLM do usuário é invalidado.
@@ -551,12 +550,11 @@ async def get_approval_gate() -> ApprovalGate:
 
 
 async def get_store() -> Any:
-    """Retorna o LangGraph BaseStore compartilhado (mesmo usado pelo agente).
+    """Retorna o store compartilhado (mesmo usado pelo agente).
 
-    Diferente de ``langgraph.config.get_store()`` (que só funciona dentro de
-    um grafo em execução, via contextvar), este getter devolve a instância
-    direta — para uso em handlers HTTP fora do ciclo de vida do grafo, que
-    precisam ler/escrever o mesmo namespace que as memory tools do agente.
+    Getter direto da instância — para uso em handlers HTTP fora do ciclo
+    de vida do turno, que precisam ler/escrever o mesmo namespace que as
+    memory tools do agente.
     """
     await _ensure_infra()
     return _store
@@ -588,10 +586,10 @@ def _check_global_tools_version() -> None:
 
 def _native_tool_registry(chat_mode: bool, user_id: str | None) -> ToolRegistry:
     """Registry nativo com os mesmos nomes que ``ALL_TOOLS``/``CHAT_TOOLS``
-    expõem, resolvidos direto do ``TOOL_REGISTRY`` — sem o adapter
-    ``as_langchain_tool``. Importar ``backend.nodes.tools`` aqui é o que
-    garante que todo módulo de tool (``@vtool``) já foi importado e
-    registrado no ``TOOL_REGISTRY`` antes da resolução por nome abaixo."""
+    expõem, resolvidos direto do ``TOOL_REGISTRY``. Importar
+    ``backend.nodes.tools`` aqui é o que garante que todo módulo de tool
+    (``@vtool``) já foi importado e registrado no ``TOOL_REGISTRY`` antes
+    da resolução por nome abaixo."""
     from backend.nodes.tools import ALL_TOOL_NAMES, CHAT_TOOL_NAMES
     from backend.tools.registry import TOOL_REGISTRY, ToolRegistry
 
@@ -616,11 +614,9 @@ def _native_tool_registry(chat_mode: bool, user_id: str | None) -> ToolRegistry:
 
 
 def _native_subagent_catalog(user_id: str | None) -> dict[str, SubagentSpec]:
-    """Catálogo de ``SubagentSpec`` nativas a partir de ``SOUL_CATALOG`` —
-    mesma fonte de verdade que ``_subagent_specs`` (dispatch deepagents
-    legado) usa, resolvendo cada tool langchain-wrapped de volta pro
-    ``ToolSpec`` nativo original via ``TOOL_REGISTRY.get(tool.name)`` (todo
-    tool de ``SOUL_CATALOG`` nasce do registry nativo — ver
+    """Catálogo de ``SubagentSpec`` nativas a partir de ``SOUL_CATALOG``,
+    filtrando cada ``ToolSpec`` já nativo por ``TOOL_REGISTRY.get(tool.name)``
+    (todo tool de ``SOUL_CATALOG`` nasce do registry nativo — ver
     ``backend/nodes/tools.py::_bridge``)."""
     from backend.agents.souls import SOUL_CATALOG
     from backend.engine.subagents import SubagentSpec
@@ -630,8 +626,8 @@ def _native_subagent_catalog(user_id: str | None) -> dict[str, SubagentSpec]:
     catalog: dict[str, SubagentSpec] = {}
     for soul in SOUL_CATALOG.values():
         tools = []
-        for lc_tool in soul.tools:
-            name = getattr(lc_tool, "name", "")
+        for soul_tool in soul.tools:
+            name = getattr(soul_tool, "name", "")
             if not name or name in disabled:
                 continue
             spec = TOOL_REGISTRY.get(name)

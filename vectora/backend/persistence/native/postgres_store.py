@@ -3,8 +3,7 @@ agente sobre ``asyncpg``.
 
 Mesma lógica de ``backend/persistence/native/store.py::VectoraStore``
 (SQLite) — só o transporte SQL muda (``$1``/``$2``, ``JSONB``). Implementa
-``backend/storage/protocols.py::StoreBackend`` diretamente, sem depender de
-``langgraph.store.base.BaseStore``.
+``backend/storage/protocols.py::StoreBackend`` diretamente.
 """
 
 from __future__ import annotations

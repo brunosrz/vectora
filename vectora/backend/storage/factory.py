@@ -15,7 +15,7 @@ Uso:
     store = await get_store()   # AsyncSqliteStore ou PostgresStore
     backend = await get_vector_store_backend()  # LanceDBBackend ou QdrantBackend
 
-O checkpointer real (LangGraph) vive em ``backend.services.agent_factory``.
+O agente real (motor nativo) vive em ``backend.services.agent_factory``.
 
 Garantia de produto — usuários/auth/settings/config NUNCA em Postgres:
 ``storage_mode`` ("lite"/"complete") afeta apenas checkpointer, BaseStore,

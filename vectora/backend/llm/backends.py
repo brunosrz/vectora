@@ -83,12 +83,12 @@ def _build_index(embedding_model: str | None) -> Any:
     fallback multi-provider (Cohere↔Voyage↔Ollama↔OpenRouter) em vez de ficar
     hardcoded em Cohere. Retorna None se nenhum provider estiver configurado.
 
-    ``dims=1024`` continua fixo: o `IndexConfig` do LangGraph Store exige a
-    dimensão na construção (síncrona), antes de qualquer chamada de rede
-    pra sondar a dimensão real do provider resolvido — mesma limitação que
-    já existia. Guard de dimensão real (`_check_embedding_dimension`) só é
-    viável no caminho async de escrita/leitura do vector store de RAG
-    (`storage/factory.py`), não neste `IndexConfig` síncrono do Store.
+    ``dims=1024`` continua fixo: o índice do Store exige a dimensão na
+    construção (síncrona), antes de qualquer chamada de rede pra sondar a
+    dimensão real do provider resolvido. Guard de dimensão real
+    (`_check_embedding_dimension`) só é viável no caminho async de
+    escrita/leitura do vector store de RAG (`storage/factory.py`), não
+    neste índice síncrono do Store.
     """
     try:
         from backend.storage.factory import _build_lc_embeddings

@@ -1,14 +1,13 @@
-"""``run_conversation`` — loop de conversa nativo. Substitui o
-``StateGraph`` do LangGraph por um loop ``while`` imperativo, estilo
-Hermes Agent: a cada volta relê o histórico da persistência (nunca mantém
-estado só em memória — reload/resume funcionam por reconstrução, mesmo
-invariante de ``SessionStore``), chama o chat client em streaming, acumula
-os fragmentos, executa as tool calls resultantes, e repete.
+"""``run_conversation`` — loop de conversa nativo, estilo Hermes Agent:
+um loop ``while`` imperativo que a cada volta relê o histórico da
+persistência (nunca mantém estado só em memória — reload/resume funcionam
+por reconstrução, mesmo invariante de ``SessionStore``), chama o chat
+client em streaming, acumula os fragmentos, executa as tool calls
+resultantes, e repete.
 
-``max_iterations`` substitui ``recursion_limit`` (o teto de super-steps que
-o LangGraph aplicava); estourar emite ``stopped_reason="max_iterations"`` —
-mesmo código que o frontend já trata hoje via `ErrorSignal(code=
-"RECURSION_LIMIT")` no adapter atual.
+``max_iterations`` é o teto de voltas do loop; estourar emite
+``stopped_reason="max_iterations"`` — mesmo código que o frontend já trata
+hoje via `ErrorSignal(code="RECURSION_LIMIT")`.
 
 HITL entra por injeção: ``should_require_approval`` (``backend/engine/
 hitl.py``) é uma função pura opcional — se fornecida e disparar pra

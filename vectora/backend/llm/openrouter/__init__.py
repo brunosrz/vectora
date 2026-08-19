@@ -1,10 +1,8 @@
-"""Integração nativa com o OpenRouter — HTTP direto, sem camada LangChain.
+"""Integração nativa com o OpenRouter — HTTP direto.
 
-A integração LangChain (`langchain-openrouter`) cobre só chat; embeddings,
-rerank, imagem, TTS, STT e vídeo ficariam de fora. E o caminho anterior
-(`ChatOpenAI` com `base_url` trocado) amarra o comportamento ao que o cliente
-da OpenAI expõe: provider routing, `usage.cost` e reasoning do OpenRouter não
-têm caminho de primeira classe por ali.
+Cliente próprio pra dar caminho de primeira classe a provider routing,
+`usage.cost` e reasoning do OpenRouter, além de chat: embeddings, rerank,
+imagem, TTS, STT e vídeo.
 """
 
 from backend.llm.openrouter.client import (

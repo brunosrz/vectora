@@ -4,10 +4,10 @@ JSON Schema exposto ao LLM (``vtool``, ``backend/tools/registry.py``,
 filtra o parâmetro `ctx` na geração do schema).
 
 ``VectoraContext`` (``backend/vtypes/context.py``) já era um dataclass
-próprio, não um tipo LangChain — só populado hoje via ``context_schema`` do
-``create_deep_agent``. Reusar em vez de duplicar: mesmos campos, mesmo
-``ctx_from_config`` de compatibilidade, agora também a interface direta que
-toda tool nativa recebe por injeção do loop de conversa
+próprio, populado pelo motor nativo a cada turno. Reusar em vez de
+duplicar: mesmos campos, mesmo ``ctx_from_config`` de compatibilidade,
+agora também a interface direta que toda tool nativa recebe por injeção
+do loop de conversa
 (``backend/engine/conversation_loop.py``).
 """
 

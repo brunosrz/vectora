@@ -11,7 +11,7 @@ Endpoints:
 Todos os endpoints exigem autenticação (injetada via middleware).
 O user_id é extraído de ``request.state.user.id``.
 
-Lê e escreve o mesmo LangGraph BaseStore usado pelas memory tools do agente
+Lê e escreve o mesmo store nativo usado pelas memory tools do agente
 (``backend/tools/memory.py``), no namespace ``("user", <user_id>, "memories")``
 — painel de configurações e agente compartilham as mesmas memórias.
 """
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/memory", tags=["memory"])
 
-# asearch/aput/aget vêm de langgraph.store.base.BaseStore — sem tipo público
+# asearch/aput/aget vêm do Protocol de store nativo — sem tipo público
 # estável para o retorno de asearch importar aqui sem acoplar à implementação
 # concreta (InMemoryStore/AsyncSqliteStore).
 _LIST_ALL_LIMIT = 1000

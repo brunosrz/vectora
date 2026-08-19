@@ -1,7 +1,6 @@
 """MCP tool: invoca ferramentas de outros servidores via Model Context Protocol.
 
-Usa o SDK oficial `mcp` (Python) direto — nenhuma dependência de
-`langchain-mcp-adapters`/`MultiServerMCPClient`. `VectoraMCPClient` também é
+Usa o SDK oficial `mcp` (Python) direto. `VectoraMCPClient` também é
 reutilizado por `backend/workspace/plugins.py` pra resolver as tools MCP
 por-usuário (servidores configurados via marketplace).
 `VectoraMCPClient` mantém uma `ClientSession` por servidor configurado
@@ -69,11 +68,8 @@ def _safe_subprocess_env(extra_keys: frozenset[str] | None = None) -> dict[str, 
 
 
 class VectoraMCPClient:
-    """Uma `ClientSession` MCP por servidor configurado.
-
-    Substitui `langchain_mcp_adapters.client.MultiServerMCPClient` — mesma
-    responsabilidade (gerenciar conexões + expor tools agregadas), sem
-    depender de `BaseTool`/`langchain_core`.
+    """Uma `ClientSession` MCP por servidor configurado — gerencia conexões
+    e expõe as tools agregadas.
     """
 
     def __init__(self) -> None:

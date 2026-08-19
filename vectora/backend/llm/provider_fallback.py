@@ -37,12 +37,12 @@ _TRANSIENT_MARKERS = (
     "high demand",
 )
 _PROVIDER_INCOMPATIBLE_MARKERS = (
-    # Cohere Command A+ (e variantes): `_get_message_cohere_format_v2` do
-    # langchain_cohere sempre inclui `tool_plan` ao serializar um AIMessage
-    # com tool_calls no histórico — alguns deployments do modelo rejeitam
-    # esse campo com 400. Nunca resolve no MESMO provider (retry idêntico
-    # falha sempre), mas o próximo da cadeia de fallback processa a mesma
-    # mensagem sem problema.
+    # Cohere Command A+ (e variantes): o client nativo sempre inclui
+    # `tool_plan` ao serializar uma mensagem de assistente com tool_calls
+    # no histórico — alguns deployments do modelo rejeitam esse campo com
+    # 400. Nunca resolve no MESMO provider (retry idêntico falha sempre),
+    # mas o próximo da cadeia de fallback processa a mesma mensagem sem
+    # problema.
     "tool plan` cannot be used with this model",
     "tool_plan",
 )

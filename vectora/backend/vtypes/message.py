@@ -1,12 +1,9 @@
-"""Tipo de mensagem nativo do motor agêntico — substitui
-``langchain_core.messages.{BaseMessage,HumanMessage,AIMessage,SystemMessage,
-ToolMessage,AIMessageChunk}``.
+"""Tipo de mensagem nativo do motor agêntico.
 
 Fundação de todo o resto do motor nativo — o loop de conversa
 (``backend/engine/conversation_loop.py``), os 5 chat clients
 (``backend/llm/*/chat_client.py``) e a persistência (``backend/
-persistence/native/session_store.py``) operam todos sobre ``VMessage``,
-nunca sobre tipos do LangChain.
+persistence/native/session_store.py``) operam todos sobre ``VMessage``.
 """
 
 from __future__ import annotations
@@ -20,8 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class MessageRole(StrEnum):
-    """Papel da mensagem — mesmo vocabulário de hoje (`msg.type` do
-    LangChain), só como enum nativo em vez de string solta."""
+    """Papel da mensagem — enum nativo em vez de string solta."""
 
     SYSTEM = "system"
     USER = "user"
@@ -172,4 +168,4 @@ class VMessageChunk:
     finish_reason: str | None = None
     usage: dict[str, int] | None = None
     """`{"input_tokens", "output_tokens", "total_tokens"}` — mesmo shape que
-    os 5 clients já preenchem hoje via `usage_metadata` do LangChain."""
+    os 5 chat clients nativos já preenchem hoje."""

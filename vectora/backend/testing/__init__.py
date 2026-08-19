@@ -1,7 +1,7 @@
 """Test Fixtures and Utilities for Unit Testing.
 
 Fixture de banco temporário (`temp_db`), factories de `VMessage` e
-assertions — tudo nativo, sem `langchain_core`.
+assertions — tudo nativo.
 """
 
 from __future__ import annotations

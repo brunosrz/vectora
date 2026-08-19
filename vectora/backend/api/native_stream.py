@@ -1,17 +1,14 @@
 """Bridge entre o motor nativo (``backend/engine/conversation_loop.py``) e o
-contrato SSE de produção — substitui ``backend/api/adapters.py::adapt_stream``
-(LangGraph) como origem do stream de ``StreamChat``/``ResumeChat``. O shape
-que chega ao frontend não muda (``backend/engine/sse_adapter.py`` já garante
-o mapeamento 1:1 pro schema Pydantic de cada evento); só a origem dos dados
-troca — motor nativo em vez de ``astream_events`` do LangGraph.
+contrato SSE de produção — origem do stream de ``StreamChat``/``ResumeChat``.
+``backend/engine/sse_adapter.py`` garante o mapeamento 1:1 de cada
+``EngineEvent`` pro schema Pydantic servido ao frontend.
 
-Efeitos colaterais que ``adapt_stream`` fazia acoplados ao shape de evento do
-LangGraph (checkpoint de rewind, persistência de conteúdo parcial no KV,
-gatilho do Remember, registro de delegação de subagente na aba Tarefas,
-streaming ao vivo da tool `terminal`, detecção de desconexão do cliente) são
-reproduzidos aqui em cima do vocabulário nativo (``EngineEvent``) — a lógica
-de cada efeito em si é reaproveitada de ``backend/api/adapters.py`` (mesmas
-funções, sem duplicar).
+Efeitos colaterais do turno (checkpoint de rewind, persistência de conteúdo
+parcial no KV, gatilho do Remember, registro de delegação de subagente na
+aba Tarefas, streaming ao vivo da tool `terminal`, detecção de desconexão do
+cliente) são tratados aqui em cima do vocabulário nativo — a lógica de cada
+efeito em si vem de ``backend/api/adapters.py`` (mesmas funções, sem
+duplicar).
 """
 
 from __future__ import annotations

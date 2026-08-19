@@ -33,7 +33,7 @@ class VectorHit:
 
 
 class VectorStoreBackend(Protocol):
-    """Contrato nativo de storage vetorial — sem LangChain no meio.
+    """Contrato nativo de storage vetorial.
 
     Erros de rede/timeout são responsabilidade de cada implementação tratar
     (nunca deixar subir cru pro tool caller) — mesma defensividade que

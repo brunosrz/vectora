@@ -7,7 +7,8 @@ Responsável por:
 - Geração e validação de JWT (python-jose, HS256)
 - Ciclo de vida dos tokens: access (15min) + refresh (7d, opaque, rotacionado)
 
-Banco de dados: ~/.vectora/checkpoints.db (mesmo que checkpointer LangGraph)
+Banco de dados: ~/.vectora/checkpoints.db (compartilhado com outras tabelas
+de sessão/thread do backend).
 """
 
 from __future__ import annotations

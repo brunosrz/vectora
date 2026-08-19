@@ -1,8 +1,8 @@
 """VectoraTelemetry — observabilidade nativa de execução do agente.
 
-Substitui o LangSmith (SaaS pago) por logging estruturado próprio: grava
-início/fim de turno, cada tool call (nome, args resumidos, duração,
-sucesso/erro) e erros não tratados como eventos JSON, um por linha.
+Logging estruturado próprio: grava início/fim de turno, cada tool call
+(nome, args resumidos, duração, sucesso/erro) e erros não tratados como
+eventos JSON, um por linha.
 
 Os eventos são emitidos pelo logger dedicado ``backend.telemetry``. Por
 padrão eles propagam para o root logger e caem no mesmo

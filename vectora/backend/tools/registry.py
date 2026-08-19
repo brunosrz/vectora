@@ -1,16 +1,12 @@
-"""Tool registry nativo — substitui ``@tool`` de ``langchain.tools``,
-``langchain_core.tools.BaseTool`` e ``langchain_core.utils.
-function_calling.convert_to_openai_tool``.
+"""Tool registry nativo.
 
-Usa Pydantic (``pydantic.create_model`` — já dependência do projeto, não
-LangChain-family) pra gerar o JSON Schema de cada tool a partir da
-assinatura da função Python, o mesmo papel que ``convert_to_openai_tool``
-cumpria antes em cima de ``BaseTool.args_schema``.
+Usa Pydantic (``pydantic.create_model``) pra gerar o JSON Schema de cada
+tool a partir da assinatura da função Python.
 
-Toda tool nativa é ``async def`` (CLAUDE.md regra 10) e recebe
-``ctx: ToolContext`` como parâmetro normal — o decorator ``vtool`` filtra
-esse parâmetro na hora de gerar o schema (nunca aparece pro LLM), mas o
-caller (``backend/engine/conversation_loop.py``) sempre passa ``ctx=``
+Toda tool nativa é ``async def`` e recebe ``ctx: ToolContext`` como
+parâmetro normal — o decorator ``vtool`` filtra esse parâmetro na hora de
+gerar o schema (nunca aparece pro LLM), mas o caller
+(``backend/engine/conversation_loop.py``) sempre passa ``ctx=``
 explicitamente na chamada.
 """
 
@@ -161,8 +157,7 @@ def _strip_titles(node: Any) -> None:
 
 
 def _summary(docstring: str | None) -> str:
-    """Primeira linha não vazia da docstring — descrição curta da tool
-    (mesmo comportamento que ``@tool`` do LangChain já tinha)."""
+    """Primeira linha não vazia da docstring — descrição curta da tool."""
     if not docstring:
         return ""
     for line in docstring.strip().splitlines():

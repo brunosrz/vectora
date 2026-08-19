@@ -201,8 +201,7 @@ class TavilyClient:
         return list(resultados)
 
     async def crawl(self, url: str, **kwargs: Any) -> dict:
-        """Varre um site a partir de `url` — endpoint que o pacote LangChain
-        não expõe."""
+        """Varre um site a partir de `url`."""
         return await self._request("POST", "/crawl", _sem_none({"url": url, **kwargs}))
 
     async def map(self, url: str, **kwargs: Any) -> dict:

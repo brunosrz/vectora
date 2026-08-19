@@ -222,8 +222,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         logger.warning("api/server: migrations SQLite falhou: %s", exc)
 
     # Garante que a tabela vectora_sessions existe antes do primeiro request.
-    # Evita race com AsyncSqliteSaver do LangGraph (mesmo arquivo .db) que
-    # podia fazer o CREATE TABLE silenciar e get_thread/list_threads
+    # Evita race com outro consumidor do mesmo arquivo .db criando tabela
+    # concorrentemente, o que podia fazer get_thread/list_threads
     # retornarem 500 "no such table" até o servidor reiniciar.
     try:
         from backend.api.handlers.threads import ensure_sessions_table

@@ -1,14 +1,8 @@
 """``OllamaChatClient`` — chat nativo do Ollama (``POST /api/chat``),
-implementa o Protocol ``ChatClient`` (``backend/llm/base.py``).
+implementa o Protocol ``ChatClient`` (``backend/llm/base.py``), consumido
+diretamente pelo motor nativo (``backend/engine/conversation_loop.py``).
 
-Arquivo separado de ``chat.py`` (``VectoraOllamaChat``, subclasse de
-``BaseChatModel``) pelo mesmo motivo documentado em
-``backend/llm/openai/chat_client.py``: o núcleo agêntico em produção ainda
-depende do adapter LangChain até o loop de conversa nativo existir e
-consumir esta classe. Quando o dispatch cortar pro motor nativo,
-``chat.py`` é removido.
-
-Dois invariantes herdados de `chat.py` (mesma API, mesmos riscos):
+Dois invariantes da API do Ollama que o parser respeita:
 - `thinking` nunca entra no texto da mensagem — vira `VMessageChunk.
   delta_reasoning`/bloco `reasoning`, concatenar misturaria raciocínio e
   resposta na tela.

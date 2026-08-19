@@ -145,10 +145,6 @@ class TelemetryService:
         # Suppress external library logs in quiet mode
         if quiet_mode:
             silent_loggers = [
-                "langchain",
-                "langchain_core",
-                "langchain_google_genai",
-                "langgraph",
                 "google",
                 "google.genai",
             ]

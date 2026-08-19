@@ -19,9 +19,8 @@ veio).
 HITL dentro do subagente: ``should_require_approval`` (``backend/engine/
 hitl.py``) é passado direto pro `run_conversation` do subagente — chamado
 IDENTICAMENTE ao do agente principal, porque é código importado, não
-estado injetado por instância de middleware. Resolve o gap que o
-deepagents tinha (subagente herdava `interrupt_on` do topo do grafo, nunca
-o `middleware=` custom do pai) sem precisar de nenhum truque de propagação.
+estado injetado por instância de middleware. Isso garante que a política
+de aprovação do pai sempre se propaga ao subagente, sem truque nenhum.
 
 Liveness ativa (``LivenessConfig``): heartbeat baseado em progresso real
 (qualquer evento emitido pelo `run_conversation` do subagente — token,

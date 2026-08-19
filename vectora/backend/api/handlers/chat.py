@@ -271,10 +271,10 @@ async def _transcribe_attachment(att: Attachment) -> str:
     return f"\n[Áudio: {att.name}]\n{transcript}"
 
 
-#: Diretório onde anexos de imagem sobrevivem a restart do processo —
-#: `additional_kwargs` do LangGraph fica só no checkpoint (não é servido
-#: por nenhuma rota), então sem copiar o arquivo pra cá o histórico via
-#: REST (`GET /threads/{id}/history`) nunca tem de onde buscar a imagem de
+#: Diretório onde anexos de imagem sobrevivem a restart do processo — o
+#: conteúdo multimodal persistido na mensagem não é servido por nenhuma
+#: rota, então sem copiar o arquivo pra cá o histórico via REST
+#: (`GET /threads/{id}/history`) nunca tem de onde buscar a imagem de
 #: volta depois que o backend reinicia.
 _CHAT_ATTACHMENTS_DIRNAME = "chat-attachments"
 

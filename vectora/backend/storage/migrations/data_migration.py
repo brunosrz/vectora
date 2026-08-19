@@ -5,7 +5,7 @@ Suporta 4 operações:
 * ``to-postgres``       — copia SQLite → Postgres via asyncpg COPY
 * ``to-qdrant``         — copia LanceDB → Qdrant em batches de 256
 * ``to-pgvector``       — copia LanceDB → Postgres pgvector
-* ``memory-to-langgraph`` — migra registros do store antigo para LangGraph BaseStore
+* ``memory-to-native`` — migra registros do store antigo para o store nativo
 
 Todas as operações são idempotentes: registros já existentes não são duplicados.
 ``--dry-run`` estima volumes sem escrever nada.
@@ -15,7 +15,7 @@ Uso (CLI):
     vectora storage migrate to-postgres --dry-run
     vectora storage migrate to-qdrant --batch-size 512
     vectora storage migrate to-pgvector
-    vectora storage migrate memory-to-langgraph
+    vectora storage migrate memory-to-native
 """
 
 from __future__ import annotations
@@ -362,16 +362,16 @@ async def migrate_to_pgvector(
         await pg_conn.close()
 
 
-async def migrate_memory_to_langgraph(
+async def migrate_memory_to_native_store(
     *,
     sqlite_path: str,
     dry_run: bool = False,
     console: Console | None = None,
 ) -> dict[str, Any]:
-    """Migra memórias do store antigo para LangGraph BaseStore.
+    """Migra memórias do store antigo para o store nativo (``get_store()``).
 
     Lê registros da tabela ``memories`` (formato antigo) e os converte
-    para namespaces LangGraph ``("user:<id>", "memories")``.
+    para o namespace ``("user:<id>", "memories")``.
 
     Args:
         sqlite_path:  Caminho do banco SQLite com tabela ``memories``.

@@ -1,10 +1,7 @@
 """Tool nativa de planejamento — ``write_todos``.
 
-Substitui a ``TodoListMiddleware`` do deepagents, que injetava essa tool
-incondicionalmente em todo agente do grafo LangGraph. Aqui é uma ``@vtool``
-normal, registrada como qualquer outra e exposta a todos os agentes via
-``ALL_TOOLS``/``CHAT_TOOLS`` (``backend/nodes/tools.py``) — sem injeção
-implícita fora do registry.
+Registrada como qualquer outra ``@vtool`` e exposta a todos os agentes
+via ``ALL_TOOLS``/``CHAT_TOOLS`` (``backend/nodes/tools.py``).
 
 O agente usa ``write_todos`` pra quebrar uma tarefa complexa em passos e
 manter o usuário informado do progresso em tempo real: cada chamada

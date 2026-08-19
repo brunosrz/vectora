@@ -305,7 +305,7 @@ async def _storage_migrate(
 
     from backend.storage.migrations.runner import MigrationRunner
 
-    if subaction in ("to-postgres", "to-qdrant", "to-pgvector", "memory-to-langgraph"):
+    if subaction in ("to-postgres", "to-qdrant", "to-pgvector", "memory-to-native"):
         await _storage_data_migrate(console, db_path, subaction, version)
         return
 
@@ -342,7 +342,7 @@ async def _storage_migrate(
             console.print(
                 f"[red]Sub-ação desconhecida: {subaction!r}[/red]\n"
                 "Opções: status | upgrade | "
-                "to-postgres | to-qdrant | to-pgvector | memory-to-langgraph"
+                "to-postgres | to-qdrant | to-pgvector | memory-to-native"
             )
             sys.exit(1)
 
@@ -353,9 +353,9 @@ async def _storage_data_migrate(
     subaction: str,
     extra: str | None,
 ) -> None:
-    """Migrações de dados (to-postgres, to-qdrant, to-pgvector, memory-to-langgraph)."""
+    """Migrações de dados (to-postgres, to-qdrant, to-pgvector, memory-to-native)."""
     from backend.storage.migrations.data_migration import (
-        migrate_memory_to_langgraph,
+        migrate_memory_to_native_store,
         migrate_to_pgvector,
         migrate_to_postgres,
         migrate_to_qdrant,
@@ -439,11 +439,11 @@ async def _storage_data_migrate(
         )
         console.print(f"[green]Total:[/green] {result['upserted']} vetores")
 
-    elif subaction == "memory-to-langgraph":
+    elif subaction == "memory-to-native":
         console.print(
-            f"[bold]Migrando memórias → LangGraph BaseStore[/bold] (dry_run={dry_run})"
+            f"[bold]Migrando memórias → store nativo[/bold] (dry_run={dry_run})"
         )
-        result = await migrate_memory_to_langgraph(
+        result = await migrate_memory_to_native_store(
             sqlite_path=db_path,
             dry_run=dry_run,
             console=console,

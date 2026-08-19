@@ -7,8 +7,7 @@ não espalhada por tools ou nodes.
 Design:
 - TextService é um singleton leve: criado uma vez, reutilizado em todo o processo.
 - O splitter usa tiktoken (cl100k_base) e um split recursivo por separadores
-  (``["\\n\\n", "\\n", " ", ""]``) — substitui o ``RecursiveCharacterTextSplitter``
-  do ``langchain_text_splitters``, sem dependência externa além do tiktoken.
+  (``["\\n\\n", "\\n", " ", ""]``), sem dependência externa além do tiktoken.
 - O token_counter usa o mesmo encoding para consistência com o splitter:
   trim_messages() e ingest_docs() falam a mesma língua de tokens.
 

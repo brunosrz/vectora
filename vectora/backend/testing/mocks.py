@@ -1,7 +1,6 @@
 """``FakeChatClient`` — implementação nativa do Protocol `ChatClient`
 (`backend/llm/base.py`) pra testes, sem depender de nenhum provider real.
-Substitui o `FakeChatModel` do LangChain (já removido — sem consumidor
-desde a Sprint 15) e generaliza o padrão `_ScriptedChatClient` que
+Generaliza o padrão `_ScriptedChatClient` que
 `test_engine_conversation_loop.py`/`test_engine_subagents.py` reimplementam
 localmente hoje.
 
@@ -107,11 +106,10 @@ def text_response(text: str, *, name: str | None = None) -> VMessage:
 
 class NativeInMemoryStore:
     """Implementação nativa do Protocol `StoreBackend`
-    (`backend/storage/protocols.py`) sobre um dict Python em memória.
-    Substitui `langgraph.store.memory.InMemoryStore` como fake de store nos
-    testes — mesmo shape de retorno (`Item`/`SearchItem` com atributos
-    `.value`/`.key`/`.score`) de `VectoraStore`/`VectoraPostgresStore`, sem
-    persistência real nem dependência do LangGraph.
+    (`backend/storage/protocols.py`) sobre um dict Python em memória, como
+    fake de store nos testes — mesmo shape de retorno (`Item`/`SearchItem`
+    com atributos `.value`/`.key`/`.score`) de
+    `VectoraStore`/`VectoraPostgresStore`, sem persistência real.
 
     Aceita o mesmo `index` opcional (`{"dims", "embed", "fields"}`) — sem
     índice configurado, `asearch(query=...)` ignora `query` e devolve todos

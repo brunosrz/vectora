@@ -1,8 +1,4 @@
-"""Asserções de teste sobre `VMessage` (`backend/vtypes/message.py`) —
-substitui as asserções equivalentes sobre `langchain_core.messages.
-{AIMessage,BaseMessage,ToolMessage}`. Mesmo contrato de API pública (nomes
-de função, exceções levantadas), só o tipo de mensagem consumido muda.
-"""
+"""Asserções de teste sobre `VMessage` (`backend/vtypes/message.py`)."""
 
 from typing import Any
 

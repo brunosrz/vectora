@@ -1,13 +1,7 @@
 """``GoogleChatClient`` — chat nativo do Google Gemini (`generateContent`/
 `streamGenerateContent`), implementa o Protocol ``ChatClient``
-(``backend/llm/base.py``).
-
-Arquivo separado de ``chat.py`` (``VectoraGoogleChat``, subclasse de
-``BaseChatModel``) pelo mesmo motivo documentado em
-``backend/llm/openai/chat_client.py``: o núcleo agêntico em produção ainda
-depende do adapter LangChain até o loop de conversa nativo existir e
-consumir esta classe. Quando o dispatch cortar pro motor nativo,
-``chat.py`` é removido.
+(``backend/llm/base.py``), consumido diretamente pelo motor nativo
+(``backend/engine/conversation_loop.py``).
 
 Peculiaridades da API do Gemini que o parser respeita:
 - `systemInstruction` é um campo top-level separado, não um item de `contents`.

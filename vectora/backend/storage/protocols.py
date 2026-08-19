@@ -38,13 +38,13 @@ def _err(msg: str) -> HealthResult:
 
 
 # ---------------------------------------------------------------------------
-# Store — armazenamento de memórias do agente (LangGraph BaseStore)
+# Store — armazenamento de memórias do agente
 # ---------------------------------------------------------------------------
 
 
 @runtime_checkable
 class StoreBackend(Protocol):
-    """Backend de BaseStore para memórias e knowledge do agente.
+    """Backend de store para memórias e knowledge do agente.
 
     Implementações:
         lite     — ``InMemoryStore`` com índice Cohere (F5)
@@ -93,8 +93,8 @@ class VectorStoreBackend(Protocol):
     """Backend de VectorStore para busca semântica (RAG).
 
     Implementações:
-        lite     — LanceDB via ``langchain-community`` (F6)
-        complete — Qdrant via ``langchain-qdrant`` (F6)
+        lite     — ``LanceDBBackend`` nativo (F6)
+        complete — ``QdrantBackend`` nativo (F6)
     """
 
     async def asimilarity_search(

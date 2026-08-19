@@ -1,15 +1,9 @@
 """``OpenRouterChatClient`` — chat nativo do OpenRouter (`/chat/completions`,
 formato OpenAI-compatível), implementa o Protocol ``ChatClient``
-(``backend/llm/base.py``).
+(``backend/llm/base.py``), consumido diretamente pelo motor nativo
+(``backend/engine/conversation_loop.py``).
 
-Arquivo separado de ``chat.py`` (``VectoraOpenRouterChat``, subclasse de
-``BaseChatModel``) pelo mesmo motivo documentado em
-``backend/llm/openai/chat_client.py``: o núcleo agêntico em produção ainda
-depende do adapter LangChain até o loop de conversa nativo existir e
-consumir esta classe. Quando o dispatch cortar pro motor nativo,
-``chat.py`` é removido.
-
-Peculiaridades que o parser preserva do adapter antigo:
+Peculiaridades que o parser preserva:
 - `reasoning` nunca entra no texto da mensagem — canal próprio
   (`ContentBlock(kind="reasoning")`/`VMessageChunk.delta_reasoning`),
   concatenar mistura raciocínio e resposta na tela.

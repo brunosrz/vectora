@@ -74,8 +74,8 @@ async def _ensure_schema(db: Any) -> None:
 
     Idempotente. Exportada para que o ``_lifespan`` do server possa chamar
     no startup, garantindo que as tabelas existam antes do primeiro request —
-    evita race com o ``AsyncSqliteSaver`` do LangGraph que abre o mesmo
-    arquivo ``~/.vectora/checkpoints.db``.
+    evita race com outro consumidor do mesmo arquivo
+    ``~/.vectora/checkpoints.db`` criando tabela concorrentemente.
 
     Tabelas gerenciadas:
     - ``vectora_sessions`` — metadados de cada thread/sessão.
@@ -712,12 +712,12 @@ async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
     isso é higiene do banco, não uma correção de comportamento visível.
 
     Segunda passada: remove também threads com `message_count > 0` mas sem
-    nenhum checkpoint real do LangGraph (tabela `checkpoints`, gerenciada
-    pelo `AsyncSqliteSaver`) — sinal inequívoco de que o grafo nunca chegou
-    a rodar pra essa thread (ex.: `message_count` incrementado antes do
-    agente inicializar). Sem essa passada, threads assim ficam fantasma pra
-    sempre: passam no filtro de `message_count > 0` do `ListThreads` e a
-    primeira passada só olha `message_count = 0`.
+    nenhum registro na tabela legada `checkpoints` (se ela existir no banco)
+    — sinal inequívoco de que o agente nunca chegou a rodar pra essa thread
+    (ex.: `message_count` incrementado antes do agente inicializar). Sem
+    essa passada, threads assim ficam fantasma pra sempre: passam no filtro
+    de `message_count > 0` do `ListThreads` e a primeira passada só olha
+    `message_count = 0`.
     """
     from datetime import timedelta
 
@@ -835,9 +835,9 @@ async def update_thread(
 
 @router.post("/vectora.chat.v1.ThreadService/GetHistory")
 async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
-    """Retorna o histórico de mensagens de uma thread via checkpointer LangGraph.
+    """Retorna o histórico de mensagens de uma thread via ``SessionStore`` nativo.
 
-    Reusa o singleton do grafo (mesmo que o handler de chat) — evita rebuild
+    Reusa o singleton do agente (mesmo que o handler de chat) — evita rebuild
     do grafo + abertura de uma nova connection SQLite a cada request.
     """
     try:
@@ -995,8 +995,8 @@ async def list_thread_checkpoints(thread_id: str) -> CheckpointsResponse:
 
     Retorna apenas artefatos com ``strategy='git'`` ou ``strategy='snapshot'``
     associados a turnos completos (gravados pelo orchestrator após cada turno).
-    A filtragem por ``kind='turn'`` via metadados LangGraph é feita pelo
-    orchestrator ao gravar — aqui lemos apenas o que está em
+    A filtragem por ``kind='turn'`` é feita pelo orchestrator ao gravar —
+    aqui lemos apenas o que está em
     ``vectora_checkpoint_artifacts``.
     """
     db = await _get_db()
@@ -1276,8 +1276,8 @@ async def thread_activity(thread_id: str) -> ActivityResponse:
         turn_count_row = await cur.fetchone()
     turn_count: int = turn_count_row[0] if turn_count_row else 0
 
-    # tool_call_counts: derivado de files_touched por convenção (sem acesso ao
-    # grafo LangGraph aqui).
+    # tool_call_counts: derivado de files_touched por convenção (sem acesso
+    # ao histórico completo de tool calls aqui).
     return ActivityResponse(
         files_touched=unique_files,
         tool_call_counts={},

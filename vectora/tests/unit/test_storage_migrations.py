@@ -322,12 +322,12 @@ class TestDataMigrationDryRun:
         assert result["total_rows"] == 0
 
     @pytest.mark.asyncio
-    async def test_memory_to_langgraph_missing_table(self, tmp_path):
+    async def test_memory_to_native_store_missing_table(self, tmp_path):
         """Banco sem tabela 'memories' retorna total=0 sem erro."""
         import aiosqlite
 
         from backend.storage.migrations.data_migration import (
-            migrate_memory_to_langgraph,
+            migrate_memory_to_native_store,
         )
 
         db_path = str(tmp_path / "no_memories.db")
@@ -335,19 +335,19 @@ class TestDataMigrationDryRun:
             await conn.execute("CREATE TABLE other (id INTEGER)")
 
         # dry-run — não precisa de store configurado
-        result = await migrate_memory_to_langgraph(
+        result = await migrate_memory_to_native_store(
             sqlite_path=db_path,
             dry_run=True,
         )
         assert result["total"] == 0
 
     @pytest.mark.asyncio
-    async def test_memory_to_langgraph_dry_run(self, tmp_path):
+    async def test_memory_to_native_store_dry_run(self, tmp_path):
         """dry-run conta registros sem chamar store."""
         import aiosqlite
 
         from backend.storage.migrations.data_migration import (
-            migrate_memory_to_langgraph,
+            migrate_memory_to_native_store,
         )
 
         db_path = str(tmp_path / "memories.db")
@@ -360,7 +360,7 @@ class TestDataMigrationDryRun:
             )
             await conn.commit()
 
-        result = await migrate_memory_to_langgraph(
+        result = await migrate_memory_to_native_store(
             sqlite_path=db_path,
             dry_run=True,
         )

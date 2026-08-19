@@ -1,9 +1,9 @@
-"""Integração nativa com o Ollama — HTTP direto, sem camada LangChain.
+"""Integração nativa com o Ollama — HTTP direto.
 
-`langchain-ollama` cobre chat de texto e esconde o que o endpoint nativo
-expõe: `images` por mensagem (vision), `message.thinking` separado do
-conteúdo, e os contadores de token. O `/api/show` — fonte de verdade das
-capacidades por modelo — nem aparece por lá.
+Cliente próprio pra expor o que o endpoint nativo do Ollama de fato
+oferece: `images` por mensagem (vision), `message.thinking` separado do
+conteúdo, os contadores de token, e `/api/show` como fonte de verdade das
+capacidades por modelo.
 """
 
 from backend.llm.ollama.client import (

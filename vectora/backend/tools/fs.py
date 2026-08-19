@@ -1,10 +1,9 @@
 """Filesystem tools: leitura, escrita, edição de arquivos, grep, listagem, terminal e artifacts.
 
 Tools nativas (``@vtool``) — chamadas como função async direta com
-``ctx: ToolContext``, sem ``.invoke({...})``/``.ainvoke({...})`` do
-LangChain. Toda I/O bloqueante de arquivo (``file_read``/``file_write``/
-``file_edit``/``grep``/``list_dir``) roda via ``asyncio.to_thread``, nunca
-bloqueando o event loop.
+``ctx: ToolContext``. Toda I/O bloqueante de arquivo (``file_read``/
+``file_write``/``file_edit``/``grep``/``list_dir``) roda via
+``asyncio.to_thread``, nunca bloqueando o event loop.
 """
 
 from __future__ import annotations

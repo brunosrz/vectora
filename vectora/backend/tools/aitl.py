@@ -1,26 +1,23 @@
 """AITL (Agent In The Loop) — subagente pede uma decisão ao agente pai.
 
 Análogo ao HITL, mas o "humano" que aprova é o próprio orquestrador: uma
-chamada de LLM síncrona dentro do mesmo turno, sem round-trip pro usuário.
-Diferente de `interrupt()`/`Command(resume=...)` do LangGraph (desenhado pra
-pausar esperando um clique na UI) — aqui a decisão resolve sozinha, no
-mesmo turno.
+chamada de LLM síncrona dentro do mesmo turno, sem round-trip pro usuário
+nem pausa esperando um clique na UI — a decisão resolve sozinha, no mesmo
+turno.
 
-Limite técnico real (confirmado por investigação do bind de tools do
-deepagents): o subagent já compilado tem sua lista de tools fixa — aprovar
-"acesso a mais tools" aqui NUNCA adiciona uma tool em voo ao subagent. O
-padrão é o agente pai executar a ação em nome do subagent (chamar a tool
-com os argumentos que o subagent pediu) e devolver o resultado como parte
-da resposta desta tool — documentado explicitamente no docstring de
+Limite técnico real: `SubagentSpec.tools` (`backend/engine/subagents.py`)
+é uma lista fixa, resolvida na montagem do subagente — aprovar "acesso a
+mais tools" aqui NUNCA adiciona uma tool em voo ao subagent. O padrão é o
+agente pai executar a ação em nome do subagent (chamar a tool com os
+argumentos que o subagent pediu) e devolver o resultado como parte da
+resposta desta tool — documentado explicitamente no docstring de
 `ask_parent_agent` pra não vender uma expansão de tooling que não existe.
 
 Exposta só dentro dos SOULs de `backend/agents/souls.py` — nunca no toolset
 do orquestrador (ele não tem "pai" a quem perguntar).
 
-Primeira tool migrada pro registry nativo (`@vtool`/`ToolSpec`) — usa
-`FallbackChatClient` (native `ChatClient`) em vez de `FallbackChatModel`
-(LangChain). `souls.py` consome o `ToolSpec` nativo direto (sem ponte
-LangChain).
+Usa `FallbackChatClient` (native `ChatClient`) — `souls.py` consome o
+`ToolSpec` nativo direto.
 """
 
 from __future__ import annotations

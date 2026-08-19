@@ -1,8 +1,6 @@
 """``VectoraStore`` — armazenamento persistente de memórias/skills do agente
 sobre ``aiosqlite``, implementando ``backend/storage/protocols.py::StoreBackend``
-(``aget``/``aput``/``adelete``/``asearch``/``health``) diretamente — sem
-depender de ``langgraph.store.base.BaseStore`` nem do vocabulário de
-``Op``/``Result`` do LangGraph.
+(``aget``/``aput``/``adelete``/``asearch``/``health``) diretamente.
 """
 
 from __future__ import annotations

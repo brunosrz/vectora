@@ -63,9 +63,8 @@ class VectoraContext:
     shape depende do backend ativo (``InMemoryStore``, Postgres/Qdrant via
     ``CompositeBackend``) — todo consumidor chama só ``aget``/``aput``/
     ``asearch``/``adelete``, contrato comum a qualquer implementação.
-    ``None`` até o dispatch nativo (``backend/engine/``) passar a
-    populá-lo; enquanto isso, tools que precisam do store caem no fallback
-    de ``langgraph.config.get_store()`` (contextvar do grafo em produção)."""
+    ``None`` só quando o caller não populou (ex.: contexto de teste sem
+    store configurado)."""
 
     _extra: dict = field(default_factory=dict, repr=False, compare=False)
     """Campos adicionais não cobertos pelos atributos tipados acima."""

@@ -1,7 +1,7 @@
-"""`VectorStoreBackend` sobre Qdrant — cliente nativo `qdrant_client`, sem
-`langchain_qdrant`. Busca dense-only (cosine), mesma capacidade que o
-LanceDB já tem hoje (nenhum dos dois faz híbrido dense+sparse) — paridade
-de comportamento real entre os dois backends, não uma feature nova.
+"""`VectorStoreBackend` sobre Qdrant — cliente nativo `qdrant_client`.
+Busca dense-only (cosine), mesma capacidade que o LanceDB já tem hoje
+(nenhum dos dois faz híbrido dense+sparse) — paridade de comportamento
+real entre os dois backends, não uma feature nova.
 
 Timeout explícito em toda chamada de rede — lição do incidente do NATS
 (`rustling-hatching-summit.md`): nunca uma chamada que trava pra sempre em

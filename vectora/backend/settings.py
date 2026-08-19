@@ -133,7 +133,7 @@ class Settings(BaseSettings):
     """Application log level."""
 
     quiet_mode: bool = False
-    """Suppress external library logs (langchain, langgraph, etc.)."""
+    """Suppress verbose logs from external libraries (httpx, google-genai, etc.)."""
 
     # ============================================================================
     # DIRECTORIES (Roaming Profile Pattern)
@@ -1113,10 +1113,9 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
     ],
 }
 
-# Providers cujo modelo aceita imagem na mensagem (langchain_cohere e
-# ChatOllama não suportam multimodal na integração Python — ver tabela
-# "Featured models" de https://docs.langchain.com/oss/python/integrations/chat,
-# independente do modelo específico escolhido dentro do provider). Usado por
+# Providers cujo modelo aceita imagem na mensagem (Cohere e Ollama não
+# suportam multimodal nos clients nativos, independente do modelo
+# específico escolhido dentro do provider). Usado por
 # `api/handlers/chat.py::stream_chat` para recusar attachments de imagem
 # cedo, com um erro claro, em vez de deixar a API do provider estourar com
 # uma mensagem crua (ex.: Cohere "image content is not supported").
@@ -1192,13 +1191,14 @@ def configured_gateway_model(provider: str, capability: str) -> str:
 
 
 # Modelos que rejeitam REPLAY de tool_calls no histórico da conversa — não é
-# sobre suportar bind_tools na primeira chamada, é sobre reprocessar um turno
-# anterior que já usou tools. Confirmado em produção: `command-a-plus-05-2026`
-# devolve 400 "tool plan` cannot be used with this model" porque
-# `langchain_cohere` sempre serializa `tool_plan` ao converter uma AIMessage
-# com tool_calls (ver `backend/llm/provider_fallback.py::_PROVIDER_INCOMPATIBLE_MARKERS`
-# pro detalhe reativo — isso aqui é o catálogo estático usado para nem
-# oferecer o modelo no code mode, que sempre usa tools). Escondido só no code
+# sobre suportar tool calling na primeira chamada, é sobre reprocessar um
+# turno anterior que já usou tools. Confirmado em produção: `command-a-plus-05-2026`
+# devolve 400 "tool plan` cannot be used with this model" porque o client
+# nativo sempre serializa `tool_plan` ao converter uma mensagem de
+# assistente com tool_calls (ver `backend/llm/provider_fallback.py::
+# _PROVIDER_INCOMPATIBLE_MARKERS` pro detalhe reativo — isso aqui é o
+# catálogo estático usado para nem oferecer o modelo no code mode, que
+# sempre usa tools). Escondido só no code
 # mode (`ALL_TOOLS`); no chat mode (`CHAT_TOOLS`) o modelo continua disponível
 # — decisão de produto, o chat mode também usa algumas tools mas o usuário
 # aceita o risco menor em troca de manter a opção.
