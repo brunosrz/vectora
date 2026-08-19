@@ -36,7 +36,6 @@ import logging
 import signal
 import socket
 import sys
-import warnings
 from pathlib import Path
 from typing import Any
 
@@ -424,11 +423,6 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
     bandeja do sistema sobe — só o servidor ASGI, para uso via browser em
     qualquer máquina, com ou sem display.
     """
-    warnings.filterwarnings(
-        "ignore", category=DeprecationWarning, module="deepagents.*"
-    )
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="langchain.*")
-
     import uvicorn
 
     from backend.api.server import create_app
@@ -553,8 +547,8 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
 
         asyncio.run(_run_win())
         # Mesmo `return` cedo do ramo Windows+desktop precisa do os._exit(0)
-        # abaixo — sem ele, threads não-daemon (langsmith/httpx/SQLite do
-        # tracer) mantêm o interpreter vivo mesmo após o shutdown gracioso
+        # abaixo — sem ele, threads não-daemon (httpx/SQLite do tracer)
+        # mantêm o interpreter vivo mesmo após o shutdown gracioso
         # do uvicorn (Ctrl+C nunca fechava o processo; só o kill via tray
         # do Electron encerrava, por caminho totalmente diferente).
         logger.info("Vectora: encerrando processo")
@@ -586,9 +580,9 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
         )
 
     # Retorno do tray/servidor = shutdown concluído. No Windows, threads
-    # não-daemon de libs externas (langsmith, httpx, SQLite do tracer, Cohere
-    # rate limiter) mantêm o interpreter vivo; os._exit ignora-as e libera o
-    # terminal. Os recursos críticos já foram fechados no lifespan.
+    # não-daemon de libs externas (httpx, SQLite do tracer) mantêm o
+    # interpreter vivo; os._exit ignora-as e libera o terminal. Os recursos
+    # críticos já foram fechados no lifespan.
     logger.info("Vectora: encerrando processo")
     os._exit(0)
 

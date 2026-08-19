@@ -179,7 +179,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     independentes não precisam esperar uns aos outros.
 
     O hard-exit final (``os._exit(0)`` em ``main.py``) cobre o caso de threads
-    não-daemon de libs externas (langsmith, httpx, cohere) que ignoram cancel.
+    não-daemon de libs externas (httpx, aiosqlite) que ignoram cancel.
     """
     logger.info("api/server: startup")
 

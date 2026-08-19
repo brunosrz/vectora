@@ -147,10 +147,6 @@ def setup_logging(
         handler_console.addFilter(_BackgroundConsoleFilter())
 
         silent_loggers = [
-            "langchain",
-            "langchain_core",
-            "langchain_google_genai",
-            "langgraph",
             "google",
             "google.genai",
             "google.genai._api_client",
@@ -168,13 +164,8 @@ def setup_logging(
             "huggingface_hub",
             "huggingface_hub.utils",
             "huggingface_hub.utils._http",
-            "langsmith",
-            "langsmith.client",
             "uvicorn.access",
             "fastapi",
-            # deepagents harness emite "Merging HarnessProfile" e similares
-            "deepagents",
-            "deepagents.profiles.harness.harness_profiles",
         ]
         for logger_name in silent_loggers:
             logging.getLogger(logger_name).setLevel(logging.CRITICAL)

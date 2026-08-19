@@ -19,8 +19,6 @@ dependencies = [
     "uvicorn[standard]>=0.49.0",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
-    "langchain-core>=1.4.8",
-    "langgraph>=1.2.6",
     "aiosqlite>=0.22.1",
     "lancedb>=0.33.0",
     "pyarrow>=24.0.0",
@@ -71,10 +69,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "qdrant-client>=1.18.0",
     # SDKs oficiais usados direto por backend/tools/media.py (geração de
-    # imagem/áudio) e backend/llm/transcription.py — sem passar por
-    # langchain, mas antes só chegavam ao venv como dependência transitiva
-    # de langchain-openai/langchain-google-genai. Pin explícito depois que
-    # a Sprint 13 removeu esses dois pacotes do projeto.
+    # imagem/áudio) e backend/llm/transcription.py.
     "openai>=2.52.0",
     "google-genai>=2.16.0",
     "fakeredis>=2.36.2",
@@ -149,7 +144,7 @@ ignore = [
     # ANN for __init__ return type — implied None, not needed
     "ANN204",
     # TC: moving imports to TYPE_CHECKING blocks requires from __future__ import annotations
-    # which can break runtime type inspection in Pydantic/LangGraph/LangChain
+    # which can break runtime type inspection in Pydantic
     "TC001", "TC002", "TC003",
     # O repositório não exige cabeçalho de copyright em cada módulo.
     "CPY001",
@@ -309,11 +304,6 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 120  # LanceDB background threads demoram ~30s para fechar
 filterwarnings = [
-    # asyncio.iscoroutinefunction está deprecado em Python 3.12 e será removido no futuro.
-    # Esses avisos vêm de libs externas (cohere-sdk, langchain-core) — não do nosso código.
-    # Suprimir até que as libs atualizem para inspect.iscoroutinefunction().
-    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:cohere",
-    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:langchain_core",
     # ── Deprecações de libs externas que não controlamos ──────────────────────
     # FastAPI/Starlette TestClient ainda usa httpx clássico (será httpx2).
     "ignore:Using .httpx. with .starlette.testclient. is deprecated:Warning",
@@ -340,10 +330,6 @@ filterwarnings = [
     "ignore:Api key is used with an insecure connection:UserWarning",
     # PyJWT avisa sobre chaves HMAC curtas em tokens de teste.
     "ignore:The HMAC key is.*bytes long.*below the minimum:Warning",
-    # Cohere SDK usa APIs Pydantic V1 (__fields__, model_fields, parse_obj) — lib externa.
-    "ignore:The `__fields__` attribute is deprecated:pydantic.warnings.PydanticDeprecatedSince20:cohere",
-    "ignore:Accessing the 'model_fields' attribute on the instance is deprecated:pydantic.warnings.PydanticDeprecatedSince211:cohere",
-    "ignore:The `parse_obj` method is deprecated:pydantic.warnings.PydanticDeprecatedSince20:cohere",
 ]
 markers = [
     "e2e: testes end-to-end com APIs reais (requer env vars e gemini CLI)",

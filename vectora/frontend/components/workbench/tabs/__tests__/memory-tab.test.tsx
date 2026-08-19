@@ -446,25 +446,25 @@ describe("MemoryTab", () => {
   });
 });
 
-describe("MemoryTab — busca unificada (fatos + skills + buckets)", () => {
-  function unifiedFetchMock(hits: unknown[]) {
-    return vi.fn(async (url: string) => {
-      if (String(url).includes("/rag/workspace-summary")) {
-        return new Response(JSON.stringify({ collections: [] }));
-      }
-      if (String(url).includes("/memory/search")) {
-        return new Response(JSON.stringify({ hits }));
-      }
-      if (String(url).includes("/rag/buckets")) {
-        return new Response(JSON.stringify([]));
-      }
-      if (String(url) === "/rag/search") {
-        return new Response(JSON.stringify({ results: [] }));
-      }
-      throw new Error(`unmocked fetch: ${url}`);
-    });
-  }
+function unifiedFetchMock(hits: unknown[]) {
+  return vi.fn(async (url: string) => {
+    if (String(url).includes("/rag/workspace-summary")) {
+      return new Response(JSON.stringify({ collections: [] }));
+    }
+    if (String(url).includes("/memory/search")) {
+      return new Response(JSON.stringify({ hits }));
+    }
+    if (String(url).includes("/rag/buckets")) {
+      return new Response(JSON.stringify([]));
+    }
+    if (String(url) === "/rag/search") {
+      return new Response(JSON.stringify({ results: [] }));
+    }
+    throw new Error(`unmocked fetch: ${url}`);
+  });
+}
 
+describe("MemoryTab — busca unificada (fatos + skills + buckets)", () => {
   it("digitar na busca chama /memory/search e mostra fato+skill+bucket combinados", async () => {
     vi.stubGlobal(
       "fetch",
