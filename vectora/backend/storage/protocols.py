@@ -38,25 +38,6 @@ def _err(msg: str) -> HealthResult:
 
 
 # ---------------------------------------------------------------------------
-# Checkpointer — persistência de estado do motor de conversa nativo
-# ---------------------------------------------------------------------------
-
-
-@runtime_checkable
-class CheckpointerBackend(Protocol):
-    """Backend de checkpointing consumido por ``backend/engine/conversation_loop.py``.
-
-    Implementações:
-        lite     — ``VectoraSqliteSaver`` (``backend/persistence/native/sqlite_checkpointer.py``)
-        complete — ``VectoraPostgresSaver`` (``backend/persistence/native/postgres_checkpointer.py``)
-    """
-
-    async def health(self) -> HealthResult:
-        """Verifica se o backend está acessível."""
-        ...
-
-
-# ---------------------------------------------------------------------------
 # Store — armazenamento de memórias do agente (LangGraph BaseStore)
 # ---------------------------------------------------------------------------
 
@@ -256,7 +237,6 @@ class TracesDB(Protocol):
 
 __all__ = [
     "AuthDB",
-    "CheckpointerBackend",
     "HealthResult",
     "QueueDB",
     "SecretsDB",

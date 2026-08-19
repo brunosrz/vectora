@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import httpx
 import pytest
-from langchain_core.documents import Document
 
 from backend.llm.openrouter.client import OpenRouterClient, OpenRouterResponseError
 from backend.llm.openrouter.embeddings import OpenRouterEmbeddings
 from backend.llm.openrouter.rerank import OpenRouterRerank
+from backend.vtypes.documents import Document
 
 
 def _client(handler) -> OpenRouterClient:

@@ -211,6 +211,10 @@ ignore = [
 # narrowing de tipo em script de migração. SIM118/SIM401: as linhas operam
 # sobre sqlite3.Row (não dict) — `.keys()` é obrigatório e `.get()` não existe.
 "backend/storage/migrations/data_migration.py" = ["S608", "S101", "SIM118", "SIM401"]
+# get_text_at_path: parser recursivo de dot-path (token de path, não segredo —
+# S105 é falso positivo do nome da variável); muitos returns é inerente a um
+# parser de sintaxe com vários formatos de token (campo/índice/wildcard/seleção).
+"backend/persistence/native/store.py" = ["S105", "PLR0911"]
 
 [tool.ruff.format]
 quote-style = "double"

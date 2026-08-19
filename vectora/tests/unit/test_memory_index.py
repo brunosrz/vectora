@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from unittest.mock import AsyncMock
 
 import pytest
-from langgraph.store.memory import InMemoryStore
 
 from backend.services.memory_index import _search_facts, search_unified_memory
+from backend.testing.mocks import NativeInMemoryStore
 from backend.vtypes.skill import Skill
 
 
@@ -30,7 +30,7 @@ class _FakeBucket:
 
 @pytest.fixture
 def store():
-    return InMemoryStore()
+    return NativeInMemoryStore()
 
 
 def _make_skill(name: str = "godot-helper") -> Skill:

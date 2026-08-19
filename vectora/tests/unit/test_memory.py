@@ -16,8 +16,8 @@ from __future__ import annotations
 import json
 
 import pytest
-from langgraph.store.memory import InMemoryStore
 
+from backend.testing.mocks import NativeInMemoryStore
 from backend.tools.context import ToolContext
 
 # ---------------------------------------------------------------------------
@@ -155,7 +155,7 @@ class TestGetStore:
         """Happy: `ctx.store` populado pelo motor nativo — usado direto."""
         from backend.tools.memory import _get_store
 
-        injected_store = InMemoryStore()
+        injected_store = NativeInMemoryStore()
         ctx = ToolContext(store=injected_store)
 
         result = _get_store(ctx)
@@ -182,10 +182,10 @@ class TestGetStore:
 
 @pytest.fixture
 def store(monkeypatch):
-    real_store = InMemoryStore()
+    real_store = NativeInMemoryStore()
     monkeypatch.setattr("backend.tools.memory._get_store", lambda ctx: real_store)
 
-    async def _fake_agent_store() -> InMemoryStore:
+    async def _fake_agent_store() -> NativeInMemoryStore:
         return real_store
 
     monkeypatch.setattr("backend.services.agent_factory.get_store", _fake_agent_store)
@@ -294,9 +294,9 @@ class TestListFactContents:
 
         monkeypatch.setattr("backend.tools.memory._get_store", _boom)
 
-        real_store = InMemoryStore()
+        real_store = NativeInMemoryStore()
 
-        async def _fake_agent_store() -> InMemoryStore:
+        async def _fake_agent_store() -> NativeInMemoryStore:
             return real_store
 
         monkeypatch.setattr(

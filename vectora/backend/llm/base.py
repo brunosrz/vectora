@@ -20,6 +20,28 @@ if TYPE_CHECKING:
     from backend.vtypes.message import VMessage, VMessageChunk
 
 
+class Embeddings(Protocol):
+    """Interface comum aos clients de embedding nativos (cohere/voyage/
+    ollama/openrouter) e ao ``FallbackEmbeddings`` que orquestra fallback
+    entre eles. Substitui ``langchain_core.embeddings.Embeddings``."""
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        """Vetoriza um lote de documentos (indexação)."""
+        ...
+
+    def embed_query(self, text: str) -> list[float]:
+        """Vetoriza uma consulta de busca."""
+        ...
+
+    async def aembed_documents(self, texts: list[str]) -> list[list[float]]:
+        """Versão assíncrona de ``embed_documents``."""
+        ...
+
+    async def aembed_query(self, text: str) -> list[float]:
+        """Versão assíncrona de ``embed_query``."""
+        ...
+
+
 class ChatClient(Protocol):
     """Interface comum aos 5 clients de chat nativos (openai/anthropic/
     google/openrouter/ollama) e ao ``FallbackChatClient`` que orquestra

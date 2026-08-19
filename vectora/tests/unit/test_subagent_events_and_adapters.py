@@ -9,8 +9,19 @@ tool calls/results, eventos thread/done/error).
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 
 import pytest
+
+
+@dataclass
+class _FakeToolOutput:
+    """Stand-in local pro shape (``.content``/``.status``) que ``adapt_stream``
+    lê via ``hasattr``/``getattr`` — não precisa ser um tipo real de SDK."""
+
+    content: str
+    tool_call_id: str
+    status: str = "success"
 
 
 @pytest.fixture(autouse=True)
@@ -72,7 +83,6 @@ class TestSubagentOutputEventSchema:
         """A tool `task` emite subagent_output 'running' (start) e 'complete'
         (end, com o resultado) — identidade do subagente pro card. Erro/borda:
         uma tool comum (não `task`) NÃO emite subagent_output."""
-        from langchain_core.messages import ToolMessage
 
         from backend.api.adapters import adapt_stream
 
@@ -87,7 +97,9 @@ class TestSubagentOutputEventSchema:
             {
                 "event": "on_tool_end",
                 "name": "task",
-                "data": {"output": ToolMessage(content="feito X", tool_call_id="r1")},
+                "data": {
+                    "output": _FakeToolOutput(content="feito X", tool_call_id="r1")
+                },
                 "run_id": "r1",
                 "metadata": {},
             },
@@ -122,10 +134,9 @@ class TestSubagentOutputEventSchema:
 
     @pytest.mark.asyncio
     async def test_adapt_stream_emite_subagent_output_status_error(self):
-        """Erro/borda: quando a delegação falha (ToolMessage com
+        """Erro/borda: quando a delegação falha (output de tool com
         status='error'), o subagent_output final sai com status='error' (não
         'complete') — o card precisa distinguir falha de sucesso."""
-        from langchain_core.messages import ToolMessage
 
         from backend.api.adapters import adapt_stream
 
@@ -143,7 +154,7 @@ class TestSubagentOutputEventSchema:
                 "event": "on_tool_end",
                 "name": "task",
                 "data": {
-                    "output": ToolMessage(
+                    "output": _FakeToolOutput(
                         content="falha ao buscar",
                         tool_call_id="r-err",
                         status="error",

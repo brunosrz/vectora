@@ -1,6 +1,6 @@
 """Test Fixtures and Utilities for Unit Testing.
 
-Fixtures de banco (checkpointer/temp_db), factories de `VMessage` e
+Fixture de banco temporário (`temp_db`), factories de `VMessage` e
 assertions — tudo nativo, sem `langchain_core`.
 """
 
@@ -14,7 +14,6 @@ from backend.testing.assertions import (
     assert_tool_result_in_messages,
 )
 from backend.testing.fixtures import (
-    checkpointer,
     temp_db,
 )
 from backend.testing.message_factory import (
@@ -31,7 +30,6 @@ __all__ = [
     "assert_tool_called",
     "assert_tool_called_with_args",
     "assert_tool_result_in_messages",
-    "checkpointer",
     "make_assistant_message",
     "make_tool_result",
     "make_user_message",

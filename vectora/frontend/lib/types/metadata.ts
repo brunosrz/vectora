@@ -6,7 +6,7 @@
 
 /**
  * Token usage and cost tracking for AI model calls.
- * Retrieved from LangSmith run metadata.
+ * Reported per turn by the native chat client (backend/llm chat_client.py per provider).
  */
 export interface UsageMetadata {
   input_tokens?: number;

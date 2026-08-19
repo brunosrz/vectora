@@ -10,9 +10,8 @@ import asyncio
 import logging
 from typing import Any
 
-from langchain_core.documents import Document
-
 from backend.llm.cohere.client import CohereClient
+from backend.vtypes.documents import Document
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,8 @@
 """Embeddings nativos do OpenRouter — ``POST /embeddings``.
 
-Encaixa na interface ``Embeddings`` do LangChain, então o pipeline de RAG
-(``storage/factory.py::_build_lc_embeddings``) consome sem mudança.
+Encaixa na interface ``Embeddings`` nativa (``backend.llm.base``), então o
+pipeline de RAG (``storage/factory.py::_build_lc_embeddings``) consome sem
+mudança.
 
 Ganho sobre o caminho anterior (``OpenAIEmbeddings`` com ``base_url``
 trocado): ``input_type`` (modelos assimétricos precisam saber se o texto é
@@ -14,8 +15,7 @@ import asyncio
 import logging
 from typing import Any
 
-from langchain_core.embeddings import Embeddings
-
+from backend.llm.base import Embeddings
 from backend.llm.openrouter.client import OpenRouterClient, OpenRouterResponseError
 
 logger = logging.getLogger(__name__)

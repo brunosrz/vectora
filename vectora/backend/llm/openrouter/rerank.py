@@ -15,9 +15,8 @@ import asyncio
 import logging
 from typing import Any
 
-from langchain_core.documents import Document
-
 from backend.llm.openrouter.client import OpenRouterClient
+from backend.vtypes.documents import Document
 
 logger = logging.getLogger(__name__)
 

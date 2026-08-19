@@ -706,7 +706,7 @@ export function ChatInterface({
           }
         }
       } catch (error) {
-        console.error("Error streaming from LangGraph:", error);
+        console.error("Error streaming chat response:", error);
         const errorMsg =
           error instanceof Error
             ? error.message

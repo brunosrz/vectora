@@ -55,7 +55,6 @@ class FallbackReranker:
         from backend.llm.provider_fallback import (
             emit_model_switch_event,
             is_quota_error,
-            record_switch,
         )
 
         try:
@@ -63,7 +62,8 @@ class FallbackReranker:
         except Exception as exc:
             if not is_quota_error(exc):
                 raise
-            record_switch(self.primary_id, self.secondary_id)
+            # emit_model_switch_event já chama record_switch — uma única
+            # entrada na fila, não duas.
             await emit_model_switch_event(self.primary_id, self.secondary_id)
             logger.warning(
                 "reranker provider switch por quota (async)",

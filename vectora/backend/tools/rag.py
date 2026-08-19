@@ -9,13 +9,12 @@ import time
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from langchain_core.documents import Document as LCDoc
-
 from backend.embedding.queue import get_embedding_queue
 from backend.services.text import text_service
 from backend.settings import settings
 from backend.tools.context import ToolContext
 from backend.tools.registry import ToolExtras, vtool
+from backend.vtypes.documents import Document
 
 try:
     import lancedb
@@ -461,7 +460,7 @@ async def vector_search(
         if results and reranker is not None:
             try:
                 docs_to_rerank = [
-                    LCDoc(page_content=str(r["content"]), metadata=r["metadata"])
+                    Document(page_content=str(r["content"]), metadata=r["metadata"])
                     for r in results
                 ]
                 reranked_docs = reranker.compress_documents(docs_to_rerank, query)

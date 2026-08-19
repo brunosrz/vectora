@@ -101,7 +101,7 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
           setShowCommentInput(null);
         }
 
-        // Delete from LangSmith if it exists
+        // Remove o registro de feedback persistido, se existir
         if (message.feedbackId) {
           try {
             await deleteFeedback(message.feedbackId);

@@ -1,7 +1,7 @@
 """Embeddings do Ollama — ``POST /api/embed``.
 
-Encaixa na interface ``Embeddings`` do LangChain, então o pipeline de RAG
-consome sem mudança. Remove o último uso de ``langchain-ollama``.
+Encaixa na interface ``Embeddings`` nativa (``backend.llm.base``), então o
+pipeline de RAG consome sem mudança.
 """
 
 from __future__ import annotations
@@ -9,8 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from langchain_core.embeddings import Embeddings
-
+from backend.llm.base import Embeddings
 from backend.llm.ollama.client import OllamaClient, OllamaResponseError
 
 logger = logging.getLogger(__name__)

@@ -192,22 +192,12 @@ def drain_switches() -> list[dict[str, str]]:
 
 
 async def emit_model_switch_event(from_model: str, to_model: str) -> None:
-    """Emite o evento custom ``model_switched`` no stream via callback LangChain.
-
-    Usado pelo fallback de embeddings/rerank (que ainda rodam sobre
-    ``Embeddings``/``BaseDocumentCompressor`` do LangChain) — o chat nativo
-    usa ``on_model_switch`` do ``FallbackChatClient``. Antes vivia em
-    ``fallback_chat_model.py``, removido junto com o corte do dispatch.
-    Defensivo: sem callback manager ativo, não faz nada.
+    """Registra a troca de embeddings/rerank na mesma fila (``record_switch``/
+    ``drain_switches``) que o fallback de chat usa — o handler de chat drena
+    e notifica o frontend independente de qual camada (chat/embeddings/
+    rerank) gerou a troca.
     """
-    try:
-        from langchain_core.callbacks.manager import adispatch_custom_event
-
-        await adispatch_custom_event(
-            "model_switched", {"from": from_model, "to": to_model}
-        )
-    except Exception:
-        pass
+    record_switch(from_model, to_model)
 
 
 async def try_with_fallback(  # noqa: UP047

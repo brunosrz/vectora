@@ -1,38 +1,20 @@
-"""``VectoraStore`` — Store nativo do LangGraph (memória cross-thread) sobre
-``aiosqlite``.
-
-Substitui ``langgraph.store.sqlite.aio.AsyncSqliteStore`` (lib
-``langgraph-checkpoint-sqlite``, que também empacota o Store). ``BaseStore``
-(``langgraph.store.base`` — parte do pacote ``langgraph`` em si, mantido)
-só exige ``batch()``/``abatch()`` como abstratos; ``get``/``put``/``search``/
-``delete``/``list_namespaces`` (e as versões ``a*``) já vêm implementadas na
-classe base como wrappers finos sobre ``(a)batch()`` — só ``abatch()``
-precisa de implementação real aqui.
+"""``VectoraStore`` — armazenamento persistente de memórias/skills do agente
+sobre ``aiosqlite``, implementando ``backend/storage/protocols.py::StoreBackend``
+(``aget``/``aput``/``adelete``/``asearch``/``health``) diretamente — sem
+depender de ``langgraph.store.base.BaseStore`` nem do vocabulário de
+``Op``/``Result`` do LangGraph.
 """
 
 from __future__ import annotations
 
 import json
 import math
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from langgraph.store.base import (
-    BaseStore,
-    GetOp,
-    Item,
-    ListNamespacesOp,
-    Op,
-    PutOp,
-    Result,
-    SearchItem,
-    SearchOp,
-)
-from langgraph.store.base.embed import get_text_at_path
-
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
+    from backend.storage.protocols import HealthResult
     from backend.storage.sqlite.pool import AsyncConnectionPool
 
 _SETUP_SQL = """
@@ -93,11 +75,192 @@ def _matches_filter(value: dict[str, Any], filter_: dict[str, Any] | None) -> bo
     return True
 
 
-class VectoraStore(BaseStore):
+# ---------------------------------------------------------------------------
+# Item / SearchItem — shape de retorno de aget/asearch
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Item:
+    """Um item persistido no store — retorno de ``aget``."""
+
+    value: dict[str, Any]
+    key: str
+    namespace: tuple[str, ...]
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass(frozen=True)
+class SearchItem(Item):
+    """Um item retornado por ``asearch`` — ``score`` presente só quando a
+    busca foi semântica (índice configurado e query não vazia)."""
+
+    score: float | None = None
+
+
+# ---------------------------------------------------------------------------
+# get_text_at_path — extração de texto por dot-path num dict aninhado, usada
+# pra indexar embeddings de campos específicos do value armazenado.
+# ---------------------------------------------------------------------------
+
+
+def tokenize_path(path: str) -> list[str]:
+    """Quebra um path em tokens: campo simples (``a``), índice de lista
+    (``[0]``, ``[*]``, ``[-1]``, com suporte a colchetes aninhados) ou
+    seleção múltipla (``{a,b}``, com suporte a chaves aninhadas)."""
+    if not path:
+        return []
+
+    tokens: list[str] = []
+    current: list[str] = []
+    i = 0
+    while i < len(path):
+        char = path[i]
+
+        if char == "[":
+            if current:
+                tokens.append("".join(current))
+                current = []
+            bracket_count = 1
+            index_chars = ["["]
+            i += 1
+            while i < len(path) and bracket_count > 0:
+                if path[i] == "[":
+                    bracket_count += 1
+                elif path[i] == "]":
+                    bracket_count -= 1
+                index_chars.append(path[i])
+                i += 1
+            tokens.append("".join(index_chars))
+            continue
+
+        if char == "{":
+            if current:
+                tokens.append("".join(current))
+                current = []
+            brace_count = 1
+            field_chars = ["{"]
+            i += 1
+            while i < len(path) and brace_count > 0:
+                if path[i] == "{":
+                    brace_count += 1
+                elif path[i] == "}":
+                    brace_count -= 1
+                field_chars.append(path[i])
+                i += 1
+            tokens.append("".join(field_chars))
+            continue
+
+        if char == ".":
+            if current:
+                tokens.append("".join(current))
+                current = []
+        else:
+            current.append(char)
+        i += 1
+
+    if current:
+        tokens.append("".join(current))
+
+    return tokens
+
+
+def get_text_at_path(obj: Any, path: str | list[str]) -> list[str]:
+    """Extrai texto de ``obj`` seguindo ``path``.
+
+    Sintaxes suportadas:
+        - path simples: ``"campo1.campo2"``
+        - índice de lista: ``"[0]"``, ``"[*]"``, ``"[-1]"``
+        - wildcard: ``"*"``
+        - seleção múltipla: ``"{campo1,campo2}"`` (aceita paths aninhados,
+          ``"{campo1,nested.campo2}"``)
+        - ``"$"`` ou path vazio: serializa ``obj`` inteiro como JSON
+    """
+    if not path or path == "$":
+        return [json.dumps(obj, sort_keys=True, ensure_ascii=False)]
+
+    tokens = tokenize_path(path) if isinstance(path, str) else path
+    return _extract_from_obj(obj, tokens, 0)
+
+
+def _extract_from_obj(obj: Any, tokens: list[str], pos: int) -> list[str]:
+    if pos >= len(tokens):
+        if isinstance(obj, str | int | float | bool):
+            return [str(obj)]
+        if obj is None:
+            return []
+        if isinstance(obj, list | dict):
+            return [json.dumps(obj, sort_keys=True, ensure_ascii=False)]
+        return []
+
+    token = tokens[pos]
+    results: list[str] = []
+
+    if token.startswith("[") and token.endswith("]"):
+        if not isinstance(obj, list):
+            return []
+        index = token[1:-1]
+        if index == "*":
+            for item in obj:
+                results.extend(_extract_from_obj(item, tokens, pos + 1))
+        else:
+            try:
+                idx = int(index)
+            except ValueError:
+                return []
+            if idx < 0:
+                idx = len(obj) + idx
+            if 0 <= idx < len(obj):
+                results.extend(_extract_from_obj(obj[idx], tokens, pos + 1))
+
+    elif token.startswith("{") and token.endswith("}"):
+        if not isinstance(obj, dict):
+            return []
+        for field in (f.strip() for f in token[1:-1].split(",")):
+            nested_tokens = tokenize_path(field)
+            if not nested_tokens:
+                continue
+            current: Any = obj
+            for nested_token in nested_tokens:
+                if isinstance(current, dict) and nested_token in current:
+                    current = current[nested_token]
+                else:
+                    current = None
+                    break
+            if current is None:
+                continue
+            if isinstance(current, str | int | float | bool):
+                results.append(str(current))
+            elif isinstance(current, list | dict):
+                results.append(json.dumps(current, sort_keys=True, ensure_ascii=False))
+
+    elif token == "*":  # nosec B105 -- token de path (wildcard), não segredo
+        if isinstance(obj, dict):
+            for value in obj.values():
+                results.extend(_extract_from_obj(value, tokens, pos + 1))
+        elif isinstance(obj, list):
+            for item in obj:
+                results.extend(_extract_from_obj(item, tokens, pos + 1))
+
+    elif isinstance(obj, dict) and token in obj:
+        results.extend(_extract_from_obj(obj[token], tokens, pos + 1))
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# VectoraStore
+# ---------------------------------------------------------------------------
+
+
+class VectoraStore:
     """Store async sobre ``AsyncConnectionPool`` (aiosqlite), com busca
-    semântica opcional via ``index`` (mesmo shape de ``IndexConfig`` que
-    ``AsyncSqliteStore``/``AsyncPostgresStore`` aceitam:
+    semântica opcional via ``index`` (mesmo shape aceito antes via
+    ``AsyncSqliteStore``/``AsyncPostgresStore``:
     ``{"dims": int, "embed": Callable[[list[str]], Awaitable[list[list[float]]]], "fields": list[str]}``).
+
+    Implementa ``backend/storage/protocols.py::StoreBackend`` diretamente.
     """
 
     def __init__(
@@ -115,34 +278,13 @@ class VectoraStore(BaseStore):
             await conn.commit()
         self._is_setup = True
 
-    def batch(self, ops: Iterable[Op]) -> list[Result]:
-        msg = "VectoraStore é async-only (CLAUDE.md regra 10) — use abatch/aget/aput."
-        raise NotImplementedError(msg)
-
-    async def abatch(self, ops: Iterable[Op]) -> list[Result]:
+    async def aget(self, namespace: tuple[str, ...], key: str) -> Item | None:
         await self.setup()
-        results: list[Result] = []
-        for op in ops:
-            if isinstance(op, GetOp):
-                results.append(await self._get(op))
-            elif isinstance(op, PutOp):
-                await self._put(op)
-                results.append(None)
-            elif isinstance(op, SearchOp):
-                results.append(await self._search(op))
-            elif isinstance(op, ListNamespacesOp):
-                results.append(await self._list_namespaces(op))
-            else:
-                msg = f"Op não suportada por VectoraStore: {type(op)!r}"
-                raise NotImplementedError(msg)
-        return results
-
-    async def _get(self, op: GetOp) -> Item | None:
         async with self._pool.acquire() as conn:
             cur = await conn.execute(
                 "SELECT value, created_at, updated_at FROM store_items "
                 "WHERE namespace = ? AND key = ?",
-                (_ns_to_str(op.namespace), op.key),
+                (_ns_to_str(namespace), key),
             )
             row = await cur.fetchone()
         if row is None:
@@ -150,49 +292,24 @@ class VectoraStore(BaseStore):
         value_json, created_at, updated_at = row
         return Item(
             value=json.loads(value_json),
-            key=op.key,
-            namespace=op.namespace,
+            key=key,
+            namespace=namespace,
             created_at=datetime.fromisoformat(created_at),
             updated_at=datetime.fromisoformat(updated_at),
         )
 
-    async def _put(self, op: PutOp) -> None:
-        namespace_str = _ns_to_str(op.namespace)
+    async def aput(
+        self, namespace: tuple[str, ...], key: str, value: dict[str, Any]
+    ) -> None:
+        await self.setup()
+        namespace_str = _ns_to_str(namespace)
         async with self._pool.acquire() as conn:
-            if op.value is None:
-                await conn.execute(
-                    "DELETE FROM store_items WHERE namespace = ? AND key = ?",
-                    (namespace_str, op.key),
-                )
-                await conn.commit()
-                return
-
-            embedding_json: str | None = None
-            if self._index is not None and op.index is not False:
-                fields = (
-                    op.index
-                    if isinstance(op.index, list)
-                    else self._index.get("fields", ["$"])
-                )
-                texts: list[str] = []
-                for field in fields:
-                    texts.extend(get_text_at_path(op.value, field))
-                if texts:
-                    vectors = await self._index["embed"](texts)
-                    # Um item pode indexar múltiplos campos/trechos — guarda
-                    # a média dos vetores (aproximação simples, suficiente
-                    # pro volume de memórias do agente; não é um índice
-                    # multi-vetor por chunk como o RAG de documentos).
-                    dims = self._index["dims"]
-                    avg = [
-                        sum(v[i] for v in vectors) / len(vectors) for i in range(dims)
-                    ]
-                    embedding_json = json.dumps(avg)
+            embedding_json = await self._embed_for_index(value)
 
             now = datetime.now(UTC).isoformat()
             cur = await conn.execute(
                 "SELECT created_at FROM store_items WHERE namespace = ? AND key = ?",
-                (namespace_str, op.key),
+                (namespace_str, key),
             )
             existing = await cur.fetchone()
             created_at = existing[0] if existing else now
@@ -203,8 +320,8 @@ class VectoraStore(BaseStore):
                 "VALUES (?, ?, ?, ?, ?, ?)",
                 (
                     namespace_str,
-                    op.key,
-                    json.dumps(op.value, ensure_ascii=False),
+                    key,
+                    json.dumps(value, ensure_ascii=False),
                     embedding_json,
                     created_at,
                     now,
@@ -212,8 +329,26 @@ class VectoraStore(BaseStore):
             )
             await conn.commit()
 
-    async def _search(self, op: SearchOp) -> list[SearchItem]:
-        prefix = _ns_to_str(op.namespace_prefix)
+    async def adelete(self, namespace: tuple[str, ...], key: str) -> None:
+        await self.setup()
+        async with self._pool.acquire() as conn:
+            await conn.execute(
+                "DELETE FROM store_items WHERE namespace = ? AND key = ?",
+                (_ns_to_str(namespace), key),
+            )
+            await conn.commit()
+
+    async def asearch(
+        self,
+        namespace: tuple[str, ...],
+        *,
+        query: str | None = None,
+        limit: int = 10,
+        filter: dict[str, Any] | None = None,  # noqa: A002 — mesmo nome do protocolo
+        offset: int = 0,
+    ) -> list[SearchItem]:
+        await self.setup()
+        prefix = _ns_to_str(namespace)
         async with self._pool.acquire() as conn:
             if prefix:
                 cur = await conn.execute(
@@ -228,15 +363,12 @@ class VectoraStore(BaseStore):
                 )
             rows = await cur.fetchall()
 
-        query_vector: list[float] | None = None
-        if op.query and self._index is not None:
-            vectors = await self._index["embed"]([op.query])
-            query_vector = vectors[0] if vectors else None
+        query_vector = await self._embed_query(query)
 
         candidates: list[tuple[float | None, SearchItem]] = []
-        for namespace, key, value_json, embedding_json, created_at, updated_at in rows:
+        for ns, key, value_json, embedding_json, created_at, updated_at in rows:
             value = json.loads(value_json)
-            if not _matches_filter(value, op.filter):
+            if not _matches_filter(value, filter):
                 continue
             score: float | None = None
             if query_vector is not None and embedding_json:
@@ -247,7 +379,7 @@ class VectoraStore(BaseStore):
                 (
                     score,
                     SearchItem(
-                        namespace=_ns_from_str(namespace),
+                        namespace=_ns_from_str(ns),
                         key=key,
                         value=value,
                         created_at=datetime.fromisoformat(created_at),
@@ -260,30 +392,42 @@ class VectoraStore(BaseStore):
         if query_vector is not None:
             candidates.sort(key=lambda pair: pair[0] or 0.0, reverse=True)
 
-        page = candidates[op.offset : op.offset + op.limit]
+        page = candidates[offset : offset + limit]
         return [item for _, item in page]
 
-    async def _list_namespaces(self, op: ListNamespacesOp) -> list[tuple[str, ...]]:
-        async with self._pool.acquire() as conn:
-            cur = await conn.execute("SELECT DISTINCT namespace FROM store_items")
-            rows = await cur.fetchall()
+    async def health(self) -> HealthResult:
+        from backend.storage.protocols import _err, _ok
 
-        namespaces = {_ns_from_str(row[0]) for row in rows}
+        try:
+            await self.setup()
+            async with self._pool.acquire() as conn:
+                await conn.execute("SELECT 1")
+            return _ok()
+        except Exception as exc:
+            return _err(str(exc))
 
-        if op.match_conditions:
-            filtered = set()
-            for ns in namespaces:
-                for cond in op.match_conditions:
-                    path = tuple(p for p in cond.path if p != "*")
-                    if (cond.match_type == "prefix" and ns[: len(path)] == path) or (
-                        cond.match_type == "suffix"
-                        and (not path or ns[-len(path) :] == path)
-                    ):
-                        filtered.add(ns)
-            namespaces = filtered
+    async def _embed_for_index(self, value: dict[str, Any]) -> str | None:
+        """Calcula o embedding médio dos campos indexados de ``value``, ou
+        ``None`` se não há índice configurado / nada extraído."""
+        if self._index is None:
+            return None
+        fields = self._index.get("fields", ["$"])
+        texts: list[str] = []
+        for field in fields:
+            texts.extend(get_text_at_path(value, field))
+        if not texts:
+            return None
+        vectors = await self._index["embed"](texts)
+        # Um item pode indexar múltiplos campos/trechos — guarda a média dos
+        # vetores (aproximação simples, suficiente pro volume de memórias do
+        # agente; não é um índice multi-vetor por chunk como o RAG de
+        # documentos).
+        dims = self._index["dims"]
+        avg = [sum(v[i] for v in vectors) / len(vectors) for i in range(dims)]
+        return json.dumps(avg)
 
-        if op.max_depth is not None:
-            namespaces = {ns[: op.max_depth] for ns in namespaces}
-
-        ordered = sorted(namespaces)
-        return ordered[op.offset : op.offset + op.limit]
+    async def _embed_query(self, query: str | None) -> list[float] | None:
+        if not query or self._index is None:
+            return None
+        vectors = await self._index["embed"]([query])
+        return vectors[0] if vectors else None

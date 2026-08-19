@@ -12,12 +12,20 @@ from __future__ import annotations
 
 import asyncio
 import json
+from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from langchain_core.messages import AIMessageChunk
 
 from backend.api.adapters import adapt_stream
+
+
+@dataclass
+class _FakeChunk:
+    """Stand-in local pro shape ``.content`` que ``adapt_stream`` lê via
+    ``getattr`` — não precisa ser um tipo real de nenhum SDK de LLM."""
+
+    content: str | list[dict]
 
 
 @pytest.fixture(autouse=True)
@@ -26,13 +34,13 @@ def _isolated(_no_thread_persistence):
 
 
 def _chunk_event(text, node="model"):
-    """Evento LangGraph ``on_chat_model_stream`` com um AIMessageChunk."""
+    """Evento de streaming de token com um chunk de conteúdo."""
     return {
         "event": "on_chat_model_stream",
         "name": node,
         "run_name": node,
         "metadata": {"langgraph_node": node},
-        "data": {"chunk": AIMessageChunk(content=text)},
+        "data": {"chunk": _FakeChunk(content=text)},
     }
 
 
@@ -120,7 +128,7 @@ async def test_gemini_list_content_chunk_extracts_text():
         "name": "model",
         "run_name": "model",
         "metadata": {"langgraph_node": "model"},
-        "data": {"chunk": AIMessageChunk(content=[{"type": "text", "text": "Oi"}])},
+        "data": {"chunk": _FakeChunk(content=[{"type": "text", "text": "Oi"}])},
     }
     out = [_parse(s) async for s in adapt_stream(_agen([ev]), "tid")]
     tokens = [e for e in out if e["type"] == "token"]
@@ -134,7 +142,7 @@ async def test_empty_chunk_emits_no_token():
         "event": "on_chat_model_stream",
         "name": "model",
         "metadata": {"langgraph_node": "model"},
-        "data": {"chunk": AIMessageChunk(content="")},
+        "data": {"chunk": _FakeChunk(content="")},
     }
     out = [_parse(s) async for s in adapt_stream(_agen([ev]), "tid")]
     assert [e for e in out if e["type"] == "token"] == []
@@ -290,7 +298,7 @@ def _nested_chat_model_events(text: str, outer_run_id: str, inner_run_id: str):
             "run_id": inner_run_id,
             "parent_ids": ["node-run", outer_run_id],
             "metadata": {"langgraph_node": "model"},
-            "data": {"chunk": AIMessageChunk(content=text)},
+            "data": {"chunk": _FakeChunk(content=text)},
         },
         {
             "event": "on_chat_model_stream",
@@ -299,7 +307,7 @@ def _nested_chat_model_events(text: str, outer_run_id: str, inner_run_id: str):
             "run_id": outer_run_id,
             "parent_ids": ["node-run"],
             "metadata": {"langgraph_node": "model"},
-            "data": {"chunk": AIMessageChunk(content=text)},
+            "data": {"chunk": _FakeChunk(content=text)},
         },
     ]
 

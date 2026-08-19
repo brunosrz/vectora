@@ -1,28 +1,23 @@
-"""Persistência de estado: checkpoints, KV transiente e traces.
+"""Persistência de estado: checkpoints de workspace, KV transiente e traces.
 
-``checkpoint.py`` (checkpointer LangGraph + backup/restore de workspace),
+``checkpoint.py`` (backup/restore de workspace via git/snapshot — rewind),
 ``kv.py`` (KV genérico com fallback Redis/SQLite) e ``tracer.py`` (coleta
 de traces de execução do grafo para diagnóstico).
 
 Lazy imports (``__getattr__``) — mesmo padrão de ``backend.mcp`` — evitam
-puxar aiosqlite/Redis/LangGraph no import do pacote quando só um submódulo
+puxar aiosqlite/Redis no import do pacote quando só um submódulo
 específico é necessário.
 """
 
 from __future__ import annotations
 
 __all__ = [
-    "Checkpointer",
     "get_kv",
     "tracer",
 ]
 
 
 def __getattr__(name: str) -> object:
-    if name == "Checkpointer":
-        from backend.persistence.checkpoint import Checkpointer
-
-        return Checkpointer
     if name == "get_kv":
         from backend.persistence.kv import get_kv
 

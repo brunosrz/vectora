@@ -1,16 +1,15 @@
 """Embeddings nativos da Voyage AI — ``POST /embeddings``.
 
-Encaixa na interface ``Embeddings`` do LangChain, então o pipeline de RAG
-(``storage/factory.py::_build_lc_embeddings``) consome sem mudança. Remove
-``langchain-voyageai`` deste caminho.
+Encaixa na interface ``Embeddings`` nativa (``backend.llm.base``), então o
+pipeline de RAG (``storage/factory.py::_build_lc_embeddings``) consome sem
+mudança.
 """
 
 from __future__ import annotations
 
 import asyncio
 
-from langchain_core.embeddings import Embeddings
-
+from backend.llm.base import Embeddings
 from backend.llm.voyage.client import VoyageClient
 
 

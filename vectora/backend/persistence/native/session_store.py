@@ -8,9 +8,6 @@ conversa nativo sobre ``aiosqlite``: schema append-only ``sessions`` +
 - **HITL sobrevivendo a restart** via ``pending_approvals`` — persistido
   IMEDIATA e SINCRONAMENTE antes de qualquer espera, nunca só em memória
   de processo.
-
-Coexiste com ``VectoraSqliteSaver`` até o dispatch de produção migrar pro
-motor nativo.
 """
 
 from __future__ import annotations
@@ -103,8 +100,7 @@ def _row_to_message(row: Any) -> VMessage:
 
 class SessionStore:
     """Persistência async sobre um ``AsyncConnectionPool`` (aiosqlite) com os
-    PRAGMAs de hardening já aplicados por conexão — mesmo pool usado por
-    ``VectoraSqliteSaver``."""
+    PRAGMAs de hardening já aplicados por conexão."""
 
     def __init__(self, pool: AsyncConnectionPool) -> None:
         self._pool = pool

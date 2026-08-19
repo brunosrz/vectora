@@ -11,10 +11,9 @@ Arquitetura:
       ``backend/engine/conversation_loop.py::run_conversation``.
     - HITL dinâmico via ``backend.engine.hitl`` — a política de aprovação por
       ``permission_mode`` é lida por request, não compilada num grafo.
-    - Checkpointer/Store nativos: VectoraSqliteSaver/VectoraStore (aiosqlite),
-      ou VectoraPostgresSaver/VectoraPostgresStore (asyncpg) em
-      STORAGE_MODE=complete — implementam a mesma interface que os
-      equivalentes LangGraph implementavam, sem depender de langgraph.
+    - Store nativo: VectoraStore (aiosqlite), ou VectoraPostgresStore
+      (asyncpg) em STORAGE_MODE=complete — implementa a mesma interface que
+      o BaseStore do LangGraph, sem depender de langgraph em runtime.
     - Singleton compartilhado entre todos os usuários; versionamento por user
       via _version_tracker detecta rebind necessário de tools/policy/skills.
 
@@ -39,16 +38,14 @@ Dispatch de produção:
     resolvido por chamada via ``FallbackChatClient``), então o cache é só
     por ``(user_id, chat_mode, workspace_id)``.
 
-    O checkpointer/store LangGraph nativos (``VectoraSqliteSaver``/
-    ``VectoraPostgresSaver``/``VectoraPostgresStore``) seguem abertos por
-    ``_ensure_infra`` e expostos via ``get_checkpointer``/``get_store`` —
-    não são mais usados por nenhum grafo compilado, mas continuam servindo
-    outros consumidores nativos (tools de memória, backend nativo de
-    subagente avulso). O histórico de thread é sempre lido do
-    ``SessionStore`` nativo; sem produto em uso público até agora, não há
-    dado de conversa pré-existente em checkpointer LangGraph para migrar —
-    uma thread sem registro no ``SessionStore`` simplesmente não tem
-    histórico/todos/interrupt pendente.
+    O store LangGraph nativo (``VectoraStore``/``VectoraPostgresStore``)
+    segue aberto por ``_ensure_infra`` e exposto via ``get_store`` — serve as
+    tools de memória do agente. O histórico de thread é sempre lido do
+    ``SessionStore`` nativo (``backend/persistence/native/session_store.py``);
+    sem produto em uso público até agora, não há dado de conversa
+    pré-existente em checkpointer LangGraph legado para migrar — uma thread
+    sem registro no ``SessionStore`` simplesmente não tem histórico/todos/
+    interrupt pendente.
 """
 
 from __future__ import annotations
@@ -389,11 +386,9 @@ def _build_session_system_prompt(
 
 
 # ---------------------------------------------------------------------------
-# Singleton da infra de persistência (checkpointer/store nativos)
+# Singleton da infra de persistência (store nativo)
 # ---------------------------------------------------------------------------
 
-_checkpointer_ctx: Any = None
-_checkpointer: Any = None
 _store: Any = None
 _store_ctx: Any = None  # context manager do store Postgres (complete mode)
 _lock = asyncio.Lock()
@@ -406,7 +401,7 @@ _session_store_pool: Any = None
 """``AsyncConnectionPool`` dedicado a ``sessions.db`` (histórico de
 mensagens/aprovações pendentes do motor nativo) — sempre SQLite local,
 independente de ``storage_mode``: ``SessionStore`` ainda não tem backend
-Postgres (só o checkpointer/store nativos abaixo têm as duas variantes)."""
+Postgres (só o store nativo abaixo tem as duas variantes)."""
 _session_store: SessionStore | None = None
 _approval_gate: ApprovalGate | None = None
 
@@ -468,73 +463,18 @@ def _agents_md_paths() -> list[str] | None:
 
 
 async def _ensure_infra() -> None:
-    """Abre (uma única vez) o checkpointer + store compartilhados.
+    """Abre (uma única vez) o store compartilhado.
 
-    Todos os grafos (um por modelo) reusam estes recursos — assim há uma só
-    conexão com o checkpointer, sem disputa de lock entre grafos.
+    Todos os grafos (um por modelo) reusam este recurso — assim há uma só
+    conexão com o store, sem disputa de lock entre grafos.
 
     Em ``storage_mode="complete"`` com ``postgres_dsn`` configurado, usa
-    ``AsyncPostgresSaver``/``AsyncPostgresStore`` (schema real, sem gargalo de
-    lock de arquivo único) — antes disso o modo complete tinha Qdrant/Redis
-    de verdade mas o checkpointer/store continuavam presos no SQLite,
-    independente do modo escolhido. Fallback: qualquer falha ao abrir o
-    Postgres (DSN ruim, banco fora do ar) degrada pro SQLite, para uma
-    sessão nunca deixar de iniciar por causa de storage.
+    ``VectoraPostgresStore`` (schema real, sem gargalo de lock de arquivo
+    único). Fallback: qualquer falha ao abrir o Postgres (DSN ruim, banco
+    fora do ar) degrada pro SQLite, para uma sessão nunca deixar de iniciar
+    por causa de storage.
     """
-    global _checkpointer_ctx, _checkpointer, _store, _store_ctx
-
-    if _checkpointer is None:
-        from backend.services.license import get_effective_storage_mode
-        from backend.settings import settings as _settings
-
-        if get_effective_storage_mode() == "complete" and _settings.postgres_dsn:
-            try:
-                import asyncpg
-
-                from backend.persistence.native.postgres_checkpointer import (
-                    VectoraPostgresSaver,
-                )
-
-                dsn = _settings.postgres_dsn.replace(
-                    "postgresql+asyncpg://", "postgresql://"
-                )
-                # Pool dedicado (não o get_pg_pool() compartilhado de
-                # storage/factory.py) — mesmo princípio de isolamento que o
-                # AsyncPostgresSaver.from_conn_string anterior já tinha:
-                # o checkpointer possui seu próprio recurso, fechado no
-                # aclose() deste módulo, sem afetar outros consumidores do
-                # pool compartilhado.
-                pg_pool = await asyncpg.create_pool(dsn, min_size=1, max_size=5)
-                _checkpointer = VectoraPostgresSaver(pg_pool)
-                await _checkpointer.setup()
-                _checkpointer_ctx = pg_pool
-                logger.info(
-                    "agent_factory: checkpointer Postgres nativo ativo (storage_mode=complete)"
-                )
-            except Exception:
-                logger.warning(
-                    "agent_factory: falha ao abrir checkpointer Postgres, caindo pro SQLite",
-                    exc_info=True,
-                )
-                _checkpointer_ctx = None
-                _checkpointer = None
-
-        if _checkpointer is None:
-            from backend.persistence.native.sqlite_checkpointer import (
-                VectoraSqliteSaver,
-            )
-            from backend.storage.sqlite.pool import AsyncConnectionPool
-
-            db_path = str(_settings.vectora_home / "checkpoints.db")
-            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-            # AsyncConnectionPool já aplica os PRAGMAs de hardening (WAL,
-            # busy_timeout=30s, synchronous=NORMAL) em toda conexão nova —
-            # ver backend/storage/sqlite/pool.py.
-            sqlite_pool = AsyncConnectionPool(db_path, min_size=1, max_size=4)
-            await sqlite_pool.open()
-            _checkpointer = VectoraSqliteSaver(sqlite_pool)
-            await _checkpointer.setup()
-            _checkpointer_ctx = sqlite_pool
+    global _store, _store_ctx
 
     if _store is None:
         from backend.services.license import get_effective_storage_mode
@@ -620,15 +560,6 @@ async def get_store() -> Any:
     """
     await _ensure_infra()
     return _store
-
-
-async def get_checkpointer() -> Any:
-    """Retorna o checkpointer compartilhado (mesmo usado pelo agente
-    principal) — para montar grafos avulsos (ex.: subagente isolado
-    agendado, ``backend.scheduling.subagent_runner``) que precisam do mesmo
-    backend de persistência sem duplicar conexão."""
-    await _ensure_infra()
-    return _checkpointer
 
 
 def _check_global_tools_version() -> None:
@@ -939,12 +870,12 @@ async def coder_compensate(workspace_id: str | None = None) -> str | None:
 
 
 async def aclose() -> None:
-    """Fecha o checkpointer/store nativos (SQLite ou Postgres) + o
-    ``SessionStore``/``ApprovalGate``. Idempotente.
+    """Fecha o store nativo (SQLite ou Postgres) + o ``SessionStore``/
+    ``ApprovalGate``. Idempotente.
 
     Deve ser chamado no shutdown do FastAPI (lifespan).
     """
-    global _checkpointer_ctx, _checkpointer, _store, _store_ctx
+    global _store, _store_ctx
     global _session_store_pool, _session_store, _approval_gate
 
     async with _lock:
@@ -960,26 +891,16 @@ async def aclose() -> None:
             except Exception as exc:
                 logger.warning("agent_factory: erro ao fechar SessionStore: %s", exc)
 
-        if _checkpointer_ctx is None:
+        if _store is None:
             return
-        ctx = _checkpointer_ctx
         store_ctx = _store_ctx
-        _checkpointer_ctx = None
-        _checkpointer = None
         _store = None  # reaberto no próximo _ensure_infra
         _store_ctx = None
         _version_tracker.clear()
-        try:
-            # ctx é o pool que _ensure_infra abriu: AsyncConnectionPool
-            # (SQLite) ou asyncpg.Pool (Postgres) — ambos expõem
-            # `close()` async, nenhum é mais um context manager
-            # (`__aexit__`) desde a nativização do checkpointer.
-            await ctx.close()
-            logger.info("agent_factory: checkpointer fechado")
-        except Exception as exc:
-            logger.warning("agent_factory: erro ao fechar checkpointer: %s", exc)
         if store_ctx is not None:
             try:
+                # store_ctx é o pool asyncpg que _ensure_infra abriu para o
+                # VectoraPostgresStore em storage_mode=complete.
                 await store_ctx.close()
                 logger.info("agent_factory: store Postgres fechado")
             except Exception as exc:
@@ -990,9 +911,9 @@ async def awarm() -> None:
     """Inicializa a infra de persistência + o ``NativeAgent`` padrão eagerly
     no startup (opt-in).
 
-    Evita que a primeira request pague o custo de abrir checkpointer/store e
-    montar tools/subagentes. Falhas aqui não derrubam o servidor — apenas
-    logam aviso.
+    Evita que a primeira request pague o custo de abrir o store e montar
+    tools/subagentes. Falhas aqui não derrubam o servidor — apenas logam
+    aviso.
     """
     try:
         await _ensure_infra()

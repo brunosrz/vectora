@@ -17,9 +17,9 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-from langchain_core.embeddings import Embeddings
 
 from backend.llm import provider_fallback as pf
+from backend.llm.base import Embeddings
 from backend.llm.fallback_embeddings import FallbackEmbeddings
 
 

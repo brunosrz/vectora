@@ -134,20 +134,20 @@ def test_direct_provider_incompatible_error_classified():
 def test_graph_recursion_error_classified():
     """Bug reproduzido ao vivo: troca de provider por falso "quota esgotada"
     (ver test_config_settings::TestLlmKeyPrecedence) deixava o orchestrator
-    em loop de delegação até estourar o recursion_limit do LangGraph — o
-    GraphRecursionError propagava como STREAM_ERROR genérico, sem explicar
-    ao usuário o que de fato aconteceu."""
-    from langgraph.errors import GraphRecursionError
-
+    em loop de delegação até estourar um limite de passos — a mensagem
+    genérica de recursão propagava como STREAM_ERROR, sem explicar ao
+    usuário o que de fato aconteceu. `classify_stream_error` casa por texto
+    da mensagem (não pelo tipo da exceção), então qualquer exceção com essa
+    mensagem — nativa ou de uma dependência — é classificada igual."""
     code, message = classify_stream_error(
-        GraphRecursionError(
+        RecursionError(
             "Recursion limit of 50 reached without hitting a stop condition."
         )
     )
     assert code == "RECURSION_LIMIT"
     assert message
     assert "loop" in message.lower()
-    # Não vaza o número cru do limite/jargão do LangGraph pro usuário.
+    # Não vaza o número cru do limite/jargão interno pro usuário.
     assert "50" not in message
 
 

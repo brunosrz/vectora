@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import httpx
 import pytest
-from langchain_core.documents import Document
 
 from backend.llm.cohere.client import CohereClient
 from backend.llm.cohere.rerank import VectoraCohereRerank
 from backend.llm.voyage.client import VoyageClient
 from backend.llm.voyage.rerank import VectoraVoyageRerank
+from backend.vtypes.documents import Document
 
 
 def _cohere_client(handler) -> CohereClient:

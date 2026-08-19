@@ -1,20 +1,18 @@
 """Embeddings nativos do Cohere — ``POST /v2/embed``.
 
-Encaixa na interface ``Embeddings`` do LangChain, então o pipeline de RAG
-(``storage/factory.py::_build_lc_embeddings``) consome sem mudança. Remove
-``langchain-cohere`` deste caminho.
+Encaixa na interface ``Embeddings`` nativa (``backend.llm.base``), então o
+pipeline de RAG (``storage/factory.py::_build_lc_embeddings``) consome sem
+mudança.
 
-``input_type`` passa a ser resolvido por chamada (``search_document``/
-``search_query``) — na v1/LangChain isso vinha do construtor; a Embed API v2
-exige isso por request.
+``input_type`` é resolvido por chamada (``search_document``/
+``search_query``) — a Embed API v2 exige isso por request.
 """
 
 from __future__ import annotations
 
 import asyncio
 
-from langchain_core.embeddings import Embeddings
-
+from backend.llm.base import Embeddings
 from backend.llm.cohere.client import CohereClient
 
 

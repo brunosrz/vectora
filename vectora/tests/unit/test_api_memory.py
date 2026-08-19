@@ -1,8 +1,8 @@
 """Testes HTTP dos endpoints de memória.
 
-Usa FastAPI TestClient com um LangGraph InMemoryStore real (mesmo tipo de
-BaseStore usado em produção via ``backend.services.agent_factory.get_store``),
-cobrindo:
+Usa FastAPI TestClient com um ``NativeInMemoryStore`` real (mesmo Protocol
+``StoreBackend`` usado em produção via
+``backend.services.agent_factory.get_store``), cobrindo:
 - GET /memory — lista vazia, paginação
 - POST /memory — cria, 409 duplicado
 - PUT /memory/{key} — edita, 404 inexistente
@@ -17,14 +17,16 @@ import os
 
 import pytest
 from fastapi.testclient import TestClient
-from langgraph.store.memory import InMemoryStore
+
+from backend.testing.mocks import NativeInMemoryStore
 
 
 @pytest.fixture
 def store():
-    """BaseStore real (InMemoryStore) compartilhado entre o TestClient e as
-    memory tools do agente — instância única por teste (mesmo fixture node)."""
-    return InMemoryStore()
+    """``StoreBackend`` real (``NativeInMemoryStore``) compartilhado entre o
+    TestClient e as memory tools do agente — instância única por teste
+    (mesmo fixture node)."""
+    return NativeInMemoryStore()
 
 
 @pytest.fixture

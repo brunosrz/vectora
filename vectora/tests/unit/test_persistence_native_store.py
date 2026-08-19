@@ -1,21 +1,12 @@
-"""Exercício real de ``VectoraStore`` — o único teste existente antes desta
-auditoria (`test_e_b_parity.py::TestBuildStore`) fazia só
-`isinstance(store, VectoraStore)`, sem nunca chamar `put`/`get`/`search`."""
+"""Exercício real de ``VectoraStore`` — implementação direta de
+``aget``/``aput``/``adelete``/``asearch`` sobre ``aiosqlite``, sem depender
+de ``langgraph.store.base`` (o único teste anterior, ``test_e_b_parity.py::
+TestBuildStore``, fazia só ``isinstance(store, VectoraStore)``, sem nunca
+chamar os métodos de fato)."""
 
 from __future__ import annotations
 
-from typing import Any, cast
-
 import pytest
-from langgraph.store.base import (
-    GetOp,
-    Item,
-    ListNamespacesOp,
-    MatchCondition,
-    PutOp,
-    SearchItem,
-    SearchOp,
-)
 
 from backend.persistence.native.store import VectoraStore
 from backend.storage.sqlite.pool import AsyncConnectionPool
@@ -55,111 +46,62 @@ async def indexed_store(tmp_path):
         await pool.close()
 
 
-async def _put(
-    store: VectoraStore, namespace: tuple[str, ...], key: str, value: dict | None
-) -> None:
-    await store.abatch([PutOp(namespace=namespace, key=key, value=value)])
-
-
-async def _get(
-    store: VectoraStore, namespace: tuple[str, ...], key: str
-) -> Item | None:
-    [result] = await store.abatch([GetOp(namespace=namespace, key=key)])
-    return cast("Item | None", result)
-
-
-async def _search(
-    store: VectoraStore,
-    namespace_prefix: tuple[str, ...],
-    *,
-    query: str | None = None,
-    filter: dict[str, Any] | None = None,  # noqa: A002 — mesmo nome do SearchOp
-    limit: int = 10,
-    offset: int = 0,
-) -> list[SearchItem]:
-    [results] = await store.abatch(
-        [
-            SearchOp(
-                namespace_prefix=namespace_prefix,
-                query=query,
-                filter=filter,
-                limit=limit,
-                offset=offset,
-            )
-        ]
-    )
-    return cast("list[SearchItem]", results)
-
-
-async def _list_namespaces(
-    store: VectoraStore,
-    *,
-    match_conditions: tuple[MatchCondition, ...] | None = None,
-    max_depth: int | None = None,
-    limit: int = 100,
-    offset: int = 0,
-) -> list[tuple[str, ...]]:
-    [namespaces] = await store.abatch(
-        [
-            ListNamespacesOp(
-                match_conditions=match_conditions,
-                max_depth=max_depth,
-                limit=limit,
-                offset=offset,
-            )
-        ]
-    )
-    return cast("list[tuple[str, ...]]", namespaces)
-
-
 class TestPutGet:
     async def test_round_trip_grava_e_le_um_item(self, store: VectoraStore):
-        await _put(store, ("user", "u1", "memories"), "k1", {"fact": "gosta de café"})
+        await store.aput(("user", "u1", "memories"), "k1", {"fact": "gosta de café"})
 
-        result = await _get(store, ("user", "u1", "memories"), "k1")
+        result = await store.aget(("user", "u1", "memories"), "k1")
 
         assert result is not None
         assert result.value == {"fact": "gosta de café"}
 
     async def test_chave_inexistente_retorna_none(self, store: VectoraStore):
-        result = await _get(store, ("user", "u1", "memories"), "ausente")
+        result = await store.aget(("user", "u1", "memories"), "ausente")
 
         assert result is None
 
-    async def test_put_com_value_none_apaga_o_item(self, store: VectoraStore):
-        await _put(store, ("user", "u1", "memories"), "k1", {"fact": "x"})
-        await _put(store, ("user", "u1", "memories"), "k1", None)
+    async def test_delete_remove_o_item(self, store: VectoraStore):
+        await store.aput(("user", "u1", "memories"), "k1", {"fact": "x"})
+        await store.adelete(("user", "u1", "memories"), "k1")
 
-        result = await _get(store, ("user", "u1", "memories"), "k1")
+        result = await store.aget(("user", "u1", "memories"), "k1")
         assert result is None
+
+    async def test_delete_de_chave_inexistente_nao_levanta(self, store: VectoraStore):
+        await store.adelete(("user", "u1", "memories"), "ausente")
 
     async def test_isolamento_entre_namespaces_de_usuarios_diferentes(
         self, store: VectoraStore
     ):
-        await _put(store, ("user", "alice", "memories"), "k1", {"fact": "a"})
-        await _put(store, ("user", "bob", "memories"), "k1", {"fact": "b"})
+        await store.aput(("user", "alice", "memories"), "k1", {"fact": "a"})
+        await store.aput(("user", "bob", "memories"), "k1", {"fact": "b"})
 
-        alice_item = await _get(store, ("user", "alice", "memories"), "k1")
+        alice_item = await store.aget(("user", "alice", "memories"), "k1")
         assert alice_item is not None
         assert alice_item.value == {"fact": "a"}
 
 
 class TestSearch:
     async def test_search_filtra_por_prefixo_de_namespace(self, store: VectoraStore):
-        await _put(store, ("user", "u1", "memories"), "k1", {"fact": "x"})
-        await _put(store, ("user", "u1", "prefs"), "k1", {"pref": "y"})
+        await store.aput(("user", "u1", "memories"), "k1", {"fact": "x"})
+        await store.aput(("user", "u1", "prefs"), "k1", {"pref": "y"})
 
-        results = await _search(store, ("user", "u1", "memories"))
+        results = await store.asearch(("user", "u1", "memories"))
 
         assert len(results) == 1
         assert results[0].value == {"fact": "x"}
 
-    async def test_search_filtra_por_valor(self, store: VectoraStore):
-        await _put(store, ("user", "u1", "memories"), "k1", {"category": "food"})
-        await _put(store, ("user", "u1", "memories"), "k2", {"category": "travel"})
+    async def test_search_sem_resultado_devolve_lista_vazia(self, store: VectoraStore):
+        results = await store.asearch(("user", "inexistente", "memories"))
 
-        results = await _search(
-            store, ("user", "u1", "memories"), filter={"category": "food"}
+        assert results == []
+
+    async def test_search_filtra_por_valor(self, store: VectoraStore):
+        await store.aput(("user", "u1", "memories"), "k1", {"category": "food"})
+        await store.aput(("user", "u1", "memories"), "k2", {"category": "travel"})
+
+        results = await store.asearch(
+            ("user", "u1", "memories"), filter={"category": "food"}
         )
 
         assert len(results) == 1
@@ -168,47 +110,14 @@ class TestSearch:
     async def test_search_semantico_ordena_por_similaridade(
         self, indexed_store: VectoraStore
     ):
-        await _put(indexed_store, ("user", "u1", "memories"), "curto", {"text": "ab"})
-        await _put(
-            indexed_store, ("user", "u1", "memories"), "longo", {"text": "abcdefgh"}
+        await indexed_store.aput(("user", "u1", "memories"), "curto", {"text": "ab"})
+        await indexed_store.aput(
+            ("user", "u1", "memories"), "longo", {"text": "abcdefgh"}
         )
 
-        results = await _search(
-            indexed_store, ("user", "u1", "memories"), query="abcdefgh"
+        results = await indexed_store.asearch(
+            ("user", "u1", "memories"), query="abcdefgh"
         )
 
         assert results[0].key == "longo"
         assert results[0].score is not None
-
-
-class TestListNamespaces:
-    async def test_lista_namespaces_distintos(self, store: VectoraStore):
-        await _put(store, ("user", "u1", "memories"), "k1", {})
-        await _put(store, ("user", "u2", "memories"), "k1", {})
-
-        namespaces = await _list_namespaces(store)
-
-        assert set(namespaces) == {
-            ("user", "u1", "memories"),
-            ("user", "u2", "memories"),
-        }
-
-    async def test_filtra_por_prefixo(self, store: VectoraStore):
-        await _put(store, ("user", "u1", "memories"), "k1", {})
-        await _put(store, ("workspace", "w1", "files"), "k1", {})
-
-        namespaces = await _list_namespaces(
-            store,
-            match_conditions=(MatchCondition(match_type="prefix", path=("user",)),),
-        )
-
-        assert namespaces == [("user", "u1", "memories")]
-
-
-class TestBatchSincronoNaoSuportado:
-    def test_batch_sincrono_levanta_not_implemented(self, store: VectoraStore):
-        """`VectoraStore` é async-only (CLAUDE.md regra 10) — o método
-        síncrono precisa falhar de forma explícita, nunca silenciosamente
-        devolver lista vazia ou travar."""
-        with pytest.raises(NotImplementedError, match="async-only"):
-            store.batch([GetOp(namespace=("x",), key="k")])
