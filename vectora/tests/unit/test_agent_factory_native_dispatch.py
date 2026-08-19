@@ -127,7 +127,7 @@ class TestAgetThreadMessagesNativePrimeiro:
 
         assert [p[:2] for p in pairs] == [("human", "oi"), ("assistant", "olá!")]
         # checkpoint_id nativo é o id da mensagem (fork target de
-        # SessionStore.set_branch_head), não um uuid do checkpointer LangGraph.
+        # SessionStore.set_branch_head).
         assert pairs[0][2] == str(id_user)
 
     async def test_filtra_mensagens_de_tool_e_system(self, session_store: SessionStore):
@@ -161,8 +161,8 @@ class TestAgetThreadMessagesNativePrimeiro:
     async def test_thread_sem_mensagem_nativa_devolve_lista_vazia(
         self, session_store: SessionStore
     ):
-        """Sem checkpointer LangGraph legado a consultar, uma thread sem
-        nenhum registro no SessionStore devolve lista vazia direto."""
+        """Uma thread sem nenhum registro no SessionStore devolve lista
+        vazia direto."""
         with patch.object(
             af, "get_session_store", AsyncMock(return_value=session_store)
         ):

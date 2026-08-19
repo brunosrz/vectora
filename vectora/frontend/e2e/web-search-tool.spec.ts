@@ -14,7 +14,7 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 const SEARCH_PROMPT =
-  "Busque na web a versão estável mais recente do LangChain (Python) hoje e me diga o número da versão.";
+  "Busque na web a versão estável mais recente do FastAPI (Python) hoje e me diga o número da versão.";
 
 async function sendPrompt(page: Page, text: string): Promise<void> {
   const input = page.getByTestId("chat-input");
@@ -82,7 +82,7 @@ test("segundo prompt de busca numa sessão nova também completa (não é fluke 
   await page.goto("/");
   await sendPrompt(
     page,
-    "Pesquise na web e diga: qual é a licença open-source do projeto LangChain?",
+    "Pesquise na web e diga: qual é a licença open-source do projeto FastAPI?",
   );
 
   const assistant = page.getByTestId("message-content-assistant").last();

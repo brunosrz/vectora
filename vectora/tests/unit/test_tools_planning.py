@@ -1,8 +1,7 @@
 """``write_todos`` (backend/tools/planning.py) — tool nativa de
-planejamento, substitui a TodoListMiddleware do deepagents. Testa a tool
-diretamente (via TOOL_REGISTRY.ainvoke, validação de args incluída) e a
-tradução do resultado em TodosUpdated feita por
-backend/engine/conversation_loop.py.
+planejamento. Testa a tool diretamente (via TOOL_REGISTRY.ainvoke,
+validação de args incluída) e a tradução do resultado em TodosUpdated
+feita por backend/engine/conversation_loop.py.
 """
 
 from __future__ import annotations

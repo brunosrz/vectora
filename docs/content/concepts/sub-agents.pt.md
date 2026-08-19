@@ -3,7 +3,7 @@ title: Orchestrator & Subagentes
 weight: 3
 ---
 
-O agente do Vectora é construído sobre `create_deep_agent` (LangGraph + [deepagents](https://github.com/langchain-ai/deepagents)) — não um orchestrator manual por nós. Isso dá acesso a middleware nativo (HITL configurável), backends de filesystem plugáveis, e um supervisor que delega pra subagentes especializados via uma tool `task` interna.
+O agente do Vectora é construído sobre um motor nativo (`backend/engine/conversation_loop.py::run_conversation`) — um loop imperativo, não um grafo compilado. Isso dá acesso a HITL configurável, backends de filesystem plugáveis, e um supervisor que delega pra subagentes especializados via a tool nativa `delegate_to_subagent`.
 
 ## Orchestrator
 

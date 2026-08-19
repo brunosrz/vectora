@@ -45,7 +45,7 @@ vectora storage migrate upgrade              # aplica migrations pendentes
 vectora storage migrate to-postgres          # SQLite → Postgres
 vectora storage migrate to-qdrant <coleção>  # LanceDB → Qdrant
 vectora storage migrate to-pgvector          # LanceDB → pgvector
-vectora storage migrate memory-to-langgraph  # memórias antigas → BaseStore
+vectora storage migrate memory-to-native     # memórias antigas → store nativo
 ```
 
 Veja [Storage: lite vs. complete](../../concepts/storage) pro contexto completo.

@@ -254,8 +254,8 @@ class TestNodeLabels:
 # ===========================================================================
 # Duration badges: duration_ms no NodeEvent de fim
 #
-# NodeEvent/NodeStatus modelava nós discretos de um grafo LangGraph
-# compilado — o motor nativo (loop imperativo, sem nós nomeados) nunca
+# NodeEvent/NodeStatus modelava nós discretos de um grafo compilado — o
+# motor nativo (loop imperativo, sem nós nomeados) nunca
 # emite ``NodeStatus`` (confirmado: nenhum ``emit(NodeStatus(...))`` existe
 # em ``backend/engine/conversation_loop.py``). Só o contrato do schema em si
 # (usado por outros produtores, se algum dia existirem) continua coberto.

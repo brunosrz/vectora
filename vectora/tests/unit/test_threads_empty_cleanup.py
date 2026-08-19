@@ -95,9 +95,10 @@ class TestCleanupEmptyThreads:
 
 
 class TestCleanupOrphanedThreadsWithoutCheckpoint:
-    """message_count > 0 sem nenhum checkpoint real do LangGraph — sinal de
-    que o grafo nunca rodou pra essa thread (bug histórico do stream_chat:
-    message_count incrementado antes do agente inicializar). Sem essa
+    """message_count > 0 sem nenhum checkpoint real na tabela legada de
+    checkpoints — sinal de que o motor nunca rodou pra essa thread (bug
+    histórico do stream_chat: message_count incrementado antes do agente
+    inicializar). Sem essa
     passada extra, essas threads ficam fantasma pra sempre — passam no
     filtro `message_count > 0` do ListThreads e a 1ª passada do cleanup só
     olha `message_count = 0`."""

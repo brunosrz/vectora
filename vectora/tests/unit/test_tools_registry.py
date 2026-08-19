@@ -1,5 +1,5 @@
-"""``backend/tools/registry.py`` — tool registry nativo, substitui
-``@tool``/``BaseTool``/``convert_to_openai_tool`` do LangChain.
+"""``backend/tools/registry.py`` — tool registry nativo (schema Pydantic,
+injeção de contexto, dedup de nome, sem dependência de framework externo).
 
 Tools de exemplo definidas aqui exercitam o mecanismo de registro
 (schema, injeção de contexto, dedup de nome) sem depender de nenhuma

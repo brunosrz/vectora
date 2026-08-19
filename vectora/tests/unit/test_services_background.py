@@ -2,9 +2,8 @@
 
 Cobre o ciclo de vida das tarefas em segundo plano session-scoped: CRUD, execução
 real do agente via o motor nativo (run_task/resume_background_run rodam sobre
-`backend/engine/conversation_loop.py`, não mais o grafo deepagents), scheduler de
-interval e a ponte webhook→IA. Cada caminho feliz tem o par de erro/borda no
-mesmo teste (CLAUDE.md §18).
+`backend/engine/conversation_loop.py`), scheduler de interval e a ponte
+webhook→IA. Cada caminho feliz tem o par de erro/borda no mesmo teste.
 """
 
 from __future__ import annotations
@@ -87,8 +86,7 @@ async def native_session_store(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Fakes do motor nativo — equivalente, pro motor nativo, do antigo
-# _FakeAgent/_SeqAgent/_patch_agent (grafo deepagents).
+# Fakes do motor nativo, usados pra simular run_conversation nos testes.
 # ---------------------------------------------------------------------------
 
 

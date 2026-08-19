@@ -186,9 +186,7 @@ async def _cleanup_dim_meta(collection: str) -> None:
 
 class TestWriteToVectorStore:
     """`_write_to_vector_store` escreve no backend nativo com guard de
-    dimensão prévio — a checagem que antes só rodava dentro do wrapper
-    LangChain (`get_langchain_vector_store`, removido) precisa continuar
-    protegendo o caminho de escrita real (nativo)."""
+    dimensão prévio, protegendo o caminho de escrita real."""
 
     @pytest.mark.asyncio
     async def test_write_upserts_after_dimension_check_passes(

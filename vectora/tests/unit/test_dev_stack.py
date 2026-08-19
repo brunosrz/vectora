@@ -74,9 +74,8 @@ def test_settings_carregam_defaults_de_infra(monkeypatch: pytest.MonkeyPatch) ->
 def test_specs_usam_imagens_compativeis_com_compose() -> None:
     """Postgres e Qdrant usam a mesma imagem no dev_stack e no docker-compose.yml.
 
-    O Redis diverge de propósito: o dev_stack usa a imagem leve; o compose usa
-    redis-stack-server porque o cache LLM (langchain-redis) precisa de
-    RediSearch/RedisJSON. Sem esses módulos o cache cai para InMemoryCache.
+    O Redis diverge de propósito: o dev_stack usa a imagem leve; o compose
+    usa redis-stack-server, que traz os módulos RediSearch/RedisJSON.
     """
     compose = (REPO_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
     for name in ("vectora-postgres", "vectora-qdrant"):

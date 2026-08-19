@@ -40,9 +40,9 @@ export interface Message {
   /** Tool ativa no momento — limpo quando tool termina */
   activeTool?: { name: string; argsPreview: string; elapsedMs?: number } | null;
 
-  // LangSmith tracing
+  // Rastreio de execução
   runId?: string;
-  shareUrl?: string; // Public LangSmith trace share URL
+  shareUrl?: string; // URL pública de compartilhamento do trace
   usageMetadata?: UsageMetadata;
 
   // User feedback

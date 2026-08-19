@@ -152,11 +152,11 @@ interface PlanCache {
   fetchedAt: number;
 }
 
-// ── Todos (write_todos / TodoListMiddleware) ────────────────────────────────
+// ── Todos (tool nativa write_todos) ──────────────────────────────────────────
 // Checklist ao vivo do turno atual — distinto dos artifacts (`plan` acima):
 // documentos salvos vs. progresso de execução em tempo real. Entregue via
 // evento SSE dedicado (`todos_updated`), não persiste em localStorage — a
-// fonte de verdade é o checkpoint do LangGraph.
+// fonte de verdade é o checkpoint da sessão.
 
 export interface TodoItem {
   content: string;

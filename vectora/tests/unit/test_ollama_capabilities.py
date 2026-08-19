@@ -202,8 +202,8 @@ class TestFactoryUsaClienteNativo:
         emb = factory._build_ollama_embeddings()
 
         assert isinstance(emb, OllamaEmbeddings)
-        # Erro/borda: o pacote `langchain-ollama` saiu do projeto — voltar a
-        # importá-lo quebraria o import, não passaria silenciosamente.
+        # Erro/borda: client nativo, sem dependência de SDK externo — um
+        # import quebrado falharia alto, não passaria silenciosamente.
         assert emb.client.base_url == "http://127.0.0.1:11434"
 
     def test_sem_modelo_configurado_devolve_none(self, monkeypatch):

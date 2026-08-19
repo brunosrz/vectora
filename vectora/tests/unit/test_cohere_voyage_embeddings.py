@@ -1,8 +1,6 @@
-"""Embeddings nativos do Cohere (Embed API v2) e da Voyage AI.
-
-Substituem `langchain_cohere.CohereEmbeddings`/`langchain_voyageai.
-VoyageAIEmbeddings` por cliente HTTP nativo — mesmo padrão de paridade já
-usado para o OpenRouter (`test_openrouter_embeddings_rerank.py`).
+"""Embeddings nativos do Cohere (Embed API v2) e da Voyage AI — cliente
+HTTP nativo, mesmo padrão de paridade já usado para o OpenRouter
+(`test_openrouter_embeddings_rerank.py`).
 """
 
 from __future__ import annotations

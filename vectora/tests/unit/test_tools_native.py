@@ -303,7 +303,7 @@ class TestHttpRequest:
 class TestNativeToolsRegisteredByName:
     """Nome exposto ao LLM precisa continuar idêntico ao pré-migração —
     quem já chama por nome (dispatch, testes de integração) não pode
-    quebrar com a troca de `@tool` (LangChain) para `@vtool` (nativo)."""
+    quebrar com a troca do decorator legado para `@vtool` (nativo)."""
 
     @pytest.mark.parametrize(
         "name",

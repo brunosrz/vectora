@@ -8,14 +8,14 @@ No seu núcleo, o Vectora resolve o **problema do abismo de conhecimento**: os L
 
 ## Por que o Vectora?
 
-- **Deep-agent canônico** — o grafo de execução é montado via `create_deep_agent` (pacote `deepagents`, sobre LangGraph), não um orchestrator manual por nós. Isso dá middleware nativo (HITL configurável por modo de permissão), backends de filesystem pluggable e um supervisor que delega para 2 subagentes especializados com instruções explícitas — sem hops de roteamento desnecessários.
+- **Motor nativo** — o loop de execução (`backend/engine/conversation_loop.py::run_conversation`) é um `while` imperativo, não um grafo compilado. Isso dá HITL configurável por modo de permissão, backends de filesystem pluggable e um supervisor que delega para 2 subagentes especializados com instruções explícitas — sem hops de roteamento desnecessários.
 - **Pipeline RAG híbrido** — cada recuperação roda BM25 + busca vetorial densa + reranker antes de voltar para o supervisor sintetizar a resposta.
 - **Context Graph nativo** — analisa o workspace (AST via tree-sitter para Python/JS/TS/Go/Rust/Java/C/C++, + extração semântica por LLM) e gera um grafo de conhecimento com god nodes, comunidades e perguntas sugeridas. Configurável por tipo de arquivo (ex.: só markdown, deixando o código para o RAG).
 - **70+ ferramentas nativas** — filesystem, git (14 operações), GitHub (`gh`), terminal (PTY real), web, RAG, memória, integrações opcionais (Jira, Slack, Linear, Google Drive, Gmail, Notion) e utilitárias (hash, JWT, regex, HTTP) — sempre disponíveis, sem instalar plugins.
 - **Resiliência de provider** — fallback automático de LLM por quota (429 troca de provider sozinho, com aviso visível) e de embeddings/rerank (Cohere↔VoyageAI). O model selector reflete o provider ativo.
 - **Embeddings curados** — resultados da busca web passam por um gate de curadoria (reranker + LLM judge) antes de serem indexados. Sua base de conhecimento nunca é contaminada.
 - **Chat web multi-usuário** — interface React 19 (Vite + TanStack Router) com autenticação, RBAC, workspaces e a workbench (terminal, git, arquivos, context graph, memória, planos — ver abaixo).
-- **Memória persistente entre sessões** — memória isolada por usuário, com checkpointer do LangGraph por thread.
+- **Memória persistente entre sessões** — memória isolada por usuário, com checkpoint nativo (`SessionStore`) por thread.
 - **Infraestrutura zero no modo lite** — SQLite + LanceDB. Sem Docker ou Postgres para uso local ou times pequenos. O modo **complete** (Postgres + Qdrant + Redis) já existe como caminho alternativo para quem precisa de mais escala.
 - **Multi-LLM** — Google Gemini, OpenAI, Anthropic, Cohere, ou Ollama (totalmente local). O model selector lista apenas os providers com API key configurada.
 
@@ -23,9 +23,9 @@ No seu núcleo, o Vectora resolve o **problema do abismo de conhecimento**: os L
 
 ## Arquitetura
 
-### Supervisor + Subagentes (`create_deep_agent`)
+### Supervisor + Subagentes (motor nativo)
 
-O agente principal (`backend/services/agent_factory.py`) é construído com `create_deep_agent` do pacote `deepagents` — não um `StateGraph` artesanal. O supervisor responde direto para consultas simples ou delega, via a tool `task`, para um dos 2 subagentes especializados:
+O agente principal (`backend/services/agent_factory.py`) roda sobre o motor nativo (`backend/engine/conversation_loop.py::run_conversation`) — um loop `while` imperativo, não um grafo compilado. O supervisor responde direto para consultas simples ou delega, via a tool nativa `delegate_to_subagent`, para um dos 2 subagentes especializados:
 
 | Agente           | Papel                                                            | Ferramentas principais                                                               |
 | ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -33,7 +33,7 @@ O agente principal (`backend/services/agent_factory.py`) é construído com `cre
 | **coder**        | Filesystem, terminal, git — geração e revisão de código          | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal`, tools de git |
 | **search**       | Busca web em tempo real + RAG (não há subagente de RAG separado) | `web_search`, `web_fetch`, `vector_search`, `embedding`, `ingest_docs`               |
 
-HITL (Human-in-the-Loop) roda via `HumanInTheLoopMiddleware` nativo do harness, configurável por modo de permissão (perguntar sempre / aceitar edições / autônomo / plano).
+HITL (Human-in-the-Loop) roda via `should_require_approval` (`backend/engine/hitl.py`), configurável por modo de permissão (perguntar sempre / aceitar edições / autônomo / plano).
 
 ### Pipeline de RAG (dentro das tools `search`/`rag`)
 
@@ -273,24 +273,24 @@ O projeto segue TDD (par caminho-feliz + caminho-de-erro no mesmo teste) — ver
 
 ### Backend
 
-| Camada              | Tecnologia                                                                                                                                                                                |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Linguagem           | Python 3.13 / [uv](https://docs.astral.sh/uv/)                                                                                                                                            |
-| Servidor            | FastAPI ≥0.138 + Uvicorn — serve API, SSE, WebSocket e a SPA (`StaticFiles`)                                                                                                              |
-| Framework de agente | [LangChain](https://langchain.com/) 1.3 + [LangGraph](https://langchain-ai.github.io/langgraph/) 1.2 + [deepagents](https://github.com/langchain-ai/deepagents) 0.6 (`create_deep_agent`) |
-| Providers de LLM    | `langchain-google-genai`, `langchain-openai`, `langchain-anthropic`, `langchain-cohere`, cliente nativo Ollama/OpenRouter                                                                 |
-| Banco vetorial      | [LanceDB](https://lancedb.github.io/lancedb/) (lite, default) / Qdrant (complete)                                                                                                         |
-| Embeddings + rerank | Cohere `embed-multilingual-v3.0` + `rerank-multilingual-v3.0`, com VoyageAI como alternativa                                                                                              |
-| Busca web           | Tavily via `langchain-tavily`                                                                                                                                                             |
-| Retrieval esparso   | `rank-bm25` (híbrido com busca vetorial densa)                                                                                                                                            |
-| Context Graph       | `tree-sitter` (Python/JS/TS/Go/Rust/Java/C/C++/JSON) + `networkx` + `rapidfuzz`                                                                                                           |
-| Persistência        | SQLite + `aiosqlite` (WAL) + LangGraph Checkpointer (Postgres via `asyncpg` no modo complete)                                                                                             |
-| Cache/KV            | Redis (`redis[hiredis]`, `langchain-redis`) — modo complete                                                                                                                               |
-| Terminal            | PTY via `pywinpty` (Windows) / `ptyprocess` (Unix)                                                                                                                                        |
-| Cliente MCP         | [MCP](https://modelcontextprotocol.io/) via `langchain-mcp-adapters` (`MultiServerMCPClient`) — consome servidores MCP de terceiros                                                       |
-| Segurança           | `argon2-cffi` (senhas), `pyjwt`, `pynacl`, `pykeepass` (vault KeePassXC), `slowapi` (rate limit)                                                                                          |
-| Interface CLI       | [Rich](https://rich.readthedocs.io/)                                                                                                                                                      |
-| Build/Distribuição  | Nuitka (compila o backend em C) + PyInstaller (empacota) + Electron + `electron-builder`                                                                                                  |
+| Camada              | Tecnologia                                                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Linguagem           | Python 3.13 / [uv](https://docs.astral.sh/uv/)                                                                        |
+| Servidor            | FastAPI ≥0.138 + Uvicorn — serve API, SSE, WebSocket e a SPA (`StaticFiles`)                                          |
+| Framework de agente | Motor nativo (`backend/engine/`) — loop de conversa imperativo, sem grafo compilado                                   |
+| Providers de LLM    | Clients HTTP nativos (`backend/llm/<provider>/`) para Google, OpenAI, Anthropic, Cohere, Ollama/OpenRouter            |
+| Banco vetorial      | [LanceDB](https://lancedb.github.io/lancedb/) (lite, default) / Qdrant (complete)                                     |
+| Embeddings + rerank | Cohere `embed-multilingual-v3.0` + `rerank-multilingual-v3.0`, com VoyageAI como alternativa                          |
+| Busca web           | Tavily via client HTTP nativo                                                                                         |
+| Retrieval esparso   | `rank-bm25` (híbrido com busca vetorial densa)                                                                        |
+| Context Graph       | `tree-sitter` (Python/JS/TS/Go/Rust/Java/C/C++/JSON) + `networkx` + `rapidfuzz`                                       |
+| Persistência        | SQLite + `aiosqlite` (WAL) + `SessionStore` nativo (Postgres via `asyncpg` no modo complete)                          |
+| Cache/KV            | Redis (`redis[hiredis]`, client nativo) — modo complete                                                               |
+| Terminal            | PTY via `pywinpty` (Windows) / `ptyprocess` (Unix)                                                                    |
+| Cliente MCP         | [MCP](https://modelcontextprotocol.io/) via SDK oficial `mcp` (`ClientSession`) — consome servidores MCP de terceiros |
+| Segurança           | `argon2-cffi` (senhas), `pyjwt`, `pynacl`, `pykeepass` (vault KeePassXC), `slowapi` (rate limit)                      |
+| Interface CLI       | [Rich](https://rich.readthedocs.io/)                                                                                  |
+| Build/Distribuição  | Nuitka (compila o backend em C) + PyInstaller (empacota) + Electron + `electron-builder`                              |
 
 ### Frontend
 
@@ -329,9 +329,8 @@ COHERE_API_KEY=sua_chave_aqui
 # Obrigatório: busca web e extração de URLs
 TAVILY_API_KEY=sua_chave_aqui
 
-# Opcional: rastreamento
-LANGSMITH_TRACING=false
-LANGSMITH_API_KEY=sua_chave_aqui
+# Opcional: telemetria nativa
+TELEMETRY_ENABLED=true
 ```
 
 ---

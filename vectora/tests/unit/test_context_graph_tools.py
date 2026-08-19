@@ -3,7 +3,7 @@
 Cobre: graph_query, graph_explain, graph_path — caminho feliz + erros.
 
 Tools nativas (`@vtool`) — chamadas como função async direta com
-`ctx: ToolContext`, sem `.ainvoke({...}, config=...)` do LangChain.
+`ctx: ToolContext`.
 """
 
 from __future__ import annotations

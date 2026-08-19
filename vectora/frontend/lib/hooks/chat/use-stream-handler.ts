@@ -1,8 +1,8 @@
 /**
  * Stream Handler Hook — Vectora
  *
- * Gerencia streaming de respostas do agente Vectora via SSE.
- * Substitui o hook baseado no LangGraph SDK pelo cliente SSE nativo.
+ * Gerencia streaming de respostas do agente Vectora via SSE, cliente
+ * nativo.
  *
  * Eventos tratados:
  * - token      → acumula texto da resposta
@@ -186,7 +186,7 @@ function announceSSEDropped(err: unknown): void {
  * Reconcilia uma mensagem cujo stream terminou sem `done`/`error` explícito
  * — o async generator do SSE simplesmente esgotou (ex.: buffer final
  * descartado numa queda de conexão silenciosa). O backend já persistiu o
- * conteúdo completo no checkpoint do LangGraph independente do que chegou ao
+ * conteúdo completo no checkpoint da sessão independente do que chegou ao
  * vivo; busca o histórico e aplica só o conteúdo final da mensagem truncada,
  * SEM substituir a lista inteira de mensagens (evita reintroduzir a race que
  * o guard `hasSentMessageRef` de chat-interface.tsx existe para prevenir).
@@ -224,7 +224,7 @@ interface UseStreamHandlerProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   agentConfig?: AgentConfig;
   shouldInterruptRef?: React.MutableRefObject<boolean>;
-  /** Não utilizado (LangSmith removido) */
+  /** Não utilizado nesta função (mantido pra compatibilidade de assinatura) */
   userId?: string | null;
   userEmail?: string | null;
   userName?: string | null;
@@ -337,9 +337,9 @@ export function useStreamHandler({
       }
       config.permission_mode = settings.permissionMode;
       config.reasoning_effort = settings.reasoningEffort;
-      // Item 3 — editar mensagem / regenerar resposta: resume o grafo a
-      // partir do checkpoint pai da mensagem alvo em vez do mais recente,
-      // fazendo o LangGraph ramificar dali (histórico original preservado).
+      // Editar mensagem / regenerar resposta: resume a partir do checkpoint
+      // pai da mensagem alvo em vez do mais recente, fazendo o histórico
+      // ramificar dali (histórico original preservado).
       if (forkFromCheckpointId) {
         config.fork_from_checkpoint_id = forkFromCheckpointId;
       }

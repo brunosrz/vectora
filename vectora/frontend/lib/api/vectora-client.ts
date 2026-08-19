@@ -35,8 +35,8 @@ export interface ChatConfig {
   /** R4 — low|medium|high|max (vazio = default do modelo) */
   reasoning_effort?: string;
   /** Fork de checkpoint (editar mensagem / regenerar resposta) — checkpoint_id
-   * pai da mensagem alvo (ver HistoryMessage.checkpoint_id). Resumir o grafo
-   * a partir dele faz o LangGraph ramificar dali; o histórico original
+   * pai da mensagem alvo (ver HistoryMessage.checkpoint_id). Resumir a
+   * partir dele faz o histórico ramificar dali; o histórico original
    * continua intacto, só deixa de ser o branch "atual" da thread. */
   fork_from_checkpoint_id?: string;
 }

@@ -295,8 +295,7 @@ class TestBuildOllamaOpenRouterEmbeddings:
             assert factory._build_ollama_embeddings() is None
 
     def test_ollama_with_model_builds_embeddings(self):
-        """Cliente nativo (`/api/embed`), não `langchain-ollama` — a
-        dependência saiu do projeto."""
+        """Cliente nativo (`/api/embed`)."""
         from backend.llm.ollama.embeddings import OllamaEmbeddings
         from backend.settings import settings
         from backend.storage import factory
@@ -332,11 +331,8 @@ class TestBuildOllamaOpenRouterEmbeddings:
             assert factory._build_openrouter_embeddings() is None
 
     def test_openrouter_with_key_and_model_builds_embeddings(self):
-        """Cliente nativo, não `OpenAIEmbeddings` (langchain_openai) com
-        base_url trocado — aquele descartava `input_type` (modelo assimétrico
-        precisa saber se é consulta ou documento) e `usage.cost`. A dependência
-        `langchain-openai` nem está mais instalada (removida na Sprint 13),
-        então o guard de regressão passa a ser o próprio isinstance positivo."""
+        """Cliente nativo — preserva `input_type` (modelo assimétrico
+        precisa saber se é consulta ou documento) e `usage.cost`."""
         from backend.llm.openrouter.embeddings import OpenRouterEmbeddings
         from backend.settings import settings
         from backend.storage import factory

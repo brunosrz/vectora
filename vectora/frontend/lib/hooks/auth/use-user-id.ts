@@ -1,7 +1,7 @@
 /**
  * User ID Management Hook
  *
- * Public Chat LangChain uses an anonymous browser UUID persisted in localStorage.
+ * Anonymous browser UUID persisted in localStorage.
  */
 
 "use client";
@@ -13,7 +13,7 @@ import { safeRandomUUID } from "@/lib/utils/uuid";
 // Constants
 // ============================================================================
 
-const USER_ID_KEY = "langgraph-user-id";
+const USER_ID_KEY = "vectora-user-id";
 
 // ============================================================================
 // Hook Implementation
@@ -22,7 +22,7 @@ const USER_ID_KEY = "langgraph-user-id";
 /**
  * Get user ID for thread management.
  *
- * Returns a browser UUID used to filter threads on the LangGraph backend.
+ * Returns a browser UUID used to filter threads on the backend.
  *
  * @returns The user's unique ID, or null while loading
  *

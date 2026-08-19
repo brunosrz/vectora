@@ -75,9 +75,10 @@ def test_missing_key_getenv_classified():
     assert "COHERE_API_KEY" not in message
 
 
-def test_missing_key_mangled_by_langchain():
-    # O langchain embrulha o GetEnvError num AttributeError ao montar generations;
-    # o texto ainda cita GetEnvError, então a classificação precisa pegar isso.
+def test_missing_key_wrapped_in_attribute_error():
+    # GetEnvError pode chegar embrulhado num AttributeError (lib externa
+    # tentando acessar um atributo que não existe na exceção) — o texto
+    # ainda cita GetEnvError, então a classificação precisa pegar isso.
     code, _ = classify_stream_error(
         AttributeError("'GetEnvError' object has no attribute 'generations'")
     )
@@ -101,8 +102,7 @@ def test_missing_key_takes_precedence_over_auth():
 
 def test_model_incompatible_not_confused_with_real_quota():
     """Bug reproduzido ao vivo: Cohere Command A+ rejeita `tool_plan` em
-    TODOS os candidatos da cadeia de fallback (langchain-cohere ainda não
-    suporta os modelos mais novos da Cohere) — o fallback esgota e levanta
+    TODOS os candidatos da cadeia de fallback — o fallback esgota e levanta
     QuotaExhaustedError, cuja mensagem contém a palavra "quota" e casava
     com o classificador RATE_LIMIT, mentindo pro usuário que o limite de
     uso foi atingido quando na verdade é incompatibilidade de schema."""

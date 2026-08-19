@@ -1,7 +1,5 @@
-"""Rerank nativo do Cohere (Rerank API v2) e da Voyage AI.
-
-Substituem `langchain_cohere.CohereRerank`/`langchain_voyageai.VoyageAIRerank`
-por cliente HTTP nativo — mesmo padrão de `test_openrouter_embeddings_rerank.py`.
+"""Rerank nativo do Cohere (Rerank API v2) e da Voyage AI — cliente HTTP
+nativo, mesmo padrão de `test_openrouter_embeddings_rerank.py`.
 """
 
 from __future__ import annotations

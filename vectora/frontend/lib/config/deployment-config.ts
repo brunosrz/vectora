@@ -344,9 +344,9 @@ export function getModelProvider(modelId: string): ModelConfig["provider"] {
 
 /**
  * Providers cujo modelo aceita imagem anexada. Espelha
- * `backend/settings.py::VISION_CAPABLE_PROVIDERS` — a integração
- * `langchain-cohere` não suporta multimodal (nenhum modelo Cohere),
- * independente do que o próprio modelo saiba fazer via API nativa.
+ * `backend/settings.py::VISION_CAPABLE_PROVIDERS` — o client nativo do
+ * Cohere não suporta multimodal (nenhum modelo Cohere), independente do
+ * que o próprio modelo saiba fazer via API nativa.
  */
 const VISION_CAPABLE_PROVIDERS: ReadonlySet<ModelConfig["provider"]> = new Set([
   "google-genai",

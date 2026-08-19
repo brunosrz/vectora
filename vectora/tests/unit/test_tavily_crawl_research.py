@@ -1,5 +1,4 @@
-"""Crawl, map e research do Tavily — os endpoints que o `langchain-tavily`
-não expunha.
+"""Crawl, map e research do Tavily — endpoints além da busca simples.
 
 Três naturezas diferentes:
 

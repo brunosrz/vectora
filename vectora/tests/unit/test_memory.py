@@ -145,8 +145,7 @@ class TestNamespaceIsolation:
 
 
 # ---------------------------------------------------------------------------
-# _get_store — injeção via ToolContext.store; o fallback pro contextvar do
-# LangGraph saiu junto com o corte do dispatch.
+# _get_store — injeção via ToolContext.store.
 # ---------------------------------------------------------------------------
 
 
@@ -164,7 +163,7 @@ class TestGetStore:
 
     def test_sem_ctx_store_levanta_runtime_error(self):
         """Erro/borda: sem `ctx.store` (execução fora do motor nativo) →
-        RuntimeError tipado, nunca import do LangGraph."""
+        RuntimeError tipado."""
         from backend.tools.memory import _get_store
 
         ctx = ToolContext()  # store=None por padrão
@@ -258,9 +257,8 @@ class TestListFactContents:
     (fora do wrapper `vtool`, que exige `ToolContext`) pra buscar os fatos já
     salvos de um usuário antes de propor duplicatas. Roda fire-and-forget
     DEPOIS do turno já ter terminado — nunca pode depender de
-    `langgraph.config.get_store()` (contextvar só válido durante a execução
-    do grafo), por isso usa `agent_factory.get_store()` em vez de
-    `_get_store()`."""
+    `_get_store()` (contextvar só válido durante a execução do motor
+    nativo), por isso usa `agent_factory.get_store()` em vez disso."""
 
     async def test_retorna_conteudo_de_todos_os_fatos_do_usuario(self, store):
         from backend.tools.memory import list_fact_contents, save_memory
@@ -281,9 +279,9 @@ class TestListFactContents:
         assert result == []
 
     async def test_funciona_fora_do_contexto_de_execucao_do_grafo(self, monkeypatch):
-        """Regressão: `_get_store()` (via `langgraph.config.get_store()`)
-        levanta RuntimeError fora de um nó em execução — exatamente o
-        cenário real do caller (`remember_trigger.py`, disparado via
+        """Regressão: `_get_store()` levanta RuntimeError fora de uma
+        execução do motor nativo em andamento — exatamente o cenário real
+        do caller (`remember_trigger.py`, disparado via
         `asyncio.ensure_future` depois do turno já ter terminado).
         `list_fact_contents` precisa funcionar mesmo assim, porque não
         depende mais de `_get_store()`."""

@@ -1,6 +1,6 @@
-"""Testes para ``backend.persistence.telemetry`` — telemetria nativa que
-substitui o LangSmith: eventos de tool call (sucesso/erro) e o startup que
-liga a telemetria em ``api/server.py``."""
+"""Testes para ``backend.persistence.telemetry`` — telemetria nativa:
+eventos de tool call (sucesso/erro) e o startup que liga a telemetria em
+``api/server.py``."""
 
 from __future__ import annotations
 
@@ -152,8 +152,7 @@ class TestTurnEvents:
 
 class TestServerStartupWiresTelemetry:
     def test_lifespan_calls_telemetry_configure(self) -> None:
-        """O startup do FastAPI (``_lifespan``) liga a telemetria nativa —
-        equivalente ao antigo ``enable_langsmith_tracing()``."""
+        """O startup do FastAPI (``_lifespan``) liga a telemetria nativa."""
         import os
 
         os.environ["VECTORA_AUTH_REQUIRED"] = "false"

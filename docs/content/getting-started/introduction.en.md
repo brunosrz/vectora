@@ -18,7 +18,7 @@ This happens through two complementary paths:
 You (CLI / Web Chat / MCP client)
         │
         ▼
-   Orchestrator (create_deep_agent — LangGraph + deepagents)
+   Orchestrator (native engine — imperative loop)
         │
    ┌────┴────┐
    ▼         ▼

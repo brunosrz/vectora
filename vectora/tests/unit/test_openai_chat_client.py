@@ -1,8 +1,7 @@
 """``OpenAIChatClient`` — chat nativo da OpenAI (Responses API), Protocol
-``ChatClient``. Espelha `test_openai_chat.py`
-(`VectoraOpenAIChat`, ainda em produção) operando sobre `VMessage` em vez
-de tipos LangChain — mesmo caminho crítico: tool-calling, streaming, e o
-edge case confirmado pela doc oficial (`.done` sem delta anterior).
+``ChatClient``, operando sobre ``VMessage``. Cobre o caminho crítico:
+tool-calling, streaming, e o edge case confirmado pela doc oficial (`.done`
+sem delta anterior).
 """
 
 from __future__ import annotations

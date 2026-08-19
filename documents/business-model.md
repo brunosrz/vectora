@@ -380,7 +380,7 @@ O Tavily é o motor de busca web do Vectora (Search Agent, cascading web →
 vector store, fallback do RAG) e não tem produto consumer próprio — seu
 crescimento depende de desenvolvedores integrando a API em produtos. O
 Vectora usa client HTTP nativo direto pra API do Tavily (`backend/tools/
-tavily/client.py`, sem `langchain-tavily`/`tavily-python`), cobrindo
+tavily/client.py`), cobrindo
 `topic`/`time_range`/`include_raw_content`/`tavily_extract`, o que já é
 argumento de parceria por si só (showcase de uso avançado da API).
 

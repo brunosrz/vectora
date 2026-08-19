@@ -9,9 +9,8 @@ Guardado em duas camadas:
   a credencial real configurada, o teste some da suíte com razão clara em
   vez de falhar.
 
-Tool calling e structured output (antigos ``.bind_tools``/``.with_structured_output``
-do LangChain) saíram junto com ``load_llm``/``BaseChatModel`` — o ChatClient
-nativo recebe ``tools=`` como parâmetro de chamada, sem bind prévio.
+O ChatClient nativo recebe ``tools=`` como parâmetro de chamada direto,
+sem bind prévio.
 """
 
 from __future__ import annotations

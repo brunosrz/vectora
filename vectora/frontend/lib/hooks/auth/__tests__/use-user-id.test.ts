@@ -7,7 +7,7 @@ import { describe, expect, it, beforeEach, vi } from "vitest";
 import { waitFor, renderHook } from "@testing-library/react";
 import { useUserId } from "../use-user-id";
 
-const KEY = "langgraph-user-id";
+const KEY = "vectora-user-id";
 
 beforeEach(() => {
   localStorage.clear();

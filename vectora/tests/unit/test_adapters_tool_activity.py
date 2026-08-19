@@ -116,8 +116,7 @@ async def test_tool_activity_emitted_on_tool_end_with_elapsed():
 async def test_tool_activity_and_tool_call_both_emitted_on_start():
     """No início da tool, tanto tool_call quanto tool_activity saem —
     ``conversation_loop.py`` emite ``ToolCallStarted`` seguido de
-    ``ToolActivity`` (ordem inversa da do adapter LangGraph removido, que
-    computava tool_activity a partir do próprio evento de tool_call)."""
+    ``ToolActivity``."""
     out = [
         _parse(s)
         async for s in stream_engine_events(

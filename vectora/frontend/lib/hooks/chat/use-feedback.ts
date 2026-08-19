@@ -59,7 +59,7 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
   );
 
   /**
-   * Main feedback handler - creates, updates, or deletes feedback in LangSmith.
+   * Main feedback handler - creates, updates, or deletes local feedback state.
    * Supports toggling feedback and adding comments.
    */
   const handleFeedback = useCallback(

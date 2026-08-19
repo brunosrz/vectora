@@ -32,8 +32,8 @@ def test_all_tools_is_union():
 
 def test_native_views_espelham_all_tools():
     """ALL_TOOL_NAMES/ALL_TOOL_SPECS são a visão nativa do MESMO toolset de
-    ALL_TOOLS (BaseTool) — nomes idênticos, sem a ponte LangChain. Garante que
-    a migração dos consumidores leves não muda o conjunto exposto."""
+    ALL_TOOLS — nomes idênticos. Garante que a migração dos consumidores
+    leves não muda o conjunto exposto."""
     legacy_names = {t.name for t in ALL_TOOLS}
     assert legacy_names == ALL_TOOL_NAMES
     assert {spec.name for spec in ALL_TOOL_SPECS} == ALL_TOOL_NAMES

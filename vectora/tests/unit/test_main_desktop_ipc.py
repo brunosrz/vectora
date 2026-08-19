@@ -279,7 +279,7 @@ def test_desktop_windows_no_tcp_host() -> None:
 def test_desktop_windows_shutdown_calls_os_exit() -> None:
     """Regressão ao vivo: o ramo Windows+desktop dava `return` logo após
     `asyncio.run(_run_win())` completar, pulando o `os._exit(0)` que mata
-    threads não-daemon (langsmith/httpx/SQLite do tracer) — Ctrl+C acionava
+    threads não-daemon (httpx/SQLite do tracer) — Ctrl+C acionava
     o shutdown gracioso do uvicorn/NATS normalmente, mas o processo Python
     continuava vivo até o usuário fechar o Electron manualmente pela
     bandeja. `os._exit` precisa ser chamado mesmo nesse ramo."""

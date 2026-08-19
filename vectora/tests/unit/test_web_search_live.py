@@ -43,7 +43,7 @@ def _results(raw: str) -> list[dict]:
 
 
 async def test_web_search_query_generica_real():
-    raw = await web_search(query="LangChain framework")
+    raw = await web_search(query="FastAPI framework")
     results = _results(raw)
     assert len(results) > 0
     for r in results:
@@ -61,7 +61,7 @@ async def test_web_search_query_local_com_time_range_real():
 
 
 async def test_web_search_query_tecnica_especifica_real():
-    raw = await web_search(query="LangGraph StateGraph checkpointer async")
+    raw = await web_search(query="Python asyncio event loop internals")
     results = _results(raw)
     assert len(results) > 0
     assert any("content" in r and r["content"] for r in results)
@@ -107,7 +107,7 @@ async def test_web_search_query_vazia_borda():
 
 
 async def test_fetch_url_pagina_real():
-    content = await fetch_url(url="https://python.langchain.com/")
+    content = await fetch_url(url="https://fastapi.tiangolo.com/")
     assert isinstance(content, str)
     assert content.strip()
     assert not content.startswith("Error:")
@@ -124,6 +124,6 @@ async def test_fetch_url_pagina_inexistente_real_nao_lanca():
     # Domínio real, path que garantidamente não existe — extração real
     # falha, mas a tool deve degradar para texto de erro, nunca propagar.
     content = await fetch_url(
-        url="https://python.langchain.com/este-path-nao-existe-vectora-test-404"
+        url="https://fastapi.tiangolo.com/este-path-nao-existe-vectora-test-404"
     )
     assert isinstance(content, str)

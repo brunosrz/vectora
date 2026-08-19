@@ -38,7 +38,7 @@ async def _cleanup_session_1212() -> None:
     """Remove dados de teste da session 1212: checkpoints + LanceDB + traces."""
     from backend.settings import settings
 
-    # 1. Limpa checkpoints SQLite (tabelas checkpoints + writes do LangGraph)
+    # 1. Limpa checkpoints SQLite legados (tabelas checkpoints + writes, se existirem)
     try:
         import aiosqlite
 

@@ -3,11 +3,11 @@ title: Agents Reference
 weight: 4
 ---
 
-El agente está construido vía `create_deep_agent` (LangGraph + [deepagents](https://github.com/langchain-ai/deepagents)) — un supervisor (orquestador) con dos sub-agentes.
+El agente está construido sobre el motor nativo (`backend/engine/conversation_loop.py::run_conversation`) — un supervisor (orquestador) con dos sub-agentes.
 
 ## orchestrator
 
-El supervisor único, punto de entrada para cada mensaje. Decide si responde directamente o delega vía la herramienta interna `task`. Sus propias herramientas: `create_artifact`, `save_memory`, `get_memory`, `delete_memory`, además de acceso a herramientas de RAG para responder preguntas simples sobre contenido ya indexado sin delegar.
+El supervisor único, punto de entrada para cada mensaje. Decide si responde directamente o delega vía la herramienta nativa `delegate_to_subagent`. Sus propias herramientas: `create_artifact`, `save_memory`, `get_memory`, `delete_memory`, además de acceso a herramientas de RAG para responder preguntas simples sobre contenido ya indexado sin delegar.
 
 ## coder
 

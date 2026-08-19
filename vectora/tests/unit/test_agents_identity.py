@@ -17,8 +17,7 @@ def test_identity_is_string():
 
 
 def test_identity_contains_stack():
-    assert "LangChain" in VECTORA_IDENTITY
-    assert "LangGraph" in VECTORA_IDENTITY
+    assert "Native engine" in VECTORA_IDENTITY
     assert "LanceDB" in VECTORA_IDENTITY
 
 

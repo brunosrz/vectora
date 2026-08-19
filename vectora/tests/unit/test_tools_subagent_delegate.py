@@ -1,7 +1,6 @@
 """``delegate_to_subagent`` — tool nativa registrada em ``TOOL_REGISTRY``
-que o loop nativo chama pra invocar uma SOUL, equivalente ao ``task()`` do
-deepagents mas consumindo ``run_subagent`` (``backend/engine/
-subagents.py``) por baixo. Mesmo ``_ScriptedChatClient``/
+que o loop nativo chama pra invocar uma SOUL, consumindo ``run_subagent``
+(``backend/engine/subagents.py``) por baixo. Mesmo ``_ScriptedChatClient``/
 ``_HangingChatClient`` de ``test_engine_subagents.py``.
 """
 

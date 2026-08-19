@@ -10,10 +10,10 @@ os dois testados nos dois sentidos:
   `[computer_use] enabled = true` explícito no `vectora.toml`. Sem a seção,
   a tool recusa antes de tocar no mouse/teclado — fail-closed.
 
-Cada caminho feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
+Cada caminho feliz tem o par de erro/borda no mesmo teste.
 
 Tool nativa (`@vtool`) — chamada como função async direta com
-`ctx: ToolContext`, sem `.invoke({...})` do LangChain.
+`ctx: ToolContext`.
 """
 
 from __future__ import annotations

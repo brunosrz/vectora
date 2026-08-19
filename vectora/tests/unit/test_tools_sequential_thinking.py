@@ -3,8 +3,7 @@
 Segue a spec MCP Anthropic: permite raciocinar passo a passo, revisitar
 pensamentos anteriores e chegar a uma conclusão antes de agir.
 
-Tool nativa (`@vtool`) — chamada como função async direta, sem
-`.ainvoke({...})` do LangChain.
+Tool nativa (`@vtool`) — chamada como função async direta.
 """
 
 from __future__ import annotations

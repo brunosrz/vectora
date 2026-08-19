@@ -3,12 +3,11 @@ impor timeout de silêncio entre chunks. Modelos de raciocínio (reasoning)
 ficam minutos "pensando" sem emitir nenhum token — isso é comportamento
 normal, não falha de conexão.
 
-"openai", "openrouter" e "nine_router" saíram do ``ChatOpenAI`` e usam
-clients nativos, que controlam o timeout HTTP diretamente — sem o
-``stream_chunk_timeout`` de 120s que o ``langchain_openai`` aplicava por padrão.
-A dependência ``langchain-openai`` foi removida do projeto na Sprint 13 — não
-há mais nenhum caminho de código capaz de instanciar ``ChatOpenAI``, então o
-guard de regressão vira o próprio isinstance positivo na classe nativa.
+"openai", "openrouter" e "nine_router" usam clients nativos, que controlam
+o timeout HTTP diretamente — sem nenhum timeout de silêncio entre chunks
+imposto por biblioteca externa. Não há mais nenhum caminho de código capaz
+de instanciar um chat model de terceiros, então o guard de regressão vira
+o próprio isinstance positivo na classe nativa.
 """
 
 from __future__ import annotations

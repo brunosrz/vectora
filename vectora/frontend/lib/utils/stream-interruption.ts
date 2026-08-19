@@ -1,7 +1,7 @@
 /**
  * Detecção client-side de streaming interrompido.
  *
- * Não há endpoint de backend capaz de inspecionar o checkpoint do LangGraph
+ * Não há endpoint de backend capaz de inspecionar o checkpoint da sessão
  * e diferenciar "parado em HITL" de "conexão caiu no meio da geração".
  * Em vez disso, marcamos localmente quando um stream começa e desmarcamos
  * quando ele termina por **qualquer** via conhecida (done, hitl, error,

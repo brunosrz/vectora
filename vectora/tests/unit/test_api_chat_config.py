@@ -129,7 +129,7 @@ def test_model_without_colon_passthrough():
 
 
 def test_fork_from_checkpoint_id_present_included_absent_omitted():
-    """checkpoint_id presente no configurable faz o LangGraph ramificar dali
+    """checkpoint_id presente no configurable faz o histórico ramificar dali
     (edit/regenerate); ausente mantém o comportamento atual — resume do
     checkpoint mais recente da thread."""
     cfg = _build_configurable(ChatConfig(fork_from_checkpoint_id="cp-1234"), "t", "u")

@@ -1,11 +1,10 @@
 """Testes de `backend/tools/aitl.py` — AITL (subagente pede decisão ao pai).
 
 Cobre happy path (aprovado/negado) + erro/borda (falha na chamada de
-decisão nunca propaga, sempre volta negado) no mesmo arquivo, CLAUDE.md §18.
+decisão nunca propaga, sempre volta negado) no mesmo arquivo.
 
-Primeira tool migrada pro registry nativo — `ask_parent_agent` é chamada
-como função async direta (sem `.ainvoke({...})` do LangChain), usando
-`FallbackChatClient` (native `ChatClient`) em vez de `FallbackChatModel`.
+`ask_parent_agent` é chamada como função async direta, usando
+`FallbackChatClient` (Protocol `ChatClient` nativo).
 """
 
 from __future__ import annotations

@@ -118,7 +118,7 @@ async def test_tool_call_busca_web_real(live_backend: str):
         live_backend,
         content=(
             "Use a ferramenta de busca web agora mesmo para procurar "
-            "'LangChain framework' e me diga em uma frase o que você encontrou."
+            "'FastAPI framework' e me diga em uma frase o que você encontrou."
         ),
         timeout_s=180.0,
     )

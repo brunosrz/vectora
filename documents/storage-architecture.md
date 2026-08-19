@@ -12,11 +12,10 @@ independente do modo.
 
 ### Motivação
 
-O `AsyncSqliteSaver` do LangGraph abre uma nova conexão por `from_conn_string()`
-a cada request. Para workloads com múltiplas threads simultâneas isso gera
-contenção de locks no SQLite. O `AsyncConnectionPool` mantém conexões abertas
-e as reutiliza, reduzindo o overhead de abertura e garantindo que os PRAGMAs
-de hardening sejam aplicados de forma consistente.
+Abrir uma nova conexão SQLite por request gera contenção de locks em
+workloads com múltiplas threads simultâneas. O `AsyncConnectionPool` mantém
+conexões abertas e as reutiliza, reduzindo o overhead de abertura e
+garantindo que os PRAGMAs de hardening sejam aplicados de forma consistente.
 
 ### PRAGMAs aplicados a toda conexão
 
@@ -151,8 +150,7 @@ task.cancel()
   Protocol, namespace em tupla (`("user", user_id, "memories")`).
 - ~~`LanceDB` como `VectorStoreBackend` nativo~~ — feito:
   `backend/storage/vectorstore/lancedb_backend.py` implementa o Protocol
-  `VectorStoreBackend` nativo (`backend/storage/vectorstore/base.py`), sem
-  depender do `VectorStore` do LangChain.
+  `VectorStoreBackend` nativo (`backend/storage/vectorstore/base.py`).
 
 ---
 

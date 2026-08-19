@@ -1,6 +1,6 @@
-"""Testes para backend/tools/mcp.py — client MCP nativo (SDK oficial `mcp`,
-sem langchain-mcp-adapters). Servidor real via stdio (tests/fixtures/
-dummy_mcp_server.py), não mock de protocolo.
+"""Testes para backend/tools/mcp.py — client MCP nativo (SDK oficial `mcp`).
+Servidor real via stdio (tests/fixtures/dummy_mcp_server.py), não mock de
+protocolo.
 """
 
 from __future__ import annotations

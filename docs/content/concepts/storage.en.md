@@ -65,7 +65,7 @@ vectora storage migrate upgrade              # applies pending Postgres migratio
 vectora storage migrate to-postgres          # copies schema/data from SQLite to Postgres
 vectora storage migrate to-qdrant <collection> # migrates embeddings from LanceDB to Qdrant
 vectora storage migrate to-pgvector          # alternative: LanceDB → pgvector on Postgres
-vectora storage migrate memory-to-langgraph  # old memories → LangGraph BaseStore
+vectora storage migrate memory-to-native     # old memories → native store
 ```
 
 ## Known practical limit

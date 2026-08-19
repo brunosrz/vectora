@@ -1,9 +1,6 @@
-"""Streaming token-a-token de ``stream_engine_events`` (regressão do bug #2 do
-antigo ``adapt_stream``/LangGraph — cliente só via a resposta ao final por
-causa de buffering do ``RunnableRetry``, problema que não existe mais no
-motor nativo, mas o invariante continua garantido pelo bridge SSE: **cada
+"""Streaming token-a-token de ``stream_engine_events`` — garante que cada
 ``MessageChunk`` vira um ``TokenEvent`` imediatamente, em ordem, um por
-chunk**).
+chunk, sem buffering.
 """
 
 from __future__ import annotations
@@ -112,8 +109,8 @@ async def test_tokens_are_incremental_not_buffered():
 async def test_empty_chunk_still_emits_token_event():
     """O bridge SSE não filtra ``MessageChunk`` vazio — mapeia pra
     ``TokenEvent(content="")`` como qualquer outro chunk (o motor nativo não
-    filtra deltas vazios do provider antes de emitir; diferente do
-    ``adapt_stream``/LangGraph removido, que descartava explicitamente).
+    filtra deltas vazios do provider antes de emitir; o adaptador antigo
+    descartava explicitamente esse caso, o nativo não).
     Inofensivo no frontend (content="" concatenado não muda nada), mas o
     comportamento real precisa ficar documentado aqui."""
     run = _token_run([""])

@@ -1,6 +1,6 @@
 """E2E do pipeline de streaming nativo: run_conversation → stream_engine_events
 → to_sse_line — o caminho de produção real de StreamChat (``backend/api/
-handlers/chat.py``), substituindo o antigo ``adapt_stream`` (LangGraph).
+handlers/chat.py``), substituindo o adaptador de streaming antigo.
 
 Histórico do bug que esta suíte protege: o dedup de token no streaming já foi
 "corrigido" 3 vezes no pipeline antigo antes de ficar de fato resolvido — cada

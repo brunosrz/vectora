@@ -1,8 +1,8 @@
 """Exercício real de ``VectoraStore`` — implementação direta de
-``aget``/``aput``/``adelete``/``asearch`` sobre ``aiosqlite``, sem depender
-de ``langgraph.store.base`` (o único teste anterior, ``test_e_b_parity.py::
-TestBuildStore``, fazia só ``isinstance(store, VectoraStore)``, sem nunca
-chamar os métodos de fato)."""
+``aget``/``aput``/``adelete``/``asearch`` sobre ``aiosqlite`` (o único
+teste anterior, ``test_e_b_parity.py::TestBuildStore``, fazia só
+``isinstance(store, VectoraStore)``, sem nunca chamar os métodos de
+fato)."""
 
 from __future__ import annotations
 

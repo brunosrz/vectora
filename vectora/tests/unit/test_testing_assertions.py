@@ -1,7 +1,6 @@
-"""Testes para backend/testing/assertions.py — sobre VMessage nativo, não
-langchain_core. Achado da auditoria de 2026-08-14: este módulo nunca foi
-exercitado por nenhum teste da suíte (zero import de `backend.testing` em
-`tests/`) — reconectar aqui fecha essa lacuna."""
+"""Testes para backend/testing/assertions.py — sobre VMessage nativo. Este
+módulo nunca foi exercitado por nenhum teste da suíte (zero import de
+`backend.testing` em `tests/`) — reconectar aqui fecha essa lacuna."""
 
 from __future__ import annotations
 

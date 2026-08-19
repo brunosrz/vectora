@@ -40,19 +40,19 @@ All Python code uses complete type hints with Python 3.14+ syntax. `pydantic` is
 
 ### 3.2. Modularity and Separation of Concerns
 
-Each layer has a single responsibility. The application does not depend directly on LanceDB or aiosqlite in upper layers — it uses abstract interfaces (LangChain `VectorStore`, injected contexts). Adding Qdrant support should not require changes outside `services/`.
+Each layer has a single responsibility. The application does not depend directly on LanceDB or aiosqlite in upper layers — it uses abstract interfaces (the native `VectorStoreBackend` Protocol, injected contexts). Adding Qdrant support should not require changes outside `services/`.
 
 ### 3.3. Async-First
 
 All I/O-bound operations (database, network, LLM, filesystem) must be `async/await`. Never use `subprocess.run` (synchronous) — use `asyncio.create_subprocess_shell`. Never use `requests` — use `httpx` or async clients. Blocking the main thread is a bug.
 
-### 3.4. Deep-Agent Architecture
+### 3.4. Native Engine Architecture
 
-The runtime graph is built with `create_deep_agent` (`backend/services/agent_factory.py`) — never a hand-rolled `StateGraph`/orchestrator-by-nodes. New agent behavior enters as: tools (`@tool`), subagents (`SUBAGENT_SPEC`), middleware (HITL via `HumanInTheLoopMiddleware`/`interrupt_on`), or `context_schema` fields. Tools are the extension point — defensive, independently testable, schema-first via `metadata={"render_hint": ...}`.
+The agent runs on the native conversation loop (`backend/engine/conversation_loop.py::run_conversation`, built by `backend/services/agent_factory.py`) — an imperative `while` loop, never a compiled graph/orchestrator-by-nodes. New agent behavior enters as: tools (`@vtool`, resolved from `TOOL_REGISTRY`), subagents (`SubagentSpec`), HITL (`should_require_approval` in `backend/engine/hitl.py`), or context fields on `ToolContext`. Tools are the extension point — defensive, independently testable, schema-first via `metadata={"render_hint": ...}`.
 
 ### 3.5. Tools: Defensive by Default
 
-Every tool (`@tool`) must have `try/except` that catches exceptions and returns an error message as a string — never propagate the exception. Tool failures must not crash the graph; they must be observed by the LLM as a result. Always include logging with `extra={}` for structured context.
+Every tool (`@vtool`) must have `try/except` that catches exceptions and returns an error message as a string — never propagate the exception. Tool failures must not crash the loop; they must be observed by the LLM as a result. Always include logging with `extra={}` for structured context.
 
 ## 4. Dependency Management
 

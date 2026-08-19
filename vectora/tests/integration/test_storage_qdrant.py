@@ -111,7 +111,7 @@ class TestQdrantConnectivity:
 
 class TestQdrantBackendNative:
     """Round-trip real do `QdrantBackend` (backend/storage/vectorstore) —
-    cliente nativo `AsyncQdrantClient`, sem `langchain_qdrant`."""
+    cliente nativo `AsyncQdrantClient`."""
 
     @pytest.fixture
     def backend(self, _storage_stack_ok, qdrant_url):

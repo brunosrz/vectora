@@ -1,6 +1,6 @@
 """Regressão: `kanban._get_db`/`budget._get_db` precisam apontar pro MESMO
 banco que `background_tasks._get_db` (onde `schema.sql` de fato cria
-`vectora_background_tasks`), não pro `checkpoints.db` de threads/LangGraph.
+`vectora_background_tasks`), não pro `checkpoints.db` de threads.
 
 Achado ao vivo: `kanban.py`/`budget.py` importavam `_get_db` de
 `backend.api.handlers.threads`, um banco sem essas tabelas — todo tick do

@@ -56,9 +56,6 @@ const VOICE_LANG: Record<Lang, string> = {
   pt: "pt-BR",
 };
 
-// Stubs de compatibilidade — LangSmith removido
-const readRun = async (_runId: string) => null;
-const shareRun = async (_runId: string): Promise<string> => "";
 import { LARGE_PASTE_THRESHOLD } from "@/lib/constants/features";
 import { m as msg } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";

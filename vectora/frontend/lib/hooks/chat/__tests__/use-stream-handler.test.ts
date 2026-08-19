@@ -299,7 +299,7 @@ describe("useStreamHandler.processStream", () => {
   it("stream corta em silêncio (generator esgota sem done/error) — reconcilia com o histórico do backend", async () => {
     // Numa queda de conexão silenciosa, o for-await simplesmente esgota,
     // sem throw e sem done/error. O conteúdo acumulado no client ("parte")
-    // não é o completo; o backend já persistiu tudo no checkpoint LangGraph.
+    // não é o completo; o backend já persistiu tudo no checkpoint da sessão.
     streamChatMock.mockReturnValue(
       (async function* () {
         yield { type: "thread", thread_id: "t1" } as StreamEvent;

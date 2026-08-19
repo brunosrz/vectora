@@ -1,8 +1,7 @@
 """Cliente HTTP nativo do Tavily — ``/search`` e ``/extract``.
 
-O `langchain-tavily` cobre só esses dois endpoints, e ainda prende
-`search_depth`/`max_results` na instanciação. A API tem seis: `/search`,
-`/extract`, `/crawl`, `/map`, `/research` e `/usage`.
+A API do Tavily tem seis endpoints: `/search`, `/extract`, `/crawl`,
+`/map`, `/research` e `/usage`.
 
 O contrato de saída das tools (`web_search` devolve `json.dumps(results)`)
 **não muda**: é o contrato com o LLM.
@@ -94,8 +93,8 @@ class TestSearch:
 
     @pytest.mark.asyncio
     async def test_parametros_por_chamada_e_nao_por_instanciacao(self):
-        """Ganho sobre o `langchain-tavily`, que prende `search_depth` e
-        `max_results` na criação do objeto."""
+        """`search_depth`/`max_results` são parâmetros por chamada, não
+        presos na criação do client."""
         capturado: dict = {}
 
         def handler(req: httpx.Request) -> httpx.Response:
@@ -213,8 +212,8 @@ class TestExtract:
 class TestUsage:
     @pytest.mark.asyncio
     async def test_usage_devolve_consumo_da_key_e_do_plano(self):
-        """`GET /usage` — endpoint que o `langchain-tavily` não expõe e que o
-        medidor de consumo usa para reportar o gasto da key/plano."""
+        """`GET /usage` — endpoint que o medidor de consumo usa para
+        reportar o gasto da key/plano."""
 
         def handler(req: httpx.Request) -> httpx.Response:
             assert req.method == "GET"

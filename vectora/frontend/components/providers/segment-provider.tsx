@@ -13,10 +13,10 @@ declare global {
 /**
  * Segment Analytics Provider
  *
- * Leverages existing langgraph-user-id for tracking anonymous users.
+ * Leverages the existing anonymous browser user ID for tracking.
  */
 export function SegmentProvider({ children }: { children: React.ReactNode }) {
-  const userId = useUserId(); // Uses existing langgraph-user-id logic
+  const userId = useUserId();
 
   useEffect(() => {
     // Wait for Segment to load and user ID to be ready
