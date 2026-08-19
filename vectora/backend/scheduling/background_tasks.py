@@ -31,6 +31,7 @@ from backend.engine.conversation_loop import (
     resume_conversation,
     run_conversation,
 )
+from backend.engine.goal_mode import resume_goal, run_goal
 from backend.engine.hitl import should_require_approval
 from backend.llm.fallback_chat_client import FallbackChatClient
 from backend.rbac.subscription import require_pro
@@ -39,7 +40,7 @@ from backend.vtypes.message import MessageRole, text_message
 
 logger = logging.getLogger(__name__)
 
-VALID_KINDS = {"routine", "heartbreak", "subagent"}
+VALID_KINDS = {"routine", "heartbreak", "subagent", "goal"}
 #: "once" — execução única numa hora futura (``next_run_at`` explícito, sem
 #: ``cron_expr`` recorrente) — usado por ``schedule_subagent_task``.
 VALID_TRIGGERS = {"interval", "once", "webhook", "manual", "subagent"}
@@ -902,23 +903,52 @@ async def run_task(
             parent_message_id=system_id,
         )
 
-        result = await run_conversation(
-            session_store=session_store,
-            chat_client=chat_client,
-            tool_registry=tool_registry,
-            ctx=run_ctx,
-            thread_id=run_thread_id,
-            config=loop_config,
-            should_require_approval=should_require_approval,
-            approval_gate=approval_gate,
-        )
+        goal_outcome = None
+        if task.kind == "goal":
+            goal_outcome = await run_goal(
+                session_store=session_store,
+                chat_client=chat_client,
+                tool_registry=tool_registry,
+                ctx=run_ctx,
+                thread_id=run_thread_id,
+                goal=task.instruction,
+                loop_config=loop_config,
+                quality_gates=task.trigger_config.get("quality_gates") or None,
+                max_goal_turns=int(task.trigger_config.get("max_goal_turns", 20)),
+                should_require_approval=should_require_approval,
+                approval_gate=approval_gate,
+            )
+            stopped_reason = (
+                "interrupted"
+                if goal_outcome.status == "interrupted"
+                else goal_outcome.status
+            )
+            final_message = goal_outcome.final_message
+        else:
+            result = await run_conversation(
+                session_store=session_store,
+                chat_client=chat_client,
+                tool_registry=tool_registry,
+                ctx=run_ctx,
+                thread_id=run_thread_id,
+                config=loop_config,
+                should_require_approval=should_require_approval,
+                approval_gate=approval_gate,
+            )
+            stopped_reason = result.stopped_reason
+            final_message = result.final_message
 
         from backend.api.handlers.threads import (
             _increment_message_count,
             _upsert_session,
         )
 
-        label = "Rotina" if task.kind == "routine" else "Heartbreak"
+        if task.kind == "goal":
+            label = "Objetivo"
+        elif task.kind == "routine":
+            label = "Rotina"
+        else:
+            label = "Heartbreak"
         await _upsert_session(
             run_thread_id,
             title=f"{label}: {task.name}",
@@ -932,8 +962,9 @@ async def run_task(
         # HITL: se o loop pausou numa ação destrutiva, a run fica pendente de
         # aprovação (não "done") — a pendência está persistida em
         # `pending_approvals` (SessionStore) e a run é retomável por
-        # resume_background_run.
-        if result.stopped_reason == "interrupted":
+        # resume_background_run. Vale tanto pro loop normal quanto pro goal
+        # loop (que nunca decide por cima de uma pendência HITL).
+        if stopped_reason == "interrupted":
             pending = await session_store.get_pending_approval(run_thread_id)
             desc = _describe_pending_approval(pending)
             await _mark_run_awaiting(run_id, desc)
@@ -941,7 +972,23 @@ async def run_task(
             _emit_run_event("needs_approval", task, run_id, run_thread_id, desc)
             return run_thread_id
 
-        summary = result.final_message.text() if result.final_message else ""
+        # Goal loop esgotou o turn budget ou travou em falha repetida (mesmo
+        # gate/judge) — terminal como uma exceção seria, mas sem propagar.
+        if goal_outcome is not None and goal_outcome.status == "error":
+            await _finish_run(run_id, "error", goal_outcome.reason)
+            await _touch_last_run(task.id)
+            _emit_run_event("error", task, run_id, run_thread_id, goal_outcome.reason)
+            with contextlib.suppress(Exception):
+                from backend.scheduling.kanban import block_task
+
+                await block_task(task.id, "transient", goal_outcome.reason[:500])
+            return None
+
+        summary = (
+            final_message.text()
+            if final_message
+            else (goal_outcome.reason if goal_outcome is not None else "")
+        )
         await _finish_run(run_id, "done", summary)
 
         # Custo real da run, gravado só agora que se sabe o resultado. O
@@ -1033,6 +1080,116 @@ async def _get_run(run_id: str) -> dict[str, Any] | None:
             await conn.close()
 
 
+async def _resume_goal_run(
+    *,
+    run_id: str,
+    task: BackgroundTask,
+    run_thread_id: str,
+    session_store: Any,
+    chat_client: Any,
+    tool_registry: Any,
+    run_ctx: Any,
+    loop_config: LoopConfig,
+    resume_decision: str,
+    edited_args: dict[str, Any] | None,
+    approval_gate: Any,
+) -> str | None:
+    """Retoma uma run ``kind="goal"`` pausada em HITL — extraído de
+    ``resume_background_run`` só pra manter o número de saídas da função
+    principal dentro do teto de lint (mesmo comportamento, sem mudança de
+    fluxo)."""
+    goal_outcome = await resume_goal(
+        session_store=session_store,
+        chat_client=chat_client,
+        tool_registry=tool_registry,
+        ctx=run_ctx,
+        thread_id=run_thread_id,
+        goal=task.instruction,
+        loop_config=loop_config,
+        decision=resume_decision,
+        edited_args=edited_args,
+        quality_gates=task.trigger_config.get("quality_gates") or None,
+        max_goal_turns=int(task.trigger_config.get("max_goal_turns", 20)),
+        should_require_approval=should_require_approval,
+        approval_gate=approval_gate,
+    )
+    if goal_outcome.status == "interrupted":
+        pending = await session_store.get_pending_approval(run_thread_id)
+        desc = _describe_pending_approval(pending)
+        await _mark_run_awaiting(run_id, desc)
+        _emit_run_event("needs_approval", task, run_id, run_thread_id, desc)
+        return "awaiting_approval"
+    if goal_outcome.status == "error":
+        await _finish_run(run_id, "error", goal_outcome.reason)
+        _emit_run_event("error", task, run_id, run_thread_id, goal_outcome.reason)
+        return None
+    summary = (
+        goal_outcome.final_message.text()
+        if goal_outcome.final_message
+        else goal_outcome.reason
+    )
+    await _finish_run(run_id, "done", summary)
+    _emit_run_event("done", task, run_id, run_thread_id, summary)
+    await report_to_parent_session(task, run_thread_id, summary)
+    return "done"
+
+
+async def _resume_normal_run(
+    *,
+    run_id: str,
+    task: BackgroundTask,
+    run_thread_id: str,
+    session_store: Any,
+    chat_client: Any,
+    tool_registry: Any,
+    run_ctx: Any,
+    loop_config: LoopConfig,
+    resume_decision: str,
+    edited_args: dict[str, Any] | None,
+    approval_gate: Any,
+) -> str | None:
+    """Retoma uma run de kind não-``"goal"`` — extraído de
+    ``resume_background_run`` pelo mesmo motivo de ``_resume_goal_run``
+    (teto de saídas do lint), sem mudança de comportamento."""
+    resumed = await resume_conversation(
+        session_store=session_store,
+        tool_registry=tool_registry,
+        ctx=run_ctx,
+        thread_id=run_thread_id,
+        decision=resume_decision,
+        edited_args=edited_args,
+        approval_gate=approval_gate,
+    )
+    if not resumed:
+        # Nenhuma pendência real (duplo-clique/retry) — idempotente, mesmo
+        # shape de retorno de "run não encontrada" em resume_background_run.
+        return None
+
+    result = await run_conversation(
+        session_store=session_store,
+        chat_client=chat_client,
+        tool_registry=tool_registry,
+        ctx=run_ctx,
+        thread_id=run_thread_id,
+        config=loop_config,
+        should_require_approval=should_require_approval,
+        approval_gate=approval_gate,
+    )
+
+    if result.stopped_reason == "interrupted":
+        pending = await session_store.get_pending_approval(run_thread_id)
+        desc = _describe_pending_approval(pending)
+        await _mark_run_awaiting(run_id, desc)
+        _emit_run_event("needs_approval", task, run_id, run_thread_id, desc)
+        return "awaiting_approval"
+
+    summary = result.final_message.text() if result.final_message else ""
+    await _finish_run(run_id, "done", summary)
+    _emit_run_event("done", task, run_id, run_thread_id, summary)
+    await report_to_parent_session(task, run_thread_id, summary)
+    return "done"
+
+
 async def resume_background_run(run_id: str, decision: str = "approve") -> str | None:
     """Retoma uma run de background pausada em HITL (``awaiting_approval``).
 
@@ -1119,43 +1276,38 @@ async def resume_background_run(run_id: str, decision: str = "approve") -> str |
                 should_require_approval=should_require_approval,
             )
 
-        resumed = await resume_conversation(
-            session_store=session_store,
-            tool_registry=tool_registry,
-            ctx=run_ctx,
-            thread_id=run_thread_id,
-            decision=resume_decision,
-            edited_args=edited_args,
-            approval_gate=approval_gate,
-        )
-        if not resumed:
-            # Nenhuma pendência real (duplo-clique/retry) — idempotente,
-            # mesmo shape de retorno de "run não encontrada" acima.
-            return None
+        if task.kind == "goal":
+            # Goal loop: `resume_goal` já resolve a pendência internamente
+            # (via `resume_conversation`) e reentra no loop de objetivo pelos
+            # turnos restantes — diferente do caminho normal abaixo, que só
+            # retoma UM turno.
+            return await _resume_goal_run(
+                run_id=run_id,
+                task=task,
+                run_thread_id=run_thread_id,
+                session_store=session_store,
+                chat_client=chat_client,
+                tool_registry=tool_registry,
+                run_ctx=run_ctx,
+                loop_config=loop_config,
+                resume_decision=resume_decision,
+                edited_args=edited_args,
+                approval_gate=approval_gate,
+            )
 
-        result = await run_conversation(
+        return await _resume_normal_run(
+            run_id=run_id,
+            task=task,
+            run_thread_id=run_thread_id,
             session_store=session_store,
             chat_client=chat_client,
             tool_registry=tool_registry,
-            ctx=run_ctx,
-            thread_id=run_thread_id,
-            config=loop_config,
-            should_require_approval=should_require_approval,
+            run_ctx=run_ctx,
+            loop_config=loop_config,
+            resume_decision=resume_decision,
+            edited_args=edited_args,
             approval_gate=approval_gate,
         )
-
-        if result.stopped_reason == "interrupted":
-            pending = await session_store.get_pending_approval(run_thread_id)
-            desc = _describe_pending_approval(pending)
-            await _mark_run_awaiting(run_id, desc)
-            _emit_run_event("needs_approval", task, run_id, run_thread_id, desc)
-            return "awaiting_approval"
-
-        summary = result.final_message.text() if result.final_message else ""
-        await _finish_run(run_id, "done", summary)
-        _emit_run_event("done", task, run_id, run_thread_id, summary)
-        await report_to_parent_session(task, run_thread_id, summary)
-        return "done"
     except Exception as exc:
         logger.exception("background_tasks: resume falhou", extra={"run_id": run_id})
         with contextlib.suppress(Exception):
