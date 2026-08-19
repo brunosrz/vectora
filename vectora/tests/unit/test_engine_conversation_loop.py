@@ -6,6 +6,8 @@ paralelos não-destrutivos, e interrupção HITL no meio de um lote misto.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from backend.engine.conversation_loop import (
@@ -597,6 +599,141 @@ class TestEmissaoDeEventos:
         assert invalidates == [
             WorkbenchInvalidate(tabs=["files", "git"], tool_name="escrever2")
         ]
+
+
+class TestArgsPreview:
+    async def test_campo_semantico_vira_preview_no_inicio_e_no_fim(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras())
+        async def ler_arquivo(path: str, ctx: ToolContext) -> str:
+            """lê um arquivo.
+            Args:
+                path: caminho do arquivo
+            """
+            return "conteudo"
+
+        registry = ToolRegistry()
+        _register(registry, "ler_arquivo")
+
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0,
+                        id="call_1",
+                        name="ler_arquivo",
+                        args='{"path":"backend/auth.py"}',
+                    )
+                ],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        activities = [e for e in eventos if isinstance(e, ToolActivity)]
+        assert len(activities) == 2
+        assert activities[0].args_preview == "backend/auth.py"
+        assert activities[1].args_preview == "backend/auth.py"
+
+    async def test_preview_trunca_em_80_chars(self, session_store, ctx):
+        @vtool(extras=ToolExtras())
+        async def buscar(query: str, ctx: ToolContext) -> str:
+            """busca algo.
+            Args:
+                query: termo de busca
+            """
+            return "achou"
+
+        registry = ToolRegistry()
+        _register(registry, "buscar")
+
+        termo_longo = "x" * 120
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0,
+                        id="call_1",
+                        name="buscar",
+                        args=json.dumps({"query": termo_longo}),
+                    )
+                ],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        activities = [e for e in eventos if isinstance(e, ToolActivity)]
+        assert all(len(a.args_preview) == 80 for a in activities)
+        assert activities[0].args_preview == "x" * 80
+
+    async def test_sem_campo_semantico_usa_fallback_k_igual_v(self, session_store, ctx):
+        @vtool(extras=ToolExtras())
+        async def somar4(a: int, b: int, ctx: ToolContext) -> str:
+            """soma dois números.
+            Args:
+                a: primeiro
+                b: segundo
+            """
+            return str(a + b)
+
+        registry = ToolRegistry()
+        _register(registry, "somar4")
+
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0, id="call_1", name="somar4", args='{"a":1,"b":2}'
+                    )
+                ],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        activities = [e for e in eventos if isinstance(e, ToolActivity)]
+        assert activities[0].args_preview == "a=1, b=2"
 
 
 class TestLoopCapGuardrail:

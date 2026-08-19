@@ -91,6 +91,25 @@ async def _noop_event(_event: object) -> None:
     return None
 
 
+_ARGS_PREVIEW_MAX_CHARS = 80
+_ARGS_PREVIEW_SEMANTIC_KEYS = ("path", "file_path", "query", "command", "url", "name")
+
+
+def _args_preview(args: dict[str, Any]) -> str:
+    """Preview curto (≤80 chars) dos args de uma tool call, pra exibir na
+    linha de status do agente (AgentStatusLine) enquanto a tool roda —
+    prioriza campos semânticos comuns, com fallback pros 2 primeiros
+    campos do dict."""
+    for chave in _ARGS_PREVIEW_SEMANTIC_KEYS:
+        valor = args.get(chave)
+        if valor and isinstance(valor, str):
+            preview = valor
+            break
+    else:
+        preview = ", ".join(f"{k}={v}" for k, v in list(args.items())[:2])
+    return preview[:_ARGS_PREVIEW_MAX_CHARS]
+
+
 def _call_signature(tool_call: ToolCall) -> tuple[str, str]:
     """Assinatura estável de uma tool call — nome + args normalizados
     (chaves ordenadas), usada só pra detectar repetição, nunca pra
@@ -240,10 +259,13 @@ async def run_conversation(
                 )
 
         tool_started_at: dict[str, float] = {}
+        tool_args_previews: dict[str, str] = {}
         for tc in tool_calls:
             spec = tool_registry.get(tc.name)
             extras = spec.extras if spec is not None else None
             tool_started_at[tc.id] = time.monotonic()
+            preview = _args_preview(tc.args)
+            tool_args_previews[tc.id] = preview
             await emit(
                 ToolCallStarted(
                     tool_name=tc.name,
@@ -255,7 +277,11 @@ async def run_conversation(
                     icon=extras.icon if extras else "tool",
                 )
             )
-            await emit(ToolActivity(tool_name=tc.name, tool_call_id=tc.id))
+            await emit(
+                ToolActivity(
+                    tool_name=tc.name, tool_call_id=tc.id, args_preview=preview
+                )
+            )
 
         resultados = await execute_tool_batch(
             tool_calls, tool_registry=tool_registry, ctx=ctx, turn_budget=turn_budget
@@ -282,6 +308,7 @@ async def run_conversation(
                 ToolActivity(
                     tool_name=resultado.name or "",
                     tool_call_id=call_id,
+                    args_preview=tool_args_previews.pop(call_id, ""),
                     elapsed_ms=elapsed_ms,
                 )
             )

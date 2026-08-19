@@ -5,9 +5,10 @@ no fim (elapsed_ms≥0) para alimentar o AgentStatusLine — o motor nativo
 (`backend/engine/conversation_loop.py`) já emite ``ToolActivity`` nesses dois
 pontos; aqui testamos que o mapeamento pra SSE preserva os campos e a ordem.
 
-``args_preview`` não é coberto aqui: o motor nativo ainda não popula esse
-campo (fica sempre vazio) — rastreado como achado separado, não é
-responsabilidade do bridge SSE.
+O cálculo de ``args_preview`` (extração do campo semântico do args da tool)
+é responsabilidade de ``conversation_loop.py``, não deste bridge — coberto
+em ``tests/unit/test_engine_conversation_loop.py::TestArgsPreview``. Aqui só
+confirmamos que o valor já calculado atravessa o bridge sem alteração.
 """
 
 from __future__ import annotations
