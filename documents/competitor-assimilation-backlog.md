@@ -50,7 +50,7 @@ detalhe equivalente).
 | 1   | **Connect** — Telegram/Discord/Slack/WhatsApp/Signal/Email/CLI | **Sim**                                 | Implementado em `backend/services/connect/`: Telegram (long polling, `python-telegram-bot`), Discord (WebSocket Gateway, `discord.py`), Slack (**Socket Mode** via `slack_bolt`, não Events API) e Email (**IMAP polling + SMTP direto**, stdlib). As 4 são conexões _outbound_ — nenhuma exige IP público, domínio ou túnel pelo gateway. `messaging.py` seguiu como a abstração comum; os adapters só traduzem formato e `connect/runner.py` resolve thread + roda o agente. Mapeamento persistido em `connect_thread_mappings`. Credencial por instalação (bot próprio do usuário), nunca bot central. WhatsApp/Signal/CLI ficaram de fora por decisão — no Hermes dependem de bridge Node/Baileys e do daemon não-oficial `signal-cli`.                                                                                                                                                                                                         |
 | 2   | **Remember** — memória persistente, skills auto-geradas        | **Sim**                                 | Real, mas mais enxuto que o design (H-1 abaixo): `backend/tools/learning.py` + `backend/services/learning.py` + `backend/services/remember_trigger.py` — gatilho automático a cada 5 turnos (`REMEMBER_TRIGGER_EVERY_N_TURNS`, fire-and-forget em `api/adapters.py`), destila via LLM, propõe skill/fato como artifact na aba Plan, HITL real antes de persistir (`save_learned_fact`/`install_learned_skill`). O painel "o que aprendi sobre você" existe (`GET /memory/journey` + seção no Memory tab). **Não existem** `/learn` (a tool `learn_from_session` cobre a mesma função com outro nome), `/journey` como comando de chat (virou painel), nem job via NATS `vectora-jobs`.                                                                                                                                                                                                                                                              |
 | 3   | **Schedule** — agendamento em linguagem natural                | **Não** — Vectora já tinha antes        | Implementado de ponta a ponta: `backend/scheduling/background_tasks.py` (loop asyncio, tick 60s, `croniter`) + `backend/scheduling/nl_schedule.py` (`parse_natural_schedule` — regex determinístico em pt/en/es, não LLM; o Hermes delega essa conversão ao próprio LLM da conversa, mais flexível a qualquer idioma mas menos testável) + tool `schedule_task` (`backend/tools/background.py`) + endpoints `backend/api/handlers/background.py` + aba "Tarefas" no frontend (`tasks-tab.tsx`). Funcional, não stub. Ganhou timezone do usuário (`user_timezone`), quota por workspace e catch-up com janela de tolerância — tarefa `interval` muito atrasada pula pro próximo ciclo em vez de disparar retroativamente; `once` nunca é pulada.                                                                                                                                                                                                     |
-| 4   | **Delegate** — subagentes isolados, worktree-per-task          | **Não** — Vectora já tinha antes        | `task()` vem do `SubAgentMiddleware` da lib `deepagents` (`agent_factory.py`); worktree-per-task é real (`backend/scheduling/delegate.py`) e cobre background tasks tipo `coder`; a delegação síncrona roda no workspace principal **por design** (não é trabalho paralelo, é troca de persona no mesmo turno) — há teste travando esse invariante. Achado da auditoria do código do Hermes: lá `delegate_task` é chamada LLM recursiva em `ThreadPoolExecutor`, **sem worktree nenhum** (o worktree do Hermes é flag de sessão inteira, `hermes -w`), então o Vectora supera o Hermes aqui em vez de alcançá-lo. Terminal isolado por subagente não existe como feature própria. Nome interno real: "Background Tasks"/"tarefas em segundo plano", não "Delegate" como produto.                                                                                                                                                                    |
+| 4   | **Delegate** — subagentes isolados, worktree-per-task          | **Não** — Vectora já tinha antes        | Delegação vem do motor nativo (`backend/engine/subagents.py`, chamado por `agent_factory.py`) — cada subagente é uma instância nova de `run_conversation` com `SessionStore` thread própria, sem depender de `deepagents`/LangGraph; worktree-per-task é real (`backend/scheduling/delegate.py`) e cobre background tasks tipo `coder`; a delegação síncrona roda no workspace principal **por design** (não é trabalho paralelo, é troca de persona no mesmo turno) — há teste travando esse invariante. Achado da auditoria do código do Hermes: lá `delegate_task` é chamada LLM recursiva em `ThreadPoolExecutor`, **sem worktree nenhum** (o worktree do Hermes é flag de sessão inteira, `hermes -w`), então o Vectora supera o Hermes aqui em vez de alcançá-lo. Terminal isolado por subagente não existe como feature própria. Nome interno real: "Background Tasks"/"tarefas em segundo plano", não "Delegate" como produto.              |
 | 5   | **Search** — busca web, browser, visão, geração de imagem, TTS | **Não** — Vectora já tinha antes        | Busca web (Tavily + fallback DuckDuckGo/Playwright) e browser automation (Playwright multi-aba) — completos e robustos. Visão — real: bloqueio explícito pra Cohere/Ollama (sem multimodal); pra OpenRouter, a capability é checada por modelo via `architecture.input_modalities` do catálogo público da OpenRouter, não um bloqueio de provider inteiro. Geração de imagem e TTS existem em `backend/tools/media.py` (`generate_image`/`text_to_speech`), resolvidas pelo provider **ativo da sessão** via `PROVIDER_CAPABILITIES` — se o modelo escolhido não suporta, a tool avisa e **nunca** desvia pra outro provider por conta própria (chamaria e cobraria uma API que o usuário não pediu). Browser: o Vectora vai além do Hermes — observabilidade nativa inspirada no `chrome-devtools-mcp` sobre Playwright+Chromium direto, enquanto o Hermes chama um binário CLI proprietário (`agent-browser`) que esconde o Playwright do agente. |
 | 6   | Sandbox (rotulado "Experiment") — isolamento de execução       | **Não** — baseado no `ai-jail` do Akita | `backend/sandbox/`: 4 backends reais (`local` via bwrap+Landlock+seccomp+rlimits, `docker`, `ssh`, `modal`) — **Singularity nunca foi implementado** (só citado num teste como nome arbitrário de backend desconhecido). `local` é o mais completo (e supera o `local` do Hermes, que é `subprocess.Popen` puro, sem isolamento nenhum); `docker` ganhou cap-drop ALL, no-new-privileges, tmpfs e limites de cpu/memória/PIDs **condicionais a haver cgroup delegado** — aplicá-los cegamente impede o container de subir em LXC não-privilegiado, lição tirada do `docker.py` do Hermes. `modal` tem teto de cpu/memória por perfil. WSL2 é o mecanismo que faz `local` funcionar no Windows, não um backend separado. Existe teste de escape real contra bwrap de verdade (Linux-only, com skip-guard) — o Hermes não tem equivalente.                                                                                                            |
 
@@ -80,13 +80,13 @@ fine-tuning, coerente com multi-LLM.
 - **Gatilho.** Comando `/learn` no chat + job pós-sessão opcional (enfileirado
   no NATS `vectora-jobs`, ver `backend/scheduling/mq.py`/`services/jobs.py`).
 - **Destilação.** Um subagent/reflexão lê o transcript da thread
-  (checkpointer LangGraph) e produz duas saídas via `response_format`:
+  (`SessionStore` nativo) e produz duas saídas via `response_format`:
   1. **Skills reutilizáveis** → grava `SKILL.md` em
-     `~/.vectora/skills/{user_id}/` (formato que já carregamos on-demand no
-     deep-agent). Dedup por similaridade de embedding contra as skills
+     `~/.vectora/skills/{user_id}/` (formato que já carregamos on-demand pelo
+     motor nativo). Dedup por similaridade de embedding contra as skills
      existentes antes de gravar (usa o próprio pipeline de embeddings).
-  2. **Fatos duráveis sobre o usuário** → `save_memory` (BaseStore), com tag
-     `user_model`.
+  2. **Fatos duráveis sobre o usuário** → `save_memory` (`ctx.store`, o
+     `StoreBackend` do `CompositeBackend`), com tag `user_model`.
 - **Painel "o que aprendi sobre você".** `GET /memory/journey` cruza os fatos
   com tag `user_model` no BaseStore com as skills de `source="learning-loop"`;
   o Memory tab do workbench renderiza a lista, só leitura. Substitui o comando
@@ -349,21 +349,21 @@ com profundidade limitada (`depth`) e ordem estável.
 **Por que pro Vectora.** Nosso `save_memory`/`get_memory` hoje é
 chave-valor plano. Caminhos (`projeto/decisões/…`, `usuário/preferências/…`)
 dão memória **navegável, escopável por workspace/usuário e recuperável** —
-upgrade direto do BaseStore e destino natural do que o H-1 destila.
+upgrade direto do `StoreBackend` nativo e destino natural do que o H-1 destila.
 
 **Como implementar.**
 
-- O LangGraph `BaseStore` já suporta **namespace em tupla** + `key` — usar a
-  tupla como segmentos de path. Nada de schema novo no lite (SQLite) nem no
-  complete (Postgres/Qdrant).
+- O `StoreBackend` nativo (`backend/storage/protocols.py`) já suporta
+  **namespace em tupla** + `key` — usar a tupla como segmentos de path. Nada
+  de schema novo no lite (SQLite) nem no complete (Postgres/Qdrant).
 - Nova tool `list_memory(path_prefix, depth)` + `save_memory(path=..., ...)`;
   o Memory tab do workbench ganha uma **árvore** navegável.
 - Migração: memórias planas atuais → path `default/`.
 - Fecha com RAG: paths viram filtros de retrieval (memória escopada por
   projeto entra no contexto certo).
 
-**Esforço.** Médio. **Dependências:** BaseStore (existe, já tem namespaces),
-Memory tab (existe).
+**Esforço.** Médio. **Dependências:** `StoreBackend` (existe, já tem
+namespaces), Memory tab (existe).
 
 ### C-2. `response_inclusion`: higiene de contexto nas web/RAG tools
 
@@ -379,11 +379,13 @@ incham o histórico e desfocam o modelo. Barato e alto valor.
 - Nas tools `backend/tools/web.py` e nas de RAG: depois que um resultado é
   citado numa resposta, **compactar** o bloco bruto no histórico deixando só
   a citação `[N]` + fonte (a resposta segue auditável, o contexto encolhe).
-- Integra com a compaction de contexto do LangGraph (middleware). Opt-in,
-  ligado por padrão em execuções longas/background.
+- Roda como etapa do motor nativo (`backend/engine/conversation_loop.py`),
+  não um middleware externo — ainda não existe compaction de contexto no
+  engine hoje, esta é a primeira. Opt-in, ligado por padrão em execuções
+  longas/background.
 
-**Esforço.** Médio. **Dependências:** web/RAG tools (existem), middleware de
-contexto.
+**Esforço.** Médio. **Dependências:** web/RAG tools (existem), compaction de
+contexto no motor nativo (não existe ainda).
 
 ### C-3 🎯 Hook `post-session`
 

@@ -121,10 +121,10 @@ produto atual evolui sob licença comercial.
 - **Agente com memória real.** RAG sobre código, docs, decisões e
   histórico de trabalho — não um assistente amnésico que esquece o
   projeto a cada mensagem.
-- **Arquitetura deep-agent.** Orquestrador + subagentes especializados
-  (coder, search) via `create_deep_agent` (LangGraph/deepagents), com
-  middleware HITL para ações destrutivas — não uma rede neural própria
-  fazendo roteamento.
+- **Motor de conversa nativo.** Orquestrador + subagentes especializados
+  (coder, search) via `run_conversation` (`backend/engine/
+conversation_loop.py`), com HITL nativo para ações destrutivas — não uma
+  rede neural própria fazendo roteamento.
 - **Auditável.** Toda resposta cita fontes (`[1] [2]`). Toda tool call
   é registrada com input/output. Toda decisão de routing é rastreável.
 - **Multi-modal nativo.** LLM + embedding + reranker + STT + TTS +
@@ -282,11 +282,12 @@ paridade `mcp add/remove/list`; **navegador embutido de preview/QA no
 workbench** — evolução do A2 (Playwright): um pane que carrega o dev
 server, lê DOM/console/network e detecta servers via config, **sem travar
 o computador do usuário** (a dor exata da abordagem por extensão do
-Chrome); **checkpoints + rewind por sessão** (snapshot antes de cada
-mudança, além do checkpointer LangGraph que já temos); **agent swarm
-opcional** para tarefas grandes — sempre sob HITL e com o workspace
-visível, assimilar a escala **sem virar Devin**. Fallback chain já
-temos (`FallbackChatModel`); streaming resiliente a erro no meio idem.
+Chrome); **checkpoints + rewind por sessão** (snapshot antes de cada mudança, além
+do checkpoint git/snapshot nativo que já temos — `backend/persistence/
+checkpoint.py`); **agent swarm opcional** para tarefas grandes — sempre sob
+HITL e com o workspace visível, assimilar a escala **sem virar Devin**.
+Fallback chain já temos (`FallbackChatClient`); streaming resiliente a
+erro no meio idem.
 
 **O que Vectora NÃO copia:** lock-in a LLM único (princípio
 fundacional), cloud-managed (somos local-first), pricing alto, foco
@@ -437,8 +438,8 @@ self-host, sem MCP, posicionamento "substituir júnior" é polêmico.
 
 **O que Vectora aprende:** workspace visível (workbench já existe,
 aumentar visibilidade), long-running tasks com retomada, planning
-interface explícita, memória de sessões passadas (já via LangGraph
-Store).
+interface explícita, memória de sessões passadas (já via `StoreBackend`
+nativo).
 
 **O que Vectora NÃO copia:** pricing $500/mês, posicionamento
 "substitui júnior" (falso e antipático), marketing cherry-picked,
@@ -655,10 +656,10 @@ transparência + ARPU baixo).
 | -------------------------------------- | --------------------------------------------------------------------- |
 | Navegador embutido (DOM/console/net)   | ✅ painel Console/Network/Elements no workbench, sobre Playwright+CDP |
 | Detecção de dev server (`launch.json`) | 📋 config `preview` + auto-start no workbench                         |
-| Checkpoints + `/rewind` por sessão     | 📋 snapshot pré-mudança sobre o checkpointer LangGraph                |
+| Checkpoints + `/rewind` por sessão     | 📋 snapshot pré-mudança sobre o checkpoint git/snapshot nativo        |
 | Dynamic workflows / agent swarm        | 📋 opcional, sempre sob HITL + workspace visível                      |
 | Subagentes em background por padrão    | ✅ background tasks + fila NATS (jobs)                                |
-| Fallback model chain                   | ✅ `FallbackChatModel`                                                |
+| Fallback model chain                   | ✅ `FallbackChatClient`                                               |
 | Streaming resiliente a erro no meio    | ✅ `adapt_stream` + classify_stream_error                             |
 | Auto mode bloqueia git/terraform       | 🔄 permission modes (HITL) — falta a lista de bloqueio                |
 
@@ -894,8 +895,8 @@ que torna esse workspace útil desde o primeiro dia.
 ### Arquitetura de agentes (para audiência técnica)
 
 Vectora não é um único modelo respondendo perguntas — é um sistema de
-agentes especializados orquestrados via `create_deep_agent`
-(LangGraph/deepagents):
+agentes especializados orquestrados pelo motor nativo (`run_conversation`,
+`backend/engine/conversation_loop.py`):
 
 - **Vectora Agent (orquestrador)** — recebe a tarefa, decide qual
   subagente acionar, consolida respostas. Ponto de entrada único para

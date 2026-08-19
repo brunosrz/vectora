@@ -134,7 +134,7 @@ o host só conecta, não reescreve o core:
 ### 2.5 Os dois SDKs
 
 **Python** (`vectora-extension-sdk`, import `vectora_ext`) — API
-declarativa espelhando o `@tool` do LangChain:
+declarativa espelhando o `@vtool` nativo (`backend/tools/registry.py`):
 
 ```python
 from vectora_ext import extension, ToolContext

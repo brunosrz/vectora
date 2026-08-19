@@ -38,7 +38,6 @@ dependencies = [
     "deepagents>=0.6.11",
     "pathspec>=1.1.1",
     "watchdog>=6.0.0",
-    "langchain-text-splitters>=1.1.2",
     "tiktoken>=0.13.0",
     "langchain-cohere>=0.6.0",
     "ruff>=0.15.18",

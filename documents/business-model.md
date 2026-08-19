@@ -379,10 +379,10 @@ equipe de partnerships/devrel, não o topo da empresa.
 O Tavily é o motor de busca web do Vectora (Search Agent, cascading web →
 vector store, fallback do RAG) e não tem produto consumer próprio — seu
 crescimento depende de desenvolvedores integrando a API em produtos. O
-Vectora usa a integração oficial mais avançada (`langchain-tavily` v2,
-com `topic`/`time_range`/`include_raw_content`/`tavily_extract`), o que
-já é argumento de parceria por si só (showcase de uso avançado dentro do
-ecossistema LangChain).
+Vectora usa client HTTP nativo direto pra API do Tavily (`backend/tools/
+tavily/client.py`, sem `langchain-tavily`/`tavily-python`), cobrindo
+`topic`/`time_range`/`include_raw_content`/`tavily_extract`, o que já é
+argumento de parceria por si só (showcase de uso avançado da API).
 
 Cenários: créditos para trials + co-marketing (mais provável), acesso
 antecipado a features novas, ou revenue share via código de referência no

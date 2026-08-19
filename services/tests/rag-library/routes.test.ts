@@ -58,12 +58,12 @@ describe("GET /rag-library", () => {
     )
       .bind(
         id,
-        "langchain-docs",
-        "langchain",
-        "0.3.0",
+        "requests-docs",
+        "requests",
+        "2.31.0",
         1024,
         "abc123",
-        "https://storage.example.com/langchain-docs.tar.gz",
+        "https://storage.example.com/requests-docs.tar.gz",
       )
       .run();
 
@@ -79,7 +79,7 @@ describe("GET /rag-library", () => {
     );
     expect(download.status).toBe(302);
     expect(download.headers.get("Location")).toBe(
-      "https://storage.example.com/langchain-docs.tar.gz",
+      "https://storage.example.com/requests-docs.tar.gz",
     );
 
     const missing = await ragLibrary.request("/unknown-id/download", {}, env);

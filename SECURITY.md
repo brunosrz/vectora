@@ -33,7 +33,7 @@ The `grep` tool accepts regex patterns from the LLM. Malicious patterns can caus
 
 - **No secrets in logs**: API keys are masked before any log statement.
 - **`.env` never committed**: `.gitignore` includes `.env`, `.env.*` (except `.env.example`).
-- **LangSmith optional**: Tracing is only activated if `LANGSMITH_API_KEY` is explicitly configured.
+- **Native telemetry, opt-out**: Structured logging of turn start/end, tool calls, and unhandled errors is enabled by default (`TELEMETRY_ENABLED=true`) and stays local — events go to `~/.vectora/logs/backend.jsonl` or a dedicated file (`TELEMETRY_OUTPUT_PATH`), never to a third-party service.
 
 ### API Rate Limiting
 

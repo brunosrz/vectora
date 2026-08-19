@@ -3,7 +3,7 @@
  * linha na mesma tabela `rag_packages`:
  *
  * - First-party: bibliotecas de código pré-indexadas pela Vectora
- *   (`source_lib`/`source_version`, ex. "langchain 0.3.0"), sem publisher.
+ *   (`source_lib`/`source_version`, ex. "requests 2.31.0"), sem publisher.
  * - Comunidade (Memory Library): buckets publicados por usuários via
  *   `POST /publish`, com `publisher_id`/`embed_model`/`license`, curados
  *   via `PATCH /admin/:id/verify` (community aberta + selo first-party).

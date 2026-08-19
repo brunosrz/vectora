@@ -26,7 +26,7 @@ da company **e** a distribuição de releases do desktop (o antigo
 ```
 electron/ (Electron shell)
 └── backend Python compilado via Nuitka (binário nativo)
-    ├── FastAPI + LangGraph + deep-agent (backend/)
+    ├── FastAPI + motor de conversa nativo (backend/)
     ├── frontend/dist (build Vite, servido como StaticFiles)
     └── recursos (skills, templates, icons)
 ```

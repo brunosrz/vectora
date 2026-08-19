@@ -161,5 +161,5 @@ disableKinds = ["taxonomy", "term"]
     locale = 'en'
 
   [params.seo]
-    keywords = 'Vectora, self-hosted AI agent, RAG, Context Graph, MCP, LangGraph, deep agent'
+    keywords = 'Vectora, self-hosted AI agent, RAG, Context Graph, MCP, deep agent'
     robots = 'index, follow'

@@ -31,8 +31,8 @@ port = 8080
 | `POSTGRES_DSN`                                            | Only in `complete`  | e.g. `postgresql+asyncpg://user:pass@host:5432/vectora`      |
 | `QDRANT_URL` / `QDRANT_API_KEY`                           | Only in `complete`  | Qdrant endpoint                                              |
 | `REDIS_URL`                                               | Only in `complete`  | Redis endpoint                                               |
-| `LANGSMITH_TRACING`                                       | Optional            | `true`/`false` — external observability                      |
-| `LANGSMITH_API_KEY`                                       | Optional            | only if tracing is enabled                                   |
+| `TELEMETRY_ENABLED`                                       | No (default `true`) | Enables native agent telemetry (turn start/end, tool calls, unhandled errors) via structured logging |
+| `TELEMETRY_OUTPUT_PATH`                                   | Optional            | Path to a dedicated JSONL file for telemetry events. If unset, events go to the standard JSON log (`~/.vectora/logs/backend.jsonl`) |
 
 ## Hierarchy
 

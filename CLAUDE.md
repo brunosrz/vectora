@@ -82,7 +82,7 @@ cd vectora && uv run vectora start
 
 ```
 vectora/          ← produto principal (Python backend + React frontend)
-  backend/        ← FastAPI + LangGraph + deep-agent
+  backend/        ← FastAPI + motor de conversa nativo (backend/engine/)
   frontend/       ← Vite + React + TanStack Router
   tests/          ← pytest (unit/ integration/ e2e/ stress/)
   docker-compose.yml
@@ -102,17 +102,17 @@ Camadas:
 
 - **`api/`** — routers FastAPI (`handlers/`) + schemas Pydantic (`schemas.py`). Todo endpoint usa `Depends(get_current_user)`; rotas públicas são whitelist explícita.
 - **`services/`** — lógica de negócio. Peças centrais:
-  - `agent_factory.py` — `create_deep_agent` (padrão canônico deepagents); constrói o agente com tools, subagents, middleware HITL e checkpointer.
+  - `agent_factory.py` — monta o agente nativo: resolve tools por nome no `TOOL_REGISTRY` (`backend/tools/registry.py`), monta subagents e liga o HITL (`backend/engine/hitl.py`). Sem grafo LangGraph/deepagents.
   - `profiles.py` — `HarnessProfile` por harness (skills, tools policy).
-  - `cache_llm.py` — detecta RediSearch/RedisJSON; usa `RedisCache` se disponível, `InMemoryCache` como fallback.
   - `kv.py` — acesso ao Redis (chat history, KV geral).
 - **`storage/`** — factories singleton para dois modos:
   - `lite` (default): SQLite (`aiosqlite`) + LanceDB (vetores)
   - `complete`: PostgreSQL (`asyncpg`) + Qdrant + Redis
   - Usuários/auth/settings **sempre** em SQLite, independente do modo.
-- **`tools/`** — tools LangChain registradas no agente: `fs.py`, `git.py`, `web.py`, `rag.py`, `mcp.py`, etc. `mcp.py` é o client MCP (`call_mcp_tool`) que consome servidores MCP externos.
+- **`tools/`** — tools nativas registradas via `@tool`/`register` no `TOOL_REGISTRY` (`backend/tools/registry.py`): `fs.py`, `git.py`, `web.py`, `rag.py`, `mcp.py`, etc. `mcp.py` é o client MCP (`call_mcp_tool`) que consome servidores MCP externos.
 - **`agents/`** — specs de subagents (coder, search) + identidade do agente.
-- **`nodes/`** — nós LangGraph do engine de chat.
+- **`nodes/`** — `backend/nodes/tools.py` agrupa o `ALL_TOOLS`/`FS_TOOLS`/`GIT_TOOLS`/etc. (listas de `ToolSpec` filtradas do `TOOL_REGISTRY`) consumidas pelo agent_factory; não há mais nós de grafo.
+- **`engine/`** — motor de conversa nativo: `conversation_loop.py::run_conversation` é o loop `while` imperativo que substitui o `StateGraph` (relê o histórico via `SessionStore` a cada volta, chama o `ChatClient` em streaming, executa as tool calls, repete); `stream_events.py` define o vocabulário de eventos nativo; `hitl.py`, `subagents.py`, `guardrails.py` completam o motor.
 
 Configuração: `backend/settings.py` (Pydantic Settings). Hierarquia: `defaults.env` → `.env` → `~/.vectora/.env`.
 
@@ -272,13 +272,15 @@ demais ferramentas a partir de outro produto (Claude Code, Hermes),
 sem passar pelo workspace compartilhado que é o diferencial real do
 produto.
 
-## 17. Arquitetura de agente é deep-agent
+## 17. Arquitetura de agente é motor nativo
 
-Todo agente entra via `create_deep_agent` (`backend/services/
-agent_factory.py`): tools, subagents (`SUBAGENT_SPEC`), middleware
-(HITL via `HumanInTheLoopMiddleware`/`interrupt_on`), `context_schema`.
-Proibido reintroduzir StateGraph manual / orchestrator por nós. CLI é
-operacional (Rich + argparse em `backend/cli`), nunca TUI/Textual.
+Todo agente entra via `backend/engine/conversation_loop.py::run_conversation`
+(loop `while` imperativo, montado por `backend/services/agent_factory.py`):
+tools resolvidas do `TOOL_REGISTRY`, subagents via `backend/engine/
+subagents.py`, HITL via `should_require_approval` (`backend/engine/
+hitl.py`), estado sempre relido do `SessionStore` (nunca só em memória).
+Proibido reintroduzir `StateGraph`/LangGraph ou depender de deepagents. CLI
+é operacional (Rich + argparse em `backend/cli`), nunca TUI/Textual.
 
 ## 18. Testes: TDD, foco no erro, reconstrução pelos testes
 

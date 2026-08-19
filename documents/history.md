@@ -263,10 +263,14 @@ concorrendo de frente com Claude Code, Gemini CLI e Codex.
 
 O que ficou, e o que existe hoje no repositório:
 
-- **Arquitetura.** `create_deep_agent` (LangGraph + deepagents), não mais um
-  orchestrator manual por nós nem uma LM própria fazendo roteamento. Tools,
-  subagents (coder, search), middleware HITL (`HumanInTheLoopMiddleware`) e
-  `context_schema` — o "pensar antes de usar o modelo" da V3 virou
+- **Arquitetura.** Motor de conversa nativo (`backend/engine/
+conversation_loop.py::run_conversation`, loop `while` imperativo) — passou
+  por `create_deep_agent` (LangGraph + deepagents) no meio do caminho, mas
+  isso também foi substituído por engenharia própria, sem depender de
+  orchestrator manual por nós nem de uma LM própria fazendo roteamento.
+  Tools resolvidas via `TOOL_REGISTRY`, subagents (coder, search) via
+  `backend/engine/subagents.py`, HITL via `should_require_approval`
+  (`backend/engine/hitl.py`) — o "pensar antes de usar o modelo" da V3 virou
   engenharia de contexto (tools de fs/git/web/rag, skills por harness,
   memória via Redis/SQLite) em vez de uma rede neural própria.
 - **Storage.** Dois modos, não um banco obrigatório: `lite` (SQLite +

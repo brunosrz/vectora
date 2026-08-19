@@ -21,7 +21,8 @@ export const Route = createFileRoute("/roadmap")({
 const SHIPPED = [
   { label: "Desktop app — Windows, macOS, Linux (Electron + backend Nuitka)" },
   {
-    label: "Agente principal — arquitetura deep-agent (LangGraph + deepagents)",
+    label:
+      "Agente principal — motor de conversa nativo, tools/subagentes e checkpointer próprios",
   },
   { label: "Coder Agent + Search Agent — arquivos, terminal, git, web, RAG" },
   {
