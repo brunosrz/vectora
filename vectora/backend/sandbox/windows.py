@@ -99,7 +99,7 @@ def assign_job_object_kill_on_close(pid: int) -> int | None:
         Handle (int) do Job Object, ou None se indisponível/falhar.
     """
     try:
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = getattr(ctypes, "windll").kernel32  # noqa: B009
     except (AttributeError, OSError):
         logger.debug("sandbox: kernel32 indisponível — sem Job Object")
         return None
@@ -154,7 +154,7 @@ def close_job_handle(handle: int | None) -> None:
     if handle is None:
         return
     try:
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = getattr(ctypes, "windll").kernel32  # noqa: B009
         kernel32.CloseHandle(handle)
     except Exception:  # pragma: no cover
         logger.debug("sandbox: falha ao fechar handle do Job Object")
