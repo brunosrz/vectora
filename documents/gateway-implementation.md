@@ -1,13 +1,11 @@
-# Plano de Implementação — Vectora Gateway (Produção)
+# Vectora Gateway — Arquitetura e Implementação
 
-> Revisado 2026-08-08. Reescrito por inteiro — a versão anterior (revisão
-> 2026-06-28) descrevia uma arquitetura pré-migração (Supabase, Worker
-> `vectora-gateway` isolado, domínio `vectora.chat` cobrindo tudo). Desde
-> então o produto migrou pra um Worker único (`vectora-services`) com D1 no
-> lugar do Supabase — ver `documents/history.md` e
-> `documents/business-model.md` ("Billing, auth e licenciamento —
-> arquitetura atual") pro resumo executivo dessa mudança. Este documento
-> reflete o código real em `services/` na data da revisão.
+> Este documento descreve o estado real do Worker `vectora-services`
+> (`services/src/`) e da integração com o backend Python
+> (`vectora/backend/`). O produto roda num Worker Cloudflare único com D1 —
+> não há Supabase nem Worker de gateway isolado. Ver `documents/history.md`
+> e `documents/business-model.md` ("Billing, auth e licenciamento —
+> arquitetura atual") pro resumo executivo de produto.
 
 ---
 
@@ -35,7 +33,7 @@ vectora-services (Worker Cloudflare único — services/src/index.ts)
 **Um único Worker, dois domínios servidos por ele** (`services/src/index.ts`):
 
 - `gateway.vectora.chat` + `*.vectora.chat` (zona `vectora.chat`, única `[[routes]]` do `wrangler.toml`) → o gateway (device/session relay pro desktop).
-- `services.vectora.company` → o mesmo Worker, branch "qualquer outro host": auth/billing/license/gdpr/api-keys/issues/rag-library/registry/telemetry + updates. **Este segundo domínio não tem `[[routes]]` própria no `wrangler.toml`** — a exposição em `services.vectora.company` é configurada como Custom Domain fora deste repo (validar com quem administra o Cloudflare antes de assumir o mecanismo exato).
+- `services.vectora.company` → o mesmo Worker, branch "qualquer outro host": auth/admin/profile/billing/license/oauth (device flow)/gdpr/api-keys/issues/rag-library/registry/telemetry + updates (`services/src/index.ts`, um único `Hono` app montado por prefixo). **Este segundo domínio não tem `[[routes]]` própria no `wrangler.toml`** — a exposição em `services.vectora.company` é configurada como Custom Domain fora deste repo (validar com quem administra o Cloudflare antes de assumir o mecanismo exato).
 - O **site** `vectora.company` (marketing/dashboard, TanStack Start) é outro sistema por completo — hospedado no **Vercel** (`company/vercel.json`), não neste Worker.
 
 **Dois tipos de OAuth — não confundir:**
@@ -283,10 +281,17 @@ GOOGLE_OAUTH_CLIENT_SECRET=<Client Secret>
 GOOGLE_OAUTH_REDIRECT_URI=https://gateway.vectora.chat/auth/google/callback
 ```
 
-> Nota de gap conhecido (ver `documents/gateway-implementation.md` §10):
-> `gmail.py`/`gdrive.py` hoje não têm um fluxo `/auth/google/...`
-> implementado no backend — só a env var lida diretamente pelas tools. Os
-> passos acima cadastram o app; falta a rota Python correspondente.
+> O fluxo `/auth/google/...` já está implementado no backend
+> (`backend/api/handlers/oauth.py`): `GET /auth/google` monta a URL de
+> consent (`access_type=offline&prompt=consent`, scopes
+> `drive.readonly`+`gmail.readonly`+`openid email profile`), `GET
+/auth/google/callback` troca `code` por `access_token`/`refresh_token` e
+> grava em `env_overrides["GOOGLE_ACCESS_TOKEN"]`/`["GOOGLE_REFRESH_TOKEN"]`
+> do usuário (`backend/rbac/auth.py::set_env_override`), `GET
+/auth/google/status` informa se está conectado, `DELETE /auth/google`
+> desconecta. `gmail.py`/`gdrive.py` leem esses overrides como qualquer
+> outra credencial de integração — nenhuma tool precisa saber que o token
+> veio do fluxo OAuth em vez de configuração manual.
 
 ---
 
@@ -734,12 +739,17 @@ popular a env var), sem exigir refactor de nenhuma tool existente.
 
 ### Escopo de providers (fase 1, ao implementar)
 
-Providers que já têm tool própria e leem env var isolada — candidatos
-naturais por já terem o "outro lado" pronto: Slack (`SLACK_BOT_TOKEN`),
-GitHub (`GITHUB_PERSONAL_ACCESS_TOKEN`, já cobre `gh.py`), Google
-(`gmail.py`/`gdrive.py`, hoje sem OAuth implementado — ver nota na Seção
-3.2), Linear, Jira, Notion. Não inclui MCP marketplace (já resolvido via
-`POST /auth/envs` no fluxo de instalação, sem precisar do Tool Gateway).
+Providers que já têm tool própria e leem env var/override isolado —
+candidatos naturais por já terem o "outro lado" pronto: Slack
+(`SLACK_BOT_TOKEN`, hoje via Socket Mode/Connect, fora do escopo OAuth
+público desta seção), GitHub (`GITHUB_PERSONAL_ACCESS_TOKEN`, já cobre
+`gh.py`), Google (`gmail.py`/`gdrive.py`, já lêem
+`GOOGLE_ACCESS_TOKEN`/`GOOGLE_REFRESH_TOKEN` gravados pelo fluxo OAuth
+descrito na Seção 3.2 — candidato mais próximo de já "funcionar" com o Tool
+Gateway, resta só trocar client_id/secret operados por usuário pelos
+operados pela Vectora), Linear, Jira, Notion. Não inclui MCP marketplace
+(já resolvido via `POST /auth/envs` no fluxo de instalação, sem precisar do
+Tool Gateway).
 
 ### Testes (quando implementado — fora de escopo desta seção)
 

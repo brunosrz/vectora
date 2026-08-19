@@ -127,10 +127,12 @@ Amplia superfície de integração sem lock-in.
   configurada, mesma fonte do seletor do chat).
 - **Dois modos** (query/header `X-Vectora-Mode`): `raw` (passthrough ao LLM
   resolvido, sem agente — latência mínima, pra autocomplete/edits) e `agent`
-  (roteia pelo `create_deep_agent`, ganhando RAG/tools). Default `raw`.
+  (roteia pelo motor nativo, `backend/engine/conversation_loop.py::
+run_conversation`, ganhando RAG/tools). Default `raw`.
 - **Tradução.** Request OpenAI → nossa resolução de provider
-  (`FallbackChatModel` + settings). Streaming: reempacotar os chunks no
-  formato `data: {...}\n\n` do OpenAI (adaptador irmão do `adapt_stream`).
+  (`FallbackChatClient`, resolvido por chamada — ver `agent_factory.py`).
+  Streaming: reempacotar os chunks no formato `data: {...}\n\n` do OpenAI
+  (adaptador irmão do `adapt_stream`).
 - **Auth.** Reusa o middleware: Bearer com Vectora Token (Pro) ou usuário
   local. Rate-limit por tier (já temos `slowapi`).
 - **Cuidado.** Não expor `agent` mode sem HITL desligado explicitamente —
@@ -173,9 +175,10 @@ editam arquivos em paralelo (hoje compartilham o working tree). Habilita o
   ali. Na conclusão: PR (via `gh`) ou merge com HITL; limpar o worktree.
   Integra na aba **Tarefas** do workbench e nas git tools (`backend/tools/git.py`).
 - **Override de modelo.** Adicionar `model` opcional ao registro da task e ao
-  `ChatConfig`; `agent_factory` já constrói um grafo por modelo — reusar pra
-  buildar o grafo da task com o modelo escolhido. UI: seletor de modelo por
-  task na aba Tarefas.
+  `ChatConfig`; `agent_factory` já resolve o `ChatClient` por chamada
+  (`FallbackChatClient`) — reusar essa resolução pra rodar a task com o
+  modelo escolhido em vez do modelo default da sessão. UI: seletor de modelo
+  por task na aba Tarefas.
 - **Concorrência.** Cada worktree = working tree isolado, então o lock do
   SQLite (D2, `busy_timeout`) já cobre o checkpointer compartilhado.
 
@@ -196,7 +199,7 @@ decidida (entrou no plano de sprints ou foi descartada com motivo).
 | Categoria                 | No Hermes                                                                                                                                                                                                                                                                                                                         | Decisão pro Vectora                                                                                                                                                                                                                                                                               |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Kanban multi-agente       | `hermes_cli/kanban_db.py` — 7 status, `task_links` para dependências, claim atômico por CAS (`UPDATE ... WHERE status='ready' AND claim_lock IS NULL`), heartbeat que estende o TTL do claim, bloqueio tipado (`dependency`/`needs_input`/`capability`/`transient`). Filhos de `delegate_task` são **proibidos** de mutar o board | **Entregue** — `backend/scheduling/kanban.py` sobre o `background_tasks` existente, 9 estados (mais que os 6 do Hermes), prioridade/tenant/assignee no card, dependências com contagem N/M, comentários, timeline de eventos, filtros de topo; feature pública (flag `enableKanbanMode` removida) |
-| Smart home                | 4 tools de Home Assistant via API REST                                                                                                                                                                                                                                                                                            | Planejado (Sprint 20), com `ha_call_service` sempre em HITL — age no mundo físico                                                                                                                                                                                                                 |
+| Smart home                | 4 tools de Home Assistant via API REST                                                                                                                                                                                                                                                                                            | **Entregue** — `backend/tools/homeassistant.py`, `ha_call_service` marcada `destructive=True` (sempre HITL, age no mundo físico)                                                                                                                                                                  |
 | Vídeo                     | `video_generation_tool.py` + `vision_tools.py::video_analyze`                                                                                                                                                                                                                                                                     | Planejado (Sprint 19), como extensão do capability matrix                                                                                                                                                                                                                                         |
 | `computer_use`            | Controle de mouse/teclado do desktop                                                                                                                                                                                                                                                                                              | Planejado (Sprint 21) com o maior rigor do plano: HITL sempre, ignorando `permission_mode`, e opt-in explícito no `vectora.toml`                                                                                                                                                                  |
 | Aprovação "inteligente"   | `tools/approval.py` — LLM auxiliar auto-aprova comandos reconhecidos, com allowlist persistente                                                                                                                                                                                                                                   | Planejado (Sprint 22), mas **mais conservador**: no Vectora o avaliador no máximo marca a sugestão como pré-aprovada; nunca pula o HITL sozinho                                                                                                                                                   |
@@ -463,15 +466,23 @@ reduz custo/latência.
 
 **Como implementar.**
 
-- No engine de chat (`backend/nodes/`), quando o contexto de sistema muda no
-  meio da sessão, inserir um bloco `system` **no meio** do array em vez de
-  reconstruir o system prompt no topo.
+- No motor nativo (`backend/engine/conversation_loop.py::run_conversation`),
+  quando o contexto de sistema muda no meio da sessão, inserir um bloco
+  `system` **no meio** do array em vez de reconstruir o system prompt no
+  topo.
 - Depende de suporte do provider (Anthropic sim); **fallback** para providers
-  sem suporte = rebuild no topo (degrada só o cache, não a correção). Integra
-  com o `cache_llm` (Redis/InMemory) pra manter o hit.
+  sem suporte = rebuild no topo (degrada só o cache, não a correção).
 
-**Esforço.** Médio. **Dependências:** chat engine (existe), cache_llm
-(existe), capability do provider (parcial).
+> **Correção.** O `cache_llm`/`native_redis_cache` (cache global de resposta
+> LLM via `langchain_core.caches.BaseCache`) foi removido por completo
+> (commit `23c19d55`) — não tinha consumidor de produção desde o corte do
+> dispatch pro `ChatClient` nativo. Este item não depende mais dele: o
+> "prompt cache" aqui é o cache **do lado do provider** (ex. prompt caching
+> da Anthropic), não um cache local do Vectora — não há mecanismo próprio a
+> integrar, só a ordem dos blocos da mensagem enviada ao provider.
+
+**Esforço.** Médio. **Dependências:** motor nativo (existe), capability do
+provider (parcial).
 
 ---
 
@@ -691,8 +702,11 @@ atual continuam podendo ser corrigidos imediatamente; nenhum desses itens deve s
 ### Fontes auditadas
 
 - Hermes: `pyproject.toml`, `uv.lock`, `tools/`, `hermes_cli/` e skills locais.
-- Vectora: `pyproject.toml`, `uv.lock`, `backend/tools/`,
-  `backend/nodes/tools.py` e `backend/mcp/server.py`.
+- Vectora: `pyproject.toml`, `uv.lock`, `backend/tools/` e
+  `backend/nodes/tools.py`. (`backend/mcp/server.py` não existe mais — o
+  servidor MCP embutido foi removido por completo; `backend/tools/mcp.py` é
+  o client que consome servidores MCP externos, ver nota de atualização
+  acima.)
 - A contagem de módulos não é tratada como contagem de tools: módulos Hermes
   como `approval.py`, `path_security.py` e `tool_backend_helpers.py` são
   infraestrutura, enquanto o inventário do Vectora foi conferido contra o

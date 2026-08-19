@@ -1,110 +1,156 @@
 # Vectora — Lançamento e Distribuição
 
 > Como o Vectora é empacotado, entregue, atualizado e testado por usuários
-> reais antes do lançamento público. Consolida o que antes eram três
-> documentos separados (programa de beta, distribuição comercial, fluxo de
-> atualização) num único lugar, porque as três coisas descrevem a mesma
-> jornada: do build ao usuário final, e do usuário final de volta como
-> feedback.
+> reais antes do lançamento público. Cobre três frentes que descrevem a
+> mesma jornada — do build ao usuário final, e do usuário final de volta
+> como feedback: empacotamento/CI de release, programa de beta e fluxo de
+> atualização.
 
 Contexto de produto (ver `documents/history.md`, seção "O Vectora hoje"):
 Vectora é local-first, sem cloud obrigatória. O desktop é Electron + backend
-Python (Nuitka) como uma unidade só — o frontend pode estar visível (janela)
-ou oculto (headless/bandeja), mas o backend sempre roda. Comunicação
-Electron↔backend é por IPC (named pipe/unix socket), nunca TCP; a única
-superfície TCP é o modo servidor (web/VPS), por design. `services/` é o
-Worker Cloudflare único que cobre auth/billing/license/GDPR/api-keys/issues
-da company **e** a distribuição de releases do desktop (o antigo
-`update-server`) — ver `services/src/updates/worker.ts`.
+Python (compilado) como uma unidade só — o frontend pode estar visível
+(janela) ou oculto (headless/bandeja), mas o backend sempre roda. Comunicação
+Electron↔backend é por IPC (unix socket em Linux/macOS, named pipe com
+fallback TCP loopback no Windows — ver §1.1), nunca uma porta TCP exposta
+externamente; a única superfície TCP real é o modo servidor (web/VPS), por
+design. `services/` é o Worker Cloudflare único que cobre auth/billing/
+license/GDPR/api-keys/issues da company **e** a distribuição de releases do
+desktop — ver `services/src/updates/worker.ts` e `services/src/license/routes.ts`.
 
 ---
 
 ## 1. Empacotamento e arquitetura de distribuição
 
-### Arquitetura
+### 1.1 Arquitetura
+
+O binário do backend **não** é gerado por Nuitka sozinho. O pipeline real
+(`build-hybrid.py`, raiz do monorepo) é híbrido, em duas fases:
 
 ```
-electron/ (Electron shell)
-└── backend Python compilado via Nuitka (binário nativo)
-    ├── FastAPI + motor de conversa nativo (backend/)
-    ├── frontend/dist (build Vite, servido como StaticFiles)
-    └── recursos (skills, templates, icons)
+Fase 1 — Nuitka --mode=package
+  vectora/backend/  ──────────────────►  backend.pyd (Windows) / backend.so (Linux/macOS)
+                                          (só o pacote backend vira código C — não o app inteiro)
+
+Fase 2 — PyInstaller --onedir
+  launcher.py + backend.pyd/.so + libs Python + frontend/dist + nats-server
+                                          ──────────────────►  dist/vectora/  (pasta "vectora-core")
 ```
+
+`launcher.py` é só o ponto de entrada empacotado (`sys.path` aponta pro
+diretório do binário, depois `from backend.main import run`) — quem valida
+licença e sobe o FastAPI é o próprio `backend/main.py`/`backend/api/server.py`,
+não o launcher (ver §1.2).
+
+**Por que `--onedir` e não `--onefile`**: os arquivos ficam soltos, sem
+compressão — entre versões, DLLs/libs que não mudaram permanecem
+byte-idênticas, então o blockmap do `electron-updater` baixa só o delta real
+(poucos MB), não o pacote inteiro. Isso não muda a garantia de "artefato
+distribuído não contém fonte" (regra 13 do `CLAUDE.md`): `backend.pyd`/`.so`
+continua sendo extensão C compilada pelo Nuitka, as demais libs são
+bytecode `.pyc` de dependências de terceiros, nunca o `.py` do backend.
+`build-hybrid.py` inclusive falha o build (`_assert_no_secrets_inside_backend`)
+se encontrar `.env`/`.pem`/chaves dentro de `backend/` — o Nuitka embutiria
+esse arquivo permanentemente no binário entregue.
 
 O cliente final recebe **um** instalador (`.msi`/`.dmg`/`.AppImage`/`.deb`/
-`.rpm`). Sem `pip`, sem `npm`, sem dependências externas — alinhado ao
-princípio de "artefatos distribuídos não contêm fonte" (ver `CLAUDE.md` §13):
-o backend vai sempre compilado (Nuitka, binário C, não decompilável); o
-frontend vai como `dist/` (JS servido ao browser embutido no Electron).
+`.rpm`) via `electron-builder`, que empacota o Electron shell + a pasta
+`vectora-core` como `extraResources`. Sem `pip`, sem `npm`, sem dependências
+externas.
 
-### Componentes do pipeline
+### 1.2 Componentes do pipeline
 
-| Peça                     | Papel                                                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| Launcher (`launcher.py`) | Faz o gate de licença antes de subir o backend; delega para o processo principal                                             |
-| Bundle do frontend       | Build Vite (`frontend/dist`) embutido como diretório de dados no binário Nuitka; FastAPI serve com `serve_static=True`       |
-| Build Nuitka             | Compila `backend/` inteiro para binário nativo (flags documentadas no build do projeto)                                      |
-| Wrapper Electron         | `electron/src/main.ts` — spawn do binário Nuitka, `BrowserWindow`, encerramento limpo do processo filho no quit, autoUpdater |
-| Instaladores nativos     | `electron-builder` — Windows (NSIS/MSI), macOS (DMG notarizado), Linux (AppImage/deb/rpm)                                    |
-| Licenciamento            | Validação remota + cache local (ver seção 1.2)                                                                               |
+| Peça                      | Papel                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `launcher.py`             | Entry-point PyInstaller — só ajusta `sys.path` e chama `backend.main.run()`; não faz gate de licença                                                   |
+| Nuitka (`--mode=package`) | Compila só `backend/` para `backend.pyd`/`.so` (C, `--report=nuitka-report.xml`)                                                                       |
+| PyInstaller (`--onedir`)  | Empacota launcher + `backend.pyd`/`.so` + libs + `frontend/dist` (como `chat_static`) + `nats-server` em `dist/vectora/`                               |
+| `scons nats`              | Baixa o binário `nats-server` da plataforma pra `vectora/resources/` antes do build — sem ele o build falha                                            |
+| Wrapper Electron          | `frontend/electron/src/main.ts` — spawna a pasta `vectora-core` como sidecar (`backend-lifecycle.ts`), IPC, tray, deep-link `vectora://`, auto-updater |
+| Instaladores nativos      | `electron-builder` — Windows (NSIS/MSI), macOS (DMG notarizado), Linux (AppImage/deb/rpm)                                                              |
+| Licenciamento             | Loop periódico dentro do FastAPI (`backend/services/license.py`) — ver §1.4                                                                            |
 
-### Fluxo de release (CI)
+### 1.3 Fluxo de release (CI real — GitHub Actions)
 
-1. Push de tag de release dispara o pipeline (Jenkins, ver `Jenkinsfile` na
-   raiz do monorepo).
-2. Por sistema operacional (Windows/macOS/Linux):
-   1. Build do frontend (`pnpm --dir vectora/frontend build`) → `frontend/dist/`.
-   2. Sync de dependências Python (`uv sync --frozen`).
-   3. Build Nuitka do backend → binário nativo.
-   4. Build Electron + empacotamento (`electron-builder`) → instaladores.
-3. Assinatura de código:
-   - **Windows**: certificado EV (Azure Trusted Signing).
-   - **macOS**: Apple Developer ID + notarização.
-   - **Linux**: sem assinatura.
-4. Upload dos artefatos e publicação via `services/` (worker unificado) —
-   substituiu o antigo fluxo de GitHub Releases privadas: os binários e
-   manifestos ficam em R2, servidos pelas rotas `/updates/*` e `/download/*`
-   descritas na seção 3.
-5. Manifesto (`latest.yml`, no padrão `electron-updater`) é gerado no build e
-   publicado junto — é o que o autoUpdater consulta para saber se há versão
-   nova.
+O `Jenkinsfile` na raiz cobre **só** CI contínuo (`scons lint && scons tests`
+em todo push, infra própria com agente uv/pnpm/scons). O fluxo de release —
+build dos instaladores por SO e publicação no canal de update — roda
+inteiramente em `.github/workflows/vectora.yml`, disparado por `[up-release]`
+na mensagem do commit ou por `workflow_dispatch` manual (qualquer outro push
+aparece como "skipped", custando 0 minutos de Actions).
 
-### 1.2 Licenciamento
+Jobs (em ordem de dependência):
 
-O launcher valida o token de licença antes de subir qualquer processo do
-backend:
+1. `lint` (ruff + ruff format + ty), `security` (bandit + pip-audit) e
+   `frontend` (oxlint + tsc + vitest) — em paralelo.
+2. `build_verification` — `python -m compileall backend` + `pnpm build` do
+   frontend, gate antes de gastar minutos caros de matriz.
+3. `test-unit` (pytest unit + stress) e `test-external` (integration + e2e)
+   — em paralelo, ambos dependem de `build_verification`.
+4. `release-native` — matriz `ubuntu-latest`/`macos-26`/`windows-latest`:
+   build do frontend Vite, fetch do `nats-server` (`scons nats`), build
+   híbrido (`python build-hybrid.py --jobs 4`), smoke test
+   (`./dist/vectora/vectora --version` com `VECTORA_LICENSE_BYPASS=1`),
+   assinatura Windows (certificado via `CSC_LINK`/`CSC_KEY_PASSWORD`,
+   secrets `WIN_CERTIFICATE_BASE64`/`WIN_CERTIFICATE_PASSWORD`), build do
+   shell Electron + `electron-builder --publish always` (assina/notariza
+   macOS via `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`;
+   Linux sem assinatura) e upload dos instaladores como artifact.
+5. `publish-update-channel` — roda uma única vez após a matriz inteira
+   terminar (evita race condition de read-modify-write concorrente na
+   mesma chave `config` do KV): lê a versão de `pyproject.toml`, baixa
+   todos os instaladores da matriz, e roda `pnpm run release` dentro de
+   `services/` (`services/scripts/release.ts`), que sobe os binários pro
+   R2 e atualiza `config` no KV (rollout, `previous_stable`, histórico).
 
-1. Lê o token de licença do ambiente (no Electron, injetado pelo instalador
-   ou por Configurações → Licença).
-2. Faz uma chamada de validação contra o endpoint de licença em `services/`.
-3. Cacheia o resultado localmente (`~/.vectora/license_cache.json`) — TTL
-   curto em uso normal, TTL estendido em modo offline (graceful degradation
-   quando não há rede).
-4. Exporta o tier de licença (`plus`/`pro`) para o backend — a camada de
-   storage e de cache usam isso para recusar backends Pro (Postgres/Qdrant/
-   Redis) quando o tier não permite.
+Nenhum passo publica GitHub Release "privada" nem depende de um `update-server`
+separado — R2 + KV do worker `services` são a única fonte servida ao
+`electron-updater` e à página de downloads.
 
-O endpoint de status de licença é público (sem auth) e alimenta o banner de
-trial no chat: aviso a partir de 7 dias antes do vencimento, bloqueio quando
-expirado.
+### 1.4 Licenciamento
 
-Modos de bypass (uso interno — CI/dev — nunca em produção): variável de
-ambiente que pula o gate inteiro, e variável que aponta a validação para um
-endpoint mock/staging.
+A validação **não** bloqueia o boot do backend nem é feita pelo `launcher.py`
+— ela roda como task assíncrona de fundo dentro do próprio FastAPI
+(`_license_revalidation_loop` em `backend/api/server.py`, criada no startup,
+cancelada no shutdown) e como revalidação síncrona pontual quando o usuário
+salva um token novo. Modelo real (`backend/services/license.py`):
 
-### Setup de desenvolvimento (sem build comercial)
+1. Lê o token: `VECTORA_TOKEN` (env) tem prioridade; senão, `[license].token`
+   em `~/.vectora/config.toml` (setado pela UI/setup wizard, espelhado pra
+   `os.environ` uma vez lido).
+2. **Sem token configurado → tier `free` direto, sem erro** — uso local solo
+   sem conta é o caminho normal, não um bloqueio.
+3. Com token: `POST` em `VECTORA_LICENSE_URL` (default
+   `https://services.vectora.company/license/validate`, ver
+   `services/src/license/routes.ts::/validate`) com `{token, vectora_version}`.
+4. Resposta cacheada em `~/.vectora/license_cache.json` — TTL 6h online; em
+   falha de rede, cai pro cache até 48h (offline graceful). Cache expirado
+   sem resposta válida → `LicenseError` (token existe mas não dá pra
+   confirmar), exposta via `GET /license/status`, que alimenta o banner de
+   trial/bloqueio no chat.
+5. `LicenseError` só ocorre com token presente e inválido/expirado/revogado
+   (HTTP 401/403 ou `valid: false` no corpo), ou sem cache utilizável.
+6. `get_effective_storage_mode()` — a camada de storage só libera backends
+   Pro (Postgres/Qdrant/Redis) quando `storage_mode="complete"` **e** o
+   cache indica `tier="pro"`; caso contrário faz fallback silencioso pra
+   `lite` (SQLite + LanceDB).
 
-Dev local não precisa do launcher nem do build Nuitka — segue o fluxo comum
-descrito no `CLAUDE.md` (`uv run vectora start` + Vite dev server). O
-launcher e o binário Nuitka só entram para testar o pipeline de distribuição
-em si.
+`VECTORA_LICENSE_BYPASS=1` pula a validação inteira (retorna tier `pro`
+sintético por 365 dias) — uso interno em CI/smoke test, nunca em produção.
 
-### Próximos passos (fora do escopo imediato)
+### 1.5 Setup de desenvolvimento (sem build comercial)
 
-- Portal do cliente (Stripe Customer Portal) acessível via Configurações →
-  "Gerenciar assinatura", abrindo o portal externo a partir do Electron.
+Dev local não precisa do `launcher.py` nem do build híbrido — segue o fluxo
+comum descrito no `CLAUDE.md` (`uv run vectora start` + Vite dev server). O
+launcher e o pipeline Nuitka+PyInstaller só entram para testar a distribuição
+em si (`python build-hybrid.py` na raiz do monorepo).
+
+### 1.6 Próximos passos (fora do escopo imediato)
+
+- Portal do cliente (Stripe/Asaas Customer Portal, já existe como rota em
+  `services/src/license/routes.ts::/portal`) acessível via
+  Configurações → "Gerenciar assinatura" no Electron.
 - Distribuição somente-leitura de um CLI Plus (sem frontend/Electron) para
-  compatibilidade com early adopters que só querem a linha de comando.
+  early adopters que só querem a linha de comando.
 - Canal de update dedicado para builds de ACP server em beta.
 
 ---
@@ -226,10 +272,9 @@ features maiores (storage backends Pro, chat web multi-usuário, MCP Library
 ### 2.5 Pós-lançamento — programa contínuo
 
 Depois do lançamento público, o programa continua para toda feature nova
-significativa (IA+ com edição de imagem, Deep Agents 2.0, SDKs externos,
-Host/Client, plugins novos, Helpdesk/Code Review como betas longos de 60+
-dias). Cadência típica: 1 beta iniciando por mês, com 2–3 ciclos ativos em
-paralelo.
+significativa (IA+ com edição de imagem, SDK de extensões, Host/Client,
+plugins novos, Helpdesk/Code Review como betas longos de 60+ dias). Cadência
+típica: 1 beta iniciando por mês, com 2–3 ciclos ativos em paralelo.
 
 ### 2.6 Aspectos legais
 
@@ -281,9 +326,8 @@ formato do programa.
 ## 3. Fluxo de atualização (changelog, aprovação manual, backup e rollback)
 
 > Proposta de design ainda não implementada. O usuário precisa **ver o que
-> muda e aprovar antes** de qualquer atualização ser aplicada — o oposto de
-> um fluxo que só mostra o changelog depois de já ter instalado e sem
-> permitir reverter.
+> muda e aprovar antes** de qualquer atualização ser aplicada — o oposto do
+> fluxo de hoje, que baixa e agenda a instalação sem intervenção do usuário.
 
 ### 3.1 Princípios inegociáveis
 
@@ -298,23 +342,30 @@ formato do programa.
 
 ### 3.2 Estado atual vs. gap
 
-O wrapper Electron hoje já teria autoDownload/autoInstall automáticos e uma
-tray que só oferece "aplicar" depois de já ter baixado — o design deste
-fluxo inverte isso: busca o changelog antes de qualquer download, exige
-aprovação explícita, faz backup, e oferece rollback real. O worker
-`services/` já serve `latest.yml` e os binários com lógica de rollout/
-quarantine (ver `services/src/updates/worker.ts`); o que falta é o endpoint
-de changelog por versão, o script de release que popula esse changelog, e a
-UI dedicada no frontend (hoje o evento de status de update chega por IPC mas
-sem banner/modal).
+Hoje (`frontend/electron/src/main.ts::setupAutoUpdater`) o
+`electron-updater` já roda com `autoDownload = true` e
+`autoInstallOnAppQuit = true`: uma checagem dispara 30s após o boot e depois
+a cada 6h (gated por `autoUpdateEnabled` em `GET /settings/prefs`,
+fail-open — falha de leitura nunca desliga o update), baixa sozinho ao
+detectar versão nova, e instala no próximo quit do app (ou via "Aplicar
+atualização e reiniciar" no menu da tray, quando `updateReady`). O usuário só
+vê um evento de status (`vectora:update-status`) — sem banner de changelog,
+sem aprovação, sem backup. O design deste fluxo inverte isso: busca o
+changelog antes de qualquer download, exige aprovação explícita, faz backup,
+e oferece rollback real.
+
+O worker `services` já serve `latest.yml` e os binários com lógica de
+rollout/quarentena (`services/src/updates/worker.ts`); o que falta é o
+endpoint de changelog por versão, o script de release que popula esse
+changelog, e a UI dedicada no frontend.
 
 ### 3.3 Arquitetura
 
 ```
-   CI (tag de release)         services/ (Worker: R2 + KV)              Desktop (Electron)
+   CI (tag de release)         services/ (Worker: R2 + D1/KV)            Desktop (Electron)
  ┌─────────────┐   release   ┌───────────────────────────┐  feed  ┌────────────────────┐
- │ build nativo│ ──────────► │ R2: binários + changelog  │ ◄───── │ electron-updater   │
- │ + changelog │             │ KV: config (rollout)      │        │ (autoDownload=OFF) │
+ │ build híbrido│ ──────────► │ R2: binários + changelog  │ ◄───── │ electron-updater   │
+ │ + changelog  │             │ KV: config (rollout)      │        │ (autoDownload=OFF) │
  └─────────────┘             └───────────────────────────┘        └─────────┬──────────┘
                                                                             │ IPC
                                                                   ┌─────────▼──────────┐
@@ -324,7 +375,7 @@ sem banner/modal).
                                                                   └────────────────────┘
 ```
 
-### Sequência (caminho feliz)
+### Sequência (caminho feliz, proposto)
 
 1. App liga; após um curto atraso, verifica atualizações sem baixar nada.
 2. Ao detectar versão nova, o processo main busca o changelog
@@ -347,14 +398,16 @@ instalado.
 
 ### 3.4 Contratos
 
-**Rotas do worker `services/` relevantes a este fluxo** (as três primeiras
-já existem em `services/src/updates/worker.ts`; a quarta é a peça que falta):
+**Rotas do worker `services` relevantes a este fluxo** (as cinco primeiras
+já existem em `services/src/updates/worker.ts`; a sexta é a peça que falta):
 
 ```
-GET  /updates/:channel/:os/:arch/latest.yml       — manifesto electron-updater
+GET  /updates/:channel/:os/:arch/latest.yml       — manifesto electron-updater (resolve rollout/quarentena)
 GET  /updates/:channel/:os/:arch/:version/:file   — binário/blockmap
-POST /telemetry/update-result                     — estados de update
-GET  /changelog/:channel/:version?from=<atual>    — notas acumuladas (a implementar)
+GET  /download/:channel/:target                   — primeira instalação, sem token, ignora rollout
+GET  /version/:channel                             — versão estável atual (site, Hero/Downloads)
+POST /telemetry/update-result                      — estados de update, via fila (`vectora-jobs`)
+GET  /changelog/:channel/:version?from=<atual>     — notas acumuladas (a implementar)
 ```
 
 `GET /changelog` retornaria um JSON com a versão alvo, a versão de origem,
@@ -362,14 +415,21 @@ uma flag `mandatory` para updates de segurança (que ainda exigem clique, mas
 deixam isso claro na UI), e uma lista de entradas por versão com data e
 notas em markdown — renderizadas no modal de changelog.
 
-Configuração de rollout (em KV) mantém, por canal, a versão atual, o
-percentual de rollout, a versão estável anterior (`previous_stable`, usada
-pelo rollback), e uma lista de versões colocadas em quarentena.
+Configuração de rollout (chave `config` no KV, `RuntimeConfig` em
+`worker.ts`) mantém, por canal, `version`, `rollout_percent`,
+`previous_stable` (versão pra fallback de quarentena e alvo do rollback),
+`history` (versões retidas em R2) e `uploads` (chaves R2 por
+`<channel>/<version>`, usado por `scripts/release.ts` pra podar sem listar
+o bucket inteiro). `rolloutBucket(token)` faz hash determinístico do token
+pra bucket `[0..99]`, decidindo se o client recebe a versão nova ou
+`previous_stable`.
 
-**Canais IPC** entre main e renderer cobrem: disponibilidade de update (com
-changelog embutido), aprovação de download, progresso, download concluído,
-comando de instalar (com flag de backup), dispensar, comando de rollback
-para uma versão específica, erro, e listagem de backups disponíveis.
+**Canais IPC** entre main e renderer cobrem hoje: `vectora:update-status`
+(estado do autoUpdater), `vectora:check-for-update` (checagem manual),
+`vectora:quit-and-install`. O fluxo proposto adiciona: disponibilidade de
+update com changelog embutido, aprovação de download, comando de instalar
+(com flag de backup), comando de rollback para uma versão específica, e
+listagem de backups disponíveis.
 
 ### 3.5 Backup e rollback
 
@@ -386,26 +446,30 @@ reiniciar restaurar o backup de dados correspondente. A UI de rollback (em
 Configurações → Atualizações) lista versões instaladas recentemente e
 backups disponíveis, oferecendo "Reverter para vX".
 
-**Quarantine automático (nível de frota, complementar ao rollback manual):**
-se o volume de crash-reports de uma versão específica passar de um limiar
-em uma janela curta (via telemetria já existente), o worker move essa
-versão para a lista de quarentena e volta a servir a `previous_stable` para
-novos checks — isso não desfaz instalações já feitas, mas contém o alcance
-do problema para quem ainda não atualizou.
+**Quarantine automático (nível de frota, já implementado, complementar ao
+rollback manual):** `processUpdateTelemetry` (`services/src/updates/
+worker.ts`) conta falhas por versão numa chave KV com TTL de 1h; 3 ou mais
+falhas na mesma versão dentro dessa janela movem a versão pra lista de
+quarentena, e `latest.yml`/`/download` passam a servir `previous_stable`
+para novos checks. Isso não desfaz instalações já feitas, mas contém o
+alcance do problema para quem ainda não atualizou.
 
 ### 3.6 Peças a construir, por camada
 
 - **Worker (`services/src/updates/`)** — endpoint de changelog; script de
-  release que sobe binários + manifestos para R2, gera o changelog por
-  versão a partir de um `CHANGELOG.md` central, e atualiza a config de
-  rollout no KV.
-- **Electron main** — trocar para download/instalação manuais; buscar e
-  repassar changelog no evento de update disponível; handlers IPC de
-  aprovar/instalar/rollback; rotina de backup; suporte a downgrade.
-- **Electron preload** — expor os novos canais IPC no bridge de contexto.
+  release que gera o changelog por versão a partir de um `CHANGELOG.md`
+  central (o script atual, `services/scripts/release.ts`, já sobe binários +
+  manifestos pro R2 e atualiza a config de rollout no KV).
+- **Electron main** — trocar `autoDownload`/`autoInstallOnAppQuit` para
+  manuais; buscar e repassar changelog no evento de update disponível;
+  handlers IPC de aprovar/instalar/rollback; rotina de backup; suporte a
+  downgrade.
+- **Electron preload** — expor os novos canais IPC no bridge de contexto
+  (`preload.ts`).
 - **Frontend** — componentes de banner de update, modal de changelog,
   indicador de progresso, e seção "Atualizações" nas configurações
-  (rollback e lista de backups).
+  (rollback e lista de backups) — hoje só existe `update-banner.tsx`
+  consumindo o evento de status cru.
 - **`CHANGELOG.md`** — fonte única das notas por versão (formato Keep a
   Changelog), consumido pelo script de release.
 

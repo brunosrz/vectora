@@ -1,18 +1,17 @@
 # Vectora — Roadmap de Extensibilidade
 
-> Consolida quatro frentes de roadmap que, isoladas, descreviam mecanismos
-> sobrepostos de estender o agente: SDK de extensões (`.vext`), biblioteca
-> de MCP servers, biblioteca de skills, e modalidades de IA além de texto
-> (voz, imagem). Nenhuma delas está implementada — este documento é o mapa
-> único de para onde a extensibilidade do Vectora vai, escrito uma vez em
-> vez de três marketplaces quase-idênticos.
+> Mapa único de para onde a extensibilidade do Vectora vai: SDK de extensões
+> (`.vext`, ainda não iniciado), registry de MCP servers (parcialmente real),
+> biblioteca de skills (parcialmente real) e modalidades de IA além de texto
+> (imagem/voz/vídeo já shippam via as tools nativas; falta câmbio de faixa
+> pra STT e infraestrutura dedicada).
 >
 > **Estado atual do produto** (ver `history.md` — "O Vectora hoje"): local-first,
 > sem cloud obrigatória. Free roda 100% local sem conta; Pro é opcional e
 > cobre trial/billing/licenciamento via `services.vectora.company`, um
 > **Cloudflare Worker pequeno** (não um "Vectora Cloud" rodando o produto de
-> terceiros). Todo mecanismo de registry/marketplace descrito aqui é pensado
-> para caber nesse worker — sem exigir um backend SaaS novo.
+> terceiros). Os catálogos de MCP e skills já vivem nesse worker (D1); o de
+> extensões continua placeholder.
 
 ---
 
@@ -20,46 +19,52 @@
 
 O Vectora tem hoje (ou terá) quatro formas de crescer além do core:
 
-| Mecanismo               | O que estende                                                                 | Empacota UI?              | Empacota tools Python?       | Buildado/assinado?        |
-| ----------------------- | ----------------------------------------------------------------------------- | ------------------------- | ---------------------------- | ------------------------- |
-| **MCP server**          | Tools de terceiros via protocolo MCP                                          | não                       | não (processo externo)       | parcial                   |
-| **Skill (`.skill.md`)** | Prompt + tools requeridas (procedural)                                        | não                       | não                          | sim (assinatura opcional) |
-| **Extensão `.vext`**    | Tools + UI + comandos + render hints + integrações + skills + MCP empacotados | sim                       | sim                          | sim                       |
-| **Modalidades de IA**   | Capabilities novas do próprio core (TTS/STT/image gen)                        | sim (componentes nativos) | n/a (é o core, não extensão) | n/a                       |
+| Mecanismo             | Estado real hoje                                                                                                                                            | Empacota UI?     | Empacota tools Python?       | Buildado/assinado? |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------- | ------------------ |
+| **MCP server**        | Implementado: config por usuário (`~/.vectora/mcp/<user_id>.json`), catálogo em D1 + registro oficial + fallback local, endpoints REST de install/uninstall | não              | não (processo externo)       | não                |
+| **Skill**             | Implementado: instalação via git/path local por usuário, catálogo em D1 (curado + auto-discovery GitHub)                                                    | não              | não                          | não                |
+| **Extensão `.vext`**  | Não iniciado — só design                                                                                                                                    | sim (proposto)   | sim (proposto)               | sim (proposto)     |
+| **Modalidades de IA** | Parcial: imagem, TTS e vídeo (gen + análise) já são tools nativas; STT ainda não existe                                                                     | parcial (ver §6) | n/a (é o core, não extensão) | n/a                |
 
 Os três primeiros formam uma escada de escopo crescente: uma **skill** é só
-comportamento (prompt + tools já existentes); um **MCP server** adiciona
-tools novas via protocolo, sem UI; uma **extensão `.vext`** é o container
-guarda-chuva que pode empacotar as duas coisas junto com UI nativa
-(abas de workbench, render hints, comandos). Skills e MCP continuam
-existindo como mecanismos standalone para casos simples — o `.vext` é
-para quando alguém quer entregar uma experiência completa, análoga a uma
-extensão de VS Code.
+comportamento (prompt + instruções, sem tools novas); um **MCP server**
+adiciona tools novas via protocolo, sem UI; uma **extensão `.vext`** seria o
+container guarda-chuva que empacota as duas coisas junto com UI nativa (abas
+de workbench, render hints, comandos) — esse terceiro nível ainda não existe
+em código, é puro design (§2). MCP e skills já funcionam como mecanismos
+standalone reais, só sem a CLI dedicada e sem sandbox/assinatura que o
+roadmap original previa (ver §3, §4).
 
-Modalidades de IA (voz, imagem) são diferentes em natureza: não são
-mecanismo de terceiro, são capability nova do próprio produto, exposta
-depois como tools que qualquer skill/extensão/MCP client pode chamar.
+Modalidades de IA (imagem, voz, vídeo) são diferentes em natureza: não são
+mecanismo de terceiro, são capability do próprio core (`backend/tools/
+media.py`), expostas como tools que qualquer skill/MCP client já pode
+chamar hoje.
 
 ---
 
 ## 2. SDK de extensões (`.vext`)
 
+**Nenhum código deste mecanismo existe ainda** — sem `vectora_ext`, sem
+Extension Host, sem `.vext` no repositório. Esta seção é inteiramente
+design/roadmap, mantida porque justifica escolhas já tomadas em MCP e
+skills (formato de manifesto, scopes, verbos de CLI — ver §5) que foram
+desenhadas para caber neste mecanismo maior quando ele existir.
+
 ### 2.1 Por que existir
 
 MCP cobre só tools de terceiro via protocolo; skills cobrem só prompt +
-tools requeridas. Nenhum dos dois permite o que uma extensão de VS Code
-permite: adicionar uma aba nova no workbench, um conjunto de tools
-nativas, um card de integração, um render hint e comandos de barra — tudo
-num pacote único, assinado, versionado e instalável em um clique, rodando
-tanto no desktop (Electron + binário Nuitka) quanto no self-hosted
-(FastAPI + SPA).
+instruções. Nenhum dos dois permite o que uma extensão de VS Code permite:
+adicionar uma aba nova no workbench, um conjunto de tools nativas, um card
+de integração, um render hint e comandos de barra — tudo num pacote único,
+assinado, versionado e instalável em um clique, rodando tanto no desktop
+(Electron + backend compilado) quanto no self-hosted (FastAPI + SPA).
 
 ### 2.2 Modelo conceitual: contribuições + Extension Host
 
 Mesmo modelo mental do VS Code: uma extensão **declara contribuições** num
 manifesto e um **Extension Host** as ativa — despacho schema-driven, sem
 o core precisar conhecer código de cada extensão (o mesmo princípio já
-usado por `render_hint`).
+usado por `render_hint`, ver `frontend/lib/types/render.ts`).
 
 ```
                        my-extension.vext  (arquivo único, ZIP assinado)
@@ -67,26 +72,27 @@ usado por `render_hint`).
         ┌─────────────────────────┴──────────────────────────┐
         ▼                                                      ▼
  BACKEND HOST (FastAPI/Python)                        FRONTEND HOST (SPA/React)
- backend/services/extensions/host.py                 frontend/lib/extensions/host.ts
+ backend/services/extensions/host.py (a criar)        frontend/lib/extensions/host.ts (a criar)
    • descobre + valida + assina                          • carrega bundles UI (ESM/iframe)
-   • registra tools no tool_resolver                     • monta abas no workbench-store
-   • monta skills/mcp no agent_factory                   • registra render hints
-   • aplica permissions + sandbox                        • registra slash commands
-   • expõe via /tools/schema                             • integra cards de Settings
+   • registra tools no TOOL_REGISTRY                      • monta abas no workbench-store
+   • monta skills/mcp no agent_factory                    • registra render hints
+   • aplica permissions + sandbox                         • registra slash commands
+   • expõe via /tools/schema                              • integra cards de Settings
 ```
 
 Princípio cardinal: a extensão **nunca** é compilada dentro do binário
-Nuitka. É sideloaded em runtime a partir de
+distribuído. Seria sideloaded em runtime a partir de
 `~/.vectora/extensions/<user_id>/<ext_id>/` — exatamente como um `.vsix`
-não é compilado dentro do VS Code. O core fecha (proprietário, Nuitka);
-as extensões abrem (SDK open source, instaláveis sem rebuild do produto).
+não é compilado dentro do VS Code. O core fecha (proprietário, compilado
+via Nuitka+PyInstaller — ver `documents/launch-and-distribution.md` §1); as
+extensões abrem (SDK open source, instaláveis sem rebuild do produto).
 
-### 2.3 Formato de pacote
+### 2.3 Formato de pacote (proposto)
 
 Nenhum formato existente (`.vsix`, `.whl`, `.crx`) serve direto — cada um
 é acoplado ao próprio runtime. Todos eles, porém, são ZIP por baixo, então
-o Vectora reaproveita o container (ZIP universal, streamable, toolchain
-madura) e define apenas o layout interno + manifesto + esquema de
+o Vectora reaproveitaria o container (ZIP universal, streamable, toolchain
+madura) e definiria apenas o layout interno + manifesto + esquema de
 assinatura:
 
 ```
@@ -104,34 +110,31 @@ acme-email.vext   (ZIP)
 └── SIGNATURE                   # assinatura destacada (minisign/GPG)
 ```
 
-Todas as pastas são opcionais — uma extensão pode ser só-UI,
-só-tools-Python, só-integração, ou qualquer combinação. O manifesto
-`vectora-extension.json` declara `permissions` (network/filesystem/
-secrets/spawn_processes), `contributes` (tools, workbench_tabs,
-slash_commands, render_hints, integrations, settings, skills,
-mcp_servers) e `entrypoints` (backend/node/ui). Schema versionado
-(`manifest_version`) e validado por Pydantic no backend e Zod no
-frontend. Strings de UI sempre por chave i18n — a extensão traz seu
-próprio conjunto de traduções, mesclado em runtime.
+Todas as pastas seriam opcionais. O manifesto `vectora-extension.json`
+declararia `permissions` (network/filesystem/secrets/spawn_processes),
+`contributes` (tools, workbench_tabs, slash_commands, render_hints,
+integrations, settings, skills, mcp_servers) e `entrypoints`
+(backend/node/ui). Schema versionado (`manifest_version`), validado por
+Pydantic no backend e Zod no frontend.
 
 ### 2.4 Pontos de contribuição
 
-Cada tipo de contribuição mapeia para infraestrutura que já existe hoje —
-o host só conecta, não reescreve o core:
+Cada tipo de contribuição mapearia pra infraestrutura que já existe hoje —
+o host só conectaria, não reescreveria o core:
 
-| Contribuição    | Reusa (código real)                                                  |
-| --------------- | -------------------------------------------------------------------- |
-| tools           | `tool_resolver.py`, `tool_policy.py`, `tools/__init__.py::ALL_TOOLS` |
-| workbench_tabs  | `workbench-store.ts`, `components/workbench/`                        |
-| slash_commands  | `constants/slash-commands.ts`                                        |
-| render_hints    | `tool-call-renderer.tsx`, `types/render.ts`                          |
-| integrations    | `api/handlers/oauth.py`, `services/secrets/`                         |
-| settings        | `stores/settings-store.ts`                                           |
-| skills          | `services/skills.py`, `agent_factory.py`                             |
-| mcp_servers     | `services/plugins.py`                                                |
-| hooks (eventos) | dispatcher de eventos de ciclo de vida (novo)                        |
+| Contribuição    | Reusa (código real hoje)                                                         |
+| --------------- | -------------------------------------------------------------------------------- |
+| tools           | `backend/tools/registry.py` (`vtool`, `TOOL_REGISTRY`), `backend/nodes/tools.py` |
+| workbench_tabs  | `workbench-store.ts`, `frontend/components/workbench/`                           |
+| slash_commands  | `frontend/lib/constants/` (comandos de barra existentes)                         |
+| render_hints    | `tool-call-renderer.tsx`, `frontend/lib/types/render.ts`                         |
+| integrations    | handlers OAuth (`backend/api/handlers/oauth.py` se existir) + vault de secrets   |
+| settings        | store de settings do frontend                                                    |
+| skills          | `backend/workspace/skills.py`, `backend/services/agent_factory.py`               |
+| mcp_servers     | `backend/workspace/plugins.py`, `backend/tools/mcp.py`                           |
+| hooks (eventos) | dispatcher de eventos de ciclo de vida (novo)                                    |
 
-### 2.5 Os dois SDKs
+### 2.5 Os dois SDKs (propostos)
 
 **Python** (`vectora-extension-sdk`, import `vectora_ext`) — API
 declarativa espelhando o `@vtool` nativo (`backend/tools/registry.py`):
@@ -150,38 +153,39 @@ async def email_search(query: str, ctx: ToolContext) -> list[dict]:
 
 CLI de autoria: `vectora-ext init|build|sign|validate|publish`.
 
-**TypeScript** (`@vectora/extension-sdk`) cobre dois cenários: (a)
+**TypeScript** (`@vectora/extension-sdk`) cobriria dois cenários: (a)
 contribuições de UI via `defineExtension()`, consumido pelo host do
 frontend ao carregar o bundle ESM; (b) lógica de backend em Node/TS via
 `defineBackend()`, rodando como sidecar com harness JSON-RPC sobre
-stdio — o mesmo padrão de um MCP server stdio, reaproveitando
-diretamente a infra descrita em §3.
+stdio — o mesmo padrão de um MCP server stdio, reaproveitando a infra real
+descrita em §3.
 
-### 2.6 Compatibilidade com Electron + Nuitka
+### 2.6 Compatibilidade com o binário compilado
 
-O ponto não-trivial: o core é compilado por Nuitka onefile (fechado);
-extensões precisam rodar sem recompilar o binário.
+O ponto não-trivial: o core é compilado (Nuitka `--mode=package` +
+PyInstaller `--onedir`, ver `launch-and-distribution.md` §1.1); extensões
+precisam rodar sem recompilar o binário.
 
 - **Backend Python `in-process`** (extensões confiáveis/first-party): o
   host adiciona a extensão ao `sys.path` e importa via `importlib` — o
-  CPython embutido no onefile interpreta módulos externos em runtime.
-  Deps de terceiros vêm vendorizadas como wheels dentro do `.vext` —
-  zero pip no install.
+  CPython empacotado interpreta módulos externos em runtime. Deps de
+  terceiros viriam vendorizadas como wheels dentro do `.vext` — zero pip
+  no install.
 - **Backend Python `subprocess`/sandbox** (default para terceiros
   não-assinados): processo separado com interpretador próprio, falando
-  JSON-RPC — idêntico ao modelo MCP stdio, com o mesmo sandbox por SO
-  (bubblewrap/sandbox-exec/AppContainer).
+  JSON-RPC — idêntico ao modelo MCP stdio já usado por
+  `backend/tools/mcp.py`.
 - **Frontend TS**: bundle ESM servido pelo FastAPI, carregado via
-  `import()` dinâmico; UI não-confiável pode rodar em `<iframe>`
-  sandboxed / `<webview>`.
-- **Node sidecar**: o host spawna o processo Node como subprocesso
-  assíncrono; Node não é embutido no binário — é requisito de sistema
-  declarado (`engines`), e a ausência dele desabilita a extensão com
-  erro tipado, não crash.
+  `import()` dinâmico; UI não-confiável rodaria em `<iframe>`
+  sandboxed/`<webview>`.
+- **Node sidecar**: o host spawnaria o processo Node como subprocesso
+  assíncrono; Node não é embutido no binário — seria requisito de sistema
+  declarado, e a ausência dele desabilitaria a extensão com erro tipado,
+  não crash.
 
-### 2.7 CLI do usuário
+### 2.7 CLI do usuário (proposta)
 
-Espelha a sintaxe de `vectora mcp`/`vectora skills` (§3, §4) para um
+Espelharia a sintaxe REST hoje exposta por MCP/skills (§3, §5) para um
 único padrão de aprendizado:
 
 ```bash
@@ -189,168 +193,144 @@ vectora ext list / search / install <fonte> / info / enable|disable
 vectora ext update / remove / permissions
 ```
 
-Fontes de instalação: registry oficial, arquivo `.vext` local, URL, ou
-`git+https://...`. Scopes (`user`/`workspace`/`project`) e precedência
-idênticos aos de skills/MCP (§5).
+Hoje `backend/cli/` não tem nenhum comando `mcp`/`skills`/`ext` — MCP e
+skills são gerenciados via REST (`/mcp/*`, `/skills/*`) consumido pela SPA,
+não por CLI. Uma CLI de gerenciamento paritária é trabalho futuro comum às
+três frentes, não só extensões.
 
-### 2.8 Segurança e trust
+### 2.8 Segurança e trust (proposta)
 
-Reaproveita diretamente o modelo descrito em §5 (assinatura, permissões
-declaradas + consentidas, sandbox por default, badges de confiança, CVE
-response) — **não** um esquema paralelo. Adiciona duas camadas
-específicas de extensão:
+Reaproveitaria o modelo de MCP quando este ganhar sandbox/assinatura (§3.3)
+— não um esquema paralelo. Adicionaria duas camadas específicas de
+extensão: ABAC por usuário (admin desabilita extensão/tool por usuário),
+deny-globs herdados do filesystem (`.env`, `*.kdbx`, `.ssh/**`,
+`master.kek` nunca legíveis mesmo com `filesystem: workspace` declarado), e
+secrets resolvidos por nome via vault (a extensão nunca recebe a chave
+crua no manifesto).
 
-- **ABAC por usuário**: admin pode desabilitar uma extensão (ou tools
-  dela) por usuário via `tool_policy`.
-- **Deny-globs herdados**: nenhuma extensão lê `.env`, `*.kdbx`,
-  `.ssh/**`, `master.kek`, mesmo com `filesystem: ["workspace"]`
-  declarado.
-- **Secrets via vault**: a extensão nunca recebe a chave crua no
-  manifesto; pede por nome (`ctx.secret("X")`) e o host resolve do vault
-  do usuário.
-- **Defensividade é do host, não da extensão**: toda tool de extensão é
-  envolvida em `try/except` tipado pelo host — extensão buggada nunca
-  derruba o grafo.
+### 2.9 Critério de aceite
 
-### 2.9 Provas de conceito
-
-Três extensões first-party validam as combinações de runtime/superfície
-antes de abrir para terceiros:
-
-| Extensão         | Prova                                                                                      | Runtime |
-| ---------------- | ------------------------------------------------------------------------------------------ | ------- |
-| `vectora-ruff`   | SDK Python puro, tools in-process, diagnósticos, slash command                             | Python  |
-| `vectora-eslint` | SDK TS, backend em Node sidecar (JSON-RPC stdio, modelo MCP)                               | Node    |
-| `vectora-email`  | Full: Python + React + integração OAuth/secrets + aba nova no workbench + skill empacotada | Py + TS |
-
-Sem as três rodando de ponta a ponta pelo fluxo público de instalação, o
-SDK não está pronto — é o critério de aceite.
-
-### 2.10 Roadmap de extensões de interação (pós-SDK)
-
-Catálogo de extensões a construir depois de validar o SDK, todas via o
-mesmo `.vext`:
-
-| Extensão                | Categoria                                      | Runtime |
-| ----------------------- | ---------------------------------------------- | ------- |
-| `vectora-docker`        | devops (tools + UI de containers/logs)         | Python  |
-| `vectora-prettier`      | formatter (tools + format-on-save)             | Node    |
-| `vectora-pytest`        | testes (tools + test explorer)                 | Python  |
-| `vectora-slack`         | interações (tools + integração + webhooks)     | Py + TS |
-| `vectora-calendar`      | interações (tools + UI + OAuth)                | Py + TS |
-| `vectora-jira`/`linear` | interações (tools + integração + render hints) | Python  |
-| `vectora-postgres-cli`  | devops (query/introspect + storage browser)    | Python  |
-
-Conectores comerciais pagos (Notion, Jira, Figma, Google Workspace e
-similares) são pensados como **extensões `.vext` first-party pagas** —
-mesmo formato, licença comercial, revenue-share sobre o mesmo registry
-descrito em §6.
+Três extensões first-party validariam as combinações de runtime/superfície
+antes de abrir para terceiros — Python puro (`vectora-ruff`), Node sidecar
+(`vectora-eslint`) e full-stack com OAuth/UI/skill (`vectora-email`). Sem
+as três rodando de ponta a ponta pelo fluxo público de instalação, o SDK
+não está pronto.
 
 ---
 
-## 3. Registry de MCP servers
+## 3. MCP: estado real e o que falta
 
-### 3.1 Por que existir
+### 3.1 O que já existe
 
-Descoberta de MCP servers hoje é manual (CLI + awesome-lists no GitHub) e
-sem validação de segurança embutida. O Vectora resolve as três pontas:
-descoberta integrada, instalação em um clique, sandbox e assinatura por
-padrão.
+Ao contrário de um mecanismo puramente aspiracional, MCP **já funciona em
+produção** por dois caminhos:
 
-MCP é o mecanismo para o **long tail** — qualquer server público do
-ecossistema que não vale a pena tornar nativo nem embutir como extensão
-first-party. Para o usuário, tools vindas de tool nativa, extensão `.vext`
-ou MCP parecem iguais: mesmo render, mesma rastreabilidade, mesmo HITL.
+- **Conexão fixa via settings** (`backend/tools/mcp.py::VectoraMCPClient`)
+  — um servidor `stdio`/`sse`/`streamable_http` configurado globalmente via
+  `mcp_server_url`/`mcp_command` nas Settings, exposto como a tool única
+  `call_mcp_tool`.
+- **Marketplace por usuário** (`backend/workspace/plugins.py` +
+  `backend/api/handlers/mcp_marketplace.py`) — cada usuário tem sua própria
+  lista de servidores em `~/.vectora/mcp/<user_id>.json`, cada tool remota
+  vira uma `ToolSpec` nativa individual (não uma tool-proxy genérica),
+  resolvida via `GET /mcp/registry`, `POST /mcp/install`,
+  `POST /mcp/uninstall`. As tools instaladas entram no toolset do agente do
+  mesmo jeito que uma tool nativa — mesmo render, mesma rastreabilidade.
 
-### 3.2 Instalação e configuração
+O que falta frente ao design original: **não há CLI** (`vectora mcp ...`
+não existe — só REST), **não há sandbox** de processo `stdio` (o
+subprocess roda com o allowlist mínimo de env vars, mas sem isolamento de
+filesystem/rede via bubblewrap/sandbox-exec/AppContainer), e **não há
+assinatura/verificação de manifesto**.
 
-CLI paritária com Claude Code para facilitar migração:
+### 3.2 Registry: as três fontes reais
 
-```bash
-vectora mcp list / search <termo> / inspect <server>
-vectora mcp add <server> [--scope user|workspace|project] [--transport stdio|http|sse|ws]
-vectora mcp add <server> --no-sandbox   # requer flag explícita
-vectora mcp remove / config / env / enable / disable
-vectora mcp sync                        # atualiza catálogo local
-vectora mcp registry add|list|remove <url>   # registry custom de empresa
-```
+`list_registry()` (`backend/api/handlers/mcp_marketplace.py`) mescla três
+fontes, nessa ordem de prioridade:
 
-Transports suportados: `stdio` (binário local), `http`, `sse`, `ws`.
-Manifest local em `~/.vectora/mcp.json`, com `permissions` declaradas por
-server (internet, filesystem, spawn_processes) e `scope`
-(`user`/`workspace`/`project`, precedência do mais específico).
+1. **Registry Vectora** — D1, curado, servido por
+   `GET /registry/mcp` (`services/src/registry/routes.ts`). Populado por
+   PR manual (seed em `services/migrations/0001_schema.sql`,
+   `catalog_source='curated'`) e por um **cron automático**
+   (`services/src/registry/discovery.ts::discoverMcp`, chamado pelo
+   `scheduled()` do worker) que pagina `registry.modelcontextprotocol.io`
+   e faz upsert — nunca sobrescrevendo uma linha curada.
+2. **Registry oficial de MCP** (`registry.modelcontextprotocol.io`) —
+   consultado direto pelo cliente Python
+   (`backend/services/registry_client.py::fetch_official_mcp_registry`),
+   catálogo amplo da comunidade, só servers com pacote npm/stdio (único
+   transporte que `_connector_to_server` sabe converter em `McpServer`
+   hoje).
+3. **Fallback hardcoded** (`_REGISTRY` em `mcp_marketplace.py`) — seis
+   conectores (Brave Search, Filesystem, GitHub, Postgres, Slack,
+   Sequential Thinking), só entra se nem 1 nem 2 responderem.
 
-Fluxo de instalação: resolve manifest do registry → verifica assinatura
-→ exibe permissões para aprovação → sobe sandbox se aplicável → hot-load
-no processo rodando (sem restart) → confirmação com contagem de tools
-descobertas.
+As duas primeiras são buscadas em paralelo; a lista final ordena
+verificados primeiro, resto alfabético. `list_wellknown_catalog`-equivalente
+para MCP não existe (esse padrão é só de skills, ver §4).
 
-### 3.3 Sandbox por padrão
+### 3.3 O que falta construir
 
-Servers `stdio` não-assinados rodam isolados por padrão
-(bubblewrap/Linux, sandbox-exec/macOS, AppContainer ou WSL2/Windows),
-restringindo filesystem, network, spawn de processos e acesso a env vars
-ao que foi declarado. Desabilitar exige `--no-sandbox` explícito.
-Servers `http`/`sse`/`ws` rodam remotos (sem sandbox local), mas toda
-chamada passa pelo cliente Vectora, que loga input/output.
-
-### 3.4 Registry: onde vive
-
-O registry combina duas fontes:
-
-- **Registry oficial Vectora** — cache local em
-  `~/.vectora/mcp-registry/index.json`, sincronizado sob demanda
-  (`vectora mcp sync`). A fonte remota é servida pelo endpoint
-  `GET /registry/mcp` do worker `services` (`services/src/registry/routes.ts`)
-  — hoje um placeholder que devolve lista vazia; o cliente já sabe cair
-  para o índice local quando o remoto está vazio. Amadurecer esse
-  endpoint (proxy real para o registro oficial do MCP e/ou
-  `awesome-mcp-servers`) é trabalho futuro dentro do mesmo worker —
-  não exige um serviço novo.
-- **Registry custom por empresa** — qualquer organização pode hospedar o
-  próprio índice (`vectora mcp registry add https://mcps.empresa.com/registry.json`)
-  seguindo o mesmo schema, para MCPs internos sem expor publicamente.
-
-Cada entrada do registry inclui `id`, `transport`, `install_command`,
-`tools` expostas, `permissions` default, `signature`, `vectora_verified`,
-`community_score` e `last_updated`.
-
-### 3.5 Submissão e curadoria
-
-1. PR no repositório público do registry adicionando a entrada.
-2. Review automático (CI valida schema, roda testes do server).
-3. Review manual de segurança.
-4. Aprovado → entra como community-listed (`vectora_verified: false`).
-5. Após instalações suficientes sem incidente de segurança em uma
-   janela de tempo → promovido a `vectora_verified: true`.
-
-### 3.6 Badges de confiança
-
-| Badge               | Significa                                            |
-| ------------------- | ---------------------------------------------------- |
-| Verified by Vectora | Vectora revisou código/binários e assinou o manifest |
-| Signed by publisher | Manifest assinado por GPG de organização verificada  |
-| Community-listed    | No registry, sem review formal                       |
-| Unsigned            | Sem assinatura — atenção ao instalar                 |
-| Runs in sandbox     | Server stdio roda isolado                            |
-
-CVE crítico em MCP instalado desabilita o server automaticamente até o
-usuário revisar, com update sugerido em um clique.
-
-### 3.7 Migração de outras ferramentas
-
-Importador (`vectora mcp import --from claude-code`) lê a config
-existente e instala equivalentes do registry, sinalizando o que não foi
-encontrado ou está depreciado.
+- **CLI** (`vectora mcp list/search/add/remove/enable/disable`) — hoje só
+  REST via SPA.
+- **Sandbox por padrão** para `stdio` não-verificado (bubblewrap/Linux,
+  sandbox-exec/macOS, AppContainer/Windows).
+- **Assinatura de manifesto** e badges de confiança na UI (`Verified by
+Vectora`, `Signed by publisher`, `Community-listed`, `Unsigned`).
+- **Scopes** (`user`/`workspace`/`project`) — hoje só existe isolamento por
+  usuário (`~/.vectora/mcp/<user_id>.json`), sem workspace/project.
+- **Registry custom por empresa** (`vectora mcp registry add <url>`) — não
+  implementado; hoje só as três fontes fixas de §3.2.
+- **Importador de outras ferramentas** (`vectora mcp import --from
+claude-code`) — não implementado.
 
 ---
 
-## 4. Biblioteca de skills
+## 4. Skills: estado real e o que falta
 
-### 4.1 Formato `.skill.md`
+### 4.1 O que já existe
 
-Vectora adota o formato de Skills da spec Deep Agents (Anthropic), com
-extensões mínimas. Uma skill é um único Markdown com frontmatter:
+Skills são reais e usadas em produção — `backend/workspace/skills.py` +
+`backend/api/handlers/skills.py`:
+
+- Instalação por **URL git** (`git clone --depth 1`) ou **path local**
+  (cópia recursiva), uma pasta por skill em
+  `~/.vectora/skills/<user_id>/<skill_id>/`, indexada em `index.json`.
+- Validação mínima: a raiz precisa ter `SKILL.md` com frontmatter
+  declarando `name` e `description` — sem isso a instalação é rejeitada.
+  **Não há** validação de `version`/`tags`/`required_tools`/`tier_min`/
+  `license`/`signature` — esses campos, descritos abaixo em §4.3 como
+  formato-alvo, ainda não são impostos pelo instalador real.
+  `list_skill_paths(user_id)` alimenta o resolver de skills do
+  `agent_factory`.
+- `install_skill_from_content` instala skills geradas em memória pelo loop
+  de aprendizado do agente (sem passar por git/cópia).
+- `POST /skills/publish` publica uma skill (sempre por URL git, nunca
+  upload de blob) no catálogo remoto com `verified=0`, curadoria manual
+  via `PATCH /registry/admin/skills/:id/verify`.
+- `GET /skills/catalog` lê o catálogo remoto (D1, `skills_catalog`) — sem
+  fallback hardcoded local: catálogo vazio é estado válido, não erro.
+
+### 4.2 Registry: curadoria + auto-discovery
+
+Igual a MCP, o catálogo de skills combina seed curado (PR manual,
+`catalog_source='curated'`) com um cron de auto-discovery
+(`discovery.ts::discoverSkills`) que busca repositórios GitHub públicos
+contendo `SKILL.md` via code search — habilitado só quando `GITHUB_TOKEN`
+está configurado no worker; sem ele, essa metade do discovery fica
+desligada, sem erro. Skills.sh (cogitado inicialmente como terceira fonte)
+foi descartado: exige `VERCEL_OIDC_TOKEN` só emitido dentro do runtime de
+deploy da própria Vercel, inacessível a um Worker de terceiro (sem
+alternativa de API key documentada até a data desta revisão).
+
+Existe também um **catálogo well-known local** (`list_wellknown_catalog`,
+`~/.vectora/skills-wellknown/` ou `VECTORA_SKILLS_WELLKNOWN_DIR`) — segunda
+fonte de discovery sem rede, mesmo layout de uma skill instalada.
+
+### 4.3 Formato-alvo (roadmap, não imposto hoje)
+
+O formato `.skill.md` rico abaixo é o alvo de médio prazo — hoje só
+`name`/`description` são obrigatórios e verificados pelo instalador real:
 
 ```markdown
 ---
@@ -361,206 +341,140 @@ description: Gera Product Requirements Document com contexto via RAG
 author: vectora-official
 tags: [product, pm, document, rag]
 required_tools: [rag_search, docx_generate, workspace_read]
-required_extensions: [] # extensões .vext opcionais, com fallback se ausentes
 tier_min: pro
 license: proprietary
 signature: gpg:0x1234ABCD
 ---
-
-## Quando usar
-
-...
-
-## Como executar
-
-...
-
-## Exemplos de prompts
-
-...
 ```
 
-Campos obrigatórios: `id`, `name`, `version` (semver), `description`,
-`author`, `tags`, `required_tools`. Opcionais notáveis: `requires_skills`
-(composição — uma skill orquestrando outras), `tier_min`, `hitl_required`,
-`cost_estimate`.
+Campos adicionais previstos: `requires_skills` (composição — uma skill
+orquestrando outras), `hitl_required`, `cost_estimate`.
 
-### 4.2 CLI e scopes
+### 4.4 O que falta construir
 
-```bash
-vectora skills list / search <termo> / inspect <skill>
-vectora skills install <skill>[@versão] [--scope user|workspace|project]
-vectora skills install <url> | git+<repo>
-vectora skills update [--all] / remove
-vectora skills create <nome> / validate <arquivo> / test <arquivo>
-vectora skills build . / sign . / publish . [--registry <url>]
-```
-
-Scopes idênticos ao de MCP e extensões: `user` → `workspace` → `project`
-→ `runtime` (efêmero, só na sessão), mais específico vence em conflito de
-`id`.
-
-### 4.3 Composição e dependências
-
-Skills podem requerer outras skills (`requires_skills`), formando
-meta-workflows sem duplicar lógica (ex.: uma skill de "lançamento de
-feature" orquestrando PRD + release notes + post + email). O install
-resolve a árvore de dependências — de skills, tools nativas e, quando
-aplicável, extensões `.vext` — e pergunta antes de instalar o que falta.
-
-### 4.4 Versionamento
-
-Semver estrito. Auto-update é opt-in por skill: PATCH aplica sem
-confirmação, MINOR notifica antes de aplicar, MAJOR nunca é automático.
-Pinning via `.vectora/skills.lock.json` garante reprodutibilidade entre
-membros de um time.
-
-### 4.5 Trust model
-
-Mesmo espectro de badges do registry de MCP (§3.6): Verified by Vectora
-(oficiais, assinadas, revisadas), Signed (community com assinatura GPG
-verificada), Community-listed (sem review formal), e skills locais
-(criadas pelo próprio usuário/empresa, sem badge, sem necessidade de
-publicar). Instalar skill não-assinada exibe aviso explícito, já que
-skills executam prompts arbitrários no agente.
-
-### 4.6 Skills oficiais de lançamento
-
-Conjunto inicial cobrindo Engineering (code review, ADR, RFC, release
-notes, commit message, PR description), Product (PRD, síntese de
-pesquisa, RICE, checklist de release), Documentation, Data e Compliance
-— cada uma assinada, testada e documentada, definindo o padrão de
-qualidade esperado da comunidade.
-
-### 4.7 Pricing
-
-Free por padrão — skills da comunidade e oficiais fazem parte do
-ecossistema sem custo. Programa de skills pagas fica como possibilidade
-futura (revenue-share com o publicador), reservado a casos de manutenção
-contínua especializada; não é prioridade de lançamento.
+- **CLI** (`vectora skills list/search/install/update/remove/create/
+validate/test/build/sign/publish`) — hoje só REST.
+- **Versionamento real** — o instalador atual não lê `version` do
+  frontmatter nem impõe semver; não há `.vectora/skills.lock.json`.
+- **Scopes** (`user`/`workspace`/`project`/`runtime`) — hoje só isolamento
+  por usuário.
+- **Composição** (`requires_skills`) — não resolvido pelo instalador.
+- **Trust model completo** (badges, aviso de skill não-assinada antes de
+  instalar) — hoje `verified` é só um bit no catálogo remoto, sem exibição
+  de badge nem assinatura GPG verificada.
+- **Conjunto de skills oficiais de lançamento** (code review, ADR, RFC,
+  PRD, etc.) — nenhuma seed oficial existe ainda no catálogo curado.
 
 ---
 
-## 5. Infraestrutura compartilhada: registry e marketplace
+## 5. Infraestrutura compartilhada: "um registry, três catálogos"
 
-MCP e skills descrevem, cada um isoladamente, um "marketplace" quase
-idêntico: sidebar de descoberta, cards com badge de confiança, CLI com
-`list/search/install/remove`, scopes `user`/`workspace`/`project`,
-registry oficial + registry custom por empresa, mesmo fluxo de submissão
-via PR. Extensões `.vext` propõem reaproveitar esse mesmo modelo em vez
-de inventar um terceiro.
+O desenho de registry único **já é real para dois dos três catálogos**:
+`services/src/registry/routes.ts` serve `mcp` e `skills` como recursos
+irmãos do mesmo Worker Hono, sobre as mesmas tabelas D1
+(`mcp_catalog`/`skills_catalog`, `services/migrations/0001_schema.sql`),
+com o mesmo padrão de busca (`?q=`, `?category=`), o mesmo fluxo de
+curadoria (seed manual `catalog_source='curated'` + cron `scheduled()` em
+`discovery.ts` que nunca sobrescreve uma linha curada) e o mesmo mecanismo
+de publicação comunitária (URL git, `verified=0` até revisão de admin).
 
-Em vez de tratar como três marketplaces paralelos, o desenho é **um
-mecanismo de registry, três catálogos**:
+`GET /registry/extensions` continua um placeholder que devolve lista vazia
+— depende do SDK de autoria e do Extension Host de §2, nenhum dos dois
+existe ainda.
 
-- **Um schema de manifest comum** (id, versão, autor, permissões,
-  assinatura, badges de confiança, contagem de instalações) — só o
-  payload muda (`tools`/`transport` para MCP, `required_tools`/frontmatter
-  para skills, `contributes`/`entrypoints` para extensões).
-- **Um fluxo de submissão/curadoria comum**: PR → review automático de
-  schema → review de segurança → community-listed → verified após
-  instalações sem incidente.
-- **Um conjunto de scopes e precedência comum**: `project` > `workspace`
-  > `user` (e `runtime` para skills efêmeras).
-- **Uma única superfície de registry remoto**: o endpoint do worker
-  `services` (hoje só `GET /registry/mcp`, retornando lista vazia) é o
-  lugar natural para os três catálogos crescerem — `mcp`, `skills` e
-  `extensions` como recursos irmãos do mesmo registry, não três workers
-  diferentes. Isso mantém a promessa de "backend pequeno" do Vectora:
-  um Cloudflare Worker servindo índices versionados, não uma plataforma
-  de marketplace própria.
-- **Uma CLI com um padrão só**: `vectora mcp`, `vectora skills` e
-  `vectora ext` compartilham verbos (`list`, `search`, `install`,
-  `remove`, `enable`/`disable`, `registry add/list/remove`) para que
-  aprender um signifique aprender os três.
+O que o design original previa e ainda não existe:
 
-Onde os três catálogos genuinamente divergem, mantêm-se separados: MCP
-não tem UI nem tools Python nativas (é sempre processo externo via
-protocolo); skills não empacotam UI nem lógica nova, só compõem o que já
-existe; extensões são o único mecanismo que empacota UI e lógica de
-backend juntas. A tabela de §1 continua sendo a referência para essa
-diferença de escopo.
+- **CLI unificada** (`vectora mcp`/`vectora skills`/`vectora ext`
+  compartilhando verbos) — hoje cada catálogo só tem REST.
+- **Scopes `project` > `workspace` > `user`** — hoje ambos os catálogos só
+  isolam por usuário, sem workspace/project.
+- **Registry custom por empresa** — não implementado para nenhum dos dois
+  catálogos.
+- **Badges de confiança na UI** — o dado (`vectora_verified`/`verified`)
+  já existe nas duas tabelas D1; falta a superfície visual.
+
+Onde os catálogos genuinamente divergem, permanecem separados: MCP nunca
+empacota UI nem tools Python nativas (processo externo via protocolo);
+skills nunca empacotam UI nem lógica nova, só compõem o que já existe;
+extensões seriam o único mecanismo a empacotar UI e lógica de backend
+juntas — ver tabela de §1.
 
 ---
 
-## 6. Modalidades de IA (voz, imagem)
+## 6. Modalidades de IA (imagem, voz, vídeo)
 
-### 6.1 Escopo
+### 6.1 O que já está em produção
 
-Expandir o conjunto de modalidades de IA do produto de três (LLM chat/
-code, embedding, reranker) para seis, adicionando **TTS** (texto → voz),
-**STT** (voz → texto) e **geração/edição de imagem**. Diferente dos três
-mecanismos anteriores, isso não é uma superfície de extensão de
-terceiros — é capability nova do próprio core, depois exposta como tools
-que qualquer skill, extensão ou cliente MCP pode chamar.
+Diferente do resto deste documento, esta frente **já shippa**:
+`backend/tools/media.py` expõe `generate_image`, `text_to_speech`,
+`generate_video` e `analyze_video` como tools nativas normais (mesmo
+`@vtool`/`TOOL_REGISTRY` de qualquer outra tool), reutilizando o **provider
+de chat já ativo na sessão** — não uma camada de abstração `Protocol`
+separada por modalidade. Regra central: a tool nunca troca de provider por
+conta própria; se o modelo ativo não suporta a modalidade
+(`provider_supports(provider, "image"|"tts")`), devolve erro explicando (ex.:
+"troque para Gemini/OpenAI, ou configure um modelo de imagem/voz nas
+Settings para Ollama/OpenRouter") em vez de chamar silenciosamente outro
+provider (e cobrar por uma API que o usuário não pediu).
 
-Posicionamento: isso não compete com produtos de transcrição de reunião
-(diarização em tempo real, modo stealth) — é modalidade de input/output
-do agente de produtividade. Geração de imagem cobre diagramas, mockups,
-ícones e redesenho rápido de fluxo, não "arte generativa" como produto
-à parte. Vídeo permanece fora de escopo (custo, latência e qualidade
-ainda não competitivos para UX de chat).
+Geração de vídeo (`generate_video`, Veo no Gemini) já existe, com polling
+assíncrono (intervalo 10s, teto 900s) e distinção explícita entre "falhou"
+e "não terminou a tempo" (`VideoGenerationTimeoutError` — o job pode seguir
+rodando e sendo cobrado no provider mesmo após o timeout local).
+`analyze_video` fecha o par gen+análise.
 
-### 6.2 Camada de abstração
+Saída: arquivo binário em `~/.vectora/artifacts/{session_id}/media/` — raiz
+irmã de `create_artifact`, mas em subpasta própria (mídia é binário
+imutável; regerar produz um arquivo novo, não uma versão do anterior via
+histórico de artifact).
 
-Toda modalidade nova passa por um Protocol abstrato
-(`ImageGenerator`, `Transcriber`, `Synthesizer`) com factories que
-resolvem o provider por usuário/tier — mesmo padrão já usado para LLM,
-para que trocar de provider seja mudança de config, nunca de código:
+### 6.2 Gaps reais frente ao produto acabado
 
-```python
-class ImageGenerator(Protocol):
-    async def generate(self, prompt: str, *, size, n, reference_images=None, style_hint=None) -> list[GeneratedImage]: ...
-    async def edit(self, source: bytes, prompt: str, *, mask=None) -> GeneratedImage: ...
+- **STT (fala → texto) não existe** — nenhuma tool `audio_transcribe`/
+  `speech_to_text` no repositório hoje. É o único buraco de modalidade
+  ainda não coberto.
+- **Render hints declarados não batem com o enum do frontend** —
+  `generate_image`/`text_to_speech` declaram `render_hint="image"`/`"audio"`
+  em `ToolExtras`, mas `frontend/lib/types/render.ts::RenderHint` só lista
+  `"image_preview"` (não `"image"`) e não tem nenhum valor `"audio"` — sem
+  ajuste em um dos dois lados, essas tools caem no fallback genérico
+  (`json`) em vez de um preview de imagem/player de áudio dedicado.
+- **Sem entidade de asset persistida** — imagens/vídeos/áudios são hoje só
+  um path de arquivo devolvido em JSON, não um `asset_id` referenciável via
+  endpoint próprio; não há GC granular nem re-render barato sem embutir o
+  blob.
+- **Sem quota/HITL por custo dedicados** — a tool usa a chave/plano que já
+  está configurado para chat; não há teto mensal nem aprovação HITL
+  específica de custo de mídia.
+- **Sem exposição fora do chat** — não há comando CLI (`vectora media
+gen-image|transcribe|speak`) nem tool exposta a clientes MCP externos
+  especificamente para mídia (hoje só acessível de dentro de uma conversa
+  do próprio Vectora).
 
-class Transcriber(Protocol):
-    async def transcribe(self, audio: bytes, *, language=None, timestamps=False, diarization=False) -> Transcript: ...
+### 6.3 Roadmap: fechar os gaps, não redesenhar do zero
 
-class Synthesizer(Protocol):
-    async def synthesize(self, text: str, *, voice, language=None, speed=1.0, ssml=False) -> AsyncIterator[bytes]: ...
-```
+Como a capability central já existe, o trabalho restante é infraestrutura
+ao redor, não a modalidade em si:
 
-### 6.3 Tools novas
+1. **STT** — nova tool `audio_transcribe`, mesmo padrão de
+   `provider_supports`/erro explícito de `media.py`.
+2. **Alinhar render hints** — decidir se o enum do frontend ganha
+   `"image"`/`"audio"` como aliases de `"image_preview"`/um novo tipo
+   `"audio_player"`, ou se as tools passam a declarar os hints que já
+   existem no enum.
+3. **Assets como entidades persistidas** — `asset_id` + `GET /assets/{id}`,
+   pra thread sharing sem embutir blob e GC granular.
+4. **Quotas por tier + HITL por custo** — cota mensal Free (local, sem
+   custo) vs. Pro (cota generosa), BYOK bypassa a cota (mesmo modelo já
+   aplicado ao LLM de chat).
+5. **Exposição via CLI e MCP always-on** — `vectora media ...` e a mesma
+   tool disponível a clientes MCP externos, sujeita às mesmas quotas.
 
-`image_generate`, `image_edit`, `audio_transcribe`, `audio_synthesize` —
-registradas como tools normais (render hints `image_preview`,
-`image_grid`, `audio_player`, `transcript`), respeitando `tool_policy` e
-HITL por custo estimado (billing-destructive, não filesystem-destructive).
-Um node leve de classificação de intenção (`media_intent`) roteia pedidos
-em linguagem natural ("cria uma imagem de...", "transcreve isso") para a
-tool certa sem o usuário precisar saber qual tool chamar.
-
-### 6.4 Assets como entidades persistidas
-
-Imagens, áudios e transcrições gerados não viajam como blob embutido em
-mensagem — viram `asset_id` referenciado, resolvido via endpoint próprio
-(`GET /assets/{id}`). Isso mantém re-render barato, permite compartilhar
-thread sem embutir o blob, e possibilita GC granular por asset.
-
-### 6.5 Quotas, custo e BYOK
-
-Cada modalidade nova tem quota mensal por tier (Free local não paga
-nada; Pro tem cota generosa) e HITL automático acima de um limiar de
-custo configurável. Usuário com chave própria (BYOK) de provider
-bypassa a quota — mesmo modelo já aplicado a LLM de chat hoje.
-
-### 6.6 UI e captura
-
-Componentes novos no chat: preview de imagem com regenerar/editar/
-baixar, grid para múltiplas imagens, player de áudio com waveform e
-controle de velocidade, visualização de transcript com diarização
-opcional. Captura de voz evolui do hook atual baseado em Web Speech API
-(sem cobertura em todos os browsers) para um fallback via
-`MediaRecorder` + endpoint de transcrição remoto, com indicação visível
-de qual provider está ativo.
-
-### 6.7 Exposição fora do chat
-
-As mesmas tools ficam expostas via MCP (`/mcp`, sempre-ativo) e via CLI
-(`vectora media gen-image|transcribe|speak|quota`), para que agentes
-externos (Claude Code, outros clientes MCP) possam delegar geração de
-mídia ao Vectora quando não tiverem capability própria — sujeito às
-mesmas quotas do token configurado.
+Posicionamento (mantido do desenho original): isto não compete com
+produtos de transcrição de reunião (diarização em tempo real, modo
+stealth) — é modalidade de input/output do agente de produtividade.
+Geração de imagem/vídeo cobre diagramas, mockups, ícones e redesenho
+rápido de fluxo, não "arte generativa" como produto à parte.
 
 ---
 
@@ -568,26 +482,30 @@ mesmas quotas do token configurado.
 
 1. **Escada de escopo, não mecanismos concorrentes.** Skill → MCP →
    extensão `.vext` é um continuum de "só comportamento" até "produto
-   completo empacotado". Cada um cobre o nível de esforço certo para o
-   problema certo.
-2. **Um registry, três catálogos.** MCP, skills e extensões compartilham
-   schema de manifest, fluxo de curadoria, scopes e verbos de CLI — a
-   infraestrutura de descoberta/instalação não se triplica.
+   completo empacotado". Os dois primeiros degraus já existem em código; o
+   terceiro é só design.
+2. **Um registry, três catálogos — dois já reais.** MCP e skills já
+   compartilham Worker, schema D1, fluxo de curadoria e verbos REST;
+   extensões entram no mesmo desenho quando o SDK existir.
 3. **`services` é o backend de todos os catálogos.** O Cloudflare Worker
-   que já serve auth/billing/license also serve os índices de
-   registry — nenhum catálogo justifica um serviço novo.
-4. **Sandbox e assinatura por padrão para código não-confiável.** Vale
-   igualmente para MCP stdio, extensões de terceiro e skills
-   não-assinadas.
+   que já serve auth/billing/license também serve os índices de MCP e
+   skills — nenhum catálogo justificou (ou justificará) um serviço novo.
+4. **Sandbox e assinatura por padrão para código não-confiável — ainda não
+   implementado para nenhum mecanismo.** MCP `stdio` roda sem isolamento
+   de processo hoje; skills não têm verificação de assinatura. É a maior
+   lacuna de segurança das duas frentes já em produção.
 5. **Core fechado, mecanismo de extensão aberto.** O produto continua
-   compilado (Nuitka); os SDKs de autoria e o formato `.vext` são open
-   source.
-6. **Modalidades de IA são capability do core, não plugin.** TTS/STT/
-   imagem entram como tools nativas atrás do mesmo Protocol de provider
-   já usado para LLM — depois disso, sim, ficam disponíveis para
-   qualquer skill/extensão/MCP client chamar.
+   compilado (Nuitka + PyInstaller); os SDKs de autoria e o formato
+   `.vext` seriam open source quando existirem.
+6. **Modalidades de IA são capability do core, não plugin — e já
+   parcialmente entregue.** Imagem, TTS e vídeo já são tools nativas atrás
+   do provider de chat ativo; falta STT e a infraestrutura de assets/quota
+   ao redor (§6.3).
 7. **Permissões explícitas, sempre.** Todo mecanismo (MCP, extensão,
-   modalidade com custo) declara o que precisa e o usuário aprova antes.
-8. **Nada disto é crítico para o lançamento.** As quatro frentes são
-   roadmap pós-lançamento — o produto local-first de hoje não depende
-   de nenhuma delas para funcionar.
+   modalidade com custo) declara o que precisa; hoje isso vale para
+   `env_vars` de servidores MCP e para o aviso de provider incompatível em
+   mídia — falta estender pra consentimento explícito de permissões amplas
+   (filesystem/network) quando sandbox existir.
+8. **Nada disto é crítico para o lançamento.** As quatro frentes continuam
+   roadmap pós-lançamento — o produto local-first de hoje não depende de
+   nenhuma delas (nem das partes já implementadas) para funcionar.

@@ -121,10 +121,19 @@ produto atual evolui sob licença comercial.
 - **Agente com memória real.** RAG sobre código, docs, decisões e
   histórico de trabalho — não um assistente amnésico que esquece o
   projeto a cada mensagem.
-- **Motor de conversa nativo.** Orquestrador + subagentes especializados
-  (coder, search) via `run_conversation` (`backend/engine/
-conversation_loop.py`), com HITL nativo para ações destrutivas — não uma
-  rede neural própria fazendo roteamento.
+- **Motor de conversa nativo.** Orquestrador + catálogo dinâmico de 10
+  subagentes especializados (coder, search, reviewer, tester, devops,
+  writer-docs, data-analyst, security-auditor, browser-qa, planner) via
+  `run_conversation` (`backend/engine/conversation_loop.py`), com HITL
+  nativo para ações destrutivas — não uma rede neural própria fazendo
+  roteamento. O escopo de tools por subagente é enforcement real (bind de
+  function-calling do modelo), não sugestão de prompt: um subagente sem
+  `file_write` no catálogo não consegue escrever arquivo.
+- **Execução isolada por design.** Tools de terminal/código rodam atrás de
+  uma camada de sandbox com múltiplos backends conforme o SO/ambiente
+  disponível (Docker, Landlock, sandboxing nativo Linux/macOS/Windows, SSH
+  remoto, Modal, Singularity, modo dry-run) — não é "roda `subprocess` e
+  torce".
 - **Auditável.** Toda resposta cita fontes (`[1] [2]`). Toda tool call
   é registrada com input/output. Toda decisão de routing é rastreável.
 - **Multi-modal nativo.** LLM + embedding + reranker + STT + TTS +
@@ -163,18 +172,18 @@ Vectora **integra** com vários destes (via MCP ou plugins DLC), mas
 
 ### Frases que **não** devem ser usadas (anti-copy)
 
-| Frase ruim                             | Por que é ruim                                                            |
-| -------------------------------------- | ------------------------------------------------------------------------- |
-| "Construa apps com IA em minutos"      | É promessa de vibe coding — não somos isso                                |
-| "Substitua sua equipe de devs"         | Falso e antipático                                                        |
-| "IA mais poderosa do mercado"          | Subjetivo, indefensável, todo mundo diz                                   |
-| "Grátis para sempre"                   | Impreciso — Free é local e permanente, mas Pro é pago; ser preciso        |
-| "Mais barato que ChatGPT Plus"         | Comparação errada — público diferente                                     |
-| "Funciona sem configuração"            | Falso — exige instalar, configurar API keys, indexar workspaces           |
-| "Tudo que ChatGPT faz, mas privado"    | Reduz Vectora a "ChatGPT local", ignora RAG/MCP/agentes                   |
-| "Compatível com qualquer LLM"          | Vago e meio-verdade — só Gemini/OpenAI/Anthropic/Cohere/Ollama            |
-| "Crie um SaaS completo com 1 prompt"   | Vibe coding outra vez                                                     |
-| "Vectora Cloud" / "rodamos seu agente" | Não existe mais essa oferta — Vectora não hospeda instâncias de terceiros |
+| Frase ruim                             | Por que é ruim                                                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| "Construa apps com IA em minutos"      | É promessa de vibe coding — não somos isso                                                                            |
+| "Substitua sua equipe de devs"         | Falso e antipático                                                                                                    |
+| "IA mais poderosa do mercado"          | Subjetivo, indefensável, todo mundo diz                                                                               |
+| "Grátis para sempre"                   | Impreciso — Free é local e permanente, mas Pro é pago; ser preciso                                                    |
+| "Mais barato que ChatGPT Plus"         | Comparação errada — público diferente                                                                                 |
+| "Funciona sem configuração"            | Falso — exige instalar, configurar API keys, indexar workspaces                                                       |
+| "Tudo que ChatGPT faz, mas privado"    | Reduz Vectora a "ChatGPT local", ignora RAG/MCP/agentes                                                               |
+| "Compatível com qualquer LLM"          | Vago e meio-verdade — providers suportados hoje: OpenAI, Anthropic, Google/Gemini, Cohere, Ollama, OpenRouter, Voyage |
+| "Crie um SaaS completo com 1 prompt"   | Vibe coding outra vez                                                                                                 |
+| "Vectora Cloud" / "rodamos seu agente" | Não existe mais essa oferta — Vectora não hospeda instâncias de terceiros                                             |
 
 ### Checklist de coerência
 
@@ -195,6 +204,9 @@ Toda peça pública (site, README, post, deck, vídeo) deve passar por:
 - [ ] Nenhuma referência ao Vectora expondo servidor MCP ou API REST
       pública para terceiros — removidos (0.1.11); Vectora só consome
       MCP (client), nunca expõe a si mesmo como servidor MCP
+- [ ] Persona packs (manifest, marketplace, CLI `vectora personas`) só
+      aparecem marcados como roadmap/visão — não existem no código hoje
+      (ver seção Personas)
 
 Mudança de posicionamento (pivô de público, lançamento de produto
 Tier 3, concorrente novo relevante) exige atualização deste doc com
@@ -581,7 +593,7 @@ Oportunidades de diferenciação:
    `/v1` removida antes do lançamento (sem auth real, sem SDKs, sem
    tração); se voltar a fazer sentido estratégico, nasce com
    autenticação de verdade desde o design, não como meio-caminho
-6. Seis modalidades de IA nativas (LLM+embedding+rerank+TTS+STT+imagem)
+6. Sete modalidades de IA nativas (LLM+embedding+rerank+TTS+STT+imagem+vídeo)
    → ninguém combina; ver `extensibility-roadmap.md`
 7. Instalação modular via packs Nuitka — ninguém faz, binário pesado
    sem opção slim → `agent-core-roadmap.md`
@@ -599,11 +611,11 @@ Oportunidades de diferenciação:
 | MCP client (consumir)                                |      ✅       |     ✅      | Plan.  |  ❌   |  Plan.   |   ❌    |   ❌    |   ❌    |
 | MCP/Skills/Memory Library (UI, publish+verify+busca) |      ✅       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | REST API pública `/v1` p/ terceiros                  | ❌ (removida) |    Parc.    |   ❌   |  ❌   |    ❌    |   ✅    |   ❌    |   ❌    |
-| Webhooks                                             |      🔄       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Webhooks                                             |      ✅       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | Desktop app assinado                                 |      ✅       |     ❌      |   ✅   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | VSIX (VS Code extension)                             |      🔄       |     ❌      |  N/A   |  ❌   |    ✅    |   ✅    |   ❌    |   ✅    |
-| Áudio nativo (STT + TTS)                             |      🔄       |     ❌      |   ❌   | Parc. |    ❌    |   ❌    |   ❌    |   ❌    |
-| Geração de imagens                                   |      🔄       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
+| Áudio nativo (STT + TTS)                             |      ✅       |     ❌      |   ❌   | Parc. |    ❌    |   ❌    |   ❌    |   ❌    |
+| Geração/análise de imagem e vídeo                    |      ✅       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | Persona packs (não-devs)                             |      🔄       |     ❌      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | Hooks (pre/post tool)                                |      🔄       |     ✅      |   ❌   |  ❌   |    ❌    |   ❌    |   ❌    |   ❌    |
 | Plan mode explícito                                  |      🔄       |     ✅      |   ❌   | Parc. |    ❌    |   ❌    |   ✅    |   ❌    |
@@ -758,9 +770,21 @@ meses) — não é foco do primeiro ano.
   voice documentada + histórico de campanhas indexado + integração com
   analytics; sem RAG, é overkill.
 
-### Como funciona um persona pack
+### Como um persona pack **vai** funcionar (visão — não implementado hoje)
 
-Cada persona pack é um diretório no formato Skills do Vectora:
+> **Status real:** persona packs como produto empacotado (manifest,
+> marketplace, CLI de lifecycle) **não existem no código hoje**. O que
+> existe é o parente técnico mais próximo — **Agent Profiles**
+> (`backend/services/agent_profiles.py`): presets reutilizáveis de
+> instrução/escopo de tools/modelo que uma task do Kanban referencia em
+> vez de rodar com a personalidade genérica do orquestrador. É a mesma
+> ideia de "personalização sobre o core", mas hoje serve delegação
+> interna de tarefas, não onboarding de PM/Marketing/Design. A visão
+> abaixo é roadmap, não capability atual — tratar como tal em qualquer
+> peça de venda.
+
+Formato-alvo (a validar contra `backend/vtypes/skill.py`, já usado para
+Skills reais, quando a implementação começar):
 
 ```
 ~/.vectora/personas/<persona-slug>/
@@ -772,18 +796,20 @@ Cada persona pack é um diretório no formato Skills do Vectora:
 └── kb/                    # KB embedada na instalação (opcional)
 ```
 
-Lifecycle via CLI: `vectora personas list / install / activate /
-deactivate / remove`. O header do chat web mostra a persona ativa com
-switch rápido via dropdown — trocar de persona não perde contexto da
-conversa, só muda comportamento e sistema do agente.
+Lifecycle alvo via CLI (`vectora personas list / install / activate /
+deactivate / remove`) e switch rápido no header do chat web sem perder
+contexto de conversa — nenhum dos dois existe ainda.
 
-Distribuição em três camadas: **first-party** (mantidos pela Vectora
-Company, marketplace `vectora.company/personas`), **community**
+Distribuição em três camadas planejadas: **first-party** (mantidos pela
+Vectora Company, marketplace `vectora.company/personas`), **community**
 (qualquer um publica, mesma estrutura Skills, sem certificação), e
-**internal** (empresa cria packs próprios para cargos específicos via
-registry custom).
+**internal** (empresa cria packs próprios via registry custom).
 
-### Catálogo de persona packs
+### Catálogo de persona packs (planejado)
+
+Catálogo-alvo e pricing-alvo abaixo — nenhum pack está implementado ou à
+venda hoje; servem para orientar priorização quando a implementação
+começar, não para copy de venda atual.
 
 | Pack                    | Para quem                                           | Exemplo de uso                                                                            |
 | ----------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -802,7 +828,7 @@ Cada pack define tools necessárias, skills, slash commands e recipes
 (workflows multi-step) próprios — detalhamento técnico completo por
 pack vive no backlog de produto, não neste documento de mercado.
 
-### Pricing dos persona packs
+### Pricing dos persona packs (planejado, não à venda hoje)
 
 | Pack                                       | Preço        | Tipo              |
 | ------------------------------------------ | ------------ | ----------------- |
@@ -852,7 +878,8 @@ Vectora Company.
 > arquitetura toda semana. Vectora lembra — porque você indexou no
 > RAG. E roda na sua infra, então pode ler todo o código sem medo."_
 
-**CTO de PME tech:**
+**CTO de PME tech (frase-alvo — VSIX e persona pack são roadmap, não
+disponíveis hoje; hoje o acesso multi-pessoa real é via chat web/CLI):**
 
 > _"Local-first comercial. Sem markup de tokens. Mesmo agente atende
 > seus devs (via VSIX/chat), seu PM (via persona pack), e o resto do
@@ -865,7 +892,8 @@ Vectora Company.
 > APIs que escolheu. Auditoria de código sob NDA. Suporte para
 > on-premise air-gapped no plano Enterprise."_
 
-**Usuário não-técnico do mesmo time:**
+**Usuário não-técnico do mesmo time (frase-alvo — persona packs ainda não
+existem; hoje o mesmo resultado depende de configurar o agente na mão):**
 
 > _"O Vectora já está rodando no servidor da sua empresa. Você instala
 > a persona pack 'marketing' (ou 'design', 'pm', 'sales') e ganha um
@@ -896,38 +924,48 @@ que torna esse workspace útil desde o primeiro dia.
 
 Vectora não é um único modelo respondendo perguntas — é um sistema de
 agentes especializados orquestrados pelo motor nativo (`run_conversation`,
-`backend/engine/conversation_loop.py`):
+`backend/engine/conversation_loop.py`). O orquestrador delega para um
+**catálogo de 10 subagentes** (`SOUL_CATALOG`, `backend/agents/souls.py`),
+cada um com escopo de tools restrito de verdade (bind de function-calling,
+não instrução de prompt):
 
-- **Vectora Agent (orquestrador)** — recebe a tarefa, decide qual
-  subagente acionar, consolida respostas. Ponto de entrada único para
-  o usuário.
-- **Vectora RAG Agent** — indexa qualquer base (docs, código, wikis,
-  PDFs) e responde com contexto real do projeto. Nenhum concorrente
-  direto tem sub-agente dedicado a isso.
-- **Vectora Search Agent** — relevância e apresentação: filtra ruído,
-  reordena por relevância, entrega no formato útil (busca web →
-  curadoria via reranker + LLM judge → injeção no contexto).
-- **Vectora Coder Agent** — escreve, revisa e refatora código com
-  entendimento do padrão do projeto. Suporta git workflows completos,
-  worktrees, terminal integrado.
-- **Vectora Media Agent (roadmap)** — quando o volume de operações de
-  mídia justificar um sub-agente dedicado; hoje as tools de mídia vivem
-  no orchestrator.
+- **coder** — filesystem, git e terminal irrestritos, RAG e browser; roda
+  em worktree git isolada. Escreve, revisa e refatora código com
+  entendimento do padrão do projeto.
+- **search** — busca web (Tavily) + RAG; sem filesystem/terminal.
+- **reviewer** — lê diffs e histórico git, nunca escreve; opina sobre
+  risco antes do merge.
+- **tester** — escreve e roda testes (caminho feliz + par de erro/edge
+  case), reporta saída real da suíte.
+- **devops** — Dockerfiles, CI/CD, scripts de build/deploy; roda em
+  worktree isolada.
+- **writer-docs** — README, guias, changelog; filesystem sem terminal/git.
+- **data-analyst** — explora CSV/JSON/logs e base RAG, roda scripts via
+  terminal, nunca edita código de produção.
+- **security-auditor** — audita vulnerabilidades (injection, auth bypass,
+  secret leakage, OWASP Top 10) só em modo leitura.
+- **browser-qa** — verifica UI de verdade dirigindo o browser (navegar,
+  clicar, ler console/network, screenshot) em vez de assumir pelo código.
+- **planner** — só pesquisa e escreve plano; nunca executa.
+
+Nenhum concorrente direto tem catálogo de subagente dinâmico com
+enforcement de tools por papel nesse nível — a maioria oferece um único
+modelo genérico ou, no máximo, um split fixo tipo "architect/coder".
 
 Pipeline de RAG completo (ingestão → expansão de query → busca híbrida
 dense+esparsa → score gate → reranking ou busca web com curadoria →
 síntese com citações verificáveis `[1][2]`) — nenhum resultado chega ao
 LLM sem passar pelo filtro de relevância.
 
-### Seis modalidades de IA, sem lock-in
+### Sete modalidades de IA, sem lock-in
 
 LLM chat/code, LLM multilingual (Cohere Aya), embedding, reranker, STT,
-TTS e geração de imagem — cada categoria com provider escolhido por
-mérito (Gemini como canivete suíço multimodal, Cohere como backbone do
-RAG, OpenAI/Anthropic como opcionais premium), tudo sob protocolo
-abstrato: trocar provider é mudança de config. Geração de vídeo fica
-fora de escopo por ora (custo 20–100× maior, latência inviável para UX
-de chat).
+TTS, geração de imagem e **geração/análise de vídeo** (Gemini Veo ou
+OpenRouter, com polling assíncrono e teto de timeout) — cada categoria
+com provider escolhido por mérito (Gemini como canivete suíço
+multimodal, Cohere como backbone do RAG, OpenAI/Anthropic/OpenRouter/
+Voyage como alternativas), tudo sob protocolo abstrato: trocar provider
+é mudança de config, não de código (`backend/llm/<provider>/`).
 
 ### Três modos de uso (mesmo binário)
 
@@ -1005,8 +1043,8 @@ proposta.
 | Webhooks                                   |         ✅          |     ❌      |     ❌     |       ❌        |     ❌     |   ❌    |
 | App desktop nativo assinado                |         ✅          |     ❌      |     ❌     |       ❌        |     ❌     |   ✅    |
 | Auto-update                                |         ✅          |     n/a     |   manual   |       n/a       |   manual   |   ✅    |
-| Áudio (STT + TTS)                          |      🔄 em dev      |     ❌      |     ❌     |       ❌        |     ❌     |   ❌    |
-| Geração de imagens                         |      🔄 em dev      |     ❌      |     ❌     |       ❌        |     ❌     |   ❌    |
+| Áudio (STT + TTS)                          |         ✅          |     ❌      |     ❌     |       ❌        |     ❌     |   ❌    |
+| Geração/análise de imagem e vídeo          |         ✅          |     ❌      |     ❌     |       ❌        |     ❌     |   ❌    |
 | Custo                                      |      $0–20/mês      | $20–200/mês |   Grátis   | Inclus. ChatGPT |   Grátis   | $20/mês |
 | Suporte direto do fundador                 | ✅ (WhatsApp/email) |     ❌      | comunidade |       ❌        | comunidade |   ❌    |
 
