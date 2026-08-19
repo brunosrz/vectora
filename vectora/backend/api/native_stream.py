@@ -174,6 +174,8 @@ def stream_engine_events(
         accumulated_partial_content = ""
         last_kv_flush = 0.0
 
+        disconnected = False
+
         try:
             while True:
                 wait_set: set[asyncio.Task[Any]] = {next_task, term_task}
@@ -211,6 +213,7 @@ def stream_engine_events(
                         background_tasks.add(remainder)
                         remainder.add_done_callback(background_tasks.discard)
                         term_task.cancel()
+                        disconnected = True
                         break
                     else:
                         disconnect_task.cancel()
@@ -302,10 +305,14 @@ def stream_engine_events(
                 term_task.cancel()
                 with contextlib.suppress(BaseException):
                     await term_task
-            if not run_task.done():
+            if not run_task.done() and not disconnected:
                 # Só alcançável se o loop saiu por outro caminho que não o
-                # sentinel (ex.: exceção no próprio bridge) — defensivo,
-                # `_runner` sempre injeta o sentinel no `finally` dele.
+                # sentinel nem a desconexão do cliente (ex.: exceção no
+                # próprio bridge) — defensivo, `_runner` sempre injeta o
+                # sentinel no `finally` dele. Numa desconexão, `run_task`
+                # segue rodando de propósito (drenado em background por
+                # `_consume_remainder`) — a sessão continua gerando a
+                # resposta mesmo sem cliente conectado.
                 run_task.cancel()
                 with contextlib.suppress(BaseException):
                     await run_task

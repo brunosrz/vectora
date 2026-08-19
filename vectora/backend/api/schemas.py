@@ -296,7 +296,7 @@ class GenerateTitleResponse(BaseModel):
 
 class ThreadEvent(BaseModel):
     thread_id: str
-    # Workspace resolvido pra essa sessão — populado por adapt_stream a partir
+    # Workspace resolvido pra essa sessão — populado por stream_engine_events a partir
     # do workspace_id já calculado em stream_chat. Frontend usa isso pra
     # sincronizar o seletor de workspace quando um novo workspace é criado
     # (create_new_workspace=True em ChatConfig), já que hoje esse id nunca

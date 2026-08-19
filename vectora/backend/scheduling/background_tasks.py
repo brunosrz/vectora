@@ -634,7 +634,7 @@ async def record_subagent_delegation(
     """Registra uma chamada à tool ``task()`` como execução na aba Tarefas.
 
     Best-effort — falha aqui nunca deve derrubar o stream de chat que a
-    disparou (ver ``backend/api/adapters.py::adapt_stream``).
+    disparou (ver ``backend/api/native_stream.py::stream_engine_events``).
     """
     try:
         task = await _get_or_create_subagent_anchor(

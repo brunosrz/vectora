@@ -1,8 +1,8 @@
-"""`HITLEvent.pre_approved` dentro de `adapt_stream`.
+"""`HITLEvent.pre_approved` dentro de `stream_engine_events`.
 
-O ponto crítico: `pre_approved` é só uma anotação no evento SSE. O
-`__interrupt__` já fez o grafo pausar antes deste código rodar — nada aqui
-decide se a tool executa.
+O ponto crítico: `pre_approved` é só uma anotação no evento SSE. A pausa do
+motor nativo (`stopped_reason == "interrupted"`) já aconteceu antes deste
+código rodar — nada aqui decide se a tool executa.
 """
 
 from __future__ import annotations
@@ -12,7 +12,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from backend.api.adapters import adapt_stream
+from backend.api.native_stream import stream_engine_events
+from backend.engine.stream_events import HitlRequested
 
 
 def _parse(sse: str) -> dict:
@@ -20,22 +21,22 @@ def _parse(sse: str) -> dict:
     return json.loads(sse[len("data: ") :].strip())
 
 
-async def _agen(events):
-    for ev in events:
-        yield ev
+def _hitl_run(tool_name: str, args: dict):
+    """``run`` sintético: emite um único ``HitlRequested`` e pausa
+    (``stopped_reason="interrupted"``), como o motor nativo faria ao
+    encontrar uma tool que exige aprovação."""
 
+    async def run(on_event):
+        await on_event(
+            HitlRequested(
+                tool_name=tool_name,
+                args_json=json.dumps(args),
+                interrupt_id="i1",
+            )
+        )
+        return "interrupted"
 
-def _interrupt_event(tool_name: str, args: dict):
-    intr = type(
-        "Intr", (), {"value": [{"name": tool_name, "args": args, "id": "i1"}]}
-    )()
-    return {
-        "event": "on_chain_stream",
-        "name": "hitl_check",
-        "run_name": "hitl_check",
-        "metadata": {},
-        "data": {"chunk": {"__interrupt__": [intr]}},
-    }
+    return run
 
 
 @pytest.fixture(autouse=True)
@@ -48,10 +49,10 @@ async def test_pre_approved_reflete_o_avaliador(monkeypatch):
     async def _sempre_true(*_a, **_k):
         return True
 
-    monkeypatch.setattr("backend.api.adapters._pre_approved", _sempre_true)
+    monkeypatch.setattr("backend.api.native_stream._pre_approved", _sempre_true)
 
-    events = [_interrupt_event("terminal", {"command": "git status"})]
-    out = [_parse(s) async for s in adapt_stream(_agen(events), "tid")]
+    run = _hitl_run("terminal", {"command": "git status"})
+    out = [_parse(s) async for s in stream_engine_events(run, thread_id="tid")]
 
     hitl = next(e for e in out if e["type"] == "hitl")
     assert hitl["pre_approved"] is True
@@ -63,10 +64,10 @@ async def test_falha_no_avaliador_nao_derruba_o_stream(monkeypatch):
     (bug futuro) o stream ainda não pode quebrar por causa de uma anotação
     cosmética — HITL é a parte que importa."""
     quebrado = AsyncMock(side_effect=RuntimeError("boom"))
-    monkeypatch.setattr("backend.api.adapters._pre_approved", quebrado)
+    monkeypatch.setattr("backend.api.native_stream._pre_approved", quebrado)
 
-    events = [_interrupt_event("terminal", {"command": "git status"})]
-    out = [_parse(s) async for s in adapt_stream(_agen(events), "tid")]
+    run = _hitl_run("terminal", {"command": "git status"})
+    out = [_parse(s) async for s in stream_engine_events(run, thread_id="tid")]
 
     hitl = next(e for e in out if e["type"] == "hitl")
     assert hitl["pre_approved"] is False
@@ -74,10 +75,10 @@ async def test_falha_no_avaliador_nao_derruba_o_stream(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_pre_approved_nao_afeta_a_emissao_do_evento_hitl():
-    """Com ou sem pré-aprovação, o evento `hitl` sempre é emitido — o pause
-    já aconteceu no grafo antes disso."""
-    events = [_interrupt_event("file_write", {"path": "x.py"})]
-    out = [_parse(s) async for s in adapt_stream(_agen(events), "tid")]
+    """Com ou sem pré-aprovação, o evento `hitl` sempre é emitido — a pausa
+    já aconteceu no motor nativo antes disso."""
+    run = _hitl_run("file_write", {"path": "x.py"})
+    out = [_parse(s) async for s in stream_engine_events(run, thread_id="tid")]
 
     tipos = [e["type"] for e in out]
     assert "hitl" in tipos

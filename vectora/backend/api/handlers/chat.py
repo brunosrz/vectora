@@ -724,8 +724,9 @@ async def stream_chat(
     # é o usuário quem inicia a conversa, então a thread já é "real" (deve
     # aparecer em ListThreads e sobreviver a cleanup_empty_threads) a partir
     # daqui, mesmo que o assistente nunca chegue a responder (erro de auth/
-    # quota/timeout do provider). `adapt_stream()` (ver `content_started`)
-    # incrementa de novo no 1º token do assistente — o contador deixou de
+    # quota/timeout do provider). `stream_engine_events()` (ver
+    # `content_started`) incrementa de novo no 1º token do assistente — o
+    # contador deixou de
     # significar "só resposta do assistente" e passou a significar "tem
     # pelo menos 1 mensagem real", que é o que list_threads/cleanup_
     # empty_threads precisam. Só thread sem NENHUMA mensagem (nem essa)

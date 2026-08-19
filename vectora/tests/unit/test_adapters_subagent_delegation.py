@@ -1,20 +1,22 @@
-"""adapt_stream registra delegação de subagente (tool `task`) na aba Tarefas.
+"""``stream_engine_events`` registra delegação de subagente (tool `task`) na
+aba Tarefas.
 
-O deepagents (SubAgentMiddleware) expõe `task(subagent_type=, description=)`
-como uma tool comum — o adaptador intercepta seu on_tool_start/on_tool_end
-via observação de eventos (sem tocar o pacote deepagents vendorizado) e
-persiste via `backend.scheduling.background_tasks.record_subagent_delegation`.
+O motor nativo emite ``SubagentOutput`` (status "running" no início,
+"complete"/"error" no fim) especificamente pra delegação via subagente —
+tools normais emitem ``ToolCallStarted``/``ToolResult``, nunca
+``SubagentOutput``. O bridge intercepta esse evento e persiste via
+``backend.scheduling.background_tasks.record_subagent_delegation``.
 """
 
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 
-from backend.api.adapters import adapt_stream
+from backend.api.native_stream import stream_engine_events
+from backend.engine.stream_events import SubagentOutput, ToolCallStarted, ToolResult
 
 
 @pytest.fixture(autouse=True)
@@ -27,51 +29,65 @@ def _parse(sse: str) -> dict:
     return json.loads(sse[len("data: ") :].strip())
 
 
-async def _agen(events):
-    for ev in events:
-        yield ev
+def _delegation_run(
+    subagent_type: str,
+    description: str,
+    *,
+    status: str = "complete",
+    content: str = "feito",
+):
+    async def run(on_event):
+        await on_event(
+            SubagentOutput(
+                subagent_type=subagent_type,
+                description=description,
+                status="running",
+                tool_call_id="run-task-1",
+            )
+        )
+        await on_event(
+            SubagentOutput(
+                subagent_type=subagent_type,
+                description=description,
+                status=status,
+                tool_call_id="run-task-1",
+                content=content,
+            )
+        )
+        return "stop"
+
+    return run
 
 
-def _task_start(
-    subagent_type: str, description: str, run_id: str = "run-task-1"
-) -> dict:
-    return {
-        "event": "on_tool_start",
-        "name": "task",
-        "run_id": run_id,
-        "data": {"input": {"subagent_type": subagent_type, "description": description}},
-    }
+def _non_subagent_tool_run():
+    async def run(on_event):
+        await on_event(
+            ToolCallStarted(
+                tool_name="file_read", tool_call_id="r1", args_json='{"path":"x.py"}'
+            )
+        )
+        await on_event(ToolResult(tool_call_id="r1", content_json='"conteudo"'))
+        return "stop"
 
-
-def _task_end(
-    output: str = "feito", *, is_error: bool = False, run_id: str = "run-task-1"
-) -> dict:
-    out = (
-        SimpleNamespace(content="erro na delegação", status="error")
-        if is_error
-        else output
-    )
-    return {
-        "event": "on_tool_end",
-        "name": "task",
-        "run_id": run_id,
-        "data": {"output": out},
-    }
+    return run
 
 
 @pytest.mark.asyncio
 async def test_delegation_recorded_with_user_id(monkeypatch):
-    """on_tool_end de `task` com user_id registra a delegação."""
+    """``SubagentOutput`` final (status != running) com user_id registra a
+    delegação."""
     mock_record = AsyncMock()
     monkeypatch.setattr(
         "backend.scheduling.background_tasks.record_subagent_delegation", mock_record
     )
 
-    events = [
-        _task_start("coder", "Crie um arquivo X"),
-        _task_end("Arquivo criado com sucesso"),
+    run = _delegation_run(
+        "coder", "Crie um arquivo X", content="Arquivo criado com sucesso"
+    )
+    _ = [
+        _parse(s)
+        async for s in stream_engine_events(run, thread_id="tid", user_id="u1")
     ]
-    _ = [_parse(s) async for s in adapt_stream(_agen(events), "tid", user_id="u1")]
 
     mock_record.assert_awaited_once()
     assert mock_record.await_args is not None
@@ -84,18 +100,21 @@ async def test_delegation_recorded_with_user_id(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_delegation_marks_failed_status_on_tool_error(monkeypatch):
-    """Erro/borda: resultado de erro da tool vira status='failed'."""
+async def test_delegation_marks_error_status_on_failure(monkeypatch):
+    """Erro/borda: ``SubagentOutput`` final com status='error' vira
+    status='error' no registro."""
     mock_record = AsyncMock()
     monkeypatch.setattr(
         "backend.scheduling.background_tasks.record_subagent_delegation", mock_record
     )
 
-    events = [
-        _task_start("search", "Pesquise X"),
-        _task_end(is_error=True),
+    run = _delegation_run(
+        "search", "Pesquise X", status="error", content="erro na delegação"
+    )
+    _ = [
+        _parse(s)
+        async for s in stream_engine_events(run, thread_id="tid", user_id="u1")
     ]
-    _ = [_parse(s) async for s in adapt_stream(_agen(events), "tid", user_id="u1")]
 
     assert mock_record.await_args is not None
     kwargs = mock_record.await_args.kwargs
@@ -110,8 +129,8 @@ async def test_delegation_skipped_without_user_id(monkeypatch):
         "backend.scheduling.background_tasks.record_subagent_delegation", mock_record
     )
 
-    events = [_task_start("coder", "x"), _task_end("ok")]
-    _ = [_parse(s) async for s in adapt_stream(_agen(events), "tid")]
+    run = _delegation_run("coder", "x", content="ok")
+    _ = [_parse(s) async for s in stream_engine_events(run, thread_id="tid")]
 
     mock_record.assert_not_awaited()
 
@@ -124,37 +143,30 @@ async def test_delegation_failure_never_breaks_the_stream(monkeypatch):
         AsyncMock(side_effect=RuntimeError("db indisponível")),
     )
 
-    events = [_task_start("coder", "x"), _task_end("ok")]
-    out = [_parse(s) async for s in adapt_stream(_agen(events), "tid", user_id="u1")]
+    run = _delegation_run("coder", "x", content="ok")
+    out = [
+        _parse(s)
+        async for s in stream_engine_events(run, thread_id="tid", user_id="u1")
+    ]
 
-    # O stream não deve abortar: eventos de tool_call/tool_result normais saem.
+    # O stream não deve abortar: o done final ainda sai.
     types = [e["type"] for e in out]
-    assert "tool_call" in types
-    assert "tool_result" in types
+    assert "done" in types
 
 
 @pytest.mark.asyncio
-async def test_non_task_tools_do_not_trigger_delegation(monkeypatch):
-    """Tools normais (não `task`) não devem disparar o registro de subagente."""
+async def test_non_subagent_tools_do_not_trigger_delegation(monkeypatch):
+    """Tools normais (``ToolCallStarted``/``ToolResult``, não
+    ``SubagentOutput``) não devem disparar o registro de subagente."""
     mock_record = AsyncMock()
     monkeypatch.setattr(
         "backend.scheduling.background_tasks.record_subagent_delegation", mock_record
     )
 
-    events = [
-        {
-            "event": "on_tool_start",
-            "name": "file_read",
-            "run_id": "r1",
-            "data": {"input": {"path": "x.py"}},
-        },
-        {
-            "event": "on_tool_end",
-            "name": "file_read",
-            "run_id": "r1",
-            "data": {"output": "conteudo"},
-        },
+    run = _non_subagent_tool_run()
+    _ = [
+        _parse(s)
+        async for s in stream_engine_events(run, thread_id="tid", user_id="u1")
     ]
-    _ = [_parse(s) async for s in adapt_stream(_agen(events), "tid", user_id="u1")]
 
     mock_record.assert_not_awaited()

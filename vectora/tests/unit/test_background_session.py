@@ -1,9 +1,9 @@
 """
 Testes unitários para a lógica de persistência de background session em
-backend/api/adapters.py (_consume_remainder).
+backend/api/native_stream.py (_consume_remainder).
 
-Verifica que após a "desconexão" do cliente, a task do LangGraph continua
-consumindo eventos em background (multi-tarefas real) em vez de ser cancelada.
+Verifica que após a "desconexão" do cliente, o motor nativo continua
+consumindo eventos em background (multi-tarefas real) em vez de ser cancelado.
 """
 
 import asyncio
@@ -15,14 +15,14 @@ import pytest
 
 class TestConsumeRemainder:
     """
-    Testa a função _consume_remainder definida dentro de adapt_stream.
+    Testa a função _consume_remainder definida dentro de stream_engine_events.
 
     Isolamos o comportamento copiando a lógica para poder testá-la
-    de forma unitária sem precisar do loop inteiro do adapt_stream.
+    de forma unitária sem precisar do loop inteiro de stream_engine_events.
     """
 
     async def _consume_remainder(self, pending_task, iterator):
-        """Réplica da função interna de adapters.py para teste isolado."""
+        """Réplica da função interna de native_stream.py para teste isolado."""
         try:
             with contextlib.suppress(Exception):
                 await pending_task

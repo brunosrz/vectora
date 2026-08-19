@@ -2,7 +2,10 @@ import { useState, useCallback } from "react";
 import type { Message } from "../../types";
 import { FEEDBACK_KEY } from "../../constants/features";
 
-// LangSmith removido — feedback é local apenas (sem persistência no servidor)
+// Sem backend de feedback — o estado vive só na mensagem em memória
+// (applyFeedback/setMessages), nunca persistido. Os dois no-ops abaixo
+// mantêm o mesmo formato de chamada assíncrona caso um backend real seja
+// adicionado no futuro, sem precisar tocar em handleFeedback.
 const createOrUpdateFeedback = async (_params: unknown) => ({ id: "local" });
 const deleteFeedback = async (_id: string) => {};
 
@@ -16,9 +19,9 @@ const DEFAULT_NEGATIVE_COMMENT =
   "User indicated the answer wasn't satisfactory";
 
 /**
- * Custom hook for managing user feedback on LangSmith traces.
- * Handles creation, update, and deletion of feedback with local state management.
- * Uses server-side API routes to keep LangSmith API keys secure.
+ * Custom hook for managing user feedback (like/dislike) on chat messages.
+ * Feedback é local apenas — vive só no estado da mensagem em memória,
+ * sem persistência no servidor (não sobrevive a um reload da página).
  */
 export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
   const [feedbackComment, setFeedbackComment] = useState<{

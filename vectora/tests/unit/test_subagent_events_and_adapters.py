@@ -9,24 +9,18 @@ tool calls/results, eventos thread/done/error).
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 
 import pytest
-
-
-@dataclass
-class _FakeToolOutput:
-    """Stand-in local pro shape (``.content``/``.status``) que ``adapt_stream``
-    lê via ``hasattr``/``getattr`` — não precisa ser um tipo real de SDK."""
-
-    content: str
-    tool_call_id: str
-    status: str = "success"
 
 
 @pytest.fixture(autouse=True)
 def _isolated(_no_thread_persistence):
     pass
+
+
+def _parse(sse: str) -> dict:
+    assert sse.startswith("data: ")
+    return json.loads(sse[len("data: ") :].strip())
 
 
 # ===========================================================================
@@ -79,48 +73,36 @@ class TestSubagentOutputEventSchema:
         assert e is not None
 
     @pytest.mark.asyncio
-    async def test_adapt_stream_emite_subagent_output_na_tool_task(self):
-        """A tool `task` emite subagent_output 'running' (start) e 'complete'
-        (end, com o resultado) — identidade do subagente pro card. Erro/borda:
-        uma tool comum (não `task`) NÃO emite subagent_output."""
+    async def test_subagent_output_running_and_complete_via_stream_engine_events(self):
+        """A delegação de subagente emite ``subagent_output`` 'running' (início)
+        e 'complete' (fim, com o resultado) — identidade do subagente pro
+        card. Cobertura da emissão SSE em si (o registro na aba Tarefas é
+        testado em ``test_adapters_subagent_delegation.py``)."""
+        from backend.api.native_stream import stream_engine_events
+        from backend.engine.stream_events import SubagentOutput
 
-        from backend.api.adapters import adapt_stream
-
-        events = [
-            {
-                "event": "on_tool_start",
-                "name": "task",
-                "data": {"input": {"subagent_type": "coder", "description": "faz X"}},
-                "run_id": "r1",
-                "metadata": {},
-            },
-            {
-                "event": "on_tool_end",
-                "name": "task",
-                "data": {
-                    "output": _FakeToolOutput(content="feito X", tool_call_id="r1")
-                },
-                "run_id": "r1",
-                "metadata": {},
-            },
-            # tool comum não deve gerar subagent_output
-            {
-                "event": "on_tool_start",
-                "name": "web_search",
-                "data": {"input": {"query": "x"}},
-                "run_id": "r2",
-                "metadata": {},
-            },
-        ]
-
-        async def _fake_events():
-            for e in events:
-                yield e
+        async def run(on_event):
+            await on_event(
+                SubagentOutput(
+                    subagent_type="coder",
+                    description="faz X",
+                    status="running",
+                    tool_call_id="r1",
+                )
+            )
+            await on_event(
+                SubagentOutput(
+                    subagent_type="coder",
+                    description="faz X",
+                    status="complete",
+                    tool_call_id="r1",
+                    content="feito X",
+                )
+            )
+            return "stop"
 
         payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_fake_events(), "t-sub")
-            if line.startswith("data: ")
+            _parse(s) async for s in stream_engine_events(run, thread_id="t-sub")
         ]
         subs = [p for p in payloads if p.get("type") == "subagent_output"]
         assert len(subs) == 2
@@ -129,50 +111,37 @@ class TestSubagentOutputEventSchema:
         assert subs[0]["tool_call_id"] == "r1"
         assert subs[1]["status"] == "complete"
         assert subs[1]["content"] == "feito X"
-        # web_search não gerou subagent_output.
-        assert all(s["tool_call_id"] == "r1" for s in subs)
 
     @pytest.mark.asyncio
-    async def test_adapt_stream_emite_subagent_output_status_error(self):
-        """Erro/borda: quando a delegação falha (output de tool com
-        status='error'), o subagent_output final sai com status='error' (não
-        'complete') — o card precisa distinguir falha de sucesso."""
+    async def test_subagent_output_status_error(self):
+        """Erro/borda: quando a delegação falha (``SubagentOutput`` final com
+        status='error'), o evento sai com status='error' (não 'complete') —
+        o card precisa distinguir falha de sucesso."""
+        from backend.api.native_stream import stream_engine_events
+        from backend.engine.stream_events import SubagentOutput
 
-        from backend.api.adapters import adapt_stream
-
-        events = [
-            {
-                "event": "on_tool_start",
-                "name": "task",
-                "data": {
-                    "input": {"subagent_type": "search", "description": "busca X"}
-                },
-                "run_id": "r-err",
-                "metadata": {},
-            },
-            {
-                "event": "on_tool_end",
-                "name": "task",
-                "data": {
-                    "output": _FakeToolOutput(
-                        content="falha ao buscar",
-                        tool_call_id="r-err",
-                        status="error",
-                    )
-                },
-                "run_id": "r-err",
-                "metadata": {},
-            },
-        ]
-
-        async def _fake_events():
-            for e in events:
-                yield e
+        async def run(on_event):
+            await on_event(
+                SubagentOutput(
+                    subagent_type="search",
+                    description="busca X",
+                    status="running",
+                    tool_call_id="r-err",
+                )
+            )
+            await on_event(
+                SubagentOutput(
+                    subagent_type="search",
+                    description="busca X",
+                    status="error",
+                    tool_call_id="r-err",
+                    content="falha ao buscar",
+                )
+            )
+            return "stop"
 
         payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_fake_events(), "t-sub-err")
-            if line.startswith("data: ")
+            _parse(s) async for s in stream_engine_events(run, thread_id="t-sub-err")
         ]
         subs = [p for p in payloads if p.get("type") == "subagent_output"]
         assert len(subs) == 2
@@ -284,118 +253,21 @@ class TestNodeLabels:
 
 # ===========================================================================
 # Duration badges: duration_ms no NodeEvent de fim
+#
+# NodeEvent/NodeStatus modelava nós discretos de um grafo LangGraph
+# compilado — o motor nativo (loop imperativo, sem nós nomeados) nunca
+# emite ``NodeStatus`` (confirmado: nenhum ``emit(NodeStatus(...))`` existe
+# em ``backend/engine/conversation_loop.py``). Só o contrato do schema em si
+# (usado por outros produtores, se algum dia existirem) continua coberto.
 # ===========================================================================
 
 
 class TestNodeEventDuration:
-    """adapt_stream já calcula duration_ms; testes garantem comportamento correto."""
-
-    @pytest.mark.asyncio
-    async def test_node_finished_has_duration_ms(self):
-        from backend.api.adapters import adapt_stream
-
-        events = [
-            {
-                "event": "on_chain_start",
-                "name": "search_agent",
-                "data": {},
-                "metadata": {},
-            },
-            {
-                "event": "on_chain_end",
-                "name": "search_agent",
-                "data": {},
-                "metadata": {},
-            },
-        ]
-
-        async def _fake_events():
-            for e in events:
-                yield e
-
-        payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_fake_events(), "t-test")
-            if line.startswith("data: ")
-        ]
-
-        finished = [
-            p
-            for p in payloads
-            if p.get("type") == "node" and p.get("status") == "finished"
-        ]
-        assert len(finished) >= 1
-        # duration_ms deve ser um inteiro ≥ 0
-        assert isinstance(finished[0]["duration_ms"], int)
-        assert finished[0]["duration_ms"] >= 0
-
-    @pytest.mark.asyncio
-    async def test_node_started_has_zero_duration_ms(self):
-        from backend.api.adapters import adapt_stream
-
-        events = [
-            {
-                "event": "on_chain_start",
-                "name": "invoke_llm",
-                "data": {},
-                "metadata": {},
-            },
-        ]
-
-        async def _fake_events():
-            for e in events:
-                yield e
-
-        payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_fake_events(), "t-test")
-            if line.startswith("data: ")
-        ]
-
-        started = [
-            p
-            for p in payloads
-            if p.get("type") == "node" and p.get("status") == "started"
-        ]
-        assert len(started) >= 1
-        assert started[0]["duration_ms"] == 0
-
     def test_node_event_duration_schema(self):
         from backend.api.schemas import NodeEvent
 
         e = NodeEvent(node="n", status="finished", duration_ms=1337)
         assert e.duration_ms == 1337
-
-    @pytest.mark.asyncio
-    async def test_multiple_nodes_have_independent_durations(self):
-        from backend.api.adapters import adapt_stream
-
-        events = [
-            {"event": "on_chain_start", "name": "node_a", "data": {}, "metadata": {}},
-            {"event": "on_chain_start", "name": "node_b", "data": {}, "metadata": {}},
-            {"event": "on_chain_end", "name": "node_a", "data": {}, "metadata": {}},
-            {"event": "on_chain_end", "name": "node_b", "data": {}, "metadata": {}},
-        ]
-
-        async def _fake_events():
-            for e in events:
-                yield e
-
-        payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_fake_events(), "t-test")
-            if line.startswith("data: ")
-        ]
-
-        finished = {
-            p["node"]: p["duration_ms"]
-            for p in payloads
-            if p.get("type") == "node" and p.get("status") == "finished"
-        }
-        assert "node_a" in finished
-        assert "node_b" in finished
-        assert finished["node_a"] >= 0
-        assert finished["node_b"] >= 0
 
 
 # ===========================================================================
@@ -404,132 +276,21 @@ class TestNodeEventDuration:
 
 
 class TestAdaptersRegression:
-    """Testes de não-regressão: comportamentos correntes dos adapters."""
-
-    def test_token_event_from_chat_model_stream(self):
-        from backend.api.adapters import langgraph_event_to_payload
-        from backend.api.schemas import TokenEvent
-
-        class FakeChunk:
-            content = "hello"
-
-        event = {
-            "event": "on_chat_model_stream",
-            "name": "invoke_llm",
-            "run_name": "invoke_llm",
-            "data": {"chunk": FakeChunk()},
-            "metadata": {"langgraph_node": "invoke_llm"},
-        }
-        result = langgraph_event_to_payload(event)
-        assert isinstance(result, TokenEvent)
-        assert result.content == "hello"
-
-    def test_orchestrator_tokens_now_emitted(self):
-        """O orchestrator não usa structured output (_STRUCTURED_OUTPUT_NODES
-        vazio), então seus tokens são user-facing e viram TokenEvent."""
-        from backend.api.adapters import langgraph_event_to_payload
-        from backend.api.schemas import TokenEvent
-
-        class FakeChunk:
-            content = "Olá, como posso ajudar?"
-
-        event = {
-            "event": "on_chat_model_stream",
-            "name": "orchestrator",
-            "run_name": "orchestrator",
-            "data": {"chunk": FakeChunk()},
-            "metadata": {"langgraph_node": "orchestrator"},
-        }
-        result = langgraph_event_to_payload(event)
-        assert isinstance(result, TokenEvent)
-        assert result.content == "Olá, como posso ajudar?"
-        assert result.node == "orchestrator"
-
-    def test_tool_call_event_emitted(self):
-        from backend.api.adapters import langgraph_event_to_payload
-        from backend.api.schemas import ToolCallEvent
-
-        event = {
-            "event": "on_tool_start",
-            "name": "web_search",
-            "run_id": "run-1",
-            "data": {"input": {"query": "python asyncio"}},
-            "metadata": {},
-        }
-        result = langgraph_event_to_payload(event)
-        assert isinstance(result, ToolCallEvent)
-        assert result.tool_name == "web_search"
-        assert "python asyncio" in result.args_json
-
-    def test_tool_result_event_emitted(self):
-        from backend.api.adapters import langgraph_event_to_payload
-        from backend.api.schemas import ToolResultEvent
-
-        event = {
-            "event": "on_tool_end",
-            "name": "web_search",
-            "run_id": "run-1",
-            "data": {"output": "resultado da busca"},
-            "metadata": {},
-        }
-        result = langgraph_event_to_payload(event)
-        assert isinstance(result, ToolResultEvent)
-        assert result.content_json == "resultado da busca"
-
-    def test_node_started_event(self):
-        from backend.api.adapters import langgraph_event_to_payload
-        from backend.api.schemas import NodeEvent
-
-        event = {
-            "event": "on_chain_start",
-            "name": "search_agent",
-            "data": {},
-            "metadata": {},
-        }
-        result = langgraph_event_to_payload(event)
-        assert isinstance(result, NodeEvent)
-        assert result.status == "started"
-        assert result.node == "search_agent"
-
-    def test_node_finished_event(self):
-        from backend.api.adapters import langgraph_event_to_payload
-        from backend.api.schemas import NodeEvent
-
-        event = {
-            "event": "on_chain_end",
-            "name": "search_agent",
-            "data": {},
-            "metadata": {},
-        }
-        result = langgraph_event_to_payload(event)
-        assert isinstance(result, NodeEvent)
-        assert result.status == "finished"
-
-    def test_langgraph_root_events_ignored(self):
-        from backend.api.adapters import langgraph_event_to_payload
-
-        for name in ("", "LangGraph"):
-            event = {
-                "event": "on_chain_start",
-                "name": name,
-                "data": {},
-                "metadata": {},
-            }
-            result = langgraph_event_to_payload(event)
-            assert result is None, f"name={name!r} deveria ser ignorado"
+    """Testes de não-regressão: comportamentos correntes do bridge SSE
+    (``stream_engine_events``) que não podem regredir. Os testes de mapeamento
+    token/tool_call/tool_result já vivem em ``test_adapters_streaming.py`` e
+    ``test_adapters_tool_activity.py`` — aqui só o envelope genérico do
+    stream (thread/done/error), que qualquer ``run`` precisa respeitar."""
 
     @pytest.mark.asyncio
     async def test_stream_always_starts_with_thread_event(self):
-        from backend.api.adapters import adapt_stream
+        from backend.api.native_stream import stream_engine_events
 
-        async def _empty():
-            return
-            yield  # make it an async generator
+        async def run(on_event):
+            return "stop"
 
         payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_empty(), "t-xyz")
-            if line.startswith("data: ")
+            _parse(s) async for s in stream_engine_events(run, thread_id="t-xyz")
         ]
 
         assert payloads[0]["type"] == "thread"
@@ -537,16 +298,13 @@ class TestAdaptersRegression:
 
     @pytest.mark.asyncio
     async def test_stream_always_ends_with_done_event(self):
-        from backend.api.adapters import adapt_stream
+        from backend.api.native_stream import stream_engine_events
 
-        async def _empty():
-            return
-            yield
+        async def run(on_event):
+            return "stop"
 
         payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_empty(), "t-xyz")
-            if line.startswith("data: ")
+            _parse(s) async for s in stream_engine_events(run, thread_id="t-xyz")
         ]
 
         assert payloads[-1]["type"] == "done"
@@ -554,21 +312,18 @@ class TestAdaptersRegression:
 
     @pytest.mark.asyncio
     async def test_stream_emits_error_event_on_exception(self):
-        from backend.api.adapters import adapt_stream
+        from backend.api.native_stream import stream_engine_events
 
-        async def _failing():
+        async def run(on_event):
             raise RuntimeError("erro simulado")
-            yield
 
         payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_failing(), "t-err")
-            if line.startswith("data: ")
+            _parse(s) async for s in stream_engine_events(run, thread_id="t-err")
         ]
 
         error_events = [p for p in payloads if p["type"] == "error"]
         assert len(error_events) >= 1
-        # O adaptador classifica o erro e NÃO vaza a exceção crua ao usuário
+        # O bridge classifica o erro e NÃO vaza a exceção crua ao usuário
         # (ver adapters.classify_stream_error): erro genérico → STREAM_ERROR
         # com mensagem limpa. A mensagem técnica fica só no log do servidor.
         assert error_events[0]["code"] == "STREAM_ERROR"

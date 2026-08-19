@@ -107,7 +107,7 @@ async def test_streaming_cohere_astream_real():
 
 
 def test_load_native_llm_provider_desconhecido_levanta_erro_claro():
-    with pytest.raises(ValueError, match="LLM_PROVIDER desconhecido"):
+    with pytest.raises(ValueError, match="Provider de LLM nativo desconhecido"):
         load_native_llm("provider-que-nao-existe:algum-modelo")
 
 
