@@ -465,14 +465,14 @@ class ModelSwitchedEvent(BaseModel):
 
 class TodoItem(BaseModel):
     """Um item da checklist de progresso mantida por ``write_todos``
-    (``TodoListMiddleware``, injetado incondicionalmente pelo deepagents)."""
+    (``backend/tools/planning.py``, tool nativa exposta a todo agente)."""
 
     content: str
     status: Literal["pending", "in_progress", "completed"]
 
 
 class TodosUpdatedEvent(BaseModel):
-    """Emitido quando ``write_todos`` atualiza o state ``todos`` do grafo.
+    """Emitido quando ``write_todos`` atualiza a checklist de tarefas.
 
     ``write_todos`` substitui a lista inteira a cada chamada (não é
     incremental) — o payload aqui reflete o snapshot completo mais recente,

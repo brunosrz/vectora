@@ -23,6 +23,7 @@ from backend.engine.stream_events import (
     HitlRequested,
     MessageBreak,
     MessageChunk,
+    TodosUpdated,
     ToolActivity,
     ToolCallStarted,
     ToolResult,
@@ -30,6 +31,7 @@ from backend.engine.stream_events import (
 )
 from backend.persistence.native.session_store import SessionStore
 from backend.storage.sqlite.pool import AsyncConnectionPool
+from backend.tools import planning as _planning_module
 from backend.tools.context import ToolContext
 from backend.tools.registry import TOOL_REGISTRY, ToolExtras, ToolRegistry, vtool
 from backend.vtypes.message import ToolCallChunk, VMessageChunk
@@ -734,6 +736,133 @@ class TestArgsPreview:
 
         activities = [e for e in eventos if isinstance(e, ToolActivity)]
         assert activities[0].args_preview == "a=1, b=2"
+
+
+class TestTodosUpdated:
+    async def test_write_todos_emite_todos_updated_com_lista_completa(
+        self, session_store, ctx
+    ):
+        registry = ToolRegistry()
+        _register(registry, "write_todos")
+
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0,
+                        id="call_1",
+                        name="write_todos",
+                        args=json.dumps(
+                            {
+                                "todos": [
+                                    {"content": "passo 1", "status": "completed"},
+                                    {"content": "passo 2", "status": "in_progress"},
+                                ]
+                            }
+                        ),
+                    )
+                ],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        todos_eventos = [e for e in eventos if isinstance(e, TodosUpdated)]
+        assert len(todos_eventos) == 1
+        assert [(t.content, t.status) for t in todos_eventos[0].todos] == [
+            ("passo 1", "completed"),
+            ("passo 2", "in_progress"),
+        ]
+
+    async def test_tool_diferente_de_write_todos_nunca_emite_todos_updated(
+        self, session_store, ctx
+    ):
+        @vtool(extras=ToolExtras())
+        async def outra_tool(ctx: ToolContext) -> str:
+            """não é write_todos."""
+            return json.dumps([{"content": "x", "status": "pending"}])
+
+        registry = ToolRegistry()
+        _register(registry, "outra_tool")
+
+        client = _ScriptedChatClient(
+            [
+                [_tool_call_chunk(index=0, id="call_1", name="outra_tool", args="{}")],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        assert not [e for e in eventos if isinstance(e, TodosUpdated)]
+
+    async def test_write_todos_com_args_invalidos_nao_emite_todos_updated(
+        self, session_store, ctx
+    ):
+        """Borda: status fora da taxonomia é rejeitado na validação de args
+        (Error: argumentos inválidos) antes mesmo do handler rodar — o loop
+        não deve emitir TodosUpdated a partir de um resultado de erro."""
+        registry = ToolRegistry()
+        _register(registry, "write_todos")
+
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0,
+                        id="call_1",
+                        name="write_todos",
+                        args=json.dumps(
+                            {"todos": [{"content": "x", "status": "done"}]}
+                        ),
+                    )
+                ],
+                [_texto_chunk("pronto")],
+            ]
+        )
+        eventos: list[EngineEvent] = []
+
+        async def on_event(event: EngineEvent) -> None:
+            eventos.append(event)
+
+        await run_conversation(
+            session_store=session_store,
+            chat_client=client,
+            tool_registry=registry,
+            ctx=ctx,
+            thread_id="thread-1",
+            config=LoopConfig(),
+            on_event=on_event,
+        )
+
+        resultados_tool = [e for e in eventos if isinstance(e, ToolResult)]
+        assert resultados_tool[0].is_error
+        assert not [e for e in eventos if isinstance(e, TodosUpdated)]
 
 
 class TestLoopCapGuardrail:

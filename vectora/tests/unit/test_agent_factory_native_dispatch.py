@@ -13,7 +13,13 @@ import pytest
 from backend.persistence.native.session_store import SessionStore
 from backend.services import agent_factory as af
 from backend.storage.sqlite.pool import AsyncConnectionPool
-from backend.vtypes.message import MessageRole, ToolCall, VMessage, text_message
+from backend.vtypes.message import (
+    ContentBlock,
+    MessageRole,
+    ToolCall,
+    VMessage,
+    text_message,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -196,3 +202,158 @@ class TestAgetThreadPendingInterruptNativePrimeiro:
             pending = await af.aget_thread_pending_interrupt("thread-sem-pendencia")
 
         assert pending is None
+
+
+class TestAgetThreadTodosNativo:
+    async def test_devolve_o_snapshot_da_ultima_chamada_de_write_todos(
+        self, session_store: SessionStore
+    ):
+        import json
+
+        await session_store.create_session("thread-todos", user_id="alice")
+        assistente = VMessage(
+            role=MessageRole.ASSISTANT,
+            content=[],
+            tool_calls=[ToolCall(id="call_1", name="write_todos", args={})],
+        )
+        id_a = await session_store.append_message("thread-todos", assistente)
+        await session_store.append_message(
+            "thread-todos",
+            VMessage(
+                role=MessageRole.TOOL,
+                content=[
+                    ContentBlock(
+                        kind="text",
+                        text=json.dumps(
+                            [
+                                {"content": "passo 1", "status": "completed"},
+                                {"content": "passo 2", "status": "in_progress"},
+                            ]
+                        ),
+                    )
+                ],
+                tool_call_id="call_1",
+                name="write_todos",
+            ),
+            parent_message_id=id_a,
+        )
+
+        with patch.object(
+            af, "get_session_store", AsyncMock(return_value=session_store)
+        ):
+            todos = await af.aget_thread_todos("thread-todos")
+
+        assert todos == [
+            {"content": "passo 1", "status": "completed"},
+            {"content": "passo 2", "status": "in_progress"},
+        ]
+
+    async def test_usa_a_chamada_mais_recente_quando_ha_varias(
+        self, session_store: SessionStore
+    ):
+        import json
+
+        await session_store.create_session("thread-todos-2", user_id="alice")
+        parent_id = None
+        for i, todos_json in enumerate(
+            [
+                [{"content": "primeira versão", "status": "pending"}],
+                [{"content": "segunda versão", "status": "completed"}],
+            ]
+        ):
+            assistente = VMessage(
+                role=MessageRole.ASSISTANT,
+                content=[],
+                tool_calls=[ToolCall(id=f"call_{i}", name="write_todos", args={})],
+            )
+            parent_id = await session_store.append_message(
+                "thread-todos-2", assistente, parent_message_id=parent_id
+            )
+            parent_id = await session_store.append_message(
+                "thread-todos-2",
+                VMessage(
+                    role=MessageRole.TOOL,
+                    content=[ContentBlock(kind="text", text=json.dumps(todos_json))],
+                    tool_call_id=f"call_{i}",
+                    name="write_todos",
+                ),
+                parent_message_id=parent_id,
+            )
+
+        with patch.object(
+            af, "get_session_store", AsyncMock(return_value=session_store)
+        ):
+            todos = await af.aget_thread_todos("thread-todos-2")
+
+        assert todos == [{"content": "segunda versão", "status": "completed"}]
+
+    async def test_thread_sem_chamada_de_write_todos_devolve_lista_vazia(
+        self, session_store: SessionStore
+    ):
+        """Borda: thread com histórico normal (sem write_todos) não deve
+        lançar nem confundir outra tool com a checklist."""
+        await session_store.create_session("thread-sem-todos", user_id="alice")
+        await session_store.append_message(
+            "thread-sem-todos", text_message(MessageRole.USER, "oi")
+        )
+
+        with patch.object(
+            af, "get_session_store", AsyncMock(return_value=session_store)
+        ):
+            todos = await af.aget_thread_todos("thread-sem-todos")
+
+        assert todos == []
+
+    async def test_ultima_chamada_com_erro_e_ignorada_usa_a_anterior_valida(
+        self, session_store: SessionStore
+    ):
+        import json
+
+        await session_store.create_session("thread-todos-erro", user_id="alice")
+        assistente1 = VMessage(
+            role=MessageRole.ASSISTANT,
+            content=[],
+            tool_calls=[ToolCall(id="call_1", name="write_todos", args={})],
+        )
+        parent_id = await session_store.append_message("thread-todos-erro", assistente1)
+        parent_id = await session_store.append_message(
+            "thread-todos-erro",
+            VMessage(
+                role=MessageRole.TOOL,
+                content=[
+                    ContentBlock(
+                        kind="text",
+                        text=json.dumps([{"content": "válido", "status": "pending"}]),
+                    )
+                ],
+                tool_call_id="call_1",
+                name="write_todos",
+            ),
+            parent_message_id=parent_id,
+        )
+        assistente2 = VMessage(
+            role=MessageRole.ASSISTANT,
+            content=[],
+            tool_calls=[ToolCall(id="call_2", name="write_todos", args={})],
+        )
+        parent_id = await session_store.append_message(
+            "thread-todos-erro", assistente2, parent_message_id=parent_id
+        )
+        await session_store.append_message(
+            "thread-todos-erro",
+            VMessage(
+                role=MessageRole.TOOL,
+                content=[ContentBlock(kind="text", text="Error: argumentos inválidos")],
+                tool_call_id="call_2",
+                name="write_todos",
+                is_error=True,
+            ),
+            parent_message_id=parent_id,
+        )
+
+        with patch.object(
+            af, "get_session_store", AsyncMock(return_value=session_store)
+        ):
+            todos = await af.aget_thread_todos("thread-todos-erro")
+
+        assert todos == [{"content": "válido", "status": "pending"}]

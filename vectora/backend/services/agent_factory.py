@@ -729,17 +729,41 @@ async def aget_thread_todos(
     thread_id: str,
     workspace_id: str | None = None,
 ) -> list[dict[str, str]]:
-    """Snapshot mais recente da lista de todos da thread.
+    """Snapshot mais recente da lista de todos da thread — pra reidratar a
+    seção "Tasks" do Plan tab após um reload de página (o streaming SSE ao
+    vivo só cobre a sessão atual, sem persistência própria).
 
-    Gap documentado: o motor nativo (``backend/engine/conversation_loop.py``)
-    não tem nenhuma tool ``write_todos``/rastreamento de plano equivalente
-    ao ``TodoListMiddleware`` que o grafo deepagents legado injetava — toda
-    thread despachada pelo motor nativo devolve ``[]`` aqui (a seção "Tasks"
-    do Plan tab fica vazia). ``workspace_id`` não é usado hoje; mantido na
-    assinatura para paridade com ``aget_thread_messages``/
-    ``aget_thread_pending_interrupt``, caso um rastreamento de plano nativo
-    seja adicionado por workspace no futuro.
+    ``write_todos`` (``backend/tools/planning.py``) substitui a lista
+    inteira a cada chamada e o resultado é uma mensagem TOOL comum,
+    persistida no ``SessionStore`` como qualquer outra — aqui só varremos o
+    histórico de trás pra frente e devolvemos o JSON da última chamada bem-
+    sucedida. Sem nenhuma chamada na thread, devolve ``[]``.
+    ``workspace_id`` não é usado hoje; mantido na assinatura para paridade
+    com ``aget_thread_messages``/``aget_thread_pending_interrupt``.
     """
+    import json
+
+    from backend.vtypes.message import MessageRole
+
+    store = await get_session_store()
+    pares = await store.get_history_with_ids(thread_id)
+    for _msg_id, msg in reversed(pares):
+        if msg.role != MessageRole.TOOL or msg.name != "write_todos" or msg.is_error:
+            continue
+        try:
+            bruto = json.loads(msg.text())
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(bruto, list):
+            return []
+        return [
+            {
+                "content": str(item.get("content", "")),
+                "status": str(item.get("status", "")),
+            }
+            for item in bruto
+            if isinstance(item, dict)
+        ]
     return []
 
 

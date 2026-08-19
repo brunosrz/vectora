@@ -39,6 +39,8 @@ from backend.engine.stream_events import (
     HitlRequested,
     MessageBreak,
     MessageChunk,
+    TodoItem,
+    TodosUpdated,
     ToolActivity,
     ToolCallStarted,
     ToolResult,
@@ -108,6 +110,30 @@ def _args_preview(args: dict[str, Any]) -> str:
     else:
         preview = ", ".join(f"{k}={v}" for k, v in list(args.items())[:2])
     return preview[:_ARGS_PREVIEW_MAX_CHARS]
+
+
+_WRITE_TODOS_TOOL_NAME = "write_todos"
+
+
+def _parse_todos_result(texto: str) -> list[TodoItem] | None:
+    """Traduz o JSON devolvido por ``write_todos`` (``backend/tools/
+    planning.py``) em ``TodoItem`` — ``None`` se o resultado não tiver o
+    shape esperado (defensivo: nunca propaga, só deixa de emitir)."""
+    try:
+        bruto = json.loads(texto)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(bruto, list):
+        return None
+    itens: list[TodoItem] = []
+    for item in bruto:
+        if not isinstance(item, dict):
+            return None
+        status = item.get("status")
+        if status not in ("pending", "in_progress", "completed"):
+            return None
+        itens.append(TodoItem(content=str(item.get("content", "")), status=status))
+    return itens
 
 
 def _call_signature(tool_call: ToolCall) -> tuple[str, str]:
@@ -319,6 +345,10 @@ async def run_conversation(
                         tabs=spec.extras.invalidates, tool_name=resultado.name or ""
                     )
                 )
+            if resultado.name == _WRITE_TODOS_TOOL_NAME and not resultado.is_error:
+                todos = _parse_todos_result(resultado.text())
+                if todos is not None:
+                    await emit(TodosUpdated(todos=todos))
 
         if turn_budget.exceeded is not None:
             await emit(

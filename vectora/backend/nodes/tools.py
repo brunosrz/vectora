@@ -74,6 +74,9 @@ from backend.tools import (
     notion as _notion_module,
 )
 from backend.tools import (
+    planning as _planning_module,
+)
+from backend.tools import (
     rag as _rag_module,
 )
 from backend.tools import (
@@ -272,6 +275,7 @@ generate_image = _bridge("generate_image")
 text_to_speech = _bridge("text_to_speech")
 generate_video = _bridge("generate_video")
 analyze_video = _bridge("analyze_video")
+write_todos = _bridge("write_todos")
 
 # ---------------------------------------------------------------------------
 # Grupos semânticos (referência — não são usados diretamente pelos agentes)
@@ -405,6 +409,9 @@ GRAPH_TOOLS: list[ToolSpec] = [
 
 #: Ferramentas RAG de ingestão e gestão
 RAG_TOOLS: list[ToolSpec] = [vector_search, embedding, ingest_docs, manage_retriever]
+
+#: Planejamento — quebra de tarefa complexa em passos, exposta a todo agente
+PLANNING_TOOLS: list[ToolSpec] = [write_todos]
 
 #: Utilitários nativos (sem API externa, exceto http_request)
 NATIVE_TOOLS: list[ToolSpec] = [
@@ -634,6 +641,8 @@ for _t in [
     json_query,
     jwt_decode,
     http_request,
+    # Planejamento (checklist de progresso, todo agente)
+    write_todos,
 ]:
     _all[_t.name] = _t
 
@@ -690,6 +699,7 @@ CHAT_TOOLS: list[ToolSpec] = [
     json_query,
     jwt_decode,
     http_request,
+    write_todos,
 ]
 
 # Vista nativa dos nomes do modo Chat (mesmos nomes de CHAT_TOOLS, sem a
@@ -707,6 +717,7 @@ __all__ = [
     "GIT_TOOLS",
     "GRAPH_TOOLS",
     "MEMORY_TOOLS",
+    "PLANNING_TOOLS",
     "RAG_TOOLS",
     "SEARCH_TOOLS",
     "WORKSPACE_TOOLS",
