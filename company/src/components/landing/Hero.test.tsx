@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 import Hero from "./Hero";
 
@@ -31,9 +33,30 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
+// Hero usa useLatestVersion (useQuery) pra exibir o badge de versão — precisa
+// de um QueryClientProvider no render, senão useQueryClient lança.
+function renderWithClient(ui: ReactNode) {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
+
+const fetchMock = vi.fn();
+
+beforeEach(() => {
+  fetchMock.mockReset();
+  fetchMock.mockResolvedValue({ ok: false, json: async () => ({}) });
+  vi.stubGlobal("fetch", fetchMock);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("Hero", () => {
   it("mostra o gif de demo quando carrega com sucesso", () => {
-    render(<Hero />);
+    renderWithClient(<Hero />);
     const img = screen.getByRole("img", { name: "hero_gif_alt" });
     fireEvent.load(img);
     expect(img).toBeInTheDocument();
@@ -41,7 +64,7 @@ describe("Hero", () => {
   });
 
   it("mostra o placeholder 'prévia em breve' quando o gif falha ao carregar", () => {
-    render(<Hero />);
+    renderWithClient(<Hero />);
     const img = screen.getByRole("img", { name: "hero_gif_alt" });
     fireEvent.error(img);
     expect(
@@ -63,7 +86,7 @@ describe("Hero", () => {
       .spyOn(window.HTMLImageElement.prototype, "naturalWidth", "get")
       .mockReturnValue(0);
 
-    render(<Hero />);
+    renderWithClient(<Hero />);
 
     expect(
       screen.queryByRole("img", { name: "hero_gif_alt" }),
