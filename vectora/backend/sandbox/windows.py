@@ -74,10 +74,11 @@ def build_soft_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     Returns:
         Dicionário de ambiente enxuto, pronto pra ``env=`` no subprocess.
     """
-    env: dict[str, str] = {}
-    for key, value in os.environ.items():
-        if key in _MINIMAL_ENV_KEYS or key.startswith(_VECTORA_SANDBOX_PREFIX):
-            env[key] = value
+    env: dict[str, str] = {
+        key: value
+        for key, value in os.environ.items()
+        if key in _MINIMAL_ENV_KEYS or key.startswith(_VECTORA_SANDBOX_PREFIX)
+    }
     if extra:
         env.update(extra)
     return env

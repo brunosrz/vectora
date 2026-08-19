@@ -35,7 +35,7 @@ def test_native_views_espelham_all_tools():
     ALL_TOOLS (BaseTool) — nomes idênticos, sem a ponte LangChain. Garante que
     a migração dos consumidores leves não muda o conjunto exposto."""
     legacy_names = {t.name for t in ALL_TOOLS}
-    assert ALL_TOOL_NAMES == legacy_names
+    assert legacy_names == ALL_TOOL_NAMES
     assert {spec.name for spec in ALL_TOOL_SPECS} == ALL_TOOL_NAMES
 
 

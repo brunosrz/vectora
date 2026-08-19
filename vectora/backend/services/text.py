@@ -22,6 +22,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 
 import tiktoken
 
@@ -47,7 +48,7 @@ def _merge_splits(
     splits: list[str],
     separator: str,
     *,
-    token_len,
+    token_len: Callable[[str], int],
     chunk_size: int,
     chunk_overlap: int,
 ) -> list[str]:
@@ -91,7 +92,7 @@ def _recursive_split(
     text: str,
     separators: list[str],
     *,
-    token_len,
+    token_len: Callable[[str], int],
     chunk_size: int,
     chunk_overlap: int,
 ) -> list[str]:

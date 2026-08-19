@@ -74,7 +74,7 @@ class TestStoragePool:
 
 
 class TestGetStore:
-    """get_store retorna AsyncSqliteStore no modo lite (F5)."""
+    """get_store retorna VectoraStore (nativo, aiosqlite) no modo lite."""
 
     @pytest.mark.asyncio
     async def test_lite_store_setup(self, tmp_path, monkeypatch):

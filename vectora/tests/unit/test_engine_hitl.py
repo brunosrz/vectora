@@ -47,6 +47,10 @@ class TestShouldRequireApproval:
             is True
         )
 
+    def test_modo_desconhecido_cai_no_comportamento_mais_restritivo_de_ask(self):
+        ctx = _ctx(permission_mode="modo-invalido")
+        assert should_require_approval("file_write", ctx, {}, []) is True
+
     def test_modo_accept_edits_auto_aprova_edicao_mas_nao_terminal(self):
         ctx = _ctx(permission_mode="accept_edits")
         assert should_require_approval("file_write", ctx, {}, []) is False

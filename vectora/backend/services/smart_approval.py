@@ -3,7 +3,7 @@
 Camada de UX sobre o HITL já vinculante do produto, nunca um substituto:
 `evaluate_command` devolve só um booleano de anotação (`pre_approved`) pro
 `HITLEvent` — quem decide se a tool executa continua sendo
-`_REQUIRE_APPROVAL`/`_mode_should_interrupt` em `services/middleware.py`, que
+`REQUIRE_APPROVAL`/`should_require_approval` em `backend/engine/hitl.py`, que
 nem importa este módulo. O humano sempre confirma; no máximo o clique fica
 marcado como reconhecido antes.
 

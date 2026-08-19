@@ -85,8 +85,7 @@ def _parse_distillation(raw: str) -> DistillationResult:
     text = raw.strip()
     if text.startswith("```"):
         text = text.strip("`")
-        if text.startswith("json"):
-            text = text[4:]
+        text = text.removeprefix("json")
         text = text.strip()
     data = json.loads(text)
     return DistillationResult.model_validate(data)

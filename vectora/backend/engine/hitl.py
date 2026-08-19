@@ -1,15 +1,9 @@
-"""``should_require_approval`` — política HITL nativa. Migração literal de
-``backend/services/middleware.py`` (``_REQUIRE_APPROVAL``, ``_dynamic_
-hitl_when``, ``_mode_should_interrupt``, ``_is_self_kanban_update``,
-``_workspace_is_jailed``) pra função pura, sem LangGraph.
+"""``should_require_approval`` — política HITL nativa, como função pura.
 
 Chamada IDENTICAMENTE pelo loop principal (``backend/engine/
-conversation_loop.py``) e por qualquer subagente — resolve a propagação de
-HITL pra dentro de delegações sem o truque de "mesma instância de
-middleware compartilhada" que o ``HumanInTheLoopMiddleware`` do
-deepagents exigia (o subagente herda `interrupt_on` do `create_deep_agent`
-top-level, nunca o `middleware=` custom do pai; aqui a função é a mesma
-pra qualquer chamador, não há "herança" pra vazar).
+conversation_loop.py``) e por qualquer subagente — a mesma função decide
+pausa pra qualquer chamador, sem depender de herança de middleware ou de
+grafo compilado.
 
 Sobrevivência a restart: a persistência SÍNCRONA da aprovação pendente
 (``SessionStore.put_pending_approval``, ANTES de qualquer espera) é o que
@@ -31,9 +25,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-#: Tools destrutivas candidatas a pausar o loop para aprovação — mesma
-#: lista de `backend/services/middleware.py::_REQUIRE_APPROVAL`, migração
-#: literal (mesmos comentários de justificativa por tool, preservados lá).
+#: Tools destrutivas candidatas a pausar o loop para aprovação.
 REQUIRE_APPROVAL: frozenset[str] = frozenset(
     {
         "terminal",
@@ -132,8 +124,7 @@ def _plan_mode_ja_passou_neste_turno(history: list[VMessage]) -> bool:
 
 
 def _mode_should_interrupt(mode: str, tool_name: str, history: list[VMessage]) -> bool:
-    """Política canônica dos 5 modos — fonte única de verdade do HITL
-    nativo, mesma semântica de `middleware.py::_mode_should_interrupt`."""
+    """Política canônica dos 5 modos — fonte única de verdade do HITL nativo."""
     if tool_name not in REQUIRE_APPROVAL:
         return False
     if tool_name in _ALWAYS_INTERRUPT:

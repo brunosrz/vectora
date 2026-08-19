@@ -227,11 +227,11 @@ class TestAprovacaoHumana:
         `ha_call_service` destranca porta e desliga alarme — não há "desfazer"
         no mundo físico, ao contrário de um arquivo que volta pelo git.
         """
-        from backend.services.middleware import _REQUIRE_APPROVAL
+        from backend.engine.hitl import REQUIRE_APPROVAL
 
-        assert "ha_call_service" in _REQUIRE_APPROVAL
+        assert "ha_call_service" in REQUIRE_APPROVAL
         for leitura in ("ha_list_entities", "ha_get_state", "ha_list_services"):
-            assert leitura not in _REQUIRE_APPROVAL
+            assert leitura not in REQUIRE_APPROVAL
 
     def test_as_quatro_tools_chegam_no_agente(self):
         from backend.nodes.tools import ALL_TOOLS

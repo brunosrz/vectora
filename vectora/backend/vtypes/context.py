@@ -53,7 +53,7 @@ class VectoraContext:
 
     Vazio em turnos de chat síncrono. Populado por
     ``backend.scheduling.background_tasks.run_task``/``resume_background_run``
-    — permite ao HITL dinâmico (`backend/services/middleware.py`) distinguir
+    — permite ao HITL nativo (`backend/engine/hitl.py`) distinguir
     uma task se auto-atualizando (`kanban_update_status` no próprio id, sem
     aprovação) de uma task tentando mudar o status de OUTRA."""
 

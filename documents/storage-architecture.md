@@ -139,10 +139,20 @@ task.cancel()
 ## Roadmap de storage ainda em aberto
 
 - Schema versioning com `storage/migrations/` e um runner de migrations
-- Protocols tipados e factories unificadas para os dois modos (lite/complete)
-- Integração do `AsyncConnectionPool` com `AsyncSqliteSaver`
-- `SqliteStore` para o `BaseStore` do LangGraph (memória do agente)
-- `LanceDB` como `VectorStore` nativo do LangChain
+- ~~Protocols tipados e factories unificadas para os dois modos
+  (lite/complete)~~ — feito: `backend/storage/protocols.py`
+  (`CheckpointerBackend`/`StoreBackend`/`VectorStoreBackend`/etc.) +
+  `backend/storage/factory.py`.
+- ~~Integração do `AsyncConnectionPool` com o checkpointer~~ — feito:
+  `VectoraSqliteSaver` (`backend/persistence/native/sqlite_checkpointer.py`)
+  já abre sobre `AsyncConnectionPool`.
+- ~~Store nativo para memória do agente~~ — feito: `VectoraStore`
+  (`backend/persistence/native/store.py`), exposto via `StoreBackend`
+  Protocol, namespace em tupla (`("user", user_id, "memories")`).
+- ~~`LanceDB` como `VectorStoreBackend` nativo~~ — feito:
+  `backend/storage/vectorstore/lancedb_backend.py` implementa o Protocol
+  `VectorStoreBackend` nativo (`backend/storage/vectorstore/base.py`), sem
+  depender do `VectorStore` do LangChain.
 
 ---
 

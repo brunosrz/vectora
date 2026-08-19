@@ -3,9 +3,9 @@
 Invariante crítico, o mesmo em todos os testes deste arquivo: esta camada
 **nunca** substitui o HITL sozinha. `evaluate_command` só devolve um booleano
 de anotação (`pre_approved`) — quem decide se a tool executa continua sendo
-`_REQUIRE_APPROVAL`/`_mode_should_interrupt`, que nem sabe que esta camada
-existe. Mais conservador que o Hermes (que auto-executa), alinhado ao HITL
-sempre já vinculante do produto.
+`REQUIRE_APPROVAL`/`should_require_approval` (`backend/engine/hitl.py`), que
+nem sabe que esta camada existe. Mais conservador que o Hermes (que
+auto-executa), alinhado ao HITL sempre já vinculante do produto.
 
 Cada caminho feliz tem o par de erro/borda no mesmo teste (CLAUDE.md §18).
 """
@@ -148,13 +148,13 @@ class TestEvaluateCommand:
     async def test_pre_aprovacao_nunca_e_usada_pra_pular_o_hitl(self):
         """`evaluate_command` é uma função pura que devolve bool — nenhuma
         tool nem tool call é executada aqui. Quem decide pausar é
-        `_REQUIRE_APPROVAL`, que não importa este módulo."""
-        import backend.services.middleware as mw
-
-        assert "smart_approval" not in mw.__dict__.get("__file__", "")
-        # A dependência é de fora pra dentro (adapters chama smart_approval),
-        # nunca o contrário — middleware não conhece este módulo.
+        `REQUIRE_APPROVAL`/`should_require_approval`, que não importa este
+        módulo."""
         import inspect
 
-        fonte_middleware = inspect.getsource(mw)
-        assert "smart_approval" not in fonte_middleware
+        from backend.engine import hitl
+
+        # A dependência é de fora pra dentro (adapters chama smart_approval),
+        # nunca o contrário — hitl não conhece este módulo.
+        fonte_hitl = inspect.getsource(hitl)
+        assert "smart_approval" not in fonte_hitl

@@ -1,16 +1,13 @@
-"""Testes de paridade — verifica que o harness deepagents está corretamente
-configurado e que os componentes-chave funcionam como esperado.
+"""Testes de componentes-chave do motor nativo: contexto de execução,
+permissões de filesystem, namespacing de memórias e montagem do agente.
 
 Cobertura:
     - VectoraContext: construção correta a partir de config dict
-    - Middleware stack: HITL + Summarization montados na ordem certa
     - FilesystemPermission: regras DENY/ALLOW/INTERRUPT
     - Memory tools: namespace correto + store API
     - backends.build_store: InMemoryStore sem index quando sem API key
-    - backends.build_backend: rotas CompositeBackend corretas
     - agent_factory._subagent_specs: ABAC filtering
     - agent_factory._agents_md_paths: retorna None se não há AGENTS.md
-    - LangSmith: enable/disable não crasham
 """
 
 from __future__ import annotations
@@ -253,20 +250,6 @@ class TestBuildStore:
         assert result["fields"] == ["content"]
         vetores = await result["embed"](["a"])
         assert vetores == [[0.1] * 1024]
-
-
-# ---------------------------------------------------------------------------
-# backends.build_backend routes
-# ---------------------------------------------------------------------------
-
-
-class TestBuildBackend:
-    def test_composite_backend_created(self):
-        """build_backend() deve criar CompositeBackend sem erros."""
-        from backend.llm.backends import build_backend
-
-        backend = build_backend(workspace_id=None, user_id="u1")
-        assert backend is not None
 
 
 # ---------------------------------------------------------------------------

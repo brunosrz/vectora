@@ -105,7 +105,7 @@ async def test_catalogo_grande_e_truncado_com_total_real(monkeypatch):
 
 
 def test_hitl_cobre_escrita_e_deixa_leitura_livre():
-    from backend.services.middleware import _REQUIRE_APPROVAL
+    from backend.engine.hitl import REQUIRE_APPROVAL
 
     # Toda tool que remove, publica ou grava credencial precisa pausar.
     for sensivel in (
@@ -117,7 +117,7 @@ def test_hitl_cobre_escrita_e_deixa_leitura_livre():
         "publish_memory_bucket_tool",
         "save_mcp_env_var",
     ):
-        assert sensivel in _REQUIRE_APPROVAL, f"{sensivel} deveria exigir aprovação"
+        assert sensivel in REQUIRE_APPROVAL, f"{sensivel} deveria exigir aprovação"
 
     # Erro/borda: leitura pura NÃO pode entrar — HITL aqui seria fricção sem
     # ganho nenhum de segurança, e o agente perderia a capacidade de consultar
@@ -128,4 +128,4 @@ def test_hitl_cobre_escrita_e_deixa_leitura_livre():
         "list_skills_catalog",
         "list_memory_bucket_catalog",
     ):
-        assert leitura not in _REQUIRE_APPROVAL, f"{leitura} não deveria exigir HITL"
+        assert leitura not in REQUIRE_APPROVAL, f"{leitura} não deveria exigir HITL"

@@ -38,17 +38,17 @@ def _err(msg: str) -> HealthResult:
 
 
 # ---------------------------------------------------------------------------
-# Checkpointer — persistência de estado do grafo LangGraph
+# Checkpointer — persistência de estado do motor de conversa nativo
 # ---------------------------------------------------------------------------
 
 
 @runtime_checkable
 class CheckpointerBackend(Protocol):
-    """Backend de checkpointing para o grafo LangGraph.
+    """Backend de checkpointing consumido por ``backend/engine/conversation_loop.py``.
 
     Implementações:
-        lite     — ``AsyncSqliteSaver`` (``langgraph.checkpoint.sqlite``)
-        complete — ``AsyncPostgresSaver`` (``langgraph.checkpoint.postgres``)
+        lite     — ``VectoraSqliteSaver`` (``backend/persistence/native/sqlite_checkpointer.py``)
+        complete — ``VectoraPostgresSaver`` (``backend/persistence/native/postgres_checkpointer.py``)
     """
 
     async def health(self) -> HealthResult:

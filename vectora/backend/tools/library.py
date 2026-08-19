@@ -1,7 +1,7 @@
 """Tools de auto-instalação da Library: MCP marketplace, catálogo de Skills e
 Memory Library — mesma lógica que os handlers HTTP já usam (`_impl`
 reaproveitado, nunca duplicado). Todas exigem aprovação humana
-(`_REQUIRE_APPROVAL`, `backend/services/middleware.py`): instalar é uma
+(`REQUIRE_APPROVAL`, `backend/engine/hitl.py`): instalar é uma
 mudança persistente no ambiente do usuário.
 """
 

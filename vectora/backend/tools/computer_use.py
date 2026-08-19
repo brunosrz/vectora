@@ -9,7 +9,7 @@ proteções que nenhuma outra tool tem:
   `vectora.toml`) — sem a seção, a tool recusa antes de tocar em qualquer
   coisa. Nunca liga silenciosamente.
 - **Aprovação humana sempre**, mesmo em `permission_mode="bypass"` — ver
-  `_mode_should_interrupt` em `backend/services/middleware.py`, que abre
+  `_mode_should_interrupt` em `backend/engine/hitl.py`, que abre
   uma exceção só pra esta tool.
 
 A biblioteca de automação é ``pyautogui-next`` (fork mantido do PyAutoGUI

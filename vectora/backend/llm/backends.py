@@ -1,26 +1,10 @@
-"""Backends pluggable do Vectora — CompositeBackend canônico.
+"""Construção do ``VectoraStore`` (memórias/skills, nativo aiosqlite) usado
+pelo motor de conversa nativo.
 
-Monta e expõe o ``CompositeBackend`` passado a ``create_deep_agent(backend=...)``.
-O harness deepagents usa este backend para persistir e recuperar artifacts,
-histórico de mensagens comprimido, e arquivos do workspace.
-
-Rotas configuradas:
-    /workspace/     → FilesystemBackend(root_dir=workspace_path)
-                      Acesso ao filesystem do workspace ativo do usuário.
-    /memories/      → StoreBackend(namespace=user_ns)
-                      Armazenamento de memórias do usuário no LangGraph Store.
-    /skills/        → StoreBackend(namespace=skills_ns)
-                      Armazenamento de skills do usuário.
-    /large_tool_results/ → StateBackend()
-                      Resultados grandes de tools armazenados no grafo (evita
-                      inflar o contexto com outputs volumosos).
-
-O ``StateBackend`` é usado como default (fallback para paths não roteados).
-
-Nota: nossa camada de tools artesanais (``src/tools/fs.py``) continua ativa —
-coexiste com o ``FilesystemBackend`` que o harness usa internamente.
-A migração completa para tools automáticas via ``FilesystemMiddleware``
-está planejada para uma fase posterior.
+``build_store()`` abre um pool aiosqlite dedicado e resolve o índice vetorial
+via ``_build_lc_embeddings()`` (fallback Cohere↔Voyage↔Ollama↔OpenRouter).
+``_resolve_workspace_root()`` resolve o diretório raiz de uma workspace pelo
+registry, com fallback para o home do usuário.
 """
 
 from __future__ import annotations
@@ -30,77 +14,6 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Factory de CompositeBackend
-# ---------------------------------------------------------------------------
-
-
-def build_backend(
-    workspace_id: str | None = None,
-    user_id: str | None = None,
-) -> Any:
-    """Constrói ``CompositeBackend`` para uma sessão do usuário.
-
-    Args:
-        workspace_id: ID do workspace ativo. Se None, o ``FilesystemBackend``
-            aponta para o diretório home como fallback seguro.
-        user_id: ID do usuário para namespacing das memórias no Store.
-
-    Returns:
-        ``CompositeBackend`` configurado com rotas /workspace/, /memories/,
-        /skills/ e /large_tool_results/.
-
-    Raises:
-        ImportError: Se deepagents não estiver instalado.
-    """
-    from deepagents.backends import (
-        CompositeBackend,
-        FilesystemBackend,
-        StateBackend,
-        StoreBackend,
-    )
-
-    # ── Workspace backend ─────────────────────────────────────────────────────
-    workspace_root = _resolve_workspace_root(workspace_id)
-    # virtual_mode explícito (o default do deepagents muda em 0.6.0): mantemos
-    # False = comportamento atual (paths reais sob root_dir). A proteção de
-    # path do Vectora vive em src/services/safe_roots.py + src/tools/fs.py.
-    fs_backend = FilesystemBackend(root_dir=workspace_root, virtual_mode=False)
-
-    # ── State backend (default + large results) ───────────────────────────────
-    state_backend = StateBackend()
-
-    # ── Store backends (memories + skills) ───────────────────────────────────
-    uid = user_id or "local"
-
-    def _memory_namespace(runtime: Any) -> tuple[str, ...]:
-        return ("user", uid, "memories")
-
-    def _skills_namespace(runtime: Any) -> tuple[str, ...]:
-        return ("user", uid, "skills")
-
-    memories_backend = StoreBackend(namespace=_memory_namespace)
-    skills_backend = StoreBackend(namespace=_skills_namespace)
-
-    # ── Composite ─────────────────────────────────────────────────────────────
-    backend = CompositeBackend(
-        default=state_backend,
-        routes={
-            "/workspace/": fs_backend,
-            "/memories/": memories_backend,
-            "/skills/": skills_backend,
-            "/large_tool_results/": state_backend,
-        },
-    )
-
-    logger.debug(
-        "backends: CompositeBackend criado workspace_root=%s user_id=%s",
-        workspace_root,
-        uid,
-    )
-    return backend
 
 
 async def build_store(embedding_model: str | None = None) -> Any:
@@ -113,9 +26,9 @@ async def build_store(embedding_model: str | None = None) -> Any:
     ``VectoraStore(pool, index=index)``. Chama ``await store.setup()`` para
     criar as tabelas na primeira vez.
 
-    Usado como ``store=`` em ``create_deep_agent`` e disponível às tools via
-    ``langgraph.config.get_store()`` dentro do grafo. O store persiste memórias
-    do agente em SQLite (lite mode).
+    Usado pelas tools nativas de memória/skill (``backend/tools/memory.py``)
+    resolvidas via ``ToolContext``. O store persiste memórias do agente em
+    SQLite (lite mode).
 
     Args:
         embedding_model: não usado atualmente — ``_build_lc_embeddings()``
@@ -194,29 +107,6 @@ def _build_index(embedding_model: str | None) -> Any:
             exc_info=True,
         )
         return None
-
-
-def build_backend_lazy() -> Any:
-    """Compat shiv legado de backend lazy.
-
-    ``deepagents`` 0.7+ não aceita mais backend factory em
-    ``create_deep_agent(backend=...)``; o chamador precisa construir o backend
-    já inicializado com ``build_backend(...)``. Este helper permanece só por
-    compatibilidade com código antigo fora do caminho principal.
-    """
-
-    def _factory(runtime: Any) -> Any:
-        ctx = getattr(runtime, "context", None)
-        workspace_id = getattr(ctx, "workspace_id", None) or None
-        user_id = getattr(ctx, "user_id", None) or "local"
-        return build_backend(workspace_id=workspace_id, user_id=user_id)
-
-    return _factory
-
-
-# ---------------------------------------------------------------------------
-# Helpers internos
-# ---------------------------------------------------------------------------
 
 
 def _resolve_workspace_root(workspace_id: str | None) -> Path:

@@ -565,10 +565,8 @@ def create_app(serve_static: bool = True) -> FastAPI:
         tools_data = []
         for spec in ALL_TOOL_SPECS:
             schema: dict = {}
-            try:
+            with suppress(Exception):
                 schema = spec.args_model.model_json_schema()
-            except Exception:
-                pass
             tools_data.append(
                 {
                     "name": spec.name,
