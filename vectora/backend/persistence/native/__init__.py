@@ -1,13 +1,13 @@
-"""Implementações nativas dos protocolos ``BaseCheckpointSaver``/``BaseStore``
-do LangGraph (``langgraph.checkpoint.base``/``langgraph.store.base``) — HTTP/DB
-direto via ``aiosqlite``/``asyncpg``, sem as libs ``langgraph-checkpoint-sqlite``/
-``langgraph-checkpoint-postgres``.
+"""Persistência nativa do motor de conversa: ``session_store.py``/
+``postgres_session_store.py`` (fonte única de verdade de threads/mensagens/
+aprovações pendentes, consumida por ``backend/engine/conversation_loop.py``).
 
-O LangGraph em si (grafo, ``interrupt()``, ``HumanInTheLoopMiddleware``,
-``astream_events``) continua intocado — só a camada de storage do
-checkpointer/Store é nativizada, mesmo padrão já usado em
-``backend/llm/native_redis_cache.py`` (cache) e nos clients de provider de
-``backend/llm/{openai,anthropic,google,cohere,voyage}/``.
+``sqlite_checkpointer.py``/``postgres_checkpointer.py``/``store.py``/
+``postgres_store.py`` implementam ``BaseCheckpointSaver``/``BaseStore`` do
+LangGraph (``langgraph.checkpoint.base``/``langgraph.store.base``) via
+``aiosqlite``/``asyncpg`` direto, sem as libs ``langgraph-checkpoint-sqlite``/
+``langgraph-checkpoint-postgres`` — órfãos desde o corte de dispatch pro
+motor nativo, pendentes de remoção.
 """
 
 from __future__ import annotations

@@ -279,15 +279,6 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: cache_sync indisponível: %s", exc)
 
-    # Cache de completions LLM (RedisCache/RedisSemanticCache com Redis;
-    # InMemoryCache caso contrário), aplicado via set_llm_cache.
-    try:
-        from backend.llm.cache_llm import init_llm_cache
-
-        init_llm_cache()
-    except Exception as exc:
-        logger.warning("api/server: cache_llm indisponível: %s", exc)
-
     # Worker que processa a fila de embeddings (RAG): lê os chunks PENDING e
     # grava os vetores no LanceDB. SEM ele, tudo que `ingest_docs`/
     # `ingest_directory` enfileiram fica "pending" para sempre e o RAG nunca

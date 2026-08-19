@@ -240,26 +240,8 @@ class Settings(BaseSettings):
     """URL de conexão Redis.
 
     Default aponta para o docker-compose padrão (redis:6379/0).
-    Usado por KVCache, rate-limit, invalidação pub/sub e langchain-redis.
+    Usado por KVCache, rate-limit e invalidação pub/sub.
     """
-
-    # ============================================================================
-    # CACHE LLM — só ativo quando Redis está acessível (senão InMemoryCache).
-    # ============================================================================
-
-    cache_llm_enabled: bool = True
-    """Liga o cache de completions LLM (``RedisCache`` em modo complete,
-    ``InMemoryCache`` caso contrário). Mata re-chamadas idênticas."""
-
-    cache_semantic: bool = False
-    """Usa ``RedisSemanticCache`` (hit fuzzy por similaridade do prompt) em vez
-    do ``RedisCache`` exato. Requer embeddings Cohere configurados."""
-
-    cache_ttl_seconds: int = 3600
-    """TTL das entradas de cache LLM (segundos). Default 1h."""
-
-    cache_distance_threshold: float = 0.2
-    """Limiar de distância do cache semântico nativo (menor = mais estrito)."""
 
     # ============================================================================
     # QDRANT (complete)
