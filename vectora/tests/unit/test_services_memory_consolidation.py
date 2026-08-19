@@ -326,3 +326,53 @@ async def test_consolidate_memory_writes_directly_when_approval_not_required(
     path = section_path("gotchas", tmp_path)
     assert path.exists()
     assert "JWT expira rápido." in path.read_text(encoding="utf-8")
+
+
+class TestRunConsolidationForAllUsers:
+    """``run_consolidation_for_all_users`` — dispara consolidação pra todo
+    usuário com atividade recente, lendo de ``SessionStore`` (fonte real de
+    ``user_id``, não ``vectora_sessions`` — regressão: essa função consultava
+    colunas que nunca existiram em ``vectora_sessions``, falhando toda vez
+    que o scheduler rodava)."""
+
+    async def test_consolida_cada_usuario_ativo_encontrado(self):
+        from backend.scheduling.memory_consolidation import (
+            run_consolidation_for_all_users,
+        )
+
+        fake_store = MagicMock()
+        fake_store.list_active_user_ids = AsyncMock(return_value=["alice", "bob"])
+
+        with (
+            patch(
+                "backend.services.agent_factory.get_session_store",
+                new=AsyncMock(return_value=fake_store),
+            ),
+            patch(
+                "backend.scheduling.memory_consolidation.consolidate_memory",
+                new=AsyncMock(),
+            ) as mock_consolidate,
+        ):
+            await run_consolidation_for_all_users()
+
+        called_users = [c.args[0] for c in mock_consolidate.await_args_list]
+        assert called_users == ["alice", "bob"]
+
+    async def test_falha_ao_consultar_store_nao_propaga(self):
+        """Erro/borda: operação best-effort — falha na consulta ao
+        SessionStore nunca derruba o scheduler."""
+        from backend.scheduling.memory_consolidation import (
+            run_consolidation_for_all_users,
+        )
+
+        with patch(
+            "backend.services.agent_factory.get_session_store",
+            new=AsyncMock(side_effect=RuntimeError("banco indisponível")),
+        ):
+            try:
+                await run_consolidation_for_all_users()
+            except Exception:
+                pytest.fail(
+                    "run_consolidation_for_all_users propagou exceção — "
+                    "deve ser best-effort"
+                )

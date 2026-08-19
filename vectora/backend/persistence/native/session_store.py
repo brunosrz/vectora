@@ -359,6 +359,20 @@ class SessionStore:
             rows = await cur.fetchall()
         return {r[0] for r in rows}
 
+    async def list_active_user_ids(self, since_iso: str) -> list[str]:
+        """`user_id` distintos com pelo menos uma sessão atualizada desde
+        `since_iso` (string ISO comparável lexicograficamente com
+        `updated_at`) — usado pelo scheduler de consolidação de memória
+        pra saber quem teve atividade recente, sem varrer todas as threads."""
+        await self.setup()
+        async with self._pool.acquire() as conn:
+            cur = await conn.execute(
+                "SELECT DISTINCT user_id FROM sessions WHERE updated_at >= ?",
+                (since_iso,),
+            )
+            rows = await cur.fetchall()
+        return [r[0] for r in rows if r[0]]
+
     async def get_pending_approval(self, thread_id: str) -> dict[str, Any] | None:
         await self.setup()
         async with self._pool.acquire() as conn:

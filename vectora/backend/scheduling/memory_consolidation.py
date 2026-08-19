@@ -323,14 +323,13 @@ async def run_consolidation_for_all_users() -> None:
     Chamado pelo scheduler a cada 6 horas.
     """
     try:
-        from backend.api.handlers.threads import _get_db
+        from datetime import timedelta
 
-        db = await _get_db()
-        rows = await db.execute_fetchall(
-            "SELECT DISTINCT user_id FROM vectora_sessions "
-            "WHERE updated_at >= datetime('now', '-7 days') AND user_id IS NOT NULL",
-        )
-        users = [r[0] for r in rows if r[0]]
+        from backend.services import agent_factory
+
+        store = await agent_factory.get_session_store()
+        since_iso = (datetime.now(UTC) - timedelta(days=7)).isoformat()
+        users = await store.list_active_user_ids(since_iso)
         logger.info("memory_consolidation: iniciando para %d usuários", len(users))
         for user_id in users:
             await consolidate_memory(user_id)

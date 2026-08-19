@@ -351,3 +351,39 @@ class TestForeignThreadIds:
         )
 
         assert foreign == set()
+
+
+class TestListActiveUserIds:
+    """``list_active_user_ids`` — usado pelo scheduler de consolidação de
+    memória pra saber quais usuários tiveram atividade recente."""
+
+    async def test_lista_apenas_usuarios_atualizados_desde_o_corte(
+        self, store: SessionStore
+    ):
+        await store.create_session("thread-recente", user_id="alice")
+        await store.create_session("thread-antiga", user_id="bob")
+        async with store._pool.acquire() as conn:
+            await conn.execute(
+                "UPDATE sessions SET updated_at = ? WHERE thread_id = ?",
+                ("2020-01-01T00:00:00", "thread-antiga"),
+            )
+            await conn.commit()
+
+        users = await store.list_active_user_ids("2025-01-01T00:00:00")
+
+        assert users == ["alice"]
+
+    async def test_sem_sessao_nenhuma_devolve_lista_vazia(self, store: SessionStore):
+        """Erro/borda: banco vazio nunca lança, devolve lista vazia."""
+        assert await store.list_active_user_ids("2020-01-01T00:00:00") == []
+
+    async def test_dois_usuarios_ativos_aparecem_sem_duplicata(
+        self, store: SessionStore
+    ):
+        await store.create_session("thread-a", user_id="alice")
+        await store.create_session("thread-a2", user_id="alice")
+        await store.create_session("thread-b", user_id="bob")
+
+        users = await store.list_active_user_ids("2020-01-01T00:00:00")
+
+        assert sorted(users) == ["alice", "bob"]
