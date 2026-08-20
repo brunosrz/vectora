@@ -304,6 +304,41 @@ def _action_install_desktop(target, source, env):
     # SConstruct explícita (_build_desktop depende deste node, não do
     # build-chat, que pode não ter rodado no pipeline de release).
     _run([PNPM, "--dir", "vectora/frontend", "install", "--frozen-lockfile"])
+    _ensure_electron_binary()
+
+
+def _ensure_electron_binary() -> None:
+    """`pnpm install` só baixa o binário nativo do Electron via o
+    postinstall do pacote npm `electron` — um download de rede que pode
+    silenciosamente não completar (observado ao vivo: `path.txt` ausente
+    mesmo após `pnpm install` reportar sucesso, sem nenhum erro visível).
+    Sem esse binário, `electron_launcher.py` não encontra o executável e
+    o backend cai pro modo web como fallback silencioso — inaceitável em
+    dev/release, onde o objetivo explícito é o app desktop. `scons
+    frontend` precisa garantir isso, não só confiar que o postinstall
+    rodou.
+
+    `pnpm rebuild electron` NÃO conserta isso de forma confiável — testado
+    isoladamente (`path.txt` ausente antes, `pnpm rebuild electron` retorna
+    exit 0, `path.txt` ainda ausente depois). O único mecanismo confirmado
+    a baixar o binário de verdade é rodar o `install.js` do próprio pacote
+    (o mesmo script que o postinstall invoca) diretamente via node."""
+    path_txt = os.path.join(VECTORA, "frontend", "node_modules", "electron", "path.txt")
+    if os.path.isfile(path_txt):
+        return
+    print(">> binário do Electron ausente (path.txt não encontrado) — rodando install.js")
+    _run([
+        PNPM, "--dir", "vectora/frontend", "exec", "node",
+        "node_modules/electron/install.js",
+    ])
+    if not os.path.isfile(path_txt):
+        print(
+            "\n[scons frontend] Electron instalado mas o binário nativo não "
+            "baixou (path.txt ausente mesmo após rodar install.js).\n"
+            "  Verifique conexão de rede/proxy — sem isso o app desktop não "
+            "pode rodar.\n"
+        )
+        raise SystemExit(1)
 
 
 def _action_build_desktop(target, source, env):
