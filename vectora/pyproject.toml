@@ -96,6 +96,7 @@ dependencies = [
     "python-telegram-bot>=22.8",
     "discord.py>=2.7.1",
     "slack-bolt>=1.30.0",
+    "tree-sitter-language-pack>=1.14,<2",
 ]
 
 [project.scripts]

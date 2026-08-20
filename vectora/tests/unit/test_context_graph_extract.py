@@ -253,6 +253,188 @@ class TestExtractTypeScriptFile:
         assert isinstance(result, dict)
 
 
+class TestExtractGdscriptFile:
+    """GDScript (Godot) — achado real: um projeto Godot real do usuário
+    (`.gd`) gerava grafo com 0 nós/0 arestas porque a extensão nunca foi
+    registrada, apesar de já existir extractor pra linguagens de nicho
+    ainda mais raras (DreamMaker)."""
+
+    def test_gd_routed_to_gdscript_extractor(self, tmp_path: Path):
+        from backend.context_graph.extract import _get_extractor, extract_gdscript
+
+        f = tmp_path / "player.gd"
+        f.touch()
+        assert _get_extractor(f) is extract_gdscript
+
+    def test_extends_signal_function_and_calls(self, tmp_path: Path):
+        from backend.context_graph.extract import extract_gdscript
+
+        f = tmp_path / "player.gd"
+        f.write_text(
+            "extends CharacterBody2D\n"
+            "\n"
+            "class_name Player\n"
+            "\n"
+            "signal died\n"
+            "\n"
+            "func take_damage(amount):\n"
+            "    self.apply(amount)\n"
+            "    emit_signal('died')\n",
+            encoding="utf-8",
+        )
+        result = extract_gdscript(f)
+        labels = [n["label"] for n in result["nodes"]]
+        assert "Player" in labels  # class_name relabeia o nó do arquivo
+        assert "CharacterBody2D" in labels  # base do extends
+        assert "signal died" in labels
+        assert "take_damage()" in labels
+
+        relations = {(e["relation"], e["target"]) for e in result["edges"]}
+        assert any(rel == "inherits" for rel, _ in relations)
+        call_targets = {
+            e["target"] for e in result["edges"] if e["relation"] == "calls"
+        }
+        assert any("apply" in t for t in call_targets)
+        assert any("emit_signal" in t for t in call_targets)
+
+    def test_extends_by_res_path_resolves_to_real_file(self, tmp_path: Path):
+        """`extends "res://base.gd"` resolve pro arquivo real via
+        project.godot (regra de resolução do próprio Godot), não vira
+        referência solta como um builtin da engine."""
+        from backend.context_graph.extract import _make_id, extract_gdscript
+
+        (tmp_path / "project.godot").write_text("", encoding="utf-8")
+        base = tmp_path / "base.gd"
+        base.write_text("extends Node\n", encoding="utf-8")
+        child = tmp_path / "child.gd"
+        child.write_text('extends "res://base.gd"\n', encoding="utf-8")
+
+        result = extract_gdscript(child)
+        expected_target = _make_id(str(base))
+        assert any(
+            e["relation"] == "inherits" and e["target"] == expected_target
+            for e in result["edges"]
+        )
+
+    def test_syntax_error_graceful(self, tmp_path: Path):
+        from backend.context_graph.extract import extract_gdscript
+
+        f = tmp_path / "broken.gd"
+        f.write_text("func (:\n    pass\n", encoding="utf-8")
+        result = extract_gdscript(f)
+        assert isinstance(result, dict)
+        assert isinstance(result.get("nodes"), list)
+
+    def test_missing_dependency_degrades_gracefully(self, tmp_path: Path, monkeypatch):
+        import sys
+
+        import backend.context_graph.extract as extract_mod
+
+        monkeypatch.setitem(sys.modules, "tree_sitter_language_pack", None)
+        f = tmp_path / "player.gd"
+        f.write_text("extends Node\n", encoding="utf-8")
+        result = extract_mod.extract_gdscript(f)
+        assert result == {
+            "nodes": [],
+            "edges": [],
+            "error": "tree-sitter-language-pack not installed",
+        }
+
+
+class TestExtractGodotScene:
+    """Godot .tscn/.tres — formato de seções próprio (sem grammar
+    tree-sitter), conecta uma cena aos scripts que ela usa via
+    `[ext_resource type="Script" ...]` + `script = ExtResource("id")`."""
+
+    def test_tscn_routed_to_scene_extractor(self, tmp_path: Path):
+        from backend.context_graph.extract import _get_extractor, extract_godot_scene
+
+        f = tmp_path / "level.tscn"
+        f.touch()
+        assert _get_extractor(f) is extract_godot_scene
+
+    def test_tres_routed_to_scene_extractor(self, tmp_path: Path):
+        from backend.context_graph.extract import _get_extractor, extract_godot_scene
+
+        f = tmp_path / "theme.tres"
+        f.touch()
+        assert _get_extractor(f) is extract_godot_scene
+
+    def test_scene_attaching_script_emits_uses_edge_to_real_file(self, tmp_path: Path):
+        from backend.context_graph.extract import _make_id, extract_godot_scene
+
+        (tmp_path / "project.godot").write_text("", encoding="utf-8")
+        script = tmp_path / "player.gd"
+        script.write_text("extends Node2D\n", encoding="utf-8")
+        scene = tmp_path / "player.tscn"
+        scene.write_text(
+            "[gd_scene load_steps=2 format=3]\n\n"
+            '[ext_resource type="Script" path="res://player.gd" id="1_abc"]\n\n'
+            '[node name="Player" type="Node2D"]\n'
+            'script = ExtResource("1_abc")\n',
+            encoding="utf-8",
+        )
+        result = extract_godot_scene(scene)
+        expected_target = _make_id(str(script))
+        assert any(
+            e["relation"] == "uses" and e["target"] == expected_target
+            for e in result["edges"]
+        )
+
+    def test_non_script_resource_produces_no_edge(self, tmp_path: Path):
+        """Textura/malha anexada não é grafo-relevante — só Script gera
+        aresta (erro/borda: resource de outro type não deve virar edge)."""
+        from backend.context_graph.extract import extract_godot_scene
+
+        f = tmp_path / "sprite.tscn"
+        f.write_text(
+            "[gd_scene load_steps=2 format=3]\n\n"
+            '[ext_resource type="Texture2D" path="res://icon.png" id="1_tex"]\n\n'
+            '[node name="Sprite" type="Sprite2D"]\n'
+            'texture = ExtResource("1_tex")\n',
+            encoding="utf-8",
+        )
+        result = extract_godot_scene(f)
+        assert result["edges"] == []
+
+    def test_oversized_scene_indexes_header_only_no_crash(self, tmp_path: Path):
+        """Erro/borda: arquivo acima do teto de tamanho não trava nem
+        lança — indexa só o cabeçalho de ext_resource, sem escanear os
+        blocos [node ...] (podem ter megabytes de sub-recursos)."""
+        import backend.context_graph.extract as extract_mod
+
+        f = tmp_path / "huge.tscn"
+        big_padding = "# padding\n" * 300_000
+        f.write_text(
+            "[gd_scene load_steps=2 format=3]\n\n"
+            '[ext_resource type="Script" path="res://player.gd" id="1_abc"]\n\n'
+            + big_padding
+            + '[node name="Player" type="Node2D"]\n'
+            'script = ExtResource("1_abc")\n',
+            encoding="utf-8",
+        )
+        assert f.stat().st_size > extract_mod._GODOT_SCENE_MAX_BYTES
+        result = extract_mod.extract_godot_scene(f)
+        assert result["edges"] == []
+        assert len(result["nodes"]) == 1  # só o nó do arquivo, sem crash
+
+    def test_scene_without_ext_resource_returns_only_file_node(self, tmp_path: Path):
+        from backend.context_graph.extract import extract_godot_scene
+
+        f = tmp_path / "empty.tscn"
+        f.write_text("[gd_scene load_steps=1 format=3]\n", encoding="utf-8")
+        result = extract_godot_scene(f)
+        assert len(result["nodes"]) == 1
+        assert result["edges"] == []
+
+    def test_missing_file_returns_error_not_exception(self, tmp_path: Path):
+        from backend.context_graph.extract import extract_godot_scene
+
+        result = extract_godot_scene(tmp_path / "does-not-exist.tscn")
+        assert isinstance(result, dict)
+        assert result.get("error")
+
+
 class TestStripJsonc:
     def test_removes_line_comments(self):
         from backend.context_graph.extract import _strip_jsonc

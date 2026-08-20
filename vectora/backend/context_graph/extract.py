@@ -14950,6 +14950,302 @@ def extract_dmf(path: Path) -> dict:
     return {"nodes": nodes, "edges": edges}
 
 
+# ── GDScript (Godot engine) extractor ────────────────────────────────────────
+
+
+def _resolve_gdscript_extends_path(raw_path: str, from_file: Path) -> str | None:
+    """Resolve a Godot `res://...` extends path to an absolute file path on
+    disk, using the nearest ancestor `project.godot` as the project root —
+    Godot's own resolution rule for `res://`. Returns ``None`` when no
+    project.godot is found or the target file doesn't exist."""
+    if not raw_path.startswith("res://"):
+        return None
+    rel = raw_path[len("res://") :]
+    probe = from_file.parent
+    for _ in range(12):
+        if (probe / "project.godot").is_file():
+            candidate = probe / rel
+            return str(candidate) if candidate.is_file() else None
+        if probe.parent == probe:
+            break
+        probe = probe.parent
+    return None
+
+
+def extract_gdscript(path: Path) -> dict:
+    """Extract classes, functions, signals, and calls from a .gd (GDScript,
+    Godot engine) file.
+
+    No dedicated `tree-sitter-gdscript` package exists on PyPI (unlike the
+    other languages in this module, each with its own small grammar
+    package) — the grammar is loaded via `tree-sitter-language-pack`
+    instead. Same underlying tree-sitter API, just a different loader for
+    this one language.
+    """
+    try:
+        from tree_sitter_language_pack import get_parser
+    except ImportError:
+        return {
+            "nodes": [],
+            "edges": [],
+            "error": "tree-sitter-language-pack not installed",
+        }
+    try:
+        parser = get_parser("gdscript")
+        source = path.read_bytes()
+        tree = parser.parse(source)
+        root = tree.root_node
+    except Exception as e:
+        return {"nodes": [], "edges": [], "error": str(e)}
+
+    stem = _file_stem(path)
+    str_path = str(path)
+    nodes: list[dict] = []
+    edges: list[dict] = []
+    seen_ids: set[str] = set()
+
+    def add_node(nid: str, label: str, line: int) -> None:
+        if nid not in seen_ids:
+            seen_ids.add(nid)
+            nodes.append(
+                {
+                    "id": nid,
+                    "label": label,
+                    "file_type": "code",
+                    "source_file": str_path,
+                    "source_location": f"L{line}",
+                }
+            )
+
+    def add_edge(src: str, tgt: str, relation: str, line: int) -> None:
+        edges.append(
+            {
+                "source": src,
+                "target": tgt,
+                "relation": relation,
+                "confidence": "EXTRACTED",
+                "source_file": str_path,
+                "source_location": f"L{line}",
+                "weight": 1.0,
+            }
+        )
+
+    def ensure_ref_node(name: str, line: int) -> str:
+        """Cross-file/engine reference (base class not defined in this
+        file) — sourceless stub so corpus-level rewire can collapse it onto
+        the real definition when it's a project class; stays a dangling
+        reference when it's a Godot engine builtin (Node2D,
+        CharacterBody2D, …), which is expected and harmless."""
+        nid = _make_id(name)
+        if nid not in seen_ids:
+            seen_ids.add(nid)
+            nodes.append(
+                {
+                    "id": nid,
+                    "label": name,
+                    "file_type": "code",
+                    "source_file": "",
+                    "source_location": "",
+                }
+            )
+        return nid
+
+    def child_of_type(node, type_name: str):
+        return next((c for c in node.children if c.type == type_name), None)
+
+    file_nid = _make_id(str_path)
+    add_node(file_nid, path.name, 1)
+
+    def walk_calls(node, owner_nid: str) -> None:
+        if node is None:
+            return
+        t = node.type
+        if t == "function_definition":
+            return
+        if t == "call":
+            callee = node.children[0] if node.children else None
+            if callee is not None and callee.type == "identifier":
+                name = _read_text(callee, source)
+                target_nid = _make_id(stem, name)
+                add_edge(owner_nid, target_nid, "calls", node.start_point[0] + 1)
+        elif t == "attribute":
+            call_node = child_of_type(node, "attribute_call")
+            if call_node is not None:
+                name_node = child_of_type(call_node, "identifier")
+                if name_node is not None:
+                    name = _read_text(name_node, source)
+                    target_nid = _make_id(stem, name)
+                    add_edge(owner_nid, target_nid, "calls", node.start_point[0] + 1)
+        for child in node.children:
+            walk_calls(child, owner_nid)
+
+    def walk(node, owner_nid: str) -> None:
+        for child in node.children:
+            t = child.type
+            line = child.start_point[0] + 1
+
+            if t == "extends_statement":
+                type_node = child_of_type(child, "type")
+                string_node = child_of_type(child, "string")
+                base_name: str | None = None
+                if type_node is not None:
+                    ident = child_of_type(type_node, "identifier")
+                    base_name = _read_text(ident, source) if ident else None
+                elif string_node is not None:
+                    raw = _read_text(string_node, source).strip("\"'")
+                    resolved = _resolve_gdscript_extends_path(raw, path)
+                    if resolved:
+                        add_edge(owner_nid, _make_id(resolved), "inherits", line)
+                    else:
+                        base_name = raw
+                if base_name:
+                    add_edge(
+                        owner_nid, ensure_ref_node(base_name, line), "inherits", line
+                    )
+
+            elif t == "class_name_statement":
+                name_node = child_of_type(child, "name")
+                if name_node is not None:
+                    class_name = _read_text(name_node, source)
+                    for n in nodes:
+                        if n["id"] == owner_nid:
+                            n["label"] = class_name
+                            break
+
+            elif t == "class_definition":
+                name_node = child_of_type(child, "name")
+                cls_name = _read_text(name_node, source) if name_node else "class"
+                cls_nid = _make_id(stem, cls_name)
+                add_node(cls_nid, cls_name, line)
+                add_edge(owner_nid, cls_nid, "contains", line)
+                body = child_of_type(child, "class_body")
+                if body is not None:
+                    walk(body, cls_nid)
+
+            elif t == "signal_statement":
+                name_node = child_of_type(child, "name")
+                if name_node is not None:
+                    sig_name = _read_text(name_node, source)
+                    sig_nid = _make_id(stem, sig_name)
+                    add_node(sig_nid, f"signal {sig_name}", line)
+                    add_edge(owner_nid, sig_nid, "contains", line)
+
+            elif t == "function_definition":
+                name_node = child_of_type(child, "name")
+                func_name = _read_text(name_node, source) if name_node else "func"
+                func_nid = _make_id(stem, func_name)
+                add_node(func_nid, f"{func_name}()", line)
+                add_edge(owner_nid, func_nid, "contains", line)
+                body = child_of_type(child, "body")
+                if body is not None:
+                    walk_calls(body, func_nid)
+
+            else:
+                walk(child, owner_nid)
+
+    walk(root, file_nid)
+    return {"nodes": nodes, "edges": edges}
+
+
+# Godot scene/resource files (.tscn/.tres) — a section-based format
+# ([gd_scene ...], [ext_resource ...], [node ...]), not JSON/YAML, with no
+# tree-sitter grammar available. Only the two patterns needed to connect a
+# scene to the scripts it attaches are parsed; everything else in the file
+# (geometry, curves, embedded resources) is ignored on purpose.
+_GODOT_EXT_RESOURCE_RE = re.compile(
+    r'\[ext_resource\s+type="([^"]+)"[^\]]*\bpath="([^"]+)"[^\]]*\bid="([^"]+)"'
+)
+_GODOT_NODE_SCRIPT_RE = re.compile(r'^script\s*=\s*ExtResource\("([^"]+)"\)')
+
+# .tscn files can carry megabytes of embedded sub-resources (meshes, curves)
+# after the [node ...] blocks. Above this size, index only the ext_resource
+# header (always at the top of the file, by Godot's own format convention)
+# and skip the node-by-node scan for script attachments.
+_GODOT_SCENE_MAX_BYTES = 2_000_000
+
+
+def extract_godot_scene(path: Path) -> dict:
+    """Extract scene→script edges from a Godot .tscn/.tres file.
+
+    `[ext_resource type="Script" path="res://x.gd" id="Y"]` declares a
+    script resource by id; a `[node ...]` block with `script =
+    ExtResource("Y")` attaches it to that node. Only Script-typed resources
+    produce edges — textures/meshes/materials referenced the same way are
+    not graph-relevant here.
+    """
+    try:
+        size = path.stat().st_size
+    except OSError as e:
+        return {"nodes": [], "edges": [], "error": str(e)}
+
+    str_path = str(path)
+    file_nid = _make_id(str_path)
+    nodes: list[dict] = [
+        {
+            "id": file_nid,
+            "label": path.name,
+            "file_type": "code",
+            "source_file": str_path,
+            "source_location": "L1",
+        }
+    ]
+    edges: list[dict] = []
+    seen_ids: set[str] = {file_nid}
+    script_ids: dict[str, str] = {}  # ext_resource id -> res:// path
+
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if line.startswith("[node"):
+                    break  # ext_resource declarations always precede [node ...]
+                m = _GODOT_EXT_RESOURCE_RE.search(line)
+                if m and m.group(1) == "Script":
+                    script_ids[m.group(3)] = m.group(2)
+    except Exception as e:
+        return {"nodes": [], "edges": [], "error": str(e)}
+
+    if not script_ids or size > _GODOT_SCENE_MAX_BYTES:
+        return {"nodes": nodes, "edges": edges}
+
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                m = _GODOT_NODE_SCRIPT_RE.match(line.strip())
+                if not m:
+                    continue
+                script_path = script_ids.get(m.group(1))
+                if not script_path:
+                    continue
+                resolved = _resolve_gdscript_extends_path(script_path, path)
+                target_nid = _make_id(resolved) if resolved else _make_id(script_path)
+                if target_nid not in seen_ids:
+                    seen_ids.add(target_nid)
+                    nodes.append(
+                        {
+                            "id": target_nid,
+                            "label": script_path.rsplit("/", 1)[-1],
+                            "file_type": "code",
+                            "source_file": resolved or "",
+                            "source_location": "",
+                        }
+                    )
+                edges.append(
+                    {
+                        "source": file_nid,
+                        "target": target_nid,
+                        "relation": "uses",
+                        "confidence": "EXTRACTED",
+                        "source_file": str_path,
+                        "source_location": "L1",
+                        "weight": 1.0,
+                    }
+                )
+    except Exception as e:
+        return {"nodes": nodes, "edges": edges, "error": str(e)}
+
+    return {"nodes": nodes, "edges": edges}
+
+
 # Head tokens in an HCL traversal that are meta/builtins, not references to a
 # block defined in the corpus (count.index, each.key, self.*, path.module, ...).
 _TF_META_HEADS = frozenset({"count", "each", "self", "path", "terraform"})
@@ -15243,6 +15539,9 @@ _DISPATCH: dict[str, Any] = {
     ".tf": extract_terraform,
     ".tfvars": extract_terraform,
     ".hcl": extract_terraform,
+    ".gd": extract_gdscript,
+    ".tscn": extract_godot_scene,
+    ".tres": extract_godot_scene,
     ".dm": extract_dm,
     ".dme": extract_dm,
     ".dmi": extract_dmi,
