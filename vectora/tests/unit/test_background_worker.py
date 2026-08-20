@@ -8,6 +8,7 @@ import backend.embedding.background as _bg_mod
 from backend.embedding.background import (
     BackgroundEmbeddingWorker,
     _is_rate_limit_error,
+    get_background_worker,
     get_worker_pause_state,
 )
 from backend.embedding.queue import EmbeddingQueueRecord
@@ -292,3 +293,57 @@ class TestGenerateEmbedding:
         worker = BackgroundEmbeddingWorker()
         with pytest.raises(ValueError, match="Nenhum provider"):
             await worker._generate_embedding("conteúdo")
+
+
+class TestWorkerLockSurvivesAcrossEventLoops:
+    """Regressão (CI real, 2026-08-20): `_worker_lock` é um `asyncio.Lock()`
+    criado uma vez no import do módulo — um singleton de processo. Com
+    `asyncio_default_fixture_loop_scope = "function"`, cada teste ganha um
+    event loop novo; se o lock ficar travado (task cancelada no meio de
+    `async with _worker_lock:`, sem chegar ao `release()`), ele fica preso
+    nesse estado pra sempre — o próximo teste que chamar
+    `get_background_worker()` com `_worker is None` trava esperando um
+    `release()` que nunca vem, até o timeout de 120s do pytest-timeout
+    (era exatamente esse padrão nos ~13 testes que travavam sempre juntos
+    em CI, em arquivos sem relação nenhuma entre si — todos convergindo em
+    `get_background_worker()`/`get_embedding_queue()` via o lifespan)."""
+
+    async def test_fixture_hands_each_test_a_fresh_unlocked_worker_lock(
+        self,
+    ) -> None:
+        # O fixture autouse `_reset_async_singleton_locks` (conftest.py) já
+        # rodou antes deste teste, trocando `_worker_lock` por um
+        # `asyncio.Lock()` novo — se algum teste anterior (outro arquivo,
+        # outro event loop) tivesse deixado o lock antigo travado, ele nunca
+        # chega até aqui: nem this test nem nenhum outro reveem esse objeto.
+        assert _bg_mod._worker_lock.locked() is False
+
+        # Par happy: com o lock garantidamente destravado, adquirir o
+        # singleton via `get_background_worker()` completa sem depender de
+        # nenhum estado deixado por outro teste.
+        worker = await get_background_worker()
+        assert isinstance(worker, BackgroundEmbeddingWorker)
+
+    async def test_lock_left_locked_would_hang_forever_without_a_fresh_lock(
+        self,
+    ) -> None:
+        # Prova o mecanismo em si (não depende do fixture): um asyncio.Lock
+        # deixado travado por uma task que nunca chamou release() bloqueia
+        # QUALQUER `acquire()` posterior no mesmo objeto, para sempre — é
+        # exatamente por isso que o fixture precisa trocar o objeto Lock,
+        # não só resetar o valor (`_worker`/`_queue`) que ele protege.
+        import asyncio
+
+        poisoned = asyncio.Lock()
+        poisoned._locked = True  # ty: ignore[unresolved-attribute]
+
+        async def _acquire(lock: asyncio.Lock) -> None:
+            async with asyncio.timeout(0.2), lock:
+                pass
+
+        with pytest.raises(TimeoutError):
+            await _acquire(poisoned)
+
+        # Um Lock novo (o que o fixture faz a cada teste) não herda esse
+        # estado — a mesma operação completa na hora.
+        await _acquire(asyncio.Lock())

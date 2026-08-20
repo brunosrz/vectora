@@ -154,6 +154,32 @@ def _isolate_native_tool_registry() -> Generator[None]:
             TOOL_REGISTRY._tools.pop(name, None)
 
 
+@pytest.fixture(autouse=True)
+def _reset_async_singleton_locks() -> None:
+    """``asyncio.Lock()`` criado no import de um módulo é um singleton de
+    processo — mas ``asyncio_default_fixture_loop_scope = "function"``
+    (pyproject.toml) dá a cada teste um event loop novo. Se o lock ficar
+    travado (`_locked=True`) quando o loop que o segurava morre — uma task
+    cancelada no teardown do teste, por exemplo, nunca chega ao `release()`
+    do `__aexit__` — o objeto Lock fica preso nesse estado pra sempre: o
+    próximo teste que tentar `async with lock:` (em QUALQUER arquivo, é o
+    mesmo singleton de módulo) espera por um `release()` que nunca vai
+    acontecer, até o timeout de 120s do pytest-timeout.
+
+    Isso já tinha sido corrigido para `backend.tools.mcp._mcp_lock` (ver
+    `_reset_global_client` em `test_tools_mcp.py`) mas não para os outros
+    dois locks de singleton do processo — `get_background_worker()`/
+    `get_embedding_queue()` — que são exatamente os que travavam em CI
+    (sempre o mesmo conjunto de ~13 testes, a partir do primeiro lock
+    "envenenado" na sessão). Trocar por um Lock novo a cada teste elimina
+    o problema na raiz: nenhum teste herda o estado de lock de outro."""
+    import backend.embedding.background as _bg_mod
+    import backend.embedding.queue as _queue_mod
+
+    _bg_mod._worker_lock = asyncio.Lock()
+    _queue_mod._queue_lock = asyncio.Lock()
+
+
 @pytest.fixture
 async def spawned_backend(tmp_path: Path):
     """Backend real (``python -m backend.main start``) rodando num
