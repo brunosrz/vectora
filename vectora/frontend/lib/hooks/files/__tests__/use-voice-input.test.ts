@@ -62,8 +62,28 @@ function setMediaDevices(value: unknown) {
   });
 }
 
+// jsdom 30.0.1 tem uma incompatibilidade interna real com @exodus/bytes na
+// conversão de FileReader pra base64 (assertU8: "Expected an Uint8Array"),
+// que dispara de forma assíncrona (fora do ciclo de vida do teste que a
+// originou) e vaza como "Unhandled Error" pro Vitest — falha o job de CI
+// inteiro mesmo com todos os 1944 testes passando. blobToBase64() (hook)
+// só precisa do contrato load/error do FileReader — um fake evita depender
+// da implementação binária real do jsdom, que não é o que este teste
+// pretende exercitar.
+class FakeFileReader extends EventTarget {
+  result: string | ArrayBuffer | null = null;
+  error: DOMException | null = null;
+  readAsDataURL(blob: Blob): void {
+    queueMicrotask(() => {
+      this.result = `data:${blob.type};base64,ZmFrZQ==`;
+      this.dispatchEvent(new Event("load"));
+    });
+  }
+}
+
 function stubBackendRecordingSupport() {
   vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+  vi.stubGlobal("FileReader", FakeFileReader);
   setMediaDevices({ getUserMedia: vi.fn().mockResolvedValue(fakeStream()) });
 }
 
