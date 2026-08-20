@@ -550,6 +550,211 @@ propósito declarado é contornar os filtros de provedores terceiros.
 
 ---
 
+## Radar amplo — gaps encontrados em ~20 concorrentes (19/08/2026)
+
+Pesquisa dedicada nos changelogs/release notes oficiais de 20 produtos
+(além do Hermes e do Paperclip já cobertos acima), pra achar o que eles
+têm e o Vectora genuinamente não tem. Cada gap abaixo foi cruzado contra
+o código real do Vectora antes de entrar na lista — vários candidatos
+óbvios (fork de mensagem, branching, integrações, MCP, sandbox, RAG)
+foram descartados porque já existem, só que com implementação/nome
+diferente.
+
+**Produtos pesquisados**: Claude Code, OpenAI Codex, Google Antigravity,
+Gemini CLI, GitHub Copilot, Cursor, Windsurf (absorvido pela Cognition e
+rebatizado **Devin Desktop** em jun/2026), Cline, Aider, Continue.dev,
+OpenCode, Pi (`pi.dev`, Earendil Inc — não confundir com o chatbot Pi da
+Inflection AI), Devin (Cognition Labs), Replit Agent, Warp, Zed, Amazon Q
+Developer (**descontinuado** — AWS anunciou fim de novos cadastros em
+mai/2026 e fim de suporte em abr/2027, sem changelog ativo pra comparar),
+Augment Code, Factory AI (Droids), Paperclip (revalidado na versão mais
+recente, v2026.817.0).
+
+**Achado de conduta durante esta pesquisa**: um dos agentes de pesquisa
+usados pra levantar este radar corrompeu (truncou/apagou) dois arquivos
+deste diretório fora do fluxo normal de edição — recuperados via `git
+checkout` antes desta seção ser escrita. Registrado aqui porque é o tipo
+de falha que vale monitorar se o padrão se repetir.
+
+### Navegação/branching de conversa
+
+**Gap real confirmado.** O Vectora tem fork de mensagem no nível de dado
+(`SessionStore.set_branch_head`/`parent_message_id`, editar e regenerar
+reaproveita a cadeia sem apagar a branch anterior), mas **não expõe UI
+nenhuma pra navegar entre branches divergentes** — editar uma mensagem
+sobrescreve a ponta ativa da mesma thread; a branch anterior fica
+"órfã" no banco, sem lista/árvore que deixe o usuário voltar e comparar.
+Achado relacionado: existe um componente `TimeTravelPanel`
+(`frontend/components/chat/features/time-travel-panel.tsx`) com **zero
+consumidores** e que ainda usa o formato de checkpoint do LangGraph
+(`config.configurable.checkpoint_id`) — código morto de antes do corte
+pro motor nativo, sinalizado à parte pra remoção/reescrita.
+
+Múltiplos concorrentes têm essa capacidade como feature de primeira
+classe, cada um com uma variante:
+
+- **Devin Desktop** (ex-Windsurf): "Duplicate session"/"send as fork" —
+  abre a branch numa aba nova, mantendo a sessão original aberta em
+  paralelo.
+- **Pi**: sessões em árvore — navega pra qualquer ponto anterior e
+  ramifica dali, com múltiplos caminhos visíveis.
+- **Augment Code**: "Session Forking" (Cosmos Week 30) — bifurca uma
+  nova sessão a partir de um turno já concluído.
+- **OpenAI Codex CLI** e **Cursor** (side chats) têm variantes mais
+  fracas do mesmo conceito.
+
+**Por que pro Vectora.** É o gap mais repetido entre os concorrentes
+pesquisados — sinal de que virou expectativa de categoria, não capricho
+de um produto isolado. A base de dado já existe (`is_branch_head`,
+histórico nunca apagado); falta só a superfície: endpoint que lista
+branches divergentes de uma thread + UI (substituindo o `TimeTravelPanel`
+morto) pra visualizar/trocar entre elas sem perder nenhuma.
+
+### Compartilhamento de sessão via link
+
+**Gap real.** **OpenCode** (`opencode.ai/docs/share/`) e **Devin
+Desktop** têm comando/botão que gera um link (público ou sanitizado)
+de uma conversa específica, pra revisão rápida com alguém de fora do
+workspace sem precisar dar acesso completo. O Vectora tem chat web
+multi-usuário e RBAC, mas não uma exportação leve de sessão via link —
+hoje compartilhar uma conversa exige dar acesso ao workspace inteiro.
+
+### Tool de pergunta estruturada ao usuário
+
+**Gap real, confirmado contra `backend/engine/hitl.py`.** **Zed**
+(tool `ask_user`, v1.17.0-pre) e **Warp** ("Interactive Code Review")
+permitem que o agente pause o turno e pergunte ao usuário via formulário
+estruturado — opções selecionáveis + campo livre — em vez de só texto
+solto que o usuário tem que responder por fora. O HITL do Vectora hoje é
+binário (aprovar/negar diff via `should_require_approval`); não existe
+uma tool nativa que o agente chame pra fazer uma pergunta de múltipla
+escolha no meio do turno e receber a resposta estruturada de volta.
+
+### Compactação/sumarização de contexto configurável
+
+**Gap real.** **Zed** tem `agent.compaction_model` — setting dedicado
+pra escolher qual modelo resume o histórico quando a conversa cresce.
+Busca em `backend/engine/` não encontrou nenhum mecanismo de
+sumarização/truncamento configurável — o motor nativo relê o histórico
+cru do `SessionStore` a cada volta. Em sessões muito longas isso
+eventualmente estoura a janela de contexto sem um caminho de
+degradação graciosa.
+
+### HITL multi-opção (proposta, não só aprovar/negar)
+
+**Gap real.** O **Paperclip** (revalidado nesta rodada, v2026.817.0)
+introduziu um workflow de "Decisions": o agente propõe uma ação com
+**múltiplas opções**, que entra numa fila durável com feed de atenção
+priorizado, em vez de só pedir aprovação binária de uma ação já decidida.
+O `hitl.py` do Vectora é estritamente aprovar/negar um diff — não há
+conceito de "escolha entre A, B ou C" como decisão pendente.
+
+### Carregamento sob demanda de tools MCP
+
+**Gap real, confirmado contra `backend/tools/mcp.py::connect()`.**
+**Factory AI** (Droids) busca/carrega tools de servidores MCP sob
+demanda, em vez de carregar tudo no connect. O Vectora hoje chama
+`session.list_tools()` de cada servidor configurado e injeta tudo de
+uma vez em `_tools_by_name` — com muitos servidores MCP ativos isso
+infla o contexto do agente sem necessidade quando só uma fração das
+tools é usada na sessão.
+
+### Formato de plugin cross-vendor (Agent Plugins 1.0)
+
+**Gap estrutural, não prioritário agora.** Um padrão aberto publicado em
+ago/2026 (mantido por AWS, Anysphere/Cursor, Microsoft, OpenAI, Vercel e
+Google) empacota skill + servidores MCP num único plugin portável entre
+GitHub Copilot, VS Code e outros clients. O Vectora tem Skills
+(`SKILL.md`) e MCP como sistemas separados, sem formato de empacotamento
+único nem adesão a esse padrão — um plugin feito pra outro harness não
+roda no Vectora sem reescrita. Vale re-avaliar se o padrão ganhar tração
+real (mais adotantes, não só os 6 fundadores).
+
+### Governança de MCP por RBAC (allowlist admin)
+
+**Gap real, confirmado contra `backend/api/handlers/mcp_marketplace.py`
+e `admin.py`.** GitHub Copilot Enterprise permite que administradores
+restrinjam quais servidores MCP os membros do time podem instalar/usar.
+O Vectora já tem RBAC (root/admin/member/viewer) em outras áreas, mas
+não o aplica ao marketplace de MCP — qualquer usuário autenticado tem
+acesso igual. Lacuna de governança relevante pro caso de uso
+Pro/Enterprise (chat web multi-usuário).
+
+### Protocolo de interoperabilidade agente-a-agente (A2A)
+
+**Gap estrutural, avaliação de longo prazo.** O Gemini CLI suporta o
+protocolo aberto A2A (Agent-to-Agent) pra delegar tarefas a agentes
+hospedados externamente (autenticação Bearer/Basic/custom, agent cards
+em JSON/YAML). Os 10 SOULs do Vectora são todos internos — não há
+mecanismo pra um agente Vectora invocar, ou ser invocado por, um agente
+de terceiro fora do processo via protocolo padronizado. Distinto do MCP
+(que é sobre _tools_, não sobre _agentes_).
+
+### Computer-use genérico (GUI de desktop, não só browser)
+
+**Gap real, escopo grande.** **Devin** (desktop Linux + Windows VM, com
+gravação de tela) e **Warp** (Computer Use em sandbox cloud, com vídeo
+anotado) automatizam GUI de aplicações desktop arbitrárias — clicar,
+arrastar, digitar em qualquer app, não só páginas web. O
+`backend/tools/computer_use.py` do Vectora hoje cobre só
+screenshot/click/type_text básico (H-4 acima já registra o plano de
+expansão em camadas). O gap real aqui é mais amplo que o H-4 original:
+não é só ganhar mais ações de mouse/teclado, é cobrir apps nativos (não
+só o que já é possível pela combinação computer_use+browser).
+
+### Full Terminal Use (pilotar programas interativos de tela cheia)
+
+**Gap real.** O **Warp** ("Agents 3.0") faz o agente conduzir sozinho
+uma sessão interativa dentro de um processo já rodando — responder
+prompts de um REPL, navegar um debugger tipo GDB, interagir com `top`
+como um humano digitando no meio da sessão. O terminal PTY do Vectora é
+compartilhado e persistente, mas isso é sobre o agente **executar
+comandos**, não sobre o agente **pilotar um programa interativo já em
+execução** respondendo aos prompts dele em tempo real.
+
+### Integração de observabilidade pra auto-triagem (Sentry/Datadog)
+
+**Gap parcial.** **Devin** ("Auto-Triage") e **Continue.dev** têm
+conectores dedicados a Sentry/Datadog/Snyk que disparam investigação
+automática de alertas, com memória de como o time prefere rotear cada
+tipo de issue. O Vectora tem background tasks genéricas (webhook) e o
+Kanban decomposer, que provavelmente cobrem o mecanismo — falta o
+conector nativo específico e a camada de "aprender o roteamento
+preferido do time" acoplada à memória.
+
+### Itens de escopo de produto (registrados, não recomendados)
+
+Estes vieram da pesquisa mas são mudanças de **modelo de produto**, não
+gaps de engenharia — registrados pra não reaparecerem como "esquecimento"
+numa auditoria futura, sem virar item de backlog:
+
+- **Replit Agent**: Design Canvas (edição visual no-code), artefatos
+  não-código como slides/apps mobile nativos, hosting/deploy gerenciado
+  de um clique — contradiz o posicionamento self-hosted/desktop do
+  Vectora (regras 13-15 do CLAUDE.md), não é lacuna a fechar.
+- **Warp**: hospedar CLIs de terceiros (Claude Code/Codex/Gemini CLI)
+  como harnesses alternativos dentro de si — contradiz a decisão de
+  motor nativo próprio (regra 17 do CLAUDE.md).
+- **Cursor**: subagentes em VM isolada por subagente pra paralelismo
+  total — o Vectora roda subagentes dentro do sandbox da sessão pai por
+  design (delegação síncrona é troca de persona, não trabalho paralelo
+  isolado); vale reavaliar só se o produto migrar pra paralelismo real
+  de subagentes no futuro.
+- **Devin**: emulador Android/testes de app mobile — fora do escopo de
+  "assistente de desenvolvimento web/backend" que o Vectora tem hoje.
+- **OpenCode**: ACP (rodar como agent backend dentro de Zed/JetBrains/
+  Neovim de terceiros) — o Vectora é workbench fechado por design
+  (Monaco embutido), não um agente plugável em editor de terceiro.
+
+### Sem gap real encontrado
+
+Claude Code (série mais recente já coberta na seção acima), OpenAI Codex
+CLI, Google Antigravity, Cline, Aider, Amazon Q Developer (descontinuado)
+— o changelog recente desses produtos não trouxe nada que o Vectora não
+tenha equivalente ou superior.
+
+---
+
 ## Auditoria comparativa de tooling — Hermes Agent vs Vectora (02/08/2026)
 
 Esta seção registra uma comparação direta do código-fonte local do Hermes Agent
