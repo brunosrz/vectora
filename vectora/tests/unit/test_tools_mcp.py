@@ -5,10 +5,12 @@ protocolo.
 
 from __future__ import annotations
 
+import contextlib
 import sys
 from pathlib import Path
 
 import pytest
+from anyio import BrokenResourceError
 
 from backend.tools import mcp as mcp_tool_module
 from backend.tools.mcp import VectoraMCPClient, _safe_subprocess_env, call_mcp_tool
@@ -185,6 +187,46 @@ class TestVectoraMCPClientReal:
             assert client.tools() == {}
         finally:
             await client.aclose()
+
+
+class TestVectoraMCPClientAcloseNuncaPropaga:
+    """Regressão (CI real, 2026-08-19): o SDK oficial `mcp` tem uma race
+    conhecida no teardown de `stdio_client`/`ClientSession` dentro do mesmo
+    `AsyncExitStack` — o subprocess encerra enquanto a task de leitura ainda
+    tenta escrever no stream já fechado, e isso vira `ExceptionGroup`
+    (`anyio.BrokenResourceError`) no `__aexit__`. A conexão já tinha
+    cumprido seu propósito antes disso (tools listadas com sucesso) —
+    `aclose()` precisa absorver esse ruído de encerramento, nunca propagar,
+    senão uma chamada que já teve sucesso é reportada como falha."""
+
+    async def test_erro_no_teardown_do_stack_nao_propaga_e_limpa_estado(self):
+        client = VectoraMCPClient()
+        try:
+            await client.connect(
+                {
+                    "dummy": {
+                        "transport": "stdio",
+                        "command": sys.executable,
+                        "args": [_DUMMY_SERVER],
+                    }
+                }
+            )
+            assert client.tools()  # conexão real funcionou antes do teardown
+
+            async def _stack_aclose_quebrado() -> None:
+                raise ExceptionGroup(
+                    "unhandled errors in a TaskGroup", [BrokenResourceError()]
+                )
+
+            client._stack.aclose = _stack_aclose_quebrado  # ty: ignore[invalid-assignment]
+
+            await client.aclose()  # não deve levantar
+
+            assert client.tools() == {}
+            assert client._sessions == {}
+        finally:
+            with contextlib.suppress(Exception):
+                await client.aclose()
 
 
 class TestCallMcpToolIntegration:

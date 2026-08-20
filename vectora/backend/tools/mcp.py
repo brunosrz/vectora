@@ -165,10 +165,24 @@ class VectoraMCPClient:
         return _render_call_result(result)
 
     async def aclose(self) -> None:
-        await self._stack.aclose()
-        self._sessions.clear()
-        self._tools_by_name.clear()
-        self._connected = False
+        """Fecha as sessões/subprocessos abertos — best-effort, nunca propaga.
+
+        O SDK oficial `mcp` tem uma race conhecida no teardown de
+        `stdio_client`/`ClientSession` dentro do mesmo `AsyncExitStack`: o
+        subprocess pode encerrar enquanto a task de leitura ainda tenta
+        escrever no stream já fechado, virando `ExceptionGroup`
+        (`anyio.BrokenResourceError`) no `__aexit__`. Nesse ponto a conexão
+        já cumpriu seu propósito (tools listadas/tool chamada com sucesso)
+        — propagar aqui reportaria como falha uma chamada que já teve
+        sucesso, só por ruído de encerramento."""
+        try:
+            await self._stack.aclose()
+        except Exception:
+            logger.debug("mcp: erro no teardown do client (best-effort, ignorado)")
+        finally:
+            self._sessions.clear()
+            self._tools_by_name.clear()
+            self._connected = False
 
 
 def _render_call_result(result: Any) -> str:
