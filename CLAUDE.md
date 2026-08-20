@@ -102,7 +102,7 @@ Camadas:
 
 - **`api/`** — routers FastAPI (`handlers/`) + schemas Pydantic (`schemas.py`). Todo endpoint usa `Depends(get_current_user)`; rotas públicas são whitelist explícita.
 - **`services/`** — lógica de negócio. Peças centrais:
-  - `agent_factory.py` — monta o agente nativo: resolve tools por nome no `TOOL_REGISTRY` (`backend/tools/registry.py`), monta subagents e liga o HITL (`backend/engine/hitl.py`). Sem grafo LangGraph/deepagents.
+  - `agent_factory.py` — monta o agente nativo: resolve tools por nome no `TOOL_REGISTRY` (`backend/tools/registry.py`), monta subagents e liga o HITL (`backend/engine/hitl.py`). Sem grafo compilado.
   - `profiles.py` — `HarnessProfile` por harness (skills, tools policy).
   - `kv.py` — acesso ao Redis (chat history, KV geral).
 - **`storage/`** — factories singleton para dois modos:
@@ -279,8 +279,10 @@ Todo agente entra via `backend/engine/conversation_loop.py::run_conversation`
 tools resolvidas do `TOOL_REGISTRY`, subagents via `backend/engine/
 subagents.py`, HITL via `should_require_approval` (`backend/engine/
 hitl.py`), estado sempre relido do `SessionStore` (nunca só em memória).
-Proibido reintroduzir `StateGraph`/LangGraph ou depender de deepagents. CLI
-é operacional (Rich + argparse em `backend/cli`), nunca TUI/Textual.
+Proibido reintroduzir grafo compilado por nós ou depender de framework de
+orquestração de agente externo — o loop imperativo é a única arquitetura
+válida. CLI é operacional (Rich + argparse em `backend/cli`), nunca
+TUI/Textual.
 
 ## 18. Testes: TDD, foco no erro, reconstrução pelos testes
 
