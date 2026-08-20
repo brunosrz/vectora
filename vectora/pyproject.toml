@@ -20,7 +20,13 @@ dependencies = [
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
     "aiosqlite>=0.22.1",
-    "lancedb>=0.33.0",
+    # 0.37.x trava (thread de background do runtime async da lib fica presa
+    # em GetQueuedCompletionStatus no Windows) - reproduzido isolando a
+    # suite de testes: com 0.37.1, testes ficam presos em sequência
+    # dependendo de quantos testes rodaram antes (não isolado a um teste
+    # específico); com 0.36.0 a mesma suite passa 100%. Reavaliar o teto
+    # quando uma versão 0.37+ corrigir isso.
+    "lancedb>=0.36.0,<0.37.0",
     "pyarrow>=24.0.0",
     "sqlalchemy>=2.0.51",
     "mcp>=1.29.0",

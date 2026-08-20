@@ -36,10 +36,11 @@ class TestErroDeExecucaoFicaLogado:
         async def _run_que_falha(on_event) -> str:
             raise RuntimeError("boom: provider explodiu de verdade")
 
-        events: list[dict] = []
         with caplog.at_level(logging.ERROR, logger="backend.api.native_stream"):
-            async for sse in stream_engine_events(_run_que_falha, thread_id="t1"):
-                events.append(_parse(sse))
+            events = [
+                _parse(sse)
+                async for sse in stream_engine_events(_run_que_falha, thread_id="t1")
+            ]
 
         error_events = [e for e in events if e["type"] == "error"]
         assert len(error_events) == 1

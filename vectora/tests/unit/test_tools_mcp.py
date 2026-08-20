@@ -5,6 +5,7 @@ protocolo.
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import sys
 from pathlib import Path
@@ -24,12 +25,31 @@ _DUMMY_SERVER_CRASHES = str(
 
 
 @pytest.fixture(autouse=True)
-def _reset_global_client(monkeypatch):
+async def _reset_global_client(monkeypatch):
     """Cada teste começa sem client global cacheado — evita vazamento de
-    estado entre testes (o módulo usa um singleton lazy)."""
+    estado entre testes (o módulo usa um singleton lazy).
+
+    `_mcp_lock` também precisa de um `asyncio.Lock()` novo a cada teste: em
+    produção o processo tem um único event loop pela vida inteira, mas
+    pytest-asyncio cria um loop novo por teste (escopo função) — reusar o
+    mesmo `Lock` entre loops arrisca associá-lo a um loop já fechado.
+
+    Fechar de verdade o client anterior (não só zerar a referência) é o
+    que importa: sem isso, cada teste que passa por `_get_mcp_client()`
+    deixa um subprocess real do servidor dummy órfão (sem `__del__`
+    nenhum fecha o `AsyncExitStack` sozinho) — vários deles acumulados
+    esgotam handles/IOCP no Windows e travam o teardown de um teste
+    completamente sem relação, bem mais adiante no arquivo (achado ao
+    vivo: suíte travava sempre no teste de timeout, o último a rodar
+    depois de todos os outros subprocessos ficarem pendurados)."""
     monkeypatch.setattr(mcp_tool_module, "_mcp_client", None)
+    monkeypatch.setattr(mcp_tool_module, "_mcp_lock", asyncio.Lock())
     yield
+    stale_client = mcp_tool_module._mcp_client
     monkeypatch.setattr(mcp_tool_module, "_mcp_client", None)
+    if stale_client is not None:
+        with contextlib.suppress(Exception):
+            await stale_client.aclose()
 
 
 @pytest.fixture
@@ -213,7 +233,15 @@ class TestVectoraMCPClientAcloseNuncaPropaga:
             )
             assert client.tools()  # conexão real funcionou antes do teardown
 
+            # Fecha o subprocess de verdade (senão ele fica órfão e trava o
+            # teardown de testes seguintes) e SÓ DEPOIS simula a race —
+            # nunca substituir aclose() sem chamar o original, ou o
+            # subprocess real do servidor dummy nunca é encerrado.
+            real_aclose = client._stack.aclose
+
             async def _stack_aclose_quebrado() -> None:
+                with contextlib.suppress(Exception):
+                    await real_aclose()
                 raise ExceptionGroup(
                     "unhandled errors in a TaskGroup", [BrokenResourceError()]
                 )
@@ -265,6 +293,12 @@ class TestCallMcpToolIntegration:
     async def test_timeout_retorna_erro_tipado(
         self, _enable_mcp, _dummy_server_settings, monkeypatch
     ):
-        monkeypatch.setattr(mcp_tool_module.settings, "mcp_timeout", 0)
-        result = await call_mcp_tool(tool_name="echo", arguments='{"text": "x"}')
+        # `mcp_timeout=1` + tool que dorme 5s (não `mcp_timeout=0`): cancelar
+        # bem no meio do handshake dispara uma race real no teardown do
+        # stdio_client do SDK oficial no Windows (ProactorEventLoop) — trava
+        # o loop de teste inteiro em vez de só cancelar a chamada. Aqui a
+        # conexão já está de pé quando o timeout dispara, exercitando o
+        # mesmo código (`asyncio.timeout`/mensagem "excedeu") sem a race.
+        monkeypatch.setattr(mcp_tool_module.settings, "mcp_timeout", 1)
+        result = await call_mcp_tool(tool_name="sleep", arguments='{"seconds": 2}')
         assert "excedeu" in result

@@ -193,7 +193,7 @@ def _args_model_from_input_schema(
     tool_name: str, input_schema: dict | None
 ) -> type[BaseModel]:
     """Constrói um ``BaseModel`` dinâmico a partir do JSON Schema que um
-    servidor MCP publica em ``Tool.inputSchema`` — mapeamento raso (tipos
+    servidor MCP publica em ``Tool.input_schema`` — mapeamento raso (tipos
     primitivos + array/object), o suficiente pro schema que o LLM recebe
     pra chamar a tool remota."""
     properties: dict[str, Any] = (input_schema or {}).get("properties", {}) or {}
@@ -235,7 +235,7 @@ def _remote_tool_spec(server_name: str, connection: dict, mcp_tool: Any) -> Tool
     return ToolSpec(
         name=tool_name,
         description=mcp_tool.description or "",
-        args_model=_args_model_from_input_schema(tool_name, mcp_tool.inputSchema),
+        args_model=_args_model_from_input_schema(tool_name, mcp_tool.input_schema),
         handler=_handler,
         extras=ToolExtras(render_hint="json", category="mcp", icon="share-2"),
         needs_ctx=False,

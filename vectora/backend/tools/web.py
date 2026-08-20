@@ -205,7 +205,7 @@ async def web_search(
     try:
         from backend.persistence.tracer import tracer as _tracer
     except Exception:
-        _tracer = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
+        _tracer = None  # type: ignore[assignment]
 
     try:
         client = _tavily_client()
@@ -310,7 +310,7 @@ async def fetch_url(url: str) -> str:
     try:
         from backend.persistence.tracer import tracer as _tracer
     except Exception:
-        _tracer = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
+        _tracer = None  # type: ignore[assignment]
 
     try:
         client = _get_extract_tool()

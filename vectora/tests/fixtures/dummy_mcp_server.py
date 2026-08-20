@@ -4,9 +4,9 @@ testes de `backend/tools/mcp.py`. Roda como subprocesso — não é mock.
 
 from __future__ import annotations
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
-server = FastMCP("dummy-mcp-server")
+server = MCPServer("dummy-mcp-server")
 
 
 @server.tool()
@@ -29,6 +29,16 @@ def read_env_var(name: str) -> str:
     import os
 
     return os.environ.get(name, "ausente")
+
+
+@server.tool()
+def sleep(seconds: float) -> str:
+    """Dorme `seconds` antes de responder — usado para exercitar timeout
+    real do lado do cliente sem cancelar a conexão em pleno handshake."""
+    import time
+
+    time.sleep(seconds)
+    return "acordou"
 
 
 if __name__ == "__main__":

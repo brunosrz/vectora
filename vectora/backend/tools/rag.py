@@ -19,7 +19,7 @@ from backend.vtypes.documents import Document
 try:
     import lancedb
 except ImportError:
-    lancedb = None  # type: ignore
+    lancedb = None
 
 logger = logging.getLogger(__name__)
 

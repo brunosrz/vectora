@@ -126,7 +126,7 @@ class VectoraMCPClient:
         elif transport == "sse":
             read, write = await self._stack.enter_async_context(sse_client(cfg["url"]))
         elif transport == "streamable_http":
-            read, write, _ = await self._stack.enter_async_context(
+            read, write = await self._stack.enter_async_context(
                 streamable_http_client(cfg["url"])
             )
         else:

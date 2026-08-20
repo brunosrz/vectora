@@ -442,7 +442,7 @@ async def test_install_wires_into_functional_store_and_tools(
                 "brave_web_search": MCPTool(
                     name="brave_web_search",
                     description="busca na web",
-                    inputSchema={"type": "object", "properties": {}},
+                    input_schema={"type": "object", "properties": {}},
                 )
             }
 
