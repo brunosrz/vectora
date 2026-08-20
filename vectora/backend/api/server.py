@@ -491,6 +491,30 @@ def create_app(serve_static: bool = True) -> FastAPI:
         redoc_url=None,
     )
 
+    # ── Exceção não tratada: loga antes do 500 genérico ────────────────────────
+    # Sem isso, uma exceção em qualquer handler vira "500 Internal Server
+    # Error" sem rastro nenhum no log — Starlette imprime via
+    # `traceback.print_exc()` (stdout puro), que o `logging` do backend (e a
+    # captura de log do pytest) nunca vê. Mesmo padrão do achado em
+    # `native_stream.py`: erro real precisa deixar rastro, nunca só o
+    # genérico.
+    from fastapi.responses import JSONResponse
+
+    async def _log_unhandled_exception(
+        request: Request, exc: Exception
+    ) -> FastAPIResponse:
+        logging.getLogger(__name__).error(
+            "api/server: exceção não tratada em %s %s",
+            request.method,
+            request.url.path,
+            exc_info=exc,
+        )
+        return JSONResponse(
+            status_code=500, content={"detail": "Internal Server Error"}
+        )
+
+    app.add_exception_handler(Exception, _log_unhandled_exception)
+
     # ── Auth middleware ───────────────────────────────────────────────────────
     from backend.api.middleware.auth import AuthMiddleware
 

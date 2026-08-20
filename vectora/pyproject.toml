@@ -310,6 +310,13 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 120  # LanceDB background threads demoram ~30s para fechar
+# "signal" (default) só despeja a stack da thread principal no timeout — não
+# mostra onde a thread de background do portal anyio/starlette (usada por
+# TestClient) está de fato presa, que é exatamente onde os hangs de CI
+# acontecem. "thread" despeja TODAS as threads (faulthandler.dump_traceback
+# com all_threads=True), a única forma de ver a causa real de um hang em vez
+# de só "algo travou em algum lugar".
+timeout_method = "thread"
 filterwarnings = [
     # ── Deprecações de libs externas que não controlamos ──────────────────────
     # FastAPI/Starlette TestClient ainda usa httpx clássico (será httpx2).
