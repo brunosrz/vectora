@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Loader2,
-  RefreshCw,
-  ExternalLink,
-  X,
-  Settings2,
-  Waypoints,
-} from "lucide-react";
+import { Loader2, RefreshCw, X, Settings2, Waypoints } from "lucide-react";
 
 import { useContextGraph } from "@/lib/hooks/use-context-graph";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -62,6 +55,7 @@ export function ContextGraphTab({
   const isBuilt = status.status === "done";
   const isRunning = status.status === "running" || status.status === "queued";
   const isPaused = status.status === "paused";
+  const hasGraphData = (status.node_count ?? 0) > 0;
 
   function handleBuild() {
     build({ mode: graphMode, fileTypes });
@@ -215,10 +209,10 @@ export function ContextGraphTab({
         </div>
       </WorkbenchSlidePanel>
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 min-h-0 flex flex-col">
         {/* Status: error */}
         {status.status === "error" && (
-          <div className="px-3 py-2 text-sm text-destructive">
+          <div className="overflow-y-auto px-3 py-2 text-sm text-destructive">
             {status.error ?? "Erro desconhecido"}
           </div>
         )}
@@ -227,7 +221,7 @@ export function ContextGraphTab({
         {isPaused && (
           <div
             data-testid="graph-paused"
-            className="px-3 py-4 text-sm text-center space-y-3"
+            className="overflow-y-auto px-3 py-4 text-sm text-center space-y-3"
           >
             <p className="text-amber-500">{m.graph_paused()}</p>
             {status.step != null && status.step_total != null && (
@@ -263,7 +257,7 @@ export function ContextGraphTab({
             barra de ação acima (data-testid="graph-build-btn"), sem
             duplicar botão aqui embaixo. */}
         {!isBuilt && !isRunning && !isPaused && status.status !== "error" && (
-          <div className="px-3 py-6 text-sm text-muted-foreground text-center space-y-2">
+          <div className="overflow-y-auto px-3 py-6 text-sm text-muted-foreground text-center space-y-2">
             <Waypoints className="h-8 w-8 mx-auto text-muted-foreground/50" />
             <p className="font-medium text-foreground">{m.graph_not_built()}</p>
             <p className="text-xs">{m.graph_build_description()}</p>
@@ -272,7 +266,7 @@ export function ContextGraphTab({
 
         {/* Status: running */}
         {isRunning && (
-          <div className="flex flex-col gap-3 px-3 py-4">
+          <div className="overflow-y-auto flex flex-col gap-3 px-3 py-4">
             {/* Spinner + label */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin shrink-0" />
@@ -341,11 +335,13 @@ export function ContextGraphTab({
           </div>
         )}
 
-        {/* Built: stats + god nodes + questions */}
-        {isBuilt && (
-          <div className="flex flex-col gap-3 px-3 py-3">
-            {/* Métricas */}
-            <div className="flex gap-4 text-xs text-muted-foreground">
+        {/* Built + grafo com dados: a própria aba é o visualizador —
+            iframe embutindo o HTML já gerado no backend (vis-network,
+            comunidades, busca), sem depender de abrir link externo. */}
+        {isBuilt && hasGraphData && (
+          <div className="flex-1 min-h-0 flex flex-col">
+            {/* Métricas — faixa compacta acima do grafo */}
+            <div className="flex gap-4 text-xs text-muted-foreground px-3 py-1.5 border-b border-border/40 shrink-0">
               {status.node_count != null && (
                 <span>{status.node_count} nós</span>
               )}
@@ -354,92 +350,104 @@ export function ContextGraphTab({
               )}
             </div>
 
-            {/* Link para HTML interativo */}
             {htmlUrl && (
-              <a
-                href={htmlUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-primary hover:underline"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Ver grafo interativo
-              </a>
+              <iframe
+                src={htmlUrl}
+                title={m.graph_credit()}
+                data-testid="graph-iframe"
+                sandbox="allow-scripts"
+                className="flex-1 min-h-0 w-full border-0"
+              />
             )}
 
-            {/* God nodes */}
-            {godNodes.length > 0 && (
-              <div>
-                <p className="text-xs font-medium mb-1.5">
-                  {m.graph_god_nodes_title()}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {godNodes.map((node) => (
-                    <span key={node} className="flex items-center gap-0.5">
-                      <button
-                        onClick={() =>
-                          handleQuestion(
-                            `Explique o nó "${node}" no grafo de contexto`,
-                          )
-                        }
-                        className="text-xs px-2 py-0.5 rounded-l-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {node}
-                      </button>
-                      <button
-                        title={m.graph_affected_button()}
-                        onClick={() =>
-                          queryAffected(node).then((text) => {
-                            if (text) handleQuestion(text);
-                          })
-                        }
-                        className="text-xs px-1.5 py-0.5 rounded-r-full bg-muted hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors border-l border-border/40"
-                      >
-                        ↯
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* God nodes + perguntas + relatório — faixa compacta abaixo
+                do grafo, rolável, não compete pelo espaço principal. */}
+            {(godNodes.length > 0 || questions.length > 0 || report) && (
+              <div className="shrink-0 max-h-[30%] overflow-y-auto space-y-3 px-3 py-2 border-t border-border/40">
+                {godNodes.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium mb-1.5">
+                      {m.graph_god_nodes_title()}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {godNodes.map((node) => (
+                        <span key={node} className="flex items-center gap-0.5">
+                          <button
+                            onClick={() =>
+                              handleQuestion(
+                                `Explique o nó "${node}" no grafo de contexto`,
+                              )
+                            }
+                            className="text-xs px-2 py-0.5 rounded-l-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {node}
+                          </button>
+                          <button
+                            title={m.graph_affected_button()}
+                            onClick={() =>
+                              queryAffected(node).then((text) => {
+                                if (text) handleQuestion(text);
+                              })
+                            }
+                            className="text-xs px-1.5 py-0.5 rounded-r-full bg-muted hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors border-l border-border/40"
+                          >
+                            ↯
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {/* Perguntas sugeridas */}
-            {questions.length > 0 && (
-              <div>
-                <p className="text-xs font-medium mb-1.5">
-                  {m.graph_questions_title()}
-                </p>
-                <ul className="space-y-1.5">
-                  {questions.map((q) => (
-                    <li key={q}>
-                      <button
-                        onClick={() => handleQuestion(q)}
-                        className="text-xs text-left text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors w-full"
-                      >
-                        {q}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                {questions.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium mb-1.5">
+                      {m.graph_questions_title()}
+                    </p>
+                    <ul className="space-y-1.5">
+                      {questions.map((q) => (
+                        <li key={q}>
+                          <button
+                            onClick={() => handleQuestion(q)}
+                            className="text-xs text-left text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors w-full"
+                          >
+                            {q}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-            {/* Report toggle */}
-            {report && (
-              <div>
-                <button
-                  onClick={() => setShowReport((v) => !v)}
-                  className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                >
-                  {showReport ? "Ocultar" : m.graph_report_title()}
-                </button>
-                {showReport && (
-                  <pre className="mt-2 text-xs whitespace-pre-wrap text-muted-foreground bg-muted/50 rounded p-2 max-h-64 overflow-y-auto">
-                    {report}
-                  </pre>
+                {report && (
+                  <div>
+                    <button
+                      onClick={() => setShowReport((v) => !v)}
+                      className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                    >
+                      {showReport ? "Ocultar" : m.graph_report_title()}
+                    </button>
+                    {showReport && (
+                      <pre className="mt-2 text-xs whitespace-pre-wrap text-muted-foreground bg-muted/50 rounded p-2 max-h-64 overflow-y-auto">
+                        {report}
+                      </pre>
+                    )}
+                  </div>
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Built, mas nenhum arquivo compatível foi indexado (grafo vazio) —
+            não tenta carregar o iframe de um HTML sem grafo nenhum. */}
+        {isBuilt && !hasGraphData && (
+          <div
+            data-testid="graph-empty-result"
+            className="overflow-y-auto px-3 py-6 text-sm text-muted-foreground text-center space-y-2"
+          >
+            <Waypoints className="h-8 w-8 mx-auto text-muted-foreground/50" />
+            <p>{m.graph_empty_result()}</p>
           </div>
         )}
       </div>

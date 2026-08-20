@@ -271,6 +271,10 @@ def stream_engine_events(
                 yield to_sse_line(event)
 
             if run_error is not None:
+                logger.error(
+                    "native_stream: erro na execução do agente",
+                    exc_info=run_error,
+                )
                 code, friendly = classify_stream_error(run_error)
                 yield encode_event(ErrorEvent(message=friendly, code=code))
             elif stopped_reason == "stop":

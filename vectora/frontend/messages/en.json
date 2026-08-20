@@ -828,6 +828,7 @@
   "graph_affected_title": "Affected components",
   "graph_files_progress": "{done}/{total} files",
   "graph_credit": "Inspired by graphify (MIT, Safi Shamsi)",
+  "graph_empty_result": "Build finished, but no matching files were found in this workspace.",
   "background_tasks_title": "Background tasks",
   "background_new_task": "New task",
   "background_empty": "No background tasks in this session.",

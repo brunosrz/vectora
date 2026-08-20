@@ -828,6 +828,7 @@
   "graph_affected_title": "Componentes afectados",
   "graph_files_progress": "{done}/{total} archivos",
   "graph_credit": "Inspirado en graphify (MIT, Safi Shamsi)",
+  "graph_empty_result": "Compilación finalizada, pero no se encontró ningún archivo compatible en este workspace.",
   "background_tasks_title": "Tareas en segundo plano",
   "background_new_task": "Nueva tarea",
   "background_empty": "No hay tareas en segundo plano en esta sesión.",

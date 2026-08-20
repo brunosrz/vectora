@@ -234,12 +234,33 @@ describe("ContextGraphTab", () => {
       expect(screen.getByText("graph_rebuild_button")).toBeTruthy();
     });
 
-    it("exibe link para grafo interativo", () => {
+    it("renderiza o grafo inline via iframe (não abre link externo)", () => {
+      setup({ status: { status: "done", node_count: 42, edge_count: 17 } });
+      render(<ContextGraphTab threadId="t1" />);
+      const iframe = screen.getByTestId("graph-iframe") as HTMLIFrameElement;
+      expect(iframe.src).toContain("context-graph/html");
+      // Nenhum link externo aponta pro HTML do grafo — só o iframe inline
+      // (o link de crédito do rodapé, esse sim externo, continua existindo).
+      expect(
+        document.querySelector("a[href*='context-graph/html']"),
+      ).toBeNull();
+    });
+  });
+
+  describe("estado done — grafo vazio (build ok, 0 arquivos compatíveis)", () => {
+    it("sem node_count, mostra o estado de resultado vazio em vez do iframe", () => {
       setup({ status: { status: "done" } });
       render(<ContextGraphTab threadId="t1" />);
-      const link = document.querySelector("a[href]") as HTMLAnchorElement;
-      expect(link).not.toBeNull();
-      expect(link.href).toContain("context-graph/html");
+      expect(screen.getByTestId("graph-empty-result")).toBeTruthy();
+      expect(screen.getByText("graph_empty_result")).toBeTruthy();
+      expect(screen.queryByTestId("graph-iframe")).toBeNull();
+    });
+
+    it("node_count 0, mostra o mesmo estado de resultado vazio", () => {
+      setup({ status: { status: "done", node_count: 0, edge_count: 0 } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getByTestId("graph-empty-result")).toBeTruthy();
+      expect(screen.queryByTestId("graph-iframe")).toBeNull();
     });
   });
 
@@ -249,7 +270,7 @@ describe("ContextGraphTab", () => {
 
     it("perguntas clicáveis chamam onSendPrompt com texto da pergunta", async () => {
       const onSendPrompt = vi.fn();
-      setup({ status: { status: "done" }, report: REPORT });
+      setup({ status: { status: "done", node_count: 1 }, report: REPORT });
       render(<ContextGraphTab threadId="t1" onSendPrompt={onSendPrompt} />);
       const btn = screen.getByText("O que faz login?");
       await act(async () => {
@@ -260,7 +281,7 @@ describe("ContextGraphTab", () => {
 
     it("segunda pergunta também envia via onSendPrompt", async () => {
       const onSendPrompt = vi.fn();
-      setup({ status: { status: "done" }, report: REPORT });
+      setup({ status: { status: "done", node_count: 1 }, report: REPORT });
       render(<ContextGraphTab threadId="t1" onSendPrompt={onSendPrompt} />);
       const btn = screen.getByText("Como Token é gerado?");
       await act(async () => {
@@ -271,7 +292,7 @@ describe("ContextGraphTab", () => {
 
     it("god nodes clicáveis enviam prompt de explain com o nome do nó", async () => {
       const onSendPrompt = vi.fn();
-      setup({ status: { status: "done" }, report: REPORT });
+      setup({ status: { status: "done", node_count: 1 }, report: REPORT });
       render(<ContextGraphTab threadId="t1" onSendPrompt={onSendPrompt} />);
       const btn = screen.getByText("AuthService");
       await act(async () => {
@@ -283,7 +304,7 @@ describe("ContextGraphTab", () => {
     });
 
     it("sem onSendPrompt clicar na pergunta não lança erro", async () => {
-      setup({ status: { status: "done" }, report: REPORT });
+      setup({ status: { status: "done", node_count: 1 }, report: REPORT });
       render(<ContextGraphTab threadId="t1" />);
       const btn = screen.getByText("O que faz login?");
       await expect(
@@ -312,7 +333,7 @@ describe("ContextGraphTab", () => {
     it("toggle do report expande e colapsa o markdown", async () => {
       const REPORT_MD =
         "**God nodes**\n- X\n\n**Perguntas sugeridas**\n- Algo?\n";
-      setup({ status: { status: "done" }, report: REPORT_MD });
+      setup({ status: { status: "done", node_count: 1 }, report: REPORT_MD });
       render(<ContextGraphTab threadId="t1" />);
 
       const toggleBtn = screen.getByText("graph_report_title");
@@ -366,7 +387,7 @@ describe("ContextGraphTab", () => {
 
     it("botão ↯ do god node chama queryAffected com o nó", async () => {
       setup({
-        status: { status: "done" },
+        status: { status: "done", node_count: 1 },
         report: "**God nodes**\n- AuthService\n",
       });
       render(<ContextGraphTab threadId="t1" />);
@@ -380,7 +401,7 @@ describe("ContextGraphTab", () => {
       mockQueryAffected.mockResolvedValueOnce("impacto: A, B");
       const onSendPrompt = vi.fn();
       setup({
-        status: { status: "done" },
+        status: { status: "done", node_count: 1 },
         report: "**God nodes**\n- AuthService\n",
       });
       render(<ContextGraphTab threadId="t1" onSendPrompt={onSendPrompt} />);
@@ -399,7 +420,7 @@ describe("ContextGraphTab", () => {
     });
 
     it("done sem report não renderiza god nodes", () => {
-      setup({ status: { status: "done" }, report: null });
+      setup({ status: { status: "done", node_count: 1 }, report: null });
       render(<ContextGraphTab threadId="t1" />);
       expect(screen.queryByText("graph_god_nodes_title")).toBeNull();
     });
@@ -409,7 +430,7 @@ describe("ContextGraphTab", () => {
         "\n",
       );
       setup({
-        status: { status: "done" },
+        status: { status: "done", node_count: 1 },
         report: `**God nodes**\n${lines}\n`,
       });
       render(<ContextGraphTab threadId="t1" />);
@@ -421,7 +442,7 @@ describe("ContextGraphTab", () => {
         "\n",
       );
       setup({
-        status: { status: "done" },
+        status: { status: "done", node_count: 1 },
         report: `**Perguntas sugeridas**\n${qs}\n`,
       });
       render(<ContextGraphTab threadId="t1" />);
