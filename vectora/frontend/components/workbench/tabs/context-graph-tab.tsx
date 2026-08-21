@@ -11,6 +11,7 @@ import {
   type GraphFileType,
 } from "@/lib/stores/context-graph-settings-store";
 import { WorkbenchSlidePanel } from "@/components/workbench/workbench-slide-panel";
+import { ContextGraphViewer } from "@/components/workbench/tabs/context-graph-viewer";
 import { m } from "@/lib/paraglide/messages";
 
 interface ContextGraphTabProps {
@@ -43,7 +44,7 @@ export function ContextGraphTab({
     resume,
     cancel,
     queryAffected,
-    getHtmlUrl,
+    fetchGraphData,
   } = useContextGraph(workspaceId);
   const [showReport, setShowReport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -87,8 +88,6 @@ export function ContextGraphTab({
         .filter(Boolean)
         .slice(0, 5)
     : [];
-
-  const htmlUrl = getHtmlUrl();
 
   return (
     <div className="relative flex flex-col h-full overflow-hidden">
@@ -335,9 +334,9 @@ export function ContextGraphTab({
           </div>
         )}
 
-        {/* Built + grafo com dados: a própria aba é o visualizador —
-            iframe embutindo o HTML já gerado no backend (vis-network,
-            comunidades, busca), sem depender de abrir link externo. */}
+        {/* Built + grafo com dados: a própria aba é o visualizador — canvas
+            React nativo (reagraph), com o tema/design system do workbench
+            e sem depender de iframe/link externo. */}
         {isBuilt && hasGraphData && (
           <div className="flex-1 min-h-0 flex flex-col">
             {/* Métricas — faixa compacta acima do grafo */}
@@ -350,15 +349,17 @@ export function ContextGraphTab({
               )}
             </div>
 
-            {htmlUrl && (
-              <iframe
-                src={htmlUrl}
-                title={m.graph_credit()}
-                data-testid="graph-iframe"
-                sandbox="allow-scripts"
-                className="flex-1 min-h-0 w-full border-0"
-              />
-            )}
+            <ContextGraphViewer
+              fetchGraphData={fetchGraphData}
+              onExplainNode={(label) =>
+                handleQuestion(`Explique o nó "${label}" no grafo de contexto`)
+              }
+              onAffectedNode={(label) =>
+                queryAffected(label).then((text) => {
+                  if (text) handleQuestion(text);
+                })
+              }
+            />
 
             {/* God nodes + perguntas + relatório — faixa compacta abaixo
                 do grafo, rolável, não compete pelo espaço principal. */}

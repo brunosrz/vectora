@@ -41,10 +41,26 @@ const mockCancel = vi.fn(() => Promise.resolve());
 const mockQueryAffected = vi.fn(() => Promise.resolve(""));
 const mockGetHtmlUrl = vi.fn(() => "/workspaces/ws1/context-graph/html");
 const mockFetchStatus = vi.fn();
+const mockFetchGraphData = vi.fn(() =>
+  Promise.resolve({ nodes: [], links: [] }),
+);
 const mockUseContextGraph = vi.fn();
 
 vi.mock("@/lib/hooks/use-context-graph", () => ({
   useContextGraph: (...args: unknown[]) => mockUseContextGraph(...args),
+}));
+
+// reagraph renderiza um canvas WebGL real (three.js) — sem suporte em jsdom.
+// Stub minimalista só pra provar que o componente nativo é montado (em vez
+// do antigo iframe), sem depender de um contexto GL que jsdom não tem.
+vi.mock("reagraph", () => ({
+  GraphCanvas: () => <div data-testid="graph-canvas-mock" />,
+  lightTheme: {},
+  darkTheme: {},
+}));
+
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light" }),
 }));
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -67,11 +83,20 @@ function setup(
     queryAffected: mockQueryAffected,
     getHtmlUrl: mockGetHtmlUrl,
     fetchStatus: mockFetchStatus,
+    fetchGraphData: mockFetchGraphData,
     ...overrides,
   });
 }
 
-afterEach(() => {
+afterEach(async () => {
+  // ContextGraphViewer busca o grafo (fetchGraphData) num efeito assíncrono
+  // ao montar — sem drenar essa microtask dentro de act() antes do cleanup,
+  // o setState do resultado dispara depois que o teste já terminou e o
+  // React avisa "not wrapped in act(...)" em todo teste que renderiza o
+  // status "done", mesmo os que não têm nada a ver com o grafo em si.
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
   cleanup();
   vi.clearAllMocks();
 });
@@ -234,13 +259,15 @@ describe("ContextGraphTab", () => {
       expect(screen.getByText("graph_rebuild_button")).toBeTruthy();
     });
 
-    it("renderiza o grafo inline via iframe (não abre link externo)", () => {
+    it("renderiza o grafo nativo em vez de iframe/link externo", async () => {
       setup({ status: { status: "done", node_count: 42, edge_count: 17 } });
       render(<ContextGraphTab threadId="t1" />);
-      const iframe = screen.getByTestId("graph-iframe") as HTMLIFrameElement;
-      expect(iframe.src).toContain("context-graph/html");
-      // Nenhum link externo aponta pro HTML do grafo — só o iframe inline
-      // (o link de crédito do rodapé, esse sim externo, continua existindo).
+      await screen.findByTestId("graph-canvas-mock");
+      expect(mockFetchGraphData).toHaveBeenCalled();
+      // Nenhum iframe nem link externo aponta pro HTML do grafo — só o
+      // canvas nativo (o link de crédito do rodapé, esse sim externo,
+      // continua existindo).
+      expect(document.querySelector("iframe")).toBeNull();
       expect(
         document.querySelector("a[href*='context-graph/html']"),
       ).toBeNull();
@@ -248,19 +275,19 @@ describe("ContextGraphTab", () => {
   });
 
   describe("estado done — grafo vazio (build ok, 0 arquivos compatíveis)", () => {
-    it("sem node_count, mostra o estado de resultado vazio em vez do iframe", () => {
+    it("sem node_count, mostra o estado de resultado vazio em vez do grafo", () => {
       setup({ status: { status: "done" } });
       render(<ContextGraphTab threadId="t1" />);
       expect(screen.getByTestId("graph-empty-result")).toBeTruthy();
       expect(screen.getByText("graph_empty_result")).toBeTruthy();
-      expect(screen.queryByTestId("graph-iframe")).toBeNull();
+      expect(screen.queryByTestId("graph-canvas-mock")).toBeNull();
     });
 
     it("node_count 0, mostra o mesmo estado de resultado vazio", () => {
       setup({ status: { status: "done", node_count: 0, edge_count: 0 } });
       render(<ContextGraphTab threadId="t1" />);
       expect(screen.getByTestId("graph-empty-result")).toBeTruthy();
-      expect(screen.queryByTestId("graph-iframe")).toBeNull();
+      expect(screen.queryByTestId("graph-canvas-mock")).toBeNull();
     });
   });
 

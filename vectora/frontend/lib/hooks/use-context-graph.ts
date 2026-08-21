@@ -26,6 +26,38 @@ export interface GraphReport {
   report: string;
 }
 
+/** Nó em graph.json (backend/context_graph/export.py::to_json). */
+export interface RawGraphNode {
+  id: string;
+  label?: string;
+  community?: number | null;
+  community_name?: string | null;
+  file_type?: string | null;
+  source_file?: string | null;
+  [key: string]: unknown;
+}
+
+/** Aresta em graph.json — chave "links", não "edges" (node_link_data). */
+export interface RawGraphLink {
+  source: string;
+  target: string;
+  relation?: string | null;
+  confidence_score?: number | null;
+  [key: string]: unknown;
+}
+
+export interface RawGraphData {
+  nodes: RawGraphNode[];
+  links: RawGraphLink[];
+  hyperedges?: unknown[];
+}
+
+export interface GraphQueryResult {
+  answer: string;
+  nodes: RawGraphNode[];
+  edges: RawGraphLink[];
+}
+
 function base(workspaceId: string): string {
   return `/workspaces/${encodeURIComponent(workspaceId)}/context-graph`;
 }
@@ -130,6 +162,75 @@ export function useContextGraph(workspaceId: string | null | undefined) {
     [workspaceId],
   );
 
+  /** graph.json completo (nós/arestas/comunidades) — visualização nativa. */
+  const fetchGraphData = useCallback(async (): Promise<RawGraphData | null> => {
+    if (!workspaceId) return null;
+    try {
+      const res = await fetch(base(workspaceId));
+      if (!res.ok) return null;
+      return (await res.json()) as RawGraphData;
+    } catch {
+      return null;
+    }
+  }, [workspaceId]);
+
+  const explainNode = useCallback(
+    async (nodeId: string, depth = 1): Promise<GraphQueryResult | null> => {
+      if (!workspaceId) return null;
+      try {
+        const res = await fetch(`${base(workspaceId)}/explain`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ node_id: nodeId, depth }),
+        });
+        if (!res.ok) return null;
+        return (await res.json()) as GraphQueryResult;
+      } catch {
+        return null;
+      }
+    },
+    [workspaceId],
+  );
+
+  const queryGraph = useCallback(
+    async (question: string, topK = 10): Promise<GraphQueryResult | null> => {
+      if (!workspaceId) return null;
+      try {
+        const res = await fetch(`${base(workspaceId)}/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, top_k: topK }),
+        });
+        if (!res.ok) return null;
+        return (await res.json()) as GraphQueryResult;
+      } catch {
+        return null;
+      }
+    },
+    [workspaceId],
+  );
+
+  const pathBetween = useCallback(
+    async (
+      source: string,
+      target: string,
+    ): Promise<GraphQueryResult | null> => {
+      if (!workspaceId) return null;
+      try {
+        const res = await fetch(`${base(workspaceId)}/path`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source, target }),
+        });
+        if (!res.ok) return null;
+        return (await res.json()) as GraphQueryResult;
+      } catch {
+        return null;
+      }
+    },
+    [workspaceId],
+  );
+
   const update = useCallback(
     async (
       opts: { model?: string; mode?: string; fileTypes?: string[] } = {},
@@ -169,5 +270,9 @@ export function useContextGraph(workspaceId: string | null | undefined) {
     queryAffected,
     fetchStatus,
     getHtmlUrl,
+    fetchGraphData,
+    explainNode,
+    queryGraph,
+    pathBetween,
   };
 }
