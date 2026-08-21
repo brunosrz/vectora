@@ -319,6 +319,72 @@ async def test_sync_adapters_desliga_tudo_no_downgrade_de_tier(monkeypatch):
     assert parados == ["telegram"]
 
 
+# ---------------------------------------------------------------------------
+# Manager — toggle enabled/disabled (desacoplado da credencial)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def _isolated_runtime_settings(tmp_path, monkeypatch):
+    """Isola cada teste com um RuntimeSettings próprio — sem isso, o
+    override de `connect_enabled_platforms` de um teste vazaria pros
+    seguintes (é um singleton de processo)."""
+    from backend.workspace import runtime_settings as rs_module
+    from backend.workspace.runtime_settings import RuntimeSettings
+
+    fresh = RuntimeSettings(path=tmp_path / "settings.json")
+    monkeypatch.setattr(rs_module, "runtime_settings", fresh)
+    return fresh
+
+
+def test_is_enabled_antes_do_primeiro_toggle_espelha_credencial(
+    _isolated_runtime_settings, monkeypatch
+):
+    """Achado ao vivo (2026-08-20): antes desta feature, credencial salva
+    já ligava a plataforma pra sempre. Sem nenhum toggle usado ainda, o
+    comportamento tem que continuar idêntico — só muda quando o usuário
+    de fato usa o toggle."""
+    monkeypatch.delenv("DISCORD_BOT_TOKEN", raising=False)
+    assert manager.is_enabled("discord") is False
+
+    monkeypatch.setenv("DISCORD_BOT_TOKEN", "tok")
+    assert manager.is_enabled("discord") is True
+
+
+def test_configured_platforms_respeita_toggle_desligado(
+    _isolated_runtime_settings, monkeypatch
+):
+    """O caso do bug real: credencial presente, mas o usuário desligou o
+    toggle — a plataforma não pode aparecer como configurada."""
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+    monkeypatch.setenv("DISCORD_BOT_TOKEN", "tok")
+    assert "discord" in manager.configured_platforms()
+
+    manager.set_enabled("discord", False)
+    assert "discord" not in manager.configured_platforms()
+
+    # Erro/borda: religar sem credencial não bota a plataforma de volta.
+    monkeypatch.delenv("DISCORD_BOT_TOKEN", raising=False)
+    manager.set_enabled("discord", True)
+    assert "discord" not in manager.configured_platforms()
+
+
+def test_primeiro_toggle_preserva_outras_plataformas_ja_credenciadas(
+    _isolated_runtime_settings, monkeypatch
+):
+    """Desligar UMA plataforma pela primeira vez não pode desligar
+    silenciosamente outra que já estava rodando de propósito."""
+    monkeypatch.setenv("VECTORA_LICENSE_BYPASS", "1")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("DISCORD_BOT_TOKEN", "tok")
+
+    manager.set_enabled("discord", False)
+
+    assert manager.is_enabled("discord") is False
+    assert manager.is_enabled("telegram") is True
+    assert manager.configured_platforms() == {"telegram"}
+
+
 @pytest.mark.asyncio
 async def test_sync_adapters_falha_de_um_nao_impede_os_outros(monkeypatch):
     monkeypatch.setattr(

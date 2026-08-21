@@ -1,9 +1,26 @@
 """Ciclo de vida dos adapters de Connect.
 
 Cada plataforma só sobe quando a credencial correspondente existe nos env
-overrides do usuário. Melhor esforço, igual `nats_sidecar`/`electron_sidecar`:
-falha ao iniciar um adapter é logada e não impede os outros nem o boot do
-backend — uma credencial de Slack errada não pode derrubar o Vectora inteiro.
+overrides do usuário **e** o usuário ligou o toggle explícito (`is_enabled`).
+Melhor esforço, igual `nats_sidecar`/`electron_sidecar`: falha ao iniciar um
+adapter é logada e não impede os outros nem o boot do backend — uma
+credencial de Slack errada não pode derrubar o Vectora inteiro.
+
+Antes desta feature, "credencial salva" sozinha já ligava a plataforma pra
+sempre (achado ao vivo: um token de teste esquecido em `.env` subia o
+client Discord silenciosamente, sem o usuário jamais ter pedido). O flag
+`connect_enabled_platforms` (SQLite `app_settings` via `runtime_settings`,
+mesmo backing store de `theme`/`language`) desacopla os dois — mas só a
+partir do momento em que o usuário usa o toggle pela primeira vez
+(`set_enabled()`). Até lá, `is_enabled()` espelha o comportamento antigo
+(credencial presente = habilitado) — sem isso, o instante exato da
+primeira leitura em produção (varia por processo) ou em teste (a ordem
+de execução da suíte) decidiria pra sempre quais plataformas nascem
+habilitadas, um cadeado de timing implícito e frágil. Ao primeiro toggle,
+o override nasce preservando "ligado" pra tudo que já tinha credencial
+configurada até aquele momento (não desliga silenciosamente uma
+integração em uso só porque o usuário mexeu em OUTRA), e daí em diante é
+a fonte de verdade — uma credencial nova não aparece aqui sozinha.
 """
 
 from __future__ import annotations
@@ -18,26 +35,20 @@ logger = logging.getLogger(__name__)
 #: handler do Slack, task do email). Vazio = nada rodando.
 _running: dict[str, Any] = {}
 
+_ENABLED_SETTINGS_KEY = "connect_enabled_platforms"
+
 
 def _env(name: str) -> str:
     return (os.environ.get(name) or "").strip()
 
 
-def configured_platforms() -> set[str]:
-    """Quais plataformas têm credencial completa agora.
+def credentialed_platforms() -> set[str]:
+    """Quais plataformas têm credencial completa agora (independente de
+    tier e do toggle de enabled — só olha as env vars).
 
     Slack só entra com os **dois** tokens: com apenas um, o Socket Mode falha
     na conexão e o usuário veria um erro sem entender o que faltou.
-
-    Sem tier pro, nenhuma plataforma sobe mesmo com credencial salva de
-    antes de um downgrade — `sync_adapters()` reconcilia contra o conjunto
-    vazio e desliga o que estiver rodando.
     """
-    from backend.rbac.subscription import get_current_tier
-
-    if get_current_tier() != "pro":
-        return set()
-
     platforms: set[str] = set()
     if _env("TELEGRAM_BOT_TOKEN"):
         platforms.add("telegram")
@@ -52,6 +63,58 @@ def configured_platforms() -> set[str]:
     ):
         platforms.add("email")
     return platforms
+
+
+def _enabled_overrides() -> dict[str, bool] | None:
+    """`None` = o usuário nunca usou o toggle — nenhum override existe
+    ainda. Um `dict` (mesmo vazio) = já existe pelo menos um override
+    persistido; a partir daí ele é a fonte de verdade, não mais a
+    credencial. `has()` distingue "nunca setado" de "setado vazio",
+    diferente de `get()` (que sempre cairia num default)."""
+    from backend.workspace.runtime_settings import runtime_settings
+
+    if not runtime_settings.has(_ENABLED_SETTINGS_KEY):
+        return None
+    raw = runtime_settings.get(_ENABLED_SETTINGS_KEY, {})
+    return raw if isinstance(raw, dict) else {}
+
+
+def is_enabled(platform: str) -> bool:
+    overrides = _enabled_overrides()
+    if overrides is None:
+        # Toggle nunca usado — mesmo comportamento de antes desta feature.
+        return platform in credentialed_platforms()
+    return bool(overrides.get(platform))
+
+
+def set_enabled(platform: str, enabled: bool) -> None:
+    """Persiste a preferência de enabled — não inicia/para nada sozinho,
+    quem chama decide se reconcilia via `sync_adapters()` na sequência."""
+    from backend.workspace.runtime_settings import runtime_settings
+
+    overrides = _enabled_overrides()
+    if overrides is None:
+        # Primeiro toggle já usado nesta instância: preserva "ligado" pra
+        # tudo que já tinha credencial configurada até agora — mexer numa
+        # plataforma não pode desligar silenciosamente outra já em uso.
+        overrides = dict.fromkeys(credentialed_platforms(), True)
+    overrides[platform] = enabled
+    runtime_settings.set(_ENABLED_SETTINGS_KEY, overrides)
+
+
+def configured_platforms() -> set[str]:
+    """Quais plataformas devem estar rodando agora: credencial + enabled.
+
+    Sem tier pro, nenhuma plataforma sobe mesmo com credencial salva e
+    enabled=true de antes de um downgrade — `sync_adapters()` reconcilia
+    contra o conjunto vazio e desliga o que estiver rodando.
+    """
+    from backend.rbac.subscription import get_current_tier
+
+    if get_current_tier() != "pro":
+        return set()
+
+    return {p for p in credentialed_platforms() if is_enabled(p)}
 
 
 async def _start_platform(platform: str) -> Any:

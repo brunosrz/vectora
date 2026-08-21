@@ -41,6 +41,7 @@ from backend.api.handlers.artifacts import router as artifacts_router
 from backend.api.handlers.auth import router as auth_router
 from backend.api.handlers.background import router as background_router
 from backend.api.handlers.chat import router as chat_router
+from backend.api.handlers.connect import router as connect_router
 from backend.api.handlers.context_graph import router as graph_router
 from backend.api.handlers.flags import router as flags_router
 from backend.api.handlers.gateway import router as gateway_router
@@ -553,6 +554,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     # ── Routers ───────────────────────────────────────────────────────────────
     app.include_router(flags_router)
     app.include_router(auth_router)
+    app.include_router(connect_router)
     app.include_router(chat_router)
     app.include_router(thread_router)
     app.include_router(share_router)

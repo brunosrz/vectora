@@ -1,19 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Plug,
-  Save,
-  KeyRound,
-  Loader2,
-  Mail,
-  MessageCircle,
-  Webhook,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plug, Save, Loader2, Mail, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { ProBadge } from "@/components/ui/pro-badge";
 import { m } from "@/lib/paraglide/messages";
 import { useToastStore } from "@/lib/stores/toast-store";
@@ -22,19 +15,104 @@ interface ConnectConfig {
   TELEGRAM_BOT_TOKEN: string;
   DISCORD_BOT_TOKEN: string;
   DISCORD_APPLICATION_ID: string;
+  SLACK_BOT_TOKEN: string;
+  SLACK_APP_TOKEN: string;
   EMAIL_SMTP_HOST: string;
   EMAIL_IMAP_HOST: string;
 }
 
+type PlatformId = "telegram" | "discord" | "slack" | "email";
+
+interface PlatformStatus {
+  configured: boolean;
+  enabled: boolean;
+  running: boolean;
+}
+
+type ConnectStatus = Partial<Record<PlatformId, PlatformStatus>>;
+
+function PlatformBadgeAndToggle({
+  id,
+  formConfigured,
+  status,
+  togglingPlatform,
+  onToggle,
+}: {
+  id: PlatformId;
+  formConfigured: boolean;
+  status: ConnectStatus;
+  togglingPlatform: PlatformId | null;
+  onToggle: (id: PlatformId, enabled: boolean) => void;
+}) {
+  const s = status[id];
+  const isConfigured = s?.configured ?? formConfigured;
+  return (
+    <div className="flex items-center gap-2">
+      <Badge variant={isConfigured ? "default" : "secondary"}>
+        {isConfigured ? "Configurado" : "Pendente"}
+      </Badge>
+      <Switch
+        checked={Boolean(s?.enabled)}
+        disabled={!isConfigured || togglingPlatform === id}
+        aria-label={m.connect_toggle_aria({ platform: id })}
+        onCheckedChange={(checked) => onToggle(id, checked)}
+      />
+    </div>
+  );
+}
+
 export function ConnectTab() {
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<ConnectStatus>({});
+  const [togglingPlatform, setTogglingPlatform] = useState<PlatformId | null>(
+    null,
+  );
   const [configs, setConfigs] = useState<ConnectConfig>({
     TELEGRAM_BOT_TOKEN: "",
     DISCORD_BOT_TOKEN: "",
     DISCORD_APPLICATION_ID: "",
+    SLACK_BOT_TOKEN: "",
+    SLACK_APP_TOKEN: "",
     EMAIL_SMTP_HOST: "",
     EMAIL_IMAP_HOST: "",
   });
+
+  useEffect(() => {
+    fetch("/connect/status")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: ConnectStatus | null) => {
+        if (data) setStatus(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function toggleEnabled(platform: PlatformId, enabled: boolean) {
+    setTogglingPlatform(platform);
+    // Otimista: o switch reflete a intenção na hora, sem esperar o round-trip.
+    setStatus((prev) => ({
+      ...prev,
+      [platform]: { ...prev[platform], configured: true, enabled },
+    }));
+    try {
+      const res = await fetch(`/connect/${platform}/enabled`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) throw new Error(m.connect_toggle_error());
+    } catch (error) {
+      // Reverte o otimismo — o backend não confirmou a mudança.
+      setStatus((prev) => ({
+        ...prev,
+        [platform]: { ...prev[platform], configured: true, enabled: !enabled },
+      }));
+      useToastStore
+        .getState()
+        .error(m.connect_toggle_error(), { description: String(error) });
+    } finally {
+      setTogglingPlatform(null);
+    }
+  }
 
   const handleSave = async () => {
     setLoading(true);
@@ -97,11 +175,13 @@ export function ConnectTab() {
                 </p>
               </div>
             </div>
-            <Badge
-              variant={configs.TELEGRAM_BOT_TOKEN ? "default" : "secondary"}
-            >
-              {configs.TELEGRAM_BOT_TOKEN ? "Configurado" : "Pendente"}
-            </Badge>
+            <PlatformBadgeAndToggle
+              id="telegram"
+              formConfigured={Boolean(configs.TELEGRAM_BOT_TOKEN)}
+              status={status}
+              togglingPlatform={togglingPlatform}
+              onToggle={toggleEnabled}
+            />
           </div>
           <div className="space-y-2">
             <Label className="text-xs">Bot Token</Label>
@@ -131,11 +211,13 @@ export function ConnectTab() {
                 </p>
               </div>
             </div>
-            <Badge
-              variant={configs.DISCORD_BOT_TOKEN ? "default" : "secondary"}
-            >
-              {configs.DISCORD_BOT_TOKEN ? "Configurado" : "Pendente"}
-            </Badge>
+            <PlatformBadgeAndToggle
+              id="discord"
+              formConfigured={Boolean(configs.DISCORD_BOT_TOKEN)}
+              status={status}
+              togglingPlatform={togglingPlatform}
+              onToggle={toggleEnabled}
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -165,6 +247,57 @@ export function ConnectTab() {
           </div>
         </div>
 
+        {/* Slack */}
+        <div className="rounded-lg border bg-card p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <MessageCircle className="w-5 h-5 text-purple-500" />
+              <div>
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  Slack
+                  <ProBadge />
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  {m.connect_slack_description()}
+                </p>
+              </div>
+            </div>
+            <PlatformBadgeAndToggle
+              id="slack"
+              formConfigured={Boolean(
+                configs.SLACK_BOT_TOKEN && configs.SLACK_APP_TOKEN,
+              )}
+              status={status}
+              togglingPlatform={togglingPlatform}
+              onToggle={toggleEnabled}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs">{m.connect_slack_bot_token()}</Label>
+              <Input
+                type="password"
+                placeholder="Ex: xoxb-..."
+                value={configs.SLACK_BOT_TOKEN}
+                onChange={(e) =>
+                  setConfigs({ ...configs, SLACK_BOT_TOKEN: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">{m.connect_slack_app_token()}</Label>
+              <Input
+                type="password"
+                placeholder="Ex: xapp-..."
+                value={configs.SLACK_APP_TOKEN}
+                onChange={(e) =>
+                  setConfigs({ ...configs, SLACK_APP_TOKEN: e.target.value })
+                }
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Email */}
         <div className="rounded-lg border bg-card p-4 space-y-4">
           <div className="flex items-center justify-between">
@@ -180,9 +313,13 @@ export function ConnectTab() {
                 </p>
               </div>
             </div>
-            <Badge variant={configs.EMAIL_IMAP_HOST ? "default" : "secondary"}>
-              {configs.EMAIL_IMAP_HOST ? "Configurado" : "Pendente"}
-            </Badge>
+            <PlatformBadgeAndToggle
+              id="email"
+              formConfigured={Boolean(configs.EMAIL_IMAP_HOST)}
+              status={status}
+              togglingPlatform={togglingPlatform}
+              onToggle={toggleEnabled}
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
