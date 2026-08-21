@@ -12,6 +12,8 @@ uma das chamadas é a arriscada.
 from __future__ import annotations
 
 import asyncio
+import re
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from backend.vtypes.message import ContentBlock, MessageRole, VMessage
@@ -21,6 +23,36 @@ if TYPE_CHECKING:
     from backend.tools.context import ToolContext
     from backend.tools.registry import ToolRegistry
     from backend.vtypes.message import ToolCall
+
+#: Padrões de segredo comuns que podem vazar no stdout de `terminal` ou no
+#: conteúdo de `file_read` (variável de ambiente ecoada, chave colada num
+#: log lido) — cada match vira "[REDACTED]" antes do resultado ser
+#: persistido no histórico ou mostrado ao LLM.
+_SECRET_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"sk-[A-Za-z0-9_-]{20,}"),  # OpenAI/Anthropic/etc-style keys
+    re.compile(r"ghp_[A-Za-z0-9]{36}"),  # GitHub personal access tokens
+    re.compile(r"AKIA[0-9A-Z]{16}"),  # AWS access key IDs
+)
+
+
+def _redact_secrets(texto: str) -> str:
+    for pattern in _SECRET_PATTERNS:
+        texto = pattern.sub("[REDACTED]", texto)
+    return texto
+
+
+#: Callbacks aplicados, em ordem, ao texto de resultado de toda tool antes
+#: de persistir/emitir. Não é um sistema de plugin genérico — não há
+#: registro dinâmico vindo de fora deste módulo, é uma lista fixa e
+#: revisada, editada só aqui (CLAUDE.md: features nativas, não extensíveis
+#: por terceiros).
+_POST_EXECUTE: tuple[Callable[[str], str], ...] = (_redact_secrets,)
+
+
+def _apply_post_execute(texto: str) -> str:
+    for hook in _POST_EXECUTE:
+        texto = hook(texto)
+    return texto
 
 
 async def _run_one(
@@ -56,6 +88,7 @@ async def _run_one(
         is_error = True
     else:
         texto = await spec.ainvoke(tool_call.args, ctx)
+        texto = _apply_post_execute(texto)
         is_error = texto.startswith("Error:")
     return VMessage(
         role=MessageRole.TOOL,
