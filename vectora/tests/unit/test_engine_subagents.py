@@ -128,6 +128,7 @@ class TestRunSubagentSincrono:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
 
         assert resultado == "resultado do subagente"
@@ -144,6 +145,7 @@ class TestRunSubagentSincrono:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
 
         async with session_store._pool.acquire() as conn:
@@ -177,6 +179,7 @@ class TestRunSubagentSincrono:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
 
         historico_pai = await session_store.get_history("thread-pai")
@@ -198,6 +201,7 @@ class TestRunSubagentSincrono:
             ctx=ctx,
             parent_thread_id="thread-pai",
             on_event=on_event,
+            should_require_approval=None,
         )
 
         assert [e.status for e in eventos] == ["running", "complete"]
@@ -260,6 +264,7 @@ class TestSpawnSubagentBackground:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
 
         assert isinstance(task, asyncio.Task)
@@ -286,6 +291,7 @@ class TestTurnBudgetDoTurnoPai:
             ctx=ctx,
             parent_thread_id="thread-pai",
             turn_budget=budget,
+            should_require_approval=None,
         )
 
         assert "não foi disparado" in resultado
@@ -306,6 +312,7 @@ class TestTurnBudgetDoTurnoPai:
             ctx=ctx,
             parent_thread_id="thread-pai",
             turn_budget=budget,
+            should_require_approval=None,
         )
 
         assert resultado == "ok"
@@ -326,6 +333,7 @@ class TestLivenessAtiva:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
 
         assert resultado == "completou sem watchdog"
@@ -345,6 +353,7 @@ class TestLivenessAtiva:
             ctx=ctx,
             parent_thread_id="thread-pai",
             liveness=LivenessConfig(heartbeat_interval_s=5.0, max_stalled_heartbeats=3),
+            should_require_approval=None,
         )
 
         assert resultado == "terminei rápido"
@@ -373,6 +382,7 @@ class TestLivenessAtiva:
                 heartbeat_interval_s=0.02, max_stalled_heartbeats=2
             ),
             on_event=on_event,
+            should_require_approval=None,
         )
 
         assert "cancelado por inatividade" in resultado
@@ -403,6 +413,7 @@ class TestEscopoRBACDoSubagente:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
 
         assert resultado == "delegado"
@@ -435,6 +446,7 @@ class TestEscopoRBACDoSubagente:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
 
         assert "fora do escopo RBAC" in resultado
@@ -462,6 +474,7 @@ class TestDedupPorCorrelationId:
                 chat_client=client,
                 ctx=ctx,
                 parent_thread_id="thread-pai",
+                should_require_approval=None,
             ),
             run_subagent(
                 spec,
@@ -470,6 +483,7 @@ class TestDedupPorCorrelationId:
                 chat_client=client,
                 ctx=ctx,
                 parent_thread_id="thread-pai",
+                should_require_approval=None,
             ),
         )
 
@@ -494,6 +508,7 @@ class TestDedupPorCorrelationId:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
         resultado_b = await run_subagent(
             spec_b,
@@ -502,6 +517,7 @@ class TestDedupPorCorrelationId:
             chat_client=client,
             ctx=ctx,
             parent_thread_id="thread-pai",
+            should_require_approval=None,
         )
 
         assert resultado_a == "resultado 1"
@@ -531,6 +547,7 @@ class TestHardInterruptRealNaoPassivo:
                 chat_client=client,
                 ctx=ctx,
                 parent_thread_id="thread-pai",
+                should_require_approval=None,
             )
         )
 
@@ -556,3 +573,24 @@ class TestHardInterruptRealNaoPassivo:
         token correto."""
         token_valido = subagent_capability_token("corr-inexistente")
         assert request_hard_interrupt("corr-inexistente", token_valido) is False
+
+
+class TestShouldRequireApprovalObrigatorio:
+    """`should_require_approval` não tem default em `run_subagent` de
+    propósito — desligar HITL pra tudo que um subagente faz precisa ser
+    uma escolha explícita no call site (`should_require_approval=None`),
+    nunca um esquecimento silencioso."""
+
+    async def test_run_subagent_sem_should_require_approval_estoura_typeerror(
+        self, session_store, ctx
+    ):
+        client = _ScriptedChatClient([[_texto_chunk("nunca deveria rodar")]])
+        with pytest.raises(TypeError, match="should_require_approval"):
+            await run_subagent(  # type: ignore[call-arg]  # ty: ignore[missing-argument]
+                _spec(),
+                "faça algo",
+                session_store=session_store,
+                chat_client=client,
+                ctx=ctx,
+                parent_thread_id="thread-pai",
+            )

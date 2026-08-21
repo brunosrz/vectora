@@ -347,7 +347,7 @@ async def run_goal(
     loop_config: LoopConfig,
     quality_gates: list[list[str]] | None = None,
     max_goal_turns: int = 20,
-    should_require_approval: Callable[..., bool] | None = None,
+    should_require_approval: Callable[..., bool] | None,
     approval_gate: ApprovalGate | None = None,
 ) -> GoalOutcome:
     """Encadeia turnos de ``run_conversation`` até o objetivo ser cumprido
@@ -358,6 +358,10 @@ async def run_goal(
     guardrails internos (``_run_goal_loop``) vira ``GoalOutcome(status=
     "error")``, nunca propaga pro caller (mesma regra de tools/loops do
     projeto).
+
+    ``should_require_approval`` é obrigatório (sem default) de propósito:
+    desligar HITL é uma escolha que precisa ser explícita no call site
+    (``should_require_approval=None``), nunca um esquecimento silencioso.
     """
     try:
         return await _run_goal_loop(
@@ -393,7 +397,7 @@ async def resume_goal(
     edited_args: dict[str, Any] | None = None,
     quality_gates: list[list[str]] | None = None,
     max_goal_turns: int = 20,
-    should_require_approval: Callable[..., bool] | None = None,
+    should_require_approval: Callable[..., bool] | None,
     approval_gate: ApprovalGate | None = None,
 ) -> GoalOutcome:
     """Resolve a pendência HITL do turno pausado (``resume_conversation``) e

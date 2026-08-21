@@ -122,6 +122,7 @@ async def test_objetivo_cumprido_em_n_turnos_par_com_turn_budget_esgotado(
             goal="implemente X",
             loop_config=LoopConfig(max_iterations=10),
             max_goal_turns=10,
+            should_require_approval=None,
         ),
         timeout=5,
     )
@@ -150,6 +151,7 @@ async def test_objetivo_cumprido_em_n_turnos_par_com_turn_budget_esgotado(
             goal="implemente X",
             loop_config=LoopConfig(max_iterations=10),
             max_goal_turns=3,
+            should_require_approval=None,
         ),
         timeout=5,
     )
@@ -184,6 +186,7 @@ async def test_falhas_consecutivas_do_judge_disparam_auto_pause(session_store):
             goal="implemente X",
             loop_config=LoopConfig(max_iterations=10),
             max_goal_turns=10,
+            should_require_approval=None,
         ),
         timeout=5,
     )
@@ -220,6 +223,7 @@ async def test_mesmo_gate_falhando_repetidamente_dispara_auto_pause_antes_do_tur
             loop_config=LoopConfig(max_iterations=10),
             quality_gates=[gate_que_falha_sempre],
             max_goal_turns=20,
+            should_require_approval=None,
         ),
         timeout=20,
     )
@@ -260,6 +264,7 @@ async def test_gate_e_judge_sao_criterios_independentes_nunca_marca_done_sozinho
             loop_config=LoopConfig(max_iterations=10),
             quality_gates=[gate_ok],
             max_goal_turns=10,
+            should_require_approval=None,
         ),
         timeout=10,
     )
@@ -297,6 +302,7 @@ async def test_gate_e_judge_sao_criterios_independentes_nunca_marca_done_sozinho
             loop_config=LoopConfig(max_iterations=10),
             quality_gates=[[sys.executable, "-c", gate_intermitente_script]],
             max_goal_turns=10,
+            should_require_approval=None,
         ),
         timeout=10,
     )
@@ -342,7 +348,44 @@ async def test_resume_goal_sem_pendencia_real_devolve_erro_idempotente(session_s
         goal="implemente X",
         loop_config=LoopConfig(max_iterations=10),
         decision="approve",
+        should_require_approval=None,
     )
 
     assert outcome.status == "error"
     assert "pendente" in outcome.reason
+
+
+class TestShouldRequireApprovalObrigatorio:
+    """`should_require_approval` não tem default em `run_goal`/`resume_goal`
+    de propósito — desligar HITL precisa ser uma escolha explícita no call
+    site (`should_require_approval=None`), nunca um esquecimento silencioso
+    que roda um goal-mode inteiro sem nenhuma pausa de aprovação."""
+
+    async def test_run_goal_sem_should_require_approval_estoura_typeerror(
+        self, session_store
+    ):
+        with pytest.raises(TypeError, match="should_require_approval"):
+            await goal_mode.run_goal(  # type: ignore[call-arg]  # ty: ignore[missing-argument]
+                session_store=session_store,
+                chat_client=_GoalChatClient(turnos=[], judgments=[]),
+                tool_registry=ToolRegistry(),
+                ctx=_ctx(),
+                thread_id="goal-sem-hitl-kwarg",
+                goal="implemente X",
+                loop_config=LoopConfig(max_iterations=10),
+            )
+
+    async def test_resume_goal_sem_should_require_approval_estoura_typeerror(
+        self, session_store
+    ):
+        with pytest.raises(TypeError, match="should_require_approval"):
+            await goal_mode.resume_goal(  # type: ignore[call-arg]  # ty: ignore[missing-argument]
+                session_store=session_store,
+                chat_client=_GoalChatClient(turnos=[], judgments=[]),
+                tool_registry=ToolRegistry(),
+                ctx=_ctx(),
+                thread_id="goal-resume-sem-hitl-kwarg",
+                goal="implemente X",
+                loop_config=LoopConfig(max_iterations=10),
+                decision="approve",
+            )

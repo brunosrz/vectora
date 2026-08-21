@@ -104,6 +104,7 @@ class TestDelegateToSubagent:
             catalog={"coder": _spec("coder")},
             session_store=session_store,
             chat_client=client,
+            should_require_approval=None,
         )
         handler = _handler()
 
@@ -129,6 +130,7 @@ class TestDelegateToSubagent:
             catalog={},
             session_store=session_store,
             chat_client=_ScriptedChatClient([[_texto_chunk("nunca chamado")]]),
+            should_require_approval=None,
         )
         resultado_inexistente = await handler(
             subagent_type="soul-que-nao-existe",
@@ -143,6 +145,7 @@ class TestDelegateToSubagent:
             catalog={"coder": _spec("coder")},
             session_store=session_store,
             chat_client=client_travado,
+            should_require_approval=None,
             liveness=LivenessConfig(
                 heartbeat_interval_s=0.02, max_stalled_heartbeats=2
             ),
@@ -166,3 +169,20 @@ class TestDelegateToSubagent:
 
         assert resultado.startswith("Error:")
         assert "subagent_deps" in resultado
+
+
+class TestShouldRequireApprovalObrigatorio:
+    """`should_require_approval` não tem default em `SubagentDeps.__init__`
+    de propósito — desligar HITL pra tudo que uma delegação de subagente
+    faz precisa ser uma escolha explícita, nunca um esquecimento
+    silencioso que injeta dependências sem política de aprovação."""
+
+    def test_subagent_deps_sem_should_require_approval_estoura_typeerror(
+        self, session_store
+    ):
+        with pytest.raises(TypeError, match="should_require_approval"):
+            SubagentDeps(  # type: ignore[call-arg]  # ty: ignore[missing-argument]
+                catalog={"coder": _spec("coder")},
+                session_store=session_store,
+                chat_client=_HangingChatClient(),
+            )

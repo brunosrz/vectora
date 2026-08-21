@@ -63,7 +63,7 @@ class SubagentDeps:
         should_require_approval: Callable[
             [str, ToolContext, dict[str, Any], list[VMessage]], bool
         ]
-        | None = None,
+        | None,
         turn_budget: TurnBudget | None = None,
         liveness: LivenessConfig | None = None,
     ) -> None:
