@@ -74,3 +74,43 @@ class TestGetVectorStore:
         db1 = await get_lancedb(str(tmp_path / "db1"))
         db2 = await get_lancedb(str(tmp_path / "db1"))
         assert db1 is db2
+
+    @pytest.mark.asyncio
+    async def test_tabela_existente_agenda_otimizacao_periodica_uma_vez(self, tmp_path):
+        """`optimize_table`/`schedule_optimize` existiam mas nunca eram
+        chamados em lugar nenhum do app — nenhuma tabela LanceDB recebia
+        compactação periódica. O primeiro `get_vector_store` bem-sucedido
+        de uma coleção agenda a task; chamadas seguintes reusam a mesma
+        (não agenda duas vezes)."""
+        import lancedb
+        import pyarrow as pa
+
+        import backend.storage.factory as _fac
+        from backend.storage.factory import get_vector_store
+
+        lancedb_path = str(tmp_path / "lancedb")
+        db = await lancedb.connect_async(lancedb_path)
+        schema = pa.schema([pa.field("id", pa.string()), pa.field("text", pa.string())])
+        await db.create_table("articles", schema=schema)
+
+        await get_vector_store("articles", path=lancedb_path)
+        cache_key = f"{lancedb_path}::articles"
+        assert cache_key in _fac._optimize_tasks
+        task = _fac._optimize_tasks[cache_key]
+        assert not task.done()
+
+        await get_vector_store("articles", path=lancedb_path)
+        assert _fac._optimize_tasks[cache_key] is task
+
+    @pytest.mark.asyncio
+    async def test_tabela_inexistente_nao_agenda_otimizacao(self, tmp_path):
+        """Erro/borda: `table is None` (coleção ainda não criada) não deve
+        tentar agendar otimização de uma tabela que não existe."""
+        import backend.storage.factory as _fac
+        from backend.storage.factory import get_vector_store
+
+        lancedb_path = str(tmp_path / "lancedb")
+        tbl = await get_vector_store("nao-existe", path=lancedb_path)
+
+        assert tbl is None
+        assert _fac._optimize_tasks == {}

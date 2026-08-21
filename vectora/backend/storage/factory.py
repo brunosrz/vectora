@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 _store: Any = None  # BaseStore
 _pg_pool: Any = None  # asyncpg.Pool (complete mode only)
 _vector_stores: dict[str, Any] = {}  # collection → lancedb.AsyncTable (raw)
+_optimize_tasks: dict[str, Any] = {}  # collection → asyncio.Task (schedule_optimize)
 _vector_store_backend: Any = None  # VectorStoreBackend nativo — 1 por processo
 
 # ---------------------------------------------------------------------------
@@ -145,6 +146,23 @@ async def get_vector_store(
         table = None
 
     _vector_stores[cache_key] = table
+    if table is not None and cache_key not in _optimize_tasks:
+        # `optimize_table`/`create_ivf_index` existiam há tempo mas nunca
+        # eram chamados em lugar nenhum do app — nenhuma tabela LanceDB
+        # recebia compactação periódica nem ganhava índice IVF_PQ conforme
+        # crescia. Agenda no primeiro `open_table` bem-sucedido de cada
+        # coleção (uma vez por processo); falha ao agendar não impede o
+        # caller de usar a tabela normalmente.
+        try:
+            from backend.storage.lancedb.optimize import schedule_optimize
+
+            _optimize_tasks[cache_key] = schedule_optimize(table)
+        except Exception:
+            logger.warning(
+                "storage/factory: falha ao agendar otimização periódica de %r",
+                collection,
+                exc_info=True,
+            )
     return table
 
 
@@ -554,3 +572,6 @@ def _reset_singletons() -> None:
     _pg_pool = None
     _vector_store_backend = None
     _vector_stores.clear()
+    for task in _optimize_tasks.values():
+        task.cancel()
+    _optimize_tasks.clear()
