@@ -378,3 +378,5 @@ env.gha
 /omskills-main
 /ragflow-main
 /ai-memory-main
+/deepseek-harness
+/lancedb
