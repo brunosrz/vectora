@@ -12,7 +12,6 @@ com os mesmos parâmetros e monta o `FallbackChatClient` com o mesmo
 
 from __future__ import annotations
 
-import importlib
 from contextlib import ExitStack
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -96,13 +95,13 @@ class TestResumeChatUsesSameNativeAgentAsStreamChat:
             )
             stack.enter_context(
                 patch(
-                    "backend.engine.conversation_loop.run_conversation",
+                    "backend.api.handlers.chat.run_conversation",
                     new=AsyncMock(return_value=LoopResult(stopped_reason="stop")),
                 )
             )
             stack.enter_context(
                 patch(
-                    "backend.engine.conversation_loop.resume_conversation",
+                    "backend.api.handlers.chat.resume_conversation",
                     new=AsyncMock(return_value=True),
                 )
             )
@@ -120,8 +119,6 @@ class TestResumeChatUsesSameNativeAgentAsStreamChat:
             )
 
             import backend.api.handlers.chat as chat_mod
-
-            importlib.reload(chat_mod)
 
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)
@@ -197,8 +194,6 @@ class TestResumeChatUsesSameNativeAgentAsStreamChat:
             )
 
             import backend.api.handlers.chat as chat_mod
-
-            importlib.reload(chat_mod)
 
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)

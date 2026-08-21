@@ -19,12 +19,16 @@ import pytest
 
 def _native_dispatch_patches() -> list[Any]:
     """Patches pro motor nativo — mesmo objetivo do helper equivalente em
-    `tests/unit/test_file_attachments.py`, mas alvo em
-    `backend.engine.conversation_loop.run_conversation` (a origem, não o
-    nome importado em `backend.api.handlers.chat`) — esta suíte faz
-    `importlib.reload(chat_mod)` depois de entrar nos patches, o que
-    reexecuta `from backend.engine.conversation_loop import run_conversation`
-    e desfaria um patch aplicado só no nome local do módulo reimportado."""
+    `tests/unit/test_file_attachments.py`. `chat.py` faz `from
+    backend.engine.conversation_loop import run_conversation` (nome direto,
+    não `conversation_loop.run_conversation` dinâmico) — por isso o patch
+    tem que mirar `backend.api.handlers.chat.run_conversation` (onde o nome
+    foi importado), não a origem. Um `importlib.reload(chat_mod)` fazia
+    esse papel antes, reexecutando o import pra rebindar o nome local —
+    mas reload() nunca é seguro num teste: reexecuta o corpo inteiro do
+    módulo (decorators de rota, imports de terceiros como `lancedb` que
+    inicializam threads de background) toda vez, acumulando ao longo da
+    suíte inteira. Patchar o destino certo direto elimina a necessidade."""
     from backend.engine.conversation_loop import LoopResult
     from backend.services.agent_factory import NativeAgent
     from backend.tools.registry import ToolRegistry
@@ -56,7 +60,7 @@ def _native_dispatch_patches() -> list[Any]:
             new=AsyncMock(return_value=None),
         ),
         patch(
-            "backend.engine.conversation_loop.run_conversation",
+            "backend.api.handlers.chat.run_conversation",
             new=AsyncMock(return_value=LoopResult(stopped_reason="stop")),
         ),
     ]
@@ -320,11 +324,7 @@ class TestStreamChatRegistersThread:
                     mock_registry,
                 )
             )
-            import importlib
-
             import backend.api.handlers.chat as chat_mod
-
-            importlib.reload(chat_mod)
 
             request = StreamChatRequest(content="Olá", thread_id="explicit-thread-id")
             http_request = MagicMock()
@@ -372,11 +372,7 @@ class TestStreamChatRegistersThread:
                     mock_registry2,
                 )
             )
-            import importlib
-
             import backend.api.handlers.chat as chat_mod
-
-            importlib.reload(chat_mod)
 
             request = StreamChatRequest(content="Sem thread id")
             http_request = MagicMock()
@@ -436,13 +432,9 @@ class TestStreamChatRegistersThread:
                 mock_registry3,
             ),
         ):
-            import importlib
-
             from fastapi import HTTPException
 
             import backend.api.handlers.chat as chat_mod
-
-            importlib.reload(chat_mod)
 
             request = StreamChatRequest(content="oi", thread_id="failed-init-thread")
             http_request = MagicMock()
@@ -501,11 +493,7 @@ class TestStreamChatRegistersThread:
                     mock_registry4,
                 )
             )
-            import importlib
-
             import backend.api.handlers.chat as chat_mod
-
-            importlib.reload(chat_mod)
 
             request = StreamChatRequest(
                 content="oi, ninguém vai responder", thread_id="no-reply-thread"
