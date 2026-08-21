@@ -450,6 +450,42 @@ class TestDataMigrationLanceDBSource:
         assert all_point_ids == {f"doc-{i}" for i in range(5)}
 
     @pytest.mark.asyncio
+    async def test_to_qdrant_pula_linhas_sem_vetor_sem_lancar(self, tmp_path):
+        """Borda: linha com `vector` nulo (registro corrompido ou legado sem
+        embedding gerado) é pulada, não vira `PointStruct` com
+        `vector=None` (o que o Qdrant rejeitaria)."""
+        from unittest.mock import MagicMock, patch
+
+        import lancedb
+        import pyarrow as pa
+
+        from backend.storage.migrations.data_migration import migrate_to_qdrant
+
+        db = await lancedb.connect_async(str(tmp_path / "lancedb"))
+        schema = pa.schema(
+            [
+                pa.field("id", pa.string()),
+                pa.field("vector", pa.list_(pa.float32(), 2)),
+                pa.field("text", pa.string()),
+            ]
+        )
+        table = await db.create_table("articles", schema=schema)
+        await table.add([{"id": "doc-0", "vector": [0.1, 0.2], "text": "com vetor"}])
+        await table.add([{"id": "doc-1", "vector": None, "text": "sem vetor"}])
+
+        mock_client = MagicMock()
+        with patch("qdrant_client.QdrantClient", return_value=mock_client):
+            result = await migrate_to_qdrant(
+                lancedb_path=str(tmp_path / "lancedb"),
+                qdrant_url="http://fake-qdrant",
+            )
+
+        assert result["total"] == 2
+        assert result["upserted"] == 1
+        (call,) = mock_client.upsert.call_args_list
+        assert [p.id for p in call.kwargs["points"]] == ["doc-0"]
+
+    @pytest.mark.asyncio
     async def test_to_pgvector_colecao_ausente_retorna_erro_sem_lancar(self, tmp_path):
         import lancedb
 
@@ -505,3 +541,73 @@ class TestDataMigrationLanceDBSource:
             if call.args and "INSERT INTO" in call.args[0]
         ]
         assert len(insert_calls) == 5
+        # Idempotência por construção: reprocessar a mesma linha (id
+        # determinístico) não duplica no destino — sem isso, rodar a
+        # migração duas vezes dobraria as linhas no Postgres.
+        assert all("ON CONFLICT (id) DO NOTHING" in c.args[0] for c in insert_calls)
+
+    @pytest.mark.asyncio
+    async def test_to_pgvector_pula_linhas_sem_vetor_sem_lancar(self, tmp_path):
+        from unittest.mock import AsyncMock, patch
+
+        import lancedb
+        import pyarrow as pa
+
+        from backend.storage.migrations.data_migration import migrate_to_pgvector
+
+        db = await lancedb.connect_async(str(tmp_path / "lancedb"))
+        schema = pa.schema(
+            [
+                pa.field("id", pa.string()),
+                pa.field("vector", pa.list_(pa.float32(), 2)),
+                pa.field("text", pa.string()),
+            ]
+        )
+        table = await db.create_table("articles", schema=schema)
+        await table.add([{"id": "doc-0", "vector": [0.1, 0.2], "text": "com vetor"}])
+        await table.add([{"id": "doc-1", "vector": None, "text": "sem vetor"}])
+
+        mock_conn = AsyncMock()
+        with patch("asyncpg.connect", AsyncMock(return_value=mock_conn)):
+            result = await migrate_to_pgvector(
+                lancedb_path=str(tmp_path / "lancedb"),
+                postgres_dsn="postgresql://fake/db",
+            )
+
+        assert result["total"] == 2
+        assert result["upserted"] == 1
+        insert_calls = [
+            call
+            for call in mock_conn.execute.call_args_list
+            if call.args and "INSERT INTO" in call.args[0]
+        ]
+        assert len(insert_calls) == 1
+        assert insert_calls[0].args[1] == "doc-0"
+
+    @pytest.mark.asyncio
+    async def test_to_pgvector_fecha_conexao_mesmo_com_falha_no_insert(
+        self, source_table
+    ):
+        """Erro/borda: se um INSERT falhar no meio da migração, `pg_conn`
+        precisa ser fechado mesmo assim (bloco `finally`) — senão a conexão
+        vaza a cada tentativa de migração que falha."""
+        from unittest.mock import AsyncMock, patch
+
+        from backend.storage.migrations.data_migration import migrate_to_pgvector
+
+        mock_conn = AsyncMock()
+
+        async def _execute(query: str, *_args):
+            if "INSERT INTO" in query:
+                raise RuntimeError("conexão perdida")
+
+        mock_conn.execute = AsyncMock(side_effect=_execute)
+
+        with patch("asyncpg.connect", AsyncMock(return_value=mock_conn)):
+            with pytest.raises(RuntimeError, match="conexão perdida"):
+                await migrate_to_pgvector(
+                    lancedb_path=source_table,
+                    postgres_dsn="postgresql://fake/db",
+                )
+
+        mock_conn.close.assert_awaited_once()
