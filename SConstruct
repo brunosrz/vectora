@@ -4,6 +4,7 @@ Vectora — SConstruct (SCons build file)
 Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons               → exibe ajuda
     scons release       → build completo + instalador para o SO atual
+    scons smoke         → builda o binário híbrido e confirma que /health sobe de verdade
     scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
     scons tests         → suíte completa: todos os subprojetos (sem cobertura)
     scons coverage      → mesma suíte com relatório de cobertura
@@ -40,6 +41,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import urllib.error
+import urllib.request
 
 AddOption(
     "--latest",
@@ -255,6 +259,56 @@ def _action_build_nuitka(target, source, env):
             "Cheque o toolchain C (MSVC + Windows SDK) e o passo do PyInstaller."
         )
     print(f">> executável híbrido pronto em {binary}")
+
+
+def _action_smoke(target, source, env):
+    """Sobe o binário híbrido empacotado de verdade (não o source interpretado)
+    e confirma que `/health` responde 200.
+
+    O único smoke test que já existia (CI, job `release-native`) roda só
+    `vectora --version` — confirma que o processo abre e fecha, não que o
+    servidor FastAPI de fato sobe dentro do congelamento Nuitka+PyInstaller
+    (rotas montadas, settings carregadas, storage inicializado). Um binário
+    que quebra nesse caminho só seria descoberto num release real sem isso.
+    """
+    binary_name = "vectora.exe" if sys.platform == "win32" else "vectora"
+    binary = os.path.join(ROOT, "dist", "vectora", binary_name)
+    if not os.path.isfile(binary):
+        raise SystemExit(f"ERRO: {binary} não existe -- rode `scons release` primeiro.")
+
+    port = 8781  # porta alta, fora do default (8080) para não colidir com um dev server local
+    home_dir = tempfile.mkdtemp(prefix="vectora-smoke-")
+    proc = subprocess.Popen(
+        [binary, "web", "--port", str(port)],
+        cwd=ROOT,
+        env={**os.environ, "VECTORA_LICENSE_BYPASS": "1", "VECTORA_HOME": home_dir},
+    )
+    try:
+        url = f"http://127.0.0.1:{port}/health"
+        deadline = time.monotonic() + 30
+        last_error: Exception | None = None
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                raise SystemExit(
+                    f"ERRO: binário empacotado saiu (código {proc.returncode}) "
+                    "antes do /health responder -- ver stdout/stderr acima."
+                )
+            try:
+                with urllib.request.urlopen(url, timeout=2) as resp:  # noqa: S310  # nosec B310
+                    if resp.status == 200:
+                        print(f">> smoke test ok: {url} respondeu 200")
+                        return
+            except (urllib.error.URLError, ConnectionError, TimeoutError) as exc:
+                last_error = exc
+            time.sleep(1)
+        raise SystemExit(f"ERRO: {url} não respondeu 200 em 30s (último erro: {last_error})")
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        shutil.rmtree(home_dir, ignore_errors=True)
 
 
 def _find_signtool() -> str | None:
@@ -836,6 +890,8 @@ def _action_help(target, source, env):
   Produto final
     scons release          build completo + instalador para o SO atual
     scons prod             deploy de produção: docs + company (Vercel) + services (Worker)
+    scons smoke            builda o binário híbrido (Nuitka+PyInstaller) e confirma
+                           que `/health` responde de dentro dele — não só `--version`
 
   Build
     scons frontend         só o build do frontend (vectora/frontend/dist/)
@@ -983,6 +1039,13 @@ _build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_de
 _FULL_DEPS = [_build_chat, _fetch_nats, _build_nuitka, _build_desktop]
 
 _cmd("release", lambda target, source, env: _action_package(target, source, env), deps=_FULL_DEPS)
+# Sem deps=[_build_nuitka]: esse node é AlwaysBuild, então depender dele
+# forçaria uma recompilação Nuitka inteira (cara) toda vez que `scons smoke`
+# rodasse -- inclusive em CI, logo depois do binário já ter sido construído
+# no passo anterior do workflow. `_action_smoke` já checa se o binário
+# existe e falha com uma mensagem clara ("rode scons build-nuitka/release
+# primeiro") se não existir.
+_cmd("smoke", _action_smoke)
 
 _cmd("prod",           _action_prod)
 

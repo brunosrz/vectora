@@ -297,6 +297,14 @@ jobs:
         working-directory: .
         run: ./dist/vectora/vectora --version || ./dist/vectora/vectora.exe --version
         shell: bash
+      - name: Smoke test (server actually boots inside the frozen binary)
+        # --version só confirma que o processo abre e fecha; isto sobe o
+        # backend de verdade (`vectora web`, dentro do binário Nuitka+
+        # PyInstaller, não source interpretado) e confirma que /health
+        # responde -- rotas montadas, settings carregadas, storage ok.
+        working-directory: .
+        run: uv run --project vectora scons smoke
+        shell: bash
       - name: Export Windows signing cert
         # electron-builder só pula a assinatura quando CSC_LINK está
         # ausente (undefined) — setado como string vazia ainda conta

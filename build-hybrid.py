@@ -188,7 +188,15 @@ def main() -> None:
             "--add-data",
             f"{VECTORA / 'backend' / 'assets'}{SEP}backend/assets",
             "--add-data",
-            f"{VECTORA / 'backend' / 'storage' / 'migrations' / 'sqlite' / 'schema.sql'}{SEP}backend/storage/migrations/sqlite/schema.sql",
+            # DEST é sempre tratado como diretório pelo PyInstaller -- um SRC
+            # de arquivo único é copiado PARA DENTRO dele com o próprio nome.
+            # Terminar DEST em "schema.sql" cria uma pasta chamada schema.sql
+            # e põe o arquivo dentro dela (.../schema.sql/schema.sql), não o
+            # arquivo em si -- por isso migrations falhava silenciosamente no
+            # binário empacotado (FileNotFoundError engolido, ver
+            # backend/storage/migrations/runner.py). DEST precisa ser o
+            # diretório PAI.
+            f"{VECTORA / 'backend' / 'storage' / 'migrations' / 'sqlite' / 'schema.sql'}{SEP}backend/storage/migrations/sqlite",
             *collect,
             *hidden,
             *excludes,
