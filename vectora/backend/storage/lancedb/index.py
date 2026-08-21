@@ -113,26 +113,39 @@ async def create_fts_index(
     text_column: str = "text",
     *,
     replace: bool = False,
+    language: str = "English",
 ) -> bool:
     """Cria índice Full-Text Search nativo do LanceDB na coluna ``text_column``.
 
-    O índice FTS (baseado em Tantivy) permite ``table.search(query).full_text()``
-    para buscas lexicais eficientes, complementar ao índice vetorial IVF_PQ.
+    O índice FTS (baseado em Tantivy) permite ``table.search(query,
+    query_type="fts")`` para buscas lexicais eficientes, complementar ao
+    índice vetorial IVF_PQ. ``language`` controla stemming e remoção de
+    stop-words (``FTS.remove_stop_words``/``FTS.stem`` já vêm `True` por
+    padrão na lib) — default ``"English"`` preserva o comportamento atual;
+    passar ``"Portuguese"`` melhora a qualidade da busca textual em corpus
+    em português (stop-words como "de"/"para"/"com" deixam de poluir o
+    índice), sem precisar recriar o schema.
 
     Args:
         table:       Objeto ``lancedb.AsyncTable``.
         text_column: Coluna de texto a indexar. Default ``"text"``.
         replace:     Recria o índice se True.
+        language:    Idioma para stemming/stop-words da FTS. Default ``"English"``.
 
     Returns:
         True se criado; False se pulado ou já existente.
     """
+    from lancedb.index import FTS
+
     try:
-        await table.create_fts_index(text_column, replace=replace)
+        await table.create_index(
+            text_column, config=FTS(language=language), replace=replace
+        )
         logger.info(
-            "storage/lancedb/index: índice FTS criado em %r (coluna=%r)",
+            "storage/lancedb/index: índice FTS criado em %r (coluna=%r, idioma=%r)",
             getattr(table, "name", "?"),
             text_column,
+            language,
         )
         return True
     except Exception as exc:

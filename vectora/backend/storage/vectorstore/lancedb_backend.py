@@ -12,8 +12,8 @@ from typing import Any, cast
 
 import lancedb
 import pyarrow as pa
-from lancedb.index import FTS
 
+from backend.storage.lancedb.index import create_fts_index
 from backend.storage.vectorstore.base import VectorHit, VectorRow
 
 logger = logging.getLogger(__name__)
@@ -99,14 +99,8 @@ class LanceDBBackend:
         # Índice FTS nativo (tantivy) — criado sob demanda na primeira busca
         # textual da coleção; `replace=False` faz chamadas seguintes serem
         # no-op quando o índice já existe (nunca reconstrói à toa).
-        try:
-            async with asyncio.timeout(10):
-                await table.create_index("text", config=FTS(), replace=False)
-        except Exception:
-            logger.debug(
-                "LanceDBBackend.search_text: create_index no-op/falhou para %s",
-                collection,
-            )
+        async with asyncio.timeout(10):
+            await create_fts_index(table, "text", replace=False)
         try:
             async with asyncio.timeout(10):
                 results = await (

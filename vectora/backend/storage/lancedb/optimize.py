@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import timedelta
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -31,10 +32,14 @@ _DEFAULT_INTERVAL_S = 3600
 async def optimize_table(table: Any, *, cleanup_older_than_s: int = 86400) -> bool:
     """Compacta fragmentos e remove versões antigas da ``table``.
 
-    Executa em ordem:
-    1. ``table.optimize()`` — compacta fragmentos pequenos em arquivos maiores.
-    2. ``table.cleanup_old_versions(older_than_seconds=cleanup_older_than_s)`` —
-       remove snapshots delta com mais de ``cleanup_older_than_s`` segundos.
+    ``table.optimize(cleanup_older_than=...)`` compacta fragmentos pequenos
+    E remove snapshots delta antigos numa chamada só — a API unificada da
+    lib desde pelo menos 0.36.0. Achado ao estudar a API atual: o código
+    fazia isso em duas chamadas, com uma segunda em
+    ``table.cleanup_old_versions(older_than_seconds=...)``, método que
+    **não existe mais** em `AsyncTable` — o `try/except` ao redor engolia o
+    `AttributeError` como um warning genérico a cada chamada, então a
+    limpeza de versões antigas nunca rodava de verdade (só a compactação).
 
     Args:
         table:               Objeto ``lancedb.AsyncTable``.
@@ -42,39 +47,33 @@ async def optimize_table(table: Any, *, cleanup_older_than_s: int = 86400) -> bo
                              removidas. Default: 86 400 s (24 h).
 
     Returns:
-        True se ambas as operações foram concluídas sem erro; False caso contrário.
+        True se a operação foi concluída sem erro; False caso contrário.
     """
     name = getattr(table, "name", "?")
-    ok = True
 
     try:
-        await table.optimize()
-        logger.debug("storage/lancedb/optimize: compactação concluída para %r", name)
-    except Exception as exc:
-        logger.warning(
-            "storage/lancedb/optimize: falha na compactação de %r: %s", name, exc
+        stats = await table.optimize(
+            cleanup_older_than=timedelta(seconds=cleanup_older_than_s)
         )
-        ok = False
-
-    try:
-        await table.cleanup_old_versions(older_than_seconds=cleanup_older_than_s)
         logger.debug(
-            "storage/lancedb/optimize: versões antigas removidas de %r (threshold=%ds)",
+            "storage/lancedb/optimize: %r — fragmentos %d→%d, %d versões antigas "
+            "removidas (%d bytes)",
             name,
-            cleanup_older_than_s,
+            stats.compaction.fragments_removed,
+            stats.compaction.fragments_added,
+            stats.prune.old_versions_removed,
+            stats.prune.bytes_removed,
         )
     except Exception as exc:
-        logger.warning(
-            "storage/lancedb/optimize: falha ao limpar versões de %r: %s", name, exc
-        )
-        ok = False
+        logger.warning("storage/lancedb/optimize: falha ao otimizar %r: %s", name, exc)
+        return False
 
-    return ok
+    return True
 
 
 def schedule_optimize(
     table: Any,
-    interval_s: int = _DEFAULT_INTERVAL_S,
+    interval_s: float = _DEFAULT_INTERVAL_S,
     *,
     cleanup_older_than_s: int = 86400,
 ) -> asyncio.Task[None]:
