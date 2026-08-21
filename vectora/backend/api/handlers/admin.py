@@ -10,6 +10,7 @@ Endpoints (todos exigem role admin ou root):
     GET    /admin/system                     — versão, status dos serviços, métricas
     GET    /admin/config                     — configurações globais do servidor
     PATCH  /admin/config                     — atualiza configurações globais
+    GET    /admin/agents/resolve             — dump do NativeAgent resolvido (tools/prompt/subagentes)
 """
 
 from __future__ import annotations
@@ -393,6 +394,61 @@ async def list_tools_admin(request: Request) -> dict:
         return {"tools": tools, "total": len(tools)}
     except Exception as exc:
         logger.exception("list_tools_admin failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/agents/resolve")
+async def resolve_agent(
+    request: Request,
+    user_id: str = "",
+    chat_mode: bool = False,
+    workspace_id: str = "",
+) -> dict:
+    """Introspecção do ``NativeAgent`` que o motor monta hoje pra uma
+    combinação ``(user_id, chat_mode, workspace_id)`` — equivalente nativo
+    ao ``dsh --dump-config`` do deepseek-harness (sem expor mecanismo de
+    plugin nenhum, só o que ``agent_factory`` já monta): tools resolvidas,
+    system prompt final, catálogo de subagentes. Existe pra não precisar
+    vasculhar logs pra descobrir por que uma tool não está disponível pra
+    um usuário/sessão específica.
+    """
+    admin_user = _get_user(request)
+    require_admin(admin_user)
+
+    try:
+        from backend.services.agent_factory import get_native_agent
+
+        agent = await get_native_agent(
+            user_id=user_id or None,
+            chat_mode=chat_mode,
+            workspace_id=workspace_id or None,
+        )
+        return {
+            "user_id": user_id or "local",
+            "chat_mode": chat_mode,
+            "workspace_id": workspace_id or None,
+            "tools": [
+                {
+                    "name": spec.name,
+                    "category": spec.extras.category,
+                    "destructive": bool(spec.extras.destructive),
+                    "render_hint": spec.extras.render_hint,
+                }
+                for spec in sorted(agent.tool_registry.all(), key=lambda s: s.name)
+            ],
+            "subagents": [
+                {
+                    "name": name,
+                    "description": spec.description,
+                    "tools": sorted(t.name for t in spec.tools),
+                }
+                for name, spec in sorted(agent.subagent_catalog.items())
+            ],
+            "system_prompt": agent.system_prompt,
+            "system_prompt_length": len(agent.system_prompt),
+        }
+    except Exception as exc:
+        logger.exception("resolve_agent failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 

@@ -611,3 +611,61 @@ class TestServiceTokenEndpoints:
         with pytest.raises(HTTPException) as exc:
             await admin.list_service_tokens_endpoint(self._req(role="admin"))
         assert exc.value.status_code == 403
+
+
+class TestResolveAgent:
+    """GET /admin/agents/resolve — dump do NativeAgent resolvido (Sprint 9.5,
+    equivalente nativo ao `dsh --dump-config` do deepseek-harness). Existe
+    pra debugar por que uma tool/subagente não aparece pra um usuário sem
+    precisar vasculhar logs."""
+
+    @staticmethod
+    def _req(role: str = "admin") -> Any:
+        from unittest.mock import MagicMock
+
+        request = MagicMock()
+        request.state.user = MagicMock(role=role, id="admin-1")
+        return request
+
+    @pytest.mark.asyncio
+    async def test_admin_resolve_devolve_tools_prompt_e_subagentes(self):
+        from backend.api.handlers.admin import resolve_agent
+
+        result = await resolve_agent(self._req(), user_id="alice", chat_mode=True)
+
+        assert result["user_id"] == "alice"
+        assert result["chat_mode"] is True
+        assert result["workspace_id"] is None
+        assert isinstance(result["tools"], list)
+        assert len(result["tools"]) > 0
+        assert all(
+            {"name", "category", "destructive", "render_hint"} <= t.keys()
+            for t in result["tools"]
+        )
+        assert result["system_prompt_length"] == len(result["system_prompt"])
+        # chat_mode=True não delega a subagentes (agent_factory._native_subagent_catalog)
+        assert result["subagents"] == []
+
+    @pytest.mark.asyncio
+    async def test_sem_workspace_e_user_id_usa_defaults(self):
+        """Erro/borda: sem `user_id`/`workspace_id` (query params vazios,
+        caso real de um admin só testando o endpoint), resolve pro agente
+        'local' padrão em vez de lançar."""
+        from backend.api.handlers.admin import resolve_agent
+
+        result = await resolve_agent(self._req())
+
+        assert result["user_id"] == "local"
+        assert result["workspace_id"] is None
+        assert len(result["tools"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_usuario_nao_admin_recebe_403(self):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.admin import resolve_agent
+
+        with pytest.raises(HTTPException) as exc:
+            await resolve_agent(self._req(role="member"), user_id="alice")
+
+        assert exc.value.status_code == 403
