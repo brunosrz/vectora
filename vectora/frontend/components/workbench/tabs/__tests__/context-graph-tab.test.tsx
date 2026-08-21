@@ -44,6 +44,9 @@ const mockFetchStatus = vi.fn();
 const mockFetchGraphData = vi.fn(() =>
   Promise.resolve({ nodes: [], links: [] }),
 );
+const mockPathBetween = vi.fn(() =>
+  Promise.resolve({ answer: "", nodes: [], edges: [] }),
+);
 const mockUseContextGraph = vi.fn();
 
 vi.mock("@/lib/hooks/use-context-graph", () => ({
@@ -84,6 +87,7 @@ function setup(
     getHtmlUrl: mockGetHtmlUrl,
     fetchStatus: mockFetchStatus,
     fetchGraphData: mockFetchGraphData,
+    pathBetween: mockPathBetween,
     ...overrides,
   });
 }

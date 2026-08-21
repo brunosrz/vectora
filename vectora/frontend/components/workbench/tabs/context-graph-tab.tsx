@@ -45,6 +45,7 @@ export function ContextGraphTab({
     cancel,
     queryAffected,
     fetchGraphData,
+    pathBetween,
   } = useContextGraph(workspaceId);
   const [showReport, setShowReport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -351,6 +352,7 @@ export function ContextGraphTab({
 
             <ContextGraphViewer
               fetchGraphData={fetchGraphData}
+              pathBetween={pathBetween}
               onExplainNode={(label) =>
                 handleQuestion(`Explique o nó "${label}" no grafo de contexto`)
               }

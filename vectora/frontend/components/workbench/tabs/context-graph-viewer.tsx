@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import { GraphCanvas, darkTheme, lightTheme } from "reagraph";
 import type { GraphEdge, GraphNode } from "reagraph";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, Waypoints, X } from "lucide-react";
 
 import type {
   GraphQueryResult,
@@ -16,6 +16,10 @@ import { m } from "@/lib/paraglide/messages";
 
 interface ContextGraphViewerProps {
   fetchGraphData: () => Promise<RawGraphData | null>;
+  pathBetween: (
+    source: string,
+    target: string,
+  ) => Promise<GraphQueryResult | null>;
   onExplainNode: (label: string) => void;
   onAffectedNode: (label: string) => void;
 }
@@ -50,6 +54,7 @@ interface CommunityInfo {
 
 export function ContextGraphViewer({
   fetchGraphData,
+  pathBetween,
   onExplainNode,
   onAffectedNode,
 }: ContextGraphViewerProps) {
@@ -61,6 +66,10 @@ export function ContextGraphViewer({
   );
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<RawGraphNode | null>(null);
+  const [pathMode, setPathMode] = useState(false);
+  const [pathSource, setPathSource] = useState<RawGraphNode | null>(null);
+  const [pathResult, setPathResult] = useState<GraphQueryResult | null>(null);
+  const [pathLoading, setPathLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,6 +165,39 @@ export function ContextGraphViewer({
     communities.length > 0 && hiddenCommunities.size === communities.length;
   const noneHidden = hiddenCommunities.size === 0;
 
+  const pathNodeIds = useMemo(
+    () => pathResult?.nodes.map((n) => n.id) ?? [],
+    [pathResult],
+  );
+
+  function togglePathMode() {
+    setPathMode((v) => !v);
+    setPathSource(null);
+    setPathResult(null);
+  }
+
+  function clearPath() {
+    setPathSource(null);
+    setPathResult(null);
+  }
+
+  function handleNodeClick(node: RawGraphNode) {
+    if (!pathMode) {
+      setSelected(node);
+      return;
+    }
+    if (!pathSource) {
+      setPathSource(node);
+      setPathResult(null);
+      return;
+    }
+    if (pathSource.id === node.id) return;
+    setPathLoading(true);
+    pathBetween(pathSource.id, node.id)
+      .then((result) => setPathResult(result))
+      .finally(() => setPathLoading(false));
+  }
+
   function toggleCommunity(id: number) {
     setHiddenCommunities((prev) => {
       const next = new Set(prev);
@@ -207,6 +249,49 @@ export function ContextGraphViewer({
           )}
         </div>
 
+        {/* Modo caminho — clique em dois nós pra destacar o menor caminho
+            entre eles (POST /path, já existia no backend sem UI). */}
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5">
+          <button
+            onClick={togglePathMode}
+            data-testid="graph-path-toggle"
+            aria-pressed={pathMode}
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded border backdrop-blur ${
+              pathMode
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card/90 text-muted-foreground border-border/60 hover:text-foreground"
+            }`}
+          >
+            <Waypoints className="h-3 w-3" />
+            {m.graph_path_mode_button()}
+          </button>
+        </div>
+
+        {pathMode && (
+          <div
+            data-testid="graph-path-hint"
+            className="absolute top-11 right-2 z-10 max-w-xs bg-card/90 backdrop-blur border border-border/60 rounded px-2 py-1.5 text-xs text-muted-foreground"
+          >
+            {pathLoading
+              ? m.graph_building()
+              : pathResult
+                ? pathResult.answer
+                : pathSource
+                  ? m.graph_path_pick_target({
+                      source: String(pathSource.label ?? pathSource.id),
+                    })
+                  : m.graph_path_pick_source()}
+            {(pathSource || pathResult) && (
+              <button
+                onClick={clearPath}
+                className="ml-2 underline hover:text-foreground"
+              >
+                {m.graph_path_clear()}
+              </button>
+            )}
+          </div>
+        )}
+
         <div data-testid="graph-canvas" className="absolute inset-0">
           <GraphCanvas
             nodes={nodes}
@@ -216,7 +301,8 @@ export function ContextGraphViewer({
             layoutType="forceDirected2d"
             labelType="auto"
             selections={selected ? [selected.id] : []}
-            onNodeClick={(n) => setSelected((n.data as RawGraphNode) ?? null)}
+            actives={pathNodeIds}
+            onNodeClick={(n) => handleNodeClick(n.data as RawGraphNode)}
             onCanvasClick={() => setSelected(null)}
           />
         </div>

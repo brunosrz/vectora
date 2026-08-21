@@ -14,6 +14,7 @@ import {
   fireEvent,
   act,
   cleanup,
+  waitFor,
 } from "@testing-library/react";
 
 vi.mock("@/lib/paraglide/messages", () => ({
@@ -76,6 +77,7 @@ afterEach(async () => {
 });
 
 import { ContextGraphViewer } from "../context-graph-viewer";
+import type { GraphQueryResult } from "@/lib/hooks/use-context-graph";
 
 const GRAPH_DATA = {
   nodes: [
@@ -95,21 +97,37 @@ const GRAPH_DATA = {
 };
 
 async function renderViewer(
-  overrides: { fetchGraphData?: () => Promise<typeof GRAPH_DATA | null> } = {},
+  overrides: {
+    fetchGraphData?: () => Promise<typeof GRAPH_DATA | null>;
+    pathBetween?: (
+      source: string,
+      target: string,
+    ) => Promise<GraphQueryResult | null>;
+  } = {},
 ) {
   const onExplainNode = vi.fn();
   const onAffectedNode = vi.fn();
   const fetchGraphData =
     overrides.fetchGraphData ?? vi.fn(() => Promise.resolve(GRAPH_DATA));
+  const pathBetween =
+    overrides.pathBetween ??
+    vi.fn(() =>
+      Promise.resolve({
+        answer: "Caminho de n1 → n3: 2 nós",
+        nodes: [],
+        edges: [],
+      }),
+    );
   render(
     <ContextGraphViewer
       fetchGraphData={fetchGraphData}
+      pathBetween={pathBetween}
       onExplainNode={onExplainNode}
       onAffectedNode={onAffectedNode}
     />,
   );
   await screen.findByTestId("graph-canvas-mock");
-  return { onExplainNode, onAffectedNode, fetchGraphData };
+  return { onExplainNode, onAffectedNode, fetchGraphData, pathBetween };
 }
 
 describe("ContextGraphViewer", () => {
@@ -177,5 +195,61 @@ describe("ContextGraphViewer", () => {
     // Busca é um realce local — não remove nós do canvas, só amplia os
     // que combinam (ver comunidade continuando a listar os 3 nós).
     expect(canvasNodes().length).toBe(3);
+  });
+
+  it("modo caminho: clicar em dois nós chama pathBetween e mostra a resposta", async () => {
+    const { pathBetween } = await renderViewer();
+
+    fireEvent.click(screen.getByTestId("graph-path-toggle"));
+    expect(screen.getByText("graph_path_pick_source")).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId("fake-node-n1"));
+    expect(screen.getByText("graph_path_pick_target")).toBeTruthy();
+    // Enquanto só a origem foi escolhida, nenhuma chamada ainda — clicar no
+    // nó de origem de novo não conta como par (edge: mesmo nó não é caminho).
+    expect(pathBetween).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId("fake-node-n3"));
+    await waitFor(() => expect(pathBetween).toHaveBeenCalledWith("n1", "n3"));
+    await screen.findByText("Caminho de n1 → n3: 2 nós");
+
+    // Clicar num nó fora do modo caminho não abre o painel de info — o
+    // clique nesse momento ainda pertence ao fluxo de caminho.
+    expect(screen.queryByTestId("graph-node-info")).toBeNull();
+  });
+
+  it("modo caminho: clicar no mesmo nó escolhido como origem não dispara pathBetween", async () => {
+    const { pathBetween } = await renderViewer();
+
+    fireEvent.click(screen.getByTestId("graph-path-toggle"));
+    fireEvent.click(screen.getByTestId("fake-node-n1"));
+    fireEvent.click(screen.getByTestId("fake-node-n1"));
+
+    expect(pathBetween).not.toHaveBeenCalled();
+  });
+
+  it('"Limpar" no modo caminho reseta origem/resultado sem sair do modo', async () => {
+    await renderViewer();
+
+    fireEvent.click(screen.getByTestId("graph-path-toggle"));
+    fireEvent.click(screen.getByTestId("fake-node-n1"));
+    fireEvent.click(screen.getByText("graph_path_clear"));
+
+    expect(screen.getByText("graph_path_pick_source")).toBeTruthy();
+  });
+
+  it("desligar o modo caminho (toggle de novo) some com a dica e reseta o estado", async () => {
+    await renderViewer();
+
+    fireEvent.click(screen.getByTestId("graph-path-toggle"));
+    fireEvent.click(screen.getByTestId("fake-node-n1"));
+    fireEvent.click(screen.getByTestId("graph-path-toggle"));
+
+    expect(screen.queryByTestId("graph-path-hint")).toBeNull();
+
+    // Depois de desligado, clicar num nó volta a abrir o painel de info
+    // normal, em vez de continuar tentando escolher um par de caminho.
+    fireEvent.click(screen.getByTestId("fake-node-n1"));
+    expect(screen.getByTestId("graph-node-info")).toBeTruthy();
   });
 });
