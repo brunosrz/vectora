@@ -28,6 +28,7 @@ from backend.persistence.native.session_store import SessionStore
 from backend.storage.sqlite.pool import AsyncConnectionPool
 from backend.tools.context import ToolContext
 from backend.tools.registry import TOOL_REGISTRY, ToolExtras, vtool
+from backend.vtypes.ids import CapabilityToken, CorrelationId
 from backend.vtypes.message import ToolCallChunk, VMessageChunk
 
 
@@ -464,7 +465,7 @@ class TestDedupPorCorrelationId:
         `TestHardInterruptRealNaoPassivo` (correlation_id sem delegação
         ativa nunca cancela nada)."""
         client = _ScriptedChatClient([[_texto_chunk("resultado único")]])
-        spec = replace(_spec(), correlation_id="corr-dedup-1")
+        spec = replace(_spec(), correlation_id=CorrelationId("corr-dedup-1"))
 
         resultados = await asyncio.gather(
             run_subagent(
@@ -498,8 +499,8 @@ class TestDedupPorCorrelationId:
         client = _ScriptedChatClient(
             [[_texto_chunk("resultado 1")], [_texto_chunk("resultado 2")]]
         )
-        spec_a = replace(_spec(), correlation_id="corr-a")
-        spec_b = replace(_spec(), correlation_id="corr-b")
+        spec_a = replace(_spec(), correlation_id=CorrelationId("corr-a"))
+        spec_b = replace(_spec(), correlation_id=CorrelationId("corr-b"))
 
         resultado_a = await run_subagent(
             spec_a,
@@ -537,7 +538,7 @@ class TestHardInterruptRealNaoPassivo:
         interrupt, distinto do watchdog de liveness (timeout passivo,
         testado em `TestLivenessAtiva`)."""
         client = _HangingChatClient()
-        spec = replace(_spec(), correlation_id="corr-hard-1")
+        spec = replace(_spec(), correlation_id=CorrelationId("corr-hard-1"))
 
         task = asyncio.create_task(
             run_subagent(
@@ -553,12 +554,19 @@ class TestHardInterruptRealNaoPassivo:
 
         task_interna = await _aguarda_task_ativa("corr-hard-1")
 
-        assert request_hard_interrupt("corr-hard-1", "token-errado") is False
+        assert (
+            request_hard_interrupt(
+                CorrelationId("corr-hard-1"), CapabilityToken("token-errado")
+            )
+            is False
+        )
         assert not task_interna.cancelled()
         assert not task_interna.done()
 
-        token_valido = subagent_capability_token("corr-hard-1")
-        assert request_hard_interrupt("corr-hard-1", token_valido) is True
+        token_valido = subagent_capability_token(CorrelationId("corr-hard-1"))
+        assert (
+            request_hard_interrupt(CorrelationId("corr-hard-1"), token_valido) is True
+        )
 
         resultado = await task
 
@@ -571,8 +579,11 @@ class TestHardInterruptRealNaoPassivo:
         """Erro/borda: `correlation_id` que nunca teve (ou já terminou) uma
         delegação em execução nunca é achado pra cancelar — mesmo com o
         token correto."""
-        token_valido = subagent_capability_token("corr-inexistente")
-        assert request_hard_interrupt("corr-inexistente", token_valido) is False
+        token_valido = subagent_capability_token(CorrelationId("corr-inexistente"))
+        assert (
+            request_hard_interrupt(CorrelationId("corr-inexistente"), token_valido)
+            is False
+        )
 
 
 class TestShouldRequireApprovalObrigatorio:

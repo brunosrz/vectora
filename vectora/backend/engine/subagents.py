@@ -78,6 +78,7 @@ from backend.engine.conversation_loop import LoopConfig, run_conversation
 from backend.engine.stream_events import SubagentOutput
 from backend.rbac import tool_policy
 from backend.tools.registry import ToolRegistry
+from backend.vtypes.ids import CapabilityToken, CorrelationId
 from backend.vtypes.message import MessageRole, text_message
 
 if TYPE_CHECKING:
@@ -101,7 +102,7 @@ class SubagentSpec:
     description: str
     system_prompt: str
     tools: list[ToolSpec]
-    correlation_id: str | None = field(default=None)
+    correlation_id: CorrelationId | None = field(default=None)
     """Identificador opcional da intenção de delegação. Duas chamadas com o
     mesmo valor reaproveitam a mesma execução (`_IN_FLIGHT_BY_CORRELATION`)
     em vez de rodar o subagente duas vezes, e habilitam
@@ -121,18 +122,18 @@ class LivenessConfig:
     max_stalled_heartbeats: int = 3
 
 
-_IN_FLIGHT_BY_CORRELATION: dict[str, asyncio.Future[str]] = {}
+_IN_FLIGHT_BY_CORRELATION: dict[CorrelationId, asyncio.Future[str]] = {}
 """Delegações em andamento por `correlation_id` — chave só existe entre o
 início e o fim de `run_subagent`; usada pra reaproveitar (nunca duplicar)
 uma delegação concorrente com o mesmo id."""
 
-_ACTIVE_CONVERSATION_TASKS: dict[str, asyncio.Task[Any]] = {}
+_ACTIVE_CONVERSATION_TASKS: dict[CorrelationId, asyncio.Task[Any]] = {}
 """`conversation_task` de cada subagente em execução com `correlation_id`
 definido — só existe enquanto a task roda; é o alvo real de
 `request_hard_interrupt`."""
 
 
-def subagent_capability_token(correlation_id: str) -> str:
+def subagent_capability_token(correlation_id: CorrelationId) -> CapabilityToken:
     """HMAC(secret, correlation_id) — mesma chave de assinatura de sessão
     que ``backend/tools/background.py::_capability_token`` já usa (auto-
     gerada por instalação via ``backend.rbac.auth._get_secret``, sempre
@@ -141,12 +142,16 @@ def subagent_capability_token(correlation_id: str) -> str:
     persistido."""
     from backend.rbac.auth import _get_secret
 
-    return hmac.new(
-        _get_secret().encode(), correlation_id.encode(), hashlib.sha256
-    ).hexdigest()
+    return CapabilityToken(
+        hmac.new(
+            _get_secret().encode(), correlation_id.encode(), hashlib.sha256
+        ).hexdigest()
+    )
 
 
-def request_hard_interrupt(correlation_id: str, capability_token: str) -> bool:
+def request_hard_interrupt(
+    correlation_id: CorrelationId, capability_token: CapabilityToken
+) -> bool:
     """Cancela DE VERDADE (``asyncio.Task.cancel()``) a execução do
     subagente associado a ``correlation_id``, se ``capability_token`` bater
     com ``subagent_capability_token(correlation_id)``.

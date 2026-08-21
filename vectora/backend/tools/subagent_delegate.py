@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any
 from backend.engine.subagents import SubagentSpec, run_subagent
 from backend.tools.context import ToolContext
 from backend.tools.registry import ToolExtras, vtool
+from backend.vtypes.ids import CorrelationId
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -119,7 +120,7 @@ async def delegate_to_subagent(
             f"Válidos: {sorted(deps.catalog)}."
         )
     if correlation_id:
-        spec = replace(spec, correlation_id=correlation_id)
+        spec = replace(spec, correlation_id=CorrelationId(correlation_id))
 
     try:
         return await run_subagent(
