@@ -18,6 +18,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from lancedb.index import IvfPq
+
 logger = logging.getLogger(__name__)
 
 # Número mínimo de vetores para criar índice IVF_PQ.
@@ -77,9 +79,9 @@ async def create_ivf_index(
     try:
         await table.create_index(
             vector_column,
-            index_type="IVF_PQ",
-            num_partitions=num_partitions,
-            num_sub_vectors=num_sub_vectors,
+            config=IvfPq(
+                num_partitions=num_partitions, num_sub_vectors=num_sub_vectors
+            ),
             replace=replace,
         )
         logger.info(

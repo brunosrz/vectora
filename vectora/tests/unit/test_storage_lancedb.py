@@ -1,4 +1,4 @@
-"""Tests — storage/lancedb/ (F1) e get_vector_store (F3/F6).
+"""Tests — storage/lancedb/ e get_vector_store.
 
 Modo "lite" usa diretório temporário; modo "complete" (Qdrant) é skippado
 sem qdrant_url configurado.
@@ -19,7 +19,7 @@ def reset_storage_singletons():
 
 
 class TestLanceDBConnection:
-    """Cache de conexão LanceDB (F1)."""
+    """Cache de conexão LanceDB."""
 
     @pytest.mark.asyncio
     async def test_connection_returns_db(self, tmp_path):
@@ -36,9 +36,40 @@ class TestLanceDBConnection:
         db2 = await get_lancedb(str(tmp_path))
         assert db1 is db2
 
+    @pytest.mark.asyncio
+    async def test_close_all_fecha_conexoes_de_verdade_e_esvazia_cache(self, tmp_path):
+        """`close_all()` chama `AsyncConnection.close()` de verdade, não só
+        limpa o dict Python — confirmado pelo fato de que uma conexão
+        fechada rejeita operações subsequentes."""
+        from backend.storage.lancedb.connection import LanceDBConnectionCache
+
+        cache = LanceDBConnectionCache()
+        db = await cache.connect(str(tmp_path))
+        assert cache.cached_paths == [tmp_path]
+
+        await cache.close_all()
+
+        assert cache.cached_paths == []
+        with pytest.raises(RuntimeError, match=r"[Cc]onnection is closed"):
+            await db.table_names()
+
+    @pytest.mark.asyncio
+    async def test_close_all_com_conexao_ja_fechada_nao_propaga(self, tmp_path):
+        """Borda: se uma conexão já foi fechada por outro caminho, `close()`
+        chamado de novo não pode derrubar o shutdown das outras."""
+        from backend.storage.lancedb.connection import LanceDBConnectionCache
+
+        cache = LanceDBConnectionCache()
+        db = await cache.connect(str(tmp_path))
+        db.close()  # fecha "por fora" antes do close_all() rodar
+
+        await cache.close_all()  # não deve lançar
+
+        assert cache.cached_paths == []
+
 
 class TestGetVectorStore:
-    """get_vector_store abre AsyncTable existente ou retorna None (F3/F6)."""
+    """get_vector_store abre AsyncTable existente ou retorna None."""
 
     @pytest.mark.asyncio
     async def test_returns_none_for_nonexistent(self, tmp_path):

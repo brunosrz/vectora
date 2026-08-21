@@ -366,3 +366,142 @@ class TestDataMigrationDryRun:
         )
         assert result["dry_run"] is True
         assert result["total"] == 1
+
+
+class TestDataMigrationLanceDBSource:
+    """`migrate_to_qdrant`/`migrate_to_pgvector` — cobertura era zero antes
+    destes testes (nem mock, nem tabela real). Origem sempre uma tabela
+    LanceDB real (`tmp_path`); destino (Qdrant/Postgres) mockado, já que
+    não há serviço externo disponível neste ambiente de teste."""
+
+    @pytest.fixture
+    async def source_table(self, tmp_path):
+        import lancedb
+
+        db = await lancedb.connect_async(str(tmp_path / "lancedb"))
+        await db.create_table(
+            "articles",
+            data=[
+                {
+                    "id": f"doc-{i}",
+                    "vector": [float(i)] * 4,
+                    "text": f"conteúdo {i}",
+                }
+                for i in range(5)
+            ],
+        )
+        return str(tmp_path / "lancedb")
+
+    @pytest.mark.asyncio
+    async def test_to_qdrant_colecao_ausente_retorna_erro_sem_lancar(self, tmp_path):
+        import lancedb
+
+        from backend.storage.migrations.data_migration import migrate_to_qdrant
+
+        await lancedb.connect_async(str(tmp_path / "lancedb"))
+
+        result = await migrate_to_qdrant(
+            lancedb_path=str(tmp_path / "lancedb"),
+            qdrant_url="http://fake-qdrant",
+            collection="nao-existe",
+        )
+
+        assert result["total"] == 0
+        assert result["upserted"] == 0
+        assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_to_qdrant_dry_run_conta_sem_conectar(self, source_table):
+        from backend.storage.migrations.data_migration import migrate_to_qdrant
+
+        result = await migrate_to_qdrant(
+            lancedb_path=source_table,
+            qdrant_url="http://fake-qdrant",
+            dry_run=True,
+        )
+
+        assert result["dry_run"] is True
+        assert result["total"] == 5
+        assert result["upserted"] == 0
+
+    @pytest.mark.asyncio
+    async def test_to_qdrant_upsert_todos_os_vetores_em_batches(self, source_table):
+        from unittest.mock import MagicMock, patch
+
+        from backend.storage.migrations.data_migration import migrate_to_qdrant
+
+        mock_client = MagicMock()
+        with patch("qdrant_client.QdrantClient", return_value=mock_client):
+            result = await migrate_to_qdrant(
+                lancedb_path=source_table,
+                qdrant_url="http://fake-qdrant",
+                batch_size=2,
+            )
+
+        assert result["total"] == 5
+        assert result["upserted"] == 5
+        # 5 linhas em batches de 2 → 3 chamadas de upsert (2, 2, 1)
+        assert mock_client.upsert.call_count == 3
+        all_point_ids = {
+            p.id
+            for call in mock_client.upsert.call_args_list
+            for p in call.kwargs["points"]
+        }
+        assert all_point_ids == {f"doc-{i}" for i in range(5)}
+
+    @pytest.mark.asyncio
+    async def test_to_pgvector_colecao_ausente_retorna_erro_sem_lancar(self, tmp_path):
+        import lancedb
+
+        from backend.storage.migrations.data_migration import migrate_to_pgvector
+
+        await lancedb.connect_async(str(tmp_path / "lancedb"))
+
+        result = await migrate_to_pgvector(
+            lancedb_path=str(tmp_path / "lancedb"),
+            postgres_dsn="postgresql://fake/db",
+            collection="nao-existe",
+        )
+
+        assert result["total"] == 0
+        assert result["upserted"] == 0
+        assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_to_pgvector_dry_run_conta_sem_conectar(self, source_table):
+        from backend.storage.migrations.data_migration import migrate_to_pgvector
+
+        result = await migrate_to_pgvector(
+            lancedb_path=source_table,
+            postgres_dsn="postgresql://fake/db",
+            dry_run=True,
+        )
+
+        assert result["dry_run"] is True
+        assert result["total"] == 5
+        assert result["upserted"] == 0
+
+    @pytest.mark.asyncio
+    async def test_to_pgvector_upsert_todos_os_vetores_em_batches(self, source_table):
+        from unittest.mock import AsyncMock, patch
+
+        from backend.storage.migrations.data_migration import migrate_to_pgvector
+
+        mock_conn = AsyncMock()
+        with patch("asyncpg.connect", AsyncMock(return_value=mock_conn)):
+            result = await migrate_to_pgvector(
+                lancedb_path=source_table,
+                postgres_dsn="postgresql://fake/db",
+                batch_size=2,
+            )
+
+        assert result["total"] == 5
+        assert result["upserted"] == 5
+        mock_conn.close.assert_awaited_once()
+        # 1 CREATE EXTENSION + 1 CREATE TABLE + 5 INSERT
+        insert_calls = [
+            call
+            for call in mock_conn.execute.call_args_list
+            if call.args and "INSERT INTO" in call.args[0]
+        ]
+        assert len(insert_calls) == 5

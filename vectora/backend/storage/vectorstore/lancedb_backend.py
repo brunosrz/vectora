@@ -103,9 +103,8 @@ class LanceDBBackend:
             await create_fts_index(table, "text", replace=False)
         try:
             async with asyncio.timeout(10):
-                results = await (
-                    table.search(query, query_type="fts").limit(limit).to_pandas()
-                )
+                fts_query = await table.search(query, query_type="fts")
+                results = await fts_query.limit(limit).to_pandas()
         except Exception:
             logger.debug(
                 "LanceDBBackend.search_text: FTS indisponível na coleção %s",

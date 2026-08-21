@@ -93,10 +93,22 @@ class LanceDBConnectionCache:
         )
 
     async def close_all(self) -> None:
-        """Fecha todas as conexões cacheadas. Usado em shutdown ou testes."""
+        """Fecha todas as conexões cacheadas. Usado em shutdown ou testes.
+
+        Chama ``AsyncConnection.close()`` (síncrono) explicitamente em vez de
+        só limpar o cache — sem isso, o fechamento de verdade depende de
+        GC/Drop do lado Rust, que pode demorar até ~30s por conexão pendente.
+        """
         async with self._lock:
-            # lancedb AsyncConnection não tem close() explícito na API pública;
-            # limpar o cache é suficiente para liberar recursos Python-side.
+            for path, db in self._cache.items():
+                try:
+                    db.close()
+                except Exception:
+                    logger.warning(
+                        "storage/lancedb/connection: falha ao fechar conexão %s",
+                        path,
+                        exc_info=True,
+                    )
             count = len(self._cache)
             self._cache.clear()
             logger.debug("storage/lancedb/connection: cache limpo (%d conn(s))", count)

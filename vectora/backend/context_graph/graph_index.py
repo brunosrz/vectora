@@ -193,8 +193,14 @@ async def purge_graph_index(
             return
 
         table = await db.open_table(collection)
+        # `metadata` é gravada como JSON numa coluna Utf8 (sem schema
+        # binário dedicado) — `json_extract()` do lance/datafusion exige
+        # LargeBinary, não Utf8, e falharia sempre nessa coluna. O LIKE
+        # inclui a aspa de fechamento do valor JSON para não casar um
+        # workspace_id que é só prefixo de outro (ex.: "ws-1" vs "ws-10").
+        escaped_workspace_id = workspace_id.replace("'", "''")
         await table.delete(
-            f"json_extract(metadata, '$.workspace_id') = '{workspace_id}'"
+            f'metadata LIKE \'%"workspace_id": "{escaped_workspace_id}"%\''
         )
 
         logger.info(

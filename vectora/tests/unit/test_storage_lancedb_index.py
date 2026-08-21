@@ -14,22 +14,25 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
+from lancedb.index import IvfPq
+
 from backend.storage.lancedb.index import create_fts_index, create_ivf_index
 
+from ._lancedb_fakes import fake_async_table
 
-class _FakeTable:
-    def __init__(self, name: str = "articles", row_count: int = 0) -> None:
-        self.name = name
-        self._row_count = row_count
-        self.create_index = AsyncMock()
 
-    async def count_rows(self) -> int:
-        return self._row_count
+def _fake_table(row_count: int = 0):
+    """Autospec real de `AsyncTable` — chamar um método/kwarg que a API
+    real não aceita levanta `AttributeError`/`TypeError` de verdade, não
+    passa silenciosamente como um `AsyncMock()` genérico faria."""
+    table = fake_async_table()
+    table.count_rows = AsyncMock(return_value=row_count)
+    return table
 
 
 class TestCreateIvfIndex:
     async def test_cria_indice_quando_atinge_min_rows(self):
-        table = _FakeTable(row_count=15_000)
+        table = _fake_table(row_count=15_000)
 
         created = await create_ivf_index(table, min_rows=10_000)
 
@@ -37,10 +40,10 @@ class TestCreateIvfIndex:
         table.create_index.assert_awaited_once()
         assert table.create_index.await_args is not None
         _, kwargs = table.create_index.await_args
-        assert kwargs["index_type"] == "IVF_PQ"
+        assert isinstance(kwargs["config"], IvfPq)
 
     async def test_abaixo_do_minimo_pula_sem_erro(self):
-        table = _FakeTable(row_count=100)
+        table = _fake_table(row_count=100)
 
         created = await create_ivf_index(table, min_rows=10_000)
 
@@ -48,7 +51,7 @@ class TestCreateIvfIndex:
         table.create_index.assert_not_awaited()
 
     async def test_indice_ja_existente_nao_propaga(self):
-        table = _FakeTable(row_count=20_000)
+        table = _fake_table(row_count=20_000)
         table.create_index = AsyncMock(side_effect=RuntimeError("index already exists"))
 
         created = await create_ivf_index(table, min_rows=10_000)
@@ -56,12 +59,8 @@ class TestCreateIvfIndex:
         assert created is False
 
     async def test_count_rows_falhando_retorna_false_sem_lancar(self):
-        class _BoomTable(_FakeTable):
-            async def count_rows(self) -> int:
-                msg = "storage indisponível"
-                raise RuntimeError(msg)
-
-        table = _BoomTable()
+        table = _fake_table()
+        table.count_rows = AsyncMock(side_effect=RuntimeError("storage indisponível"))
 
         created = await create_ivf_index(table, min_rows=10_000)
 
@@ -70,7 +69,7 @@ class TestCreateIvfIndex:
 
 class TestCreateFtsIndex:
     async def test_cria_via_create_index_com_config_fts(self):
-        table = _FakeTable()
+        table = _fake_table()
 
         created = await create_fts_index(table, "text")
 
@@ -87,7 +86,7 @@ class TestCreateFtsIndex:
         assert not hasattr(table, "create_fts_index")
 
     async def test_idioma_customizado_repassado_pro_fts_config(self):
-        table = _FakeTable()
+        table = _fake_table()
 
         await create_fts_index(table, "text", language="Portuguese")
 
@@ -96,7 +95,7 @@ class TestCreateFtsIndex:
         assert kwargs["config"].language == "Portuguese"
 
     async def test_indice_ja_existente_nao_propaga(self):
-        table = _FakeTable()
+        table = _fake_table()
         table.create_index = AsyncMock(side_effect=RuntimeError("FTS already exists"))
 
         created = await create_fts_index(table, "text")
@@ -104,9 +103,39 @@ class TestCreateFtsIndex:
         assert created is False
 
     async def test_falha_generica_nao_propaga(self):
-        table = _FakeTable()
+        table = _fake_table()
         table.create_index = AsyncMock(side_effect=RuntimeError("storage indisponível"))
 
         created = await create_fts_index(table, "text")
 
         assert created is False
+
+
+class TestCreateIvfIndexRealTable:
+    """Regressão ao vivo: `create_index(index_type=..., num_partitions=...,
+    num_sub_vectors=...)` não existe na API real — precisa de
+    `config=IvfPq(...)`. O autospec acima já pega a divergência de
+    assinatura, mas só uma tabela real confirma que o índice é
+    efetivamente criado (sem erro do lado do datafusion/lance)."""
+
+    async def test_cria_indice_ivf_pq_de_verdade_em_tabela_real(self, tmp_path) -> None:
+        import lancedb
+        import pyarrow as pa
+
+        db = await lancedb.connect_async(str(tmp_path))
+        schema = pa.schema(
+            [
+                pa.field("id", pa.string()),
+                pa.field("vector", pa.list_(pa.float32(), 8)),
+            ]
+        )
+        table = await db.create_table("vecs", schema=schema)
+        await table.add(
+            [{"id": str(i), "vector": [float(i % 7)] * 8} for i in range(300)]
+        )
+
+        created = await create_ivf_index(
+            table, min_rows=100, num_partitions=4, num_sub_vectors=2
+        )
+
+        assert created is True

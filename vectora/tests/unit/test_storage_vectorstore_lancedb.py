@@ -12,6 +12,8 @@ import pytest
 
 from backend.storage.vectorstore.lancedb_backend import LanceDBBackend
 
+from ._lancedb_fakes import fake_async_connection, fake_async_table
+
 
 @pytest.fixture
 def backend():
@@ -20,7 +22,7 @@ def backend():
 
 @pytest.fixture
 def mock_db():
-    db = AsyncMock()
+    db = fake_async_connection()
     with patch(
         "backend.storage.vectorstore.lancedb_backend.lancedb.connect_async",
         AsyncMock(return_value=db),
@@ -29,8 +31,10 @@ def mock_db():
 
 
 def _fts_query(df: pd.DataFrame) -> MagicMock:
-    """Molde da cadeia `table.search(query, query_type="fts").limit(n).to_pandas()`
-    — `.search()`/`.limit()` são síncronos, só `.to_pandas()` é async."""
+    """Molde do objeto retornado por `await table.search(query, query_type="fts")`
+    — `table.search()` é async (diferente de `vector_search()`/`query()`,
+    que são síncronos); o query builder resultante tem `.limit()` síncrono
+    e encadeável, com `.to_pandas()` async."""
     query_obj = MagicMock()
     query_obj.limit.return_value.to_pandas = AsyncMock(return_value=df)
     return query_obj
@@ -39,7 +43,7 @@ def _fts_query(df: pd.DataFrame) -> MagicMock:
 class TestLanceDBBackendSearchText:
     @pytest.mark.asyncio
     async def test_search_text_retorna_hits_do_indice_fts(self, backend, mock_db):
-        table = AsyncMock()
+        table = fake_async_table()
         table.create_index = AsyncMock()
         df = pd.DataFrame(
             [
@@ -51,7 +55,7 @@ class TestLanceDBBackendSearchText:
                 }
             ]
         )
-        table.search = MagicMock(return_value=_fts_query(df))
+        table.search = AsyncMock(return_value=_fts_query(df))
         mock_db.open_table.return_value = table
 
         hits = await backend.search_text("articles", "JWT", limit=5)
@@ -78,12 +82,12 @@ class TestLanceDBBackendSearchText:
     ):
         """`create_index` falha quando o índice já existe (comportamento
         normal em rodadas subsequentes) — não pode impedir a busca."""
-        table = AsyncMock()
+        table = fake_async_table()
         table.create_index = AsyncMock(side_effect=RuntimeError("índice já existe"))
         df = pd.DataFrame(
             [{"id": "doc-1", "_score": 1.0, "text": "conteúdo", "metadata": "{}"}]
         )
-        table.search = MagicMock(return_value=_fts_query(df))
+        table.search = AsyncMock(return_value=_fts_query(df))
         mock_db.open_table.return_value = table
 
         hits = await backend.search_text("articles", "conteúdo", limit=5)
@@ -94,14 +98,49 @@ class TestLanceDBBackendSearchText:
     async def test_search_text_fts_indisponivel_retorna_vazio_sem_propagar(
         self, backend, mock_db
     ):
-        table = AsyncMock()
+        table = fake_async_table()
         table.create_index = AsyncMock()
-        table.search = MagicMock(side_effect=RuntimeError("FTS não suportado"))
+        table.search = AsyncMock(side_effect=RuntimeError("FTS não suportado"))
         mock_db.open_table.return_value = table
 
         hits = await backend.search_text("articles", "query", limit=5)
 
         assert hits == []
+
+
+class TestLanceDBBackendSearchTextRealTable:
+    """Regressão ao vivo: faltava `await` antes de `.limit()` em
+    `table.search(...)` — `AsyncTable.search()` é async, diferente de
+    `vector_search()`/`query()`. Os mocks acima já pegam isso, mas só uma
+    tabela real confirma que a busca FTS retorna resultados de verdade."""
+
+    async def test_busca_fts_retorna_hits_reais_por_termo_textual(
+        self, tmp_path
+    ) -> None:
+        backend = LanceDBBackend(lancedb_dir=str(tmp_path))
+        db = await backend._db()
+        await db.create_table(
+            "articles",
+            data=[
+                {
+                    "id": "doc-1",
+                    "vector": [0.1, 0.2, 0.3, 0.4],
+                    "text": "erro de autenticacao JWT expirado",
+                    "metadata": "{}",
+                },
+                {
+                    "id": "doc-2",
+                    "vector": [0.9, 0.8, 0.7, 0.6],
+                    "text": "receita de bolo de chocolate",
+                    "metadata": "{}",
+                },
+            ],
+        )
+
+        hits = await backend.search_text("articles", "autenticacao", limit=5)
+
+        assert len(hits) == 1
+        assert hits[0].id == "doc-1"
 
 
 class TestLanceDBBackendListRows:
@@ -112,7 +151,7 @@ class TestLanceDBBackendListRows:
 
     @pytest.mark.asyncio
     async def test_linha_com_vetor_multi_elemento_nao_lanca(self, backend, mock_db):
-        table = AsyncMock()
+        table = fake_async_table()
         df = pd.DataFrame(
             [
                 {
@@ -135,7 +174,7 @@ class TestLanceDBBackendListRows:
     async def test_linha_sem_vetor_vira_lista_vazia(self, backend, mock_db):
         """Coluna `vector` ausente na linha vem como escalar `NaN` (float)
         do pandas, não `None` — `list(NaN)` também lançaria sem o guard."""
-        table = AsyncMock()
+        table = fake_async_table()
         df = pd.DataFrame(
             [
                 {
