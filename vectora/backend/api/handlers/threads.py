@@ -17,6 +17,7 @@ Persiste no mesmo banco SQLite que o chat TUI usa, via AsyncSqliteSaver
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import json
 import logging
@@ -67,6 +68,7 @@ def _user_id(request: Request) -> str:
 # ---------------------------------------------------------------------------
 
 _db_conn: Any = None
+_db_conn_lock: asyncio.Lock = asyncio.Lock()
 
 
 async def _ensure_schema(db: Any) -> None:
@@ -158,23 +160,31 @@ async def _get_db() -> Any:
     """Retorna conexão aiosqlite com o banco de checkpoints/sessões."""
     global _db_conn
     if _db_conn is None:
-        import aiosqlite
+        # Check-then-act sem lock: duas coroutines chamando antes do primeiro
+        # `await aiosqlite.connect()` terminar abriam DUAS conexões pro mesmo
+        # arquivo, e a perdedora nunca recebia os PRAGMAs de WAL/busy_timeout
+        # a tempo — "database is locked" instantâneo em vez de esperar.
+        async with _db_conn_lock:
+            if _db_conn is None:
+                import aiosqlite
 
-        from backend.settings import settings
+                from backend.settings import settings
 
-        db_path = settings.vectora_home / "checkpoints.db"
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        _db_conn = await aiosqlite.connect(str(db_path))
-        # Sem busy_timeout, escritas concorrentes de outras conexões abertas
-        # pro mesmo checkpoints.db (agent_factory.py, rbac/auth.py, etc.)
-        # batem em "database is locked" na hora em vez de esperar — mesmos
-        # PRAGMAs do pool hardened de backend/storage/sqlite/pool.py e do
-        # checkpointer em agent_factory.py (D2).
-        await _db_conn.executescript(
-            "PRAGMA journal_mode=WAL;"
-            "PRAGMA busy_timeout=30000;"
-            "PRAGMA synchronous=NORMAL;"
-        )
+                db_path = settings.vectora_home / "checkpoints.db"
+                db_path.parent.mkdir(parents=True, exist_ok=True)
+                conn = await aiosqlite.connect(str(db_path))
+                # Sem busy_timeout, escritas concorrentes de outras conexões
+                # abertas pro mesmo checkpoints.db (agent_factory.py,
+                # rbac/auth.py, etc.) batem em "database is locked" na hora
+                # em vez de esperar — mesmos PRAGMAs do pool hardened de
+                # backend/storage/sqlite/pool.py e do checkpointer em
+                # agent_factory.py (D2).
+                await conn.executescript(
+                    "PRAGMA journal_mode=WAL;"
+                    "PRAGMA busy_timeout=30000;"
+                    "PRAGMA synchronous=NORMAL;"
+                )
+                _db_conn = conn
         await _ensure_schema(_db_conn)
     return _db_conn
 

@@ -16,7 +16,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from backend.settings import settings
 from backend.vtypes import Workspace
@@ -86,7 +86,11 @@ class WorkspaceRegistry:
                 for item in data.get("workspaces", []):
                     try:
                         ws = Workspace(**item)
-                        self._workspaces[ws.id] = ws
+                        # Nunca sobrescreve um registro já presente em
+                        # memória: quem chamou `_load()` (via `get()`/
+                        # `set()`) pode ter registrado uma versão mais nova
+                        # do mesmo id antes do primeiro load lazy disparar.
+                        self._workspaces.setdefault(ws.id, ws)
                     except Exception:
                         logger.debug("Workspace inválido ignorado: %s", item)
                 active = data.get("active")
@@ -298,7 +302,7 @@ class WorkspaceRegistry:
         self,
         *,
         name: str,
-        transport: str,
+        transport: Literal["ssh", "codespace"],
         remote_host: str | None = None,
         remote_path: str | None = None,
         ssh_key_id: str | None = None,

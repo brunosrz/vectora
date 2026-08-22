@@ -23,7 +23,7 @@ import json
 import logging
 from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
@@ -82,7 +82,7 @@ class MkdirRequest(BaseModel):
 
 
 class CreateRemoteWorkspaceRequest(BaseModel):
-    transport: str  # "ssh" | "codespace"
+    transport: Literal["ssh", "codespace"]
     name: str = ""
     remote_host: str | None = None
     remote_path: str | None = None

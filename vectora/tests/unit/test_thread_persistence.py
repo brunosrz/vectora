@@ -193,8 +193,37 @@ def _row_tuple(r: dict) -> tuple:
 
 
 # ---------------------------------------------------------------------------
-# 1. _upsert_session — testes unitários da função
+# 0. _get_db — singleton de conexão, sem mock (banco isolado em tmp_path)
 # ---------------------------------------------------------------------------
+
+
+class TestGetDbConcurrency:
+    """``_get_db()`` é um singleton de módulo com init lazy — várias
+    coroutines chamando antes da primeira ``await aiosqlite.connect()``
+    terminar devem convergir pra UMA única conexão, não abrir uma por
+    chamada (o check-then-act sem lock deixava a segunda conexão sem os
+    PRAGMAs de WAL/busy_timeout aplicados a tempo, gerando "database is
+    locked" em produção sob concorrência real)."""
+
+    @pytest.mark.asyncio
+    async def test_concurrent_calls_share_single_connection(
+        self, tmp_path, monkeypatch: pytest.MonkeyPatch
+    ):
+        import asyncio
+
+        import backend.api.handlers.threads as t_mod
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "vectora_home", tmp_path)
+        original_db_conn = t_mod._db_conn
+        t_mod._db_conn = None
+        try:
+            connections = await asyncio.gather(*(t_mod._get_db() for _ in range(20)))
+            assert len({id(c) for c in connections}) == 1
+        finally:
+            if t_mod._db_conn is not None:
+                await t_mod._db_conn.close()
+            t_mod._db_conn = original_db_conn
 
 
 class TestUpsertSession:

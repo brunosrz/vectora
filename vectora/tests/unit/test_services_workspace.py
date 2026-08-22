@@ -105,6 +105,43 @@ def test_get_or_create_persists(registry, tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
+# create_remote
+# ---------------------------------------------------------------------------
+
+
+def test_create_remote_ssh_registers_workspace(registry):
+    """transport="ssh" cria workspace com placeholder local e persiste."""
+    reg, json_file = registry
+    ws = reg.create_remote(
+        name="meu-servidor",
+        transport="ssh",
+        remote_host="10.0.0.5",
+        remote_path="/srv/app",
+    )
+    assert ws.transport == "ssh"
+    assert ws.remote_host == "10.0.0.5"
+    assert reg.get(ws.id) is not None
+    assert json_file.exists()
+
+
+def test_create_remote_same_host_returns_existing(registry):
+    """Chamar create_remote duas vezes com o mesmo host é idempotente."""
+    reg, _ = registry
+    ws1 = reg.create_remote(name="a", transport="ssh", remote_host="10.0.0.5")
+    ws2 = reg.create_remote(name="a", transport="ssh", remote_host="10.0.0.5")
+    assert ws1.id == ws2.id
+
+
+def test_create_remote_rejects_invalid_transport(registry):
+    """transport fora de {"ssh", "codespace"} levanta ValueError — a
+    validação em runtime é a última linha de defesa quando quem chama
+    contorna a checagem estática do type checker."""
+    reg, _ = registry
+    with pytest.raises(ValueError, match="transport remoto inválido"):
+        reg.create_remote(name="x", transport="local")  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
 # get
 # ---------------------------------------------------------------------------
 
@@ -122,6 +159,47 @@ def test_get_after_create(registry):
     found = reg.get(ws.id)
     assert found is not None
     assert found.id == ws.id
+
+
+def test_get_does_not_clobber_in_memory_entry_with_stale_disk_data(
+    registry, tmp_path: Path
+):
+    """Uma entrada já presente em `_workspaces` (registrada antes do
+    primeiro `_load()`) não pode ser sobrescrita pelo `workspaces.json` em
+    disco quando os dois têm o mesmo id — o disco só preenche o que ainda
+    não existe em memória, nunca substitui um registro mais recente."""
+    reg, json_file = registry
+    stale_cwd = str(tmp_path / "stale-deleted-dir")
+    json_file.write_text(
+        json.dumps(
+            {
+                "workspaces": [
+                    {
+                        "id": "ws-fixed",
+                        "name": "old",
+                        "cwd": stale_cwd,
+                        "created_at": "2020-01-01T00:00:00+00:00",
+                        "trusted": True,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    fresh_cwd = str(tmp_path / "fresh-live-dir")
+    reg._workspaces["ws-fixed"] = Workspace(
+        id="ws-fixed",
+        name="fresh",
+        cwd=fresh_cwd,
+        created_at="2026-01-01T00:00:00+00:00",
+        trusted=True,
+    )
+
+    found = reg.get("ws-fixed")
+
+    assert found is not None
+    assert found.cwd == fresh_cwd
 
 
 # ---------------------------------------------------------------------------

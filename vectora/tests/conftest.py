@@ -172,12 +172,17 @@ def _reset_async_singleton_locks() -> None:
     `get_embedding_queue()` — que são exatamente os que travavam em CI
     (sempre o mesmo conjunto de ~13 testes, a partir do primeiro lock
     "envenenado" na sessão). Trocar por um Lock novo a cada teste elimina
-    o problema na raiz: nenhum teste herda o estado de lock de outro."""
+    o problema na raiz: nenhum teste herda o estado de lock de outro.
+
+    `threads._db_conn_lock` (guarda o init do singleton de conexão SQLite,
+    ver `_get_db()`) é o mesmo tipo de objeto e precisa do mesmo reset."""
+    import backend.api.handlers.threads as _threads_mod
     import backend.embedding.background as _bg_mod
     import backend.embedding.queue as _queue_mod
 
     _bg_mod._worker_lock = asyncio.Lock()
     _queue_mod._queue_lock = asyncio.Lock()
+    _threads_mod._db_conn_lock = asyncio.Lock()
 
 
 @pytest.fixture
