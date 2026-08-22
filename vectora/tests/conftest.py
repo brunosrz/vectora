@@ -27,6 +27,7 @@ futuro volte a travar o pipeline.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import socket
 import sys
@@ -205,12 +206,27 @@ async def _close_stale_db_conn() -> None:
     enumeram diretórios em ordens diferentes), então esse encadeamento não
     reproduz de forma confiável fora do runner original — fechar
     incondicionalmente antes de cada teste elimina a classe inteira do
-    problema, independente de qual teste rodou antes."""
+    problema, independente de qual teste rodou antes.
+
+    O ``close()`` em si nunca pode travar a suíte inteira: ele enfileira
+    um job na fila da thread de fundo da conexão e espera a resposta
+    (``aiosqlite/core.py::_execute``) sem timeout próprio — se essa thread
+    ficou presa esperando algo de um teste anterior cujo event loop já
+    morreu (task fire-and-forget nunca awaited, o mesmo padrão descrito em
+    `_no_thread_persistence` em `tests/unit/conftest.py`), o `close()`
+    nunca retorna. Por isso a referência é descartada ANTES da tentativa
+    de fechar (nenhum teste seguinte pode voltar a tocar essa conexão
+    mesmo que o close trave) e o close roda sob `wait_for` com timeout
+    curto, best-effort — uma conexão real órfã que nunca fecha é um risco
+    aceitável (no pior caso, volta a colidir com a próxima), travar a
+    suíte inteira não é."""
     import backend.api.handlers.threads as _threads_mod
 
-    if _threads_mod._db_conn is not None:
-        await _threads_mod._db_conn.close()
-        _threads_mod._db_conn = None
+    conn = _threads_mod._db_conn
+    _threads_mod._db_conn = None
+    if conn is not None:
+        with contextlib.suppress(Exception, asyncio.TimeoutError):
+            await asyncio.wait_for(conn.close(), timeout=5.0)
 
 
 @pytest.fixture
