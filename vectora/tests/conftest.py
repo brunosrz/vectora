@@ -175,7 +175,9 @@ def _reset_async_singleton_locks() -> None:
     o problema na raiz: nenhum teste herda o estado de lock de outro.
 
     `threads._db_conn_lock` (guarda o init do singleton de conexão SQLite,
-    ver `_get_db()`) é o mesmo tipo de objeto e precisa do mesmo reset."""
+    ver `_get_db()`) é o mesmo tipo de objeto e precisa do mesmo reset —
+    o fechamento da conexão em si é responsabilidade de
+    `_close_stale_db_conn` (fixture separada, assíncrona, logo abaixo)."""
     import backend.api.handlers.threads as _threads_mod
     import backend.embedding.background as _bg_mod
     import backend.embedding.queue as _queue_mod
@@ -183,6 +185,32 @@ def _reset_async_singleton_locks() -> None:
     _bg_mod._worker_lock = asyncio.Lock()
     _queue_mod._queue_lock = asyncio.Lock()
     _threads_mod._db_conn_lock = asyncio.Lock()
+
+
+@pytest.fixture(autouse=True)
+async def _close_stale_db_conn() -> None:
+    """Fecha e descarta ``threads._db_conn`` antes de cada teste.
+
+    ``_get_db()`` só reconecta quando o singleton está ``None`` — testes que
+    chamam `_get_db()`/`_ensure_*_table` fora do fixture isolado de
+    `test_provider_routing_handler.py` (ex. `test_models_handler.py`,
+    `test_share_handler.py`, `test_embedding_dimension_guard.py`,
+    `test_background_worker.py`) reaproveitam a conexão real deixada por
+    QUALQUER teste anterior na mesma sessão. Se essa conexão nunca foi
+    fechada, sua thread de fundo (`aiosqlite.Connection`) e o
+    `sqlite3.Connection` real por trás dela continuam vivos e abertos —
+    uma segunda conexão real órfã disputando lock de arquivo com a nova,
+    mesmo com WAL/busy_timeout configurados. A ordem de coleta de testes
+    do pytest não é garantida entre sistemas de arquivo (Windows vs Linux
+    enumeram diretórios em ordens diferentes), então esse encadeamento não
+    reproduz de forma confiável fora do runner original — fechar
+    incondicionalmente antes de cada teste elimina a classe inteira do
+    problema, independente de qual teste rodou antes."""
+    import backend.api.handlers.threads as _threads_mod
+
+    if _threads_mod._db_conn is not None:
+        await _threads_mod._db_conn.close()
+        _threads_mod._db_conn = None
 
 
 @pytest.fixture
