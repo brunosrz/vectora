@@ -58,6 +58,13 @@ CREATE TABLE IF NOT EXISTS pending_approvals (
 """
 
 
+# Teto de segurança pra reconstrução recursiva da cadeia de mensagens
+# (get_history_with_ids) — nenhuma conversa legítima chega perto disso;
+# existe só pra um `parent_message_id` corrompido/cíclico não fazer a CTE
+# recursar sem fim.
+_CHAIN_DEPTH_CAP = 100_000
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -234,7 +241,18 @@ class SessionStore:
     ) -> list[tuple[int, VMessage]]:
         """Mesma reconstrução de `get_history`, mas devolve `(id, VMessage)` —
         o `id` é o alvo de fork (`set_branch_head`) para "editar e reenviar"/
-        "regenerar", exposto pela API REST como `checkpoint_id`."""
+        "regenerar", exposto pela API REST como `checkpoint_id`.
+
+        Reconstrói a cadeia inteira numa única query recursiva (`WITH
+        RECURSIVE`) em vez de uma leitura por mensagem — o loop anterior
+        fazia N round-trips sequenciais ao SQLite pra uma thread de N
+        mensagens, medido como o principal custo de latência ao abrir
+        threads longas. `_CHAIN_DEPTH_CAP` limita a recursão: sem essa
+        rede de segurança, um `parent_message_id` corrompido formando um
+        ciclo faria a CTE recursar sem fim (o loop antigo detectava ciclo
+        via um `set` de ids visitados — a query não tem como fazer o
+        equivalente nativamente, então o cap + checagem em Python cobre o
+        mesmo caso, ainda que sem apontar o id exato do ciclo)."""
         await self.setup()
         async with self._pool.acquire() as conn:
             if up_to_message_id is not None:
@@ -248,30 +266,37 @@ class SessionStore:
                 row = await cur.fetchone()
                 start_id = row[0] if row is not None else None
 
-            cadeia: list[Any] = []
-            visitados: set[int] = set()
-            current_id = start_id
-            while current_id is not None:
-                if current_id in visitados:
-                    erro = (
-                        f"ciclo detectado em parent_message_id da thread "
-                        f"'{thread_id}' (id {current_id} repetido)"
-                    )
-                    raise RuntimeError(erro)
-                visitados.add(current_id)
-                cur = await conn.execute(
-                    "SELECT id, parent_message_id, role, content_json, "
-                    "tool_calls_json, tool_call_id, name, is_error FROM messages "
-                    "WHERE thread_id = ? AND id = ?",
-                    (thread_id, current_id),
-                )
-                row = await cur.fetchone()
-                if row is None:
-                    break
-                cadeia.append(row)
-                current_id = row[1]
+            if start_id is None:
+                return []
 
-        cadeia.reverse()
+            cur = await conn.execute(
+                "WITH RECURSIVE chain(id, parent_message_id, role, "
+                "content_json, tool_calls_json, tool_call_id, name, "
+                "is_error, depth) AS ("
+                "  SELECT id, parent_message_id, role, content_json, "
+                "    tool_calls_json, tool_call_id, name, is_error, 0"
+                "  FROM messages WHERE thread_id = ? AND id = ?"
+                "  UNION ALL"
+                "  SELECT m.id, m.parent_message_id, m.role, "
+                "    m.content_json, m.tool_calls_json, m.tool_call_id, "
+                "    m.name, m.is_error, chain.depth + 1"
+                "  FROM messages m JOIN chain ON m.id = chain.parent_message_id"
+                "  WHERE m.thread_id = ? AND chain.depth < ?"
+                ")"
+                "SELECT id, parent_message_id, role, content_json, "
+                "tool_calls_json, tool_call_id, name, is_error "
+                "FROM chain ORDER BY depth DESC",
+                (thread_id, start_id, thread_id, _CHAIN_DEPTH_CAP - 1),
+            )
+            cadeia = list(await cur.fetchall())
+
+        if len(cadeia) >= _CHAIN_DEPTH_CAP:
+            erro = (
+                f"ciclo detectado em parent_message_id da thread "
+                f"'{thread_id}' (cadeia excedeu {_CHAIN_DEPTH_CAP} elos)"
+            )
+            raise RuntimeError(erro)
+
         return [(row[0], _row_to_message(row)) for row in cadeia]
 
     async def set_branch_head(self, thread_id: str, message_id: int) -> None:

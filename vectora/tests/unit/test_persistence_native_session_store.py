@@ -157,6 +157,59 @@ class TestAppendMessageEGetHistory:
 
         assert await store.get_history_with_ids("thread-vazia") == []
 
+    async def test_reconstroi_cadeia_longa_preservando_ordem(self, store: SessionStore):
+        """`get_history_with_ids` reconstrói via uma única query recursiva
+        (`WITH RECURSIVE`) em vez de uma leitura por mensagem — este teste
+        cobre uma cadeia longa o bastante pra não passar por acidente com
+        um `LIMIT`/`depth` mal calculado."""
+        await store.create_session("thread-1", user_id="alice")
+        parent_id = None
+        for i in range(200):
+            parent_id = await store.append_message(
+                "thread-1",
+                text_message(MessageRole.USER, f"mensagem {i}"),
+                parent_message_id=parent_id,
+            )
+
+        historico = await store.get_history("thread-1")
+
+        assert len(historico) == 200
+        assert [m.text() for m in historico] == [f"mensagem {i}" for i in range(200)]
+
+    async def test_ciclo_em_parent_message_id_levanta_erro_em_vez_de_recursar_sem_fim(
+        self, store: SessionStore
+    ):
+        """A checagem antiga de ciclo era um `set` de ids visitados no loop
+        Python; a reconstrução via CTE recursiva não tem como fazer o
+        equivalente nativamente, então depende de um teto de profundidade
+        (`_CHAIN_DEPTH_CAP`) + checagem em Python. Cria um ciclo de verdade
+        via SQL cru (bypassando `append_message`, que nunca produziria um
+        na prática) pra confirmar que o teto realmente barra a recursão
+        em vez de travar o processo."""
+        await store.create_session("thread-1", user_id="alice")
+        id1 = await store.append_message(
+            "thread-1", text_message(MessageRole.USER, "a")
+        )
+        id2 = await store.append_message(
+            "thread-1",
+            text_message(MessageRole.ASSISTANT, "b"),
+            parent_message_id=id1,
+        )
+        async with store._pool.acquire() as conn:
+            # id1 passa a apontar pra id2 — ciclo de 2 elos (id1 -> id2 -> id1).
+            await conn.execute(
+                "UPDATE messages SET parent_message_id = ? WHERE id = ?",
+                (id2, id1),
+            )
+            await conn.execute(
+                "UPDATE messages SET is_branch_head = 1 WHERE id = ?",
+                (id2,),
+            )
+            await conn.commit()
+
+        with pytest.raises(RuntimeError, match="ciclo detectado"):
+            await store.get_history_with_ids("thread-1")
+
 
 class TestGetBranchHeadId:
     async def test_thread_sem_mensagem_devolve_none(self, store: SessionStore):

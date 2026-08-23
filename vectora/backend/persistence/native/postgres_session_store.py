@@ -57,6 +57,13 @@ CREATE TABLE IF NOT EXISTS vectora_native_pending_approvals (
 """
 
 
+# Teto de segurança pra reconstrução recursiva da cadeia de mensagens
+# (get_history) — nenhuma conversa legítima chega perto disso; existe só
+# pra um `parent_message_id` corrompido/cíclico não fazer a CTE recursar
+# sem fim. Mesmo valor/motivo de `session_store.py::_CHAIN_DEPTH_CAP`.
+_CHAIN_DEPTH_CAP = 100_000
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -201,7 +208,12 @@ class PostgresSessionStore:
     ) -> list[VMessage]:
         """Reconstrói a cadeia seguindo `parent_message_id` — mesmo
         invariante de `SessionStore.get_history` (reload/resume por
-        reconstrução, nunca por estado só em memória)."""
+        reconstrução, nunca por estado só em memória).
+
+        Reconstrói via uma única query recursiva (`WITH RECURSIVE`) em vez
+        de uma leitura por mensagem — mesma otimização e mesmo motivo de
+        `session_store.py::get_history_with_ids` (o loop antigo fazia N
+        round-trips sequenciais pra uma thread de N mensagens)."""
         await self.setup()
         async with self._pool.acquire() as conn:
             if up_to_message_id is not None:
@@ -214,30 +226,39 @@ class PostgresSessionStore:
                 )
                 start_id = row["id"] if row is not None else None
 
-            cadeia: list[Any] = []
-            visitados: set[int] = set()
-            current_id = start_id
-            while current_id is not None:
-                if current_id in visitados:
-                    erro = (
-                        f"ciclo detectado em parent_message_id da thread "
-                        f"'{thread_id}' (id {current_id} repetido)"
-                    )
-                    raise RuntimeError(erro)
-                visitados.add(current_id)
-                row = await conn.fetchrow(
-                    "SELECT id, parent_message_id, role, content_json, "
-                    "tool_calls_json, tool_call_id, name FROM vectora_native_messages "
-                    "WHERE thread_id = $1 AND id = $2",
-                    thread_id,
-                    current_id,
-                )
-                if row is None:
-                    break
-                cadeia.append(row)
-                current_id = row["parent_message_id"]
+            if start_id is None:
+                return []
 
-        cadeia.reverse()
+            rows = await conn.fetch(
+                "WITH RECURSIVE chain(id, parent_message_id, role, "
+                "content_json, tool_calls_json, tool_call_id, name, depth) AS ("
+                "  SELECT id, parent_message_id, role, content_json, "
+                "    tool_calls_json, tool_call_id, name, 0"
+                "  FROM vectora_native_messages WHERE thread_id = $1 AND id = $2"
+                "  UNION ALL"
+                "  SELECT m.id, m.parent_message_id, m.role, "
+                "    m.content_json, m.tool_calls_json, m.tool_call_id, "
+                "    m.name, chain.depth + 1"
+                "  FROM vectora_native_messages m "
+                "    JOIN chain ON m.id = chain.parent_message_id"
+                "  WHERE m.thread_id = $1 AND chain.depth < $3"
+                ")"
+                "SELECT id, parent_message_id, role, content_json, "
+                "tool_calls_json, tool_call_id, name "
+                "FROM chain ORDER BY depth DESC",
+                thread_id,
+                start_id,
+                _CHAIN_DEPTH_CAP - 1,
+            )
+            cadeia = list(rows)
+
+        if len(cadeia) >= _CHAIN_DEPTH_CAP:
+            erro = (
+                f"ciclo detectado em parent_message_id da thread "
+                f"'{thread_id}' (cadeia excedeu {_CHAIN_DEPTH_CAP} elos)"
+            )
+            raise RuntimeError(erro)
+
         return [_row_to_message(row) for row in cadeia]
 
     async def set_branch_head(self, thread_id: str, message_id: int) -> None:
