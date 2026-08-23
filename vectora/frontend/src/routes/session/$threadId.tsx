@@ -250,6 +250,39 @@ function SessionPage() {
   const chatOverlayRef = useRef<HTMLDivElement>(null);
   useSlotOverlay(chatSlot?.el ?? null, chatOverlayRef, chatAnchorRef);
 
+  // ── Overlay de Header (mesmo motivo do ChatInterface acima) ───────────────
+  // O Header precisa acompanhar a largura de cada modo, mas nunca a largura
+  // TODA da coluna de conteúdo: no Assistente, com o workbench aberto, ele
+  // só pode cobrir a coluna do chat (à esquerda do HorizontalSplit) — o
+  // painel de arquivos (à direita) precisa continuar do topo ao rodapé da
+  // tela, como a sidebar de sessões. Cada branch marca um placeholder do
+  // tamanho exato que o Header deve ocupar; o Header real (instância única)
+  // é reposicionado por cima via useSlotOverlay.
+  const [headerSlot, setHeaderSlot] = useState<{
+    el: HTMLDivElement;
+    kind: "kanban" | "ide" | "assistente";
+  } | null>(null);
+  const headerSlotRefKanban = useCallback((el: HTMLDivElement | null) => {
+    setHeaderSlot((prev) => {
+      if (el) return { el, kind: "kanban" };
+      return prev?.kind === "kanban" ? null : prev;
+    });
+  }, []);
+  const headerSlotRefIde = useCallback((el: HTMLDivElement | null) => {
+    setHeaderSlot((prev) => {
+      if (el) return { el, kind: "ide" };
+      return prev?.kind === "ide" ? null : prev;
+    });
+  }, []);
+  const headerSlotRefAssistente = useCallback((el: HTMLDivElement | null) => {
+    setHeaderSlot((prev) => {
+      if (el) return { el, kind: "assistente" };
+      return prev?.kind === "assistente" ? null : prev;
+    });
+  }, []);
+  const headerOverlayRef = useRef<HTMLDivElement>(null);
+  useSlotOverlay(headerSlot?.el ?? null, headerOverlayRef, chatAnchorRef);
+
   const onSidebarResizeDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -665,6 +698,25 @@ function SessionPage() {
     [sidebar, isSidebarCollapsed, hydrated, sidebarWidth, sidebarOnRight],
   );
 
+  const headerOverlay = useMemo(
+    () => (
+      <div
+        ref={headerOverlayRef}
+        className="absolute"
+        style={{ visibility: "hidden" }}
+      >
+        <Header
+          showToolCalls={showToolCalls}
+          onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+          onShowShortcuts={() => setShowShortcutsDialog(true)}
+          onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+          showModeSwitch={!chatMode}
+        />
+      </div>
+    ),
+    [showToolCalls, chatMode],
+  );
+
   // A sidebar de sessões fica visualmente parada entre Kanban e Assistente
   // (mesma posição de tela nos dois) — só não existe no modo IDE, que usa a
   // navBar do workbench como navegação. Renderizada uma vez, fora do
@@ -762,27 +814,6 @@ function SessionPage() {
         )}
 
         <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-          {/* Header único para os 3 modos — inclusive o mode-switch central.
-              Antes cada modo tinha sua própria cópia, aninhada em
-              profundidades diferentes (Kanban/Assistente: logo após a
-              sidebar; IDE: dentro da coluna do editor, deslocada pela
-              navBar+workbenchContent). Como o mode-switch centraliza via
-              `max-w-4xl mx-auto` dentro do Header, cada largura/offset de
-              coluna diferente fazia os botões pularem de lugar ao trocar de
-              modo. Um único Header fora do AnimatePresence — mas dentro
-              desta coluna de conteúdo, não acima da sidebar também: a
-              sidebar precisa continuar do topo ao rodapé da tela, e a
-              largura desta coluna já é a mesma nos 3 modos (viewport menos
-              a sidebar, quando ela aparece) — resolve os dois problemas
-              sem tirar a sidebar do lugar. */}
-          <Header
-            showToolCalls={showToolCalls}
-            onToggleToolCalls={() => setShowToolCalls((v) => !v)}
-            onShowShortcuts={() => setShowShortcutsDialog(true)}
-            onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-            showModeSwitch={!chatMode}
-          />
-
           <AnimatePresence mode="wait" initial={false}>
             {uiMode === "kanban" && !chatMode ? (
               // 3º bloco dentro do mesmo AnimatePresence: a transição entre
@@ -793,8 +824,11 @@ function SessionPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -18 }}
                 transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                className="flex flex-1 min-h-0 overflow-hidden"
+                className="flex flex-col flex-1 min-h-0 overflow-hidden"
               >
+                {/* Placeholder do Header — instância única hoisted, ver
+                    headerSlotRefKanban. */}
+                <div ref={headerSlotRefKanban} className="h-16 shrink-0" />
                 {/* min-w-[360px]: piso mínimo pro conteúdo continuar legível
                   quando a janela encolhe. */}
                 <div className="flex flex-col flex-1 min-w-[360px] min-h-0 overflow-hidden">
@@ -809,8 +843,11 @@ function SessionPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -18 }}
                 transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                className="flex flex-1 min-h-0 overflow-hidden"
+                className="flex flex-col flex-1 min-h-0 overflow-hidden"
               >
+                {/* Placeholder do Header — instância única hoisted, ver
+                    headerSlotRefIde. */}
+                <div ref={headerSlotRefIde} className="h-16 shrink-0" />
                 <IdeModeLayout
                   isNarrow={isNarrowViewport}
                   navBar={<WorkbenchNavBar threadId={threadId} side="left" />}
@@ -933,14 +970,24 @@ function SessionPage() {
                     rightSize={splitSize}
                     onResize={setSplitSize}
                     left={
-                      // Placeholder — o <ChatInterface> real é uma instância
-                      // única hoisted fora do AnimatePresence, reposicionada
-                      // por cima deste retângulo via useSlotOverlay (ver
-                      // chatSlotRefAssistente).
-                      <div
-                        ref={chatSlotRefAssistente}
-                        className="h-full min-w-0 overflow-visible"
-                      />
+                      // O Header só pode ocupar a largura desta coluna (não
+                      // a do painel de workbench à direita, que precisa
+                      // continuar do topo ao rodapé) — por isso o placeholder
+                      // dele vive aqui dentro, não no nível do AnimatePresence.
+                      <div className="flex flex-col h-full min-w-0 overflow-visible">
+                        <div
+                          ref={headerSlotRefAssistente}
+                          className="h-16 shrink-0"
+                        />
+                        {/* Placeholder — o <ChatInterface> real é uma
+                            instância única hoisted fora do AnimatePresence,
+                            reposicionada por cima deste retângulo via
+                            useSlotOverlay (ver chatSlotRefAssistente). */}
+                        <div
+                          ref={chatSlotRefAssistente}
+                          className="flex-1 min-h-0 min-w-0 overflow-visible"
+                        />
+                      </div>
                     }
                     right={
                       <WorkbenchContent
@@ -985,6 +1032,7 @@ function SessionPage() {
           </AnimatePresence>
         </div>
         {chatOverlay}
+        {headerOverlay}
       </div>
     </div>
   );
