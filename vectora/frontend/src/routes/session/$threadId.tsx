@@ -283,6 +283,31 @@ function SessionPage() {
   const headerOverlayRef = useRef<HTMLDivElement>(null);
   useSlotOverlay(headerSlot?.el ?? null, headerOverlayRef, chatAnchorRef);
 
+  // Guarda de segurança pros dois overlays acima: o mecanismo normal
+  // (chatSlotRef*/headerSlotRef*) só some com o slot antigo quando o
+  // AnimatePresence completa a animação de saída da branch anterior — um
+  // contrato de biblioteca terceira, sem garantia de sempre disparar (ex.:
+  // janela do Electron criada oculta/sem foco no boot pode pausar
+  // requestAnimationFrame e travar a saída indefinidamente). Sem essa
+  // guarda, o chat pode continuar visível (vazando por cima do Kanban, que
+  // nunca tem placeholder de chat) mesmo depois da troca de modo já ter
+  // acontecido no resto da UI. Roda em toda troca de modo, independente de
+  // qualquer animação: força o estado a bater com o modo atual.
+  useEffect(() => {
+    const effectiveMode =
+      uiMode === "kanban" && !chatMode
+        ? "kanban"
+        : uiMode === "ide" && !chatMode
+          ? "ide"
+          : "assistente";
+    if (effectiveMode === "kanban") {
+      setChatSlot((prev) => (prev ? null : prev));
+    }
+    setHeaderSlot((prev) =>
+      prev && prev.kind !== effectiveMode ? null : prev,
+    );
+  }, [uiMode, chatMode]);
+
   const onSidebarResizeDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
