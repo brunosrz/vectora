@@ -89,6 +89,16 @@ export const MessageList = memo(function MessageList({
   // Estado do botão "Voltar ao fim" (M3)
   const [showScrollButton, setShowScrollButton] = useState(false);
 
+  // M3b — enquanto o scroll de troca de thread ainda está convergindo
+  // (scrollAndCheck abaixo), o conteúdo fica visibility:hidden em vez de
+  // visível: o scrollHeight ainda cresce a cada mutação (markdown, syntax
+  // highlight sendo medidos), e revelar o conteúdo nesse meio-tempo faz o
+  // usuário ver o scroll "perseguindo" o fim visualmente. visibility (não
+  // display: none) preserva a caixa, então scrollHeight/scrollTop
+  // continuam mensuráveis pelo polling.
+  const [isScrollSettling, setIsScrollSettling] = useState(false);
+  const settleCapTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
   // Refs de controle do auto-scroll (M3)
   const shouldAutoScrollRef = useRef(true);
   const isProgrammaticScrollRef = useRef(false);
@@ -104,7 +114,15 @@ export const MessageList = memo(function MessageList({
   // M1 — Ativa virtualização somente acima do threshold
   const shouldVirtualize = messages.length > VIRTUALIZE_THRESHOLD;
 
-  // M1 — Virtualizer (@tanstack/react-virtual)
+  // M1 — Virtualizer (@tanstack/react-virtual). O aviso abaixo é do
+  // React Compiler, que este projeto não usa (sem babel-plugin-react-compiler
+  // no build, ver vite.config.ts) — não há memoização automática pra
+  // "desistir" de aplicar. As funções que @tanstack/react-virtual retorna
+  // (getVirtualItems/getTotalSize/measureElement/scrollToIndex) só são
+  // lidas aqui dentro, nunca passadas como prop pra outro componente/hook
+  // memoizado — o cenário de "UI obsoleta" que o aviso descreve não existe
+  // neste uso. MessageList já é memo()'d manualmente (linha ~68).
+  // oxlint-disable-next-line react/incompatible-library -- ver comentário acima
   const virtualizer = useVirtualizer({
     count: shouldVirtualize ? messages.length : 0,
     getScrollElement: () => scrollRef.current,
@@ -139,10 +157,21 @@ export const MessageList = memo(function MessageList({
 
   const scrollToAbsoluteBottom = useCallback(() => {
     if (!scrollRef.current) return;
+    // Virtualizado: escrever scrollTop direto não é confiável — o
+    // virtualizer mantém seu próprio offset interno via listener de scroll
+    // e pode não render-medir os itens do fim antes da posição "grudar";
+    // scrollToIndex é a API que o próprio @tanstack/react-virtual espera
+    // que se use pra isso (mesmo padrão já usado no auto-scroll de
+    // streaming, abaixo).
+    if (shouldVirtualize) {
+      virtualizer.scrollToIndex(messages.length - 1, { align: "end" });
+      lastScrollTopRef.current = scrollRef.current.scrollTop;
+      return;
+    }
     const maxScroll = scrollRef.current.scrollHeight;
     scrollRef.current.scrollTop = maxScroll;
     lastScrollTopRef.current = maxScroll;
-  }, []);
+  }, [shouldVirtualize, virtualizer, messages.length]);
 
   const isAtAbsoluteBottom = useCallback(() => {
     if (!scrollRef.current) return true;
@@ -174,10 +203,26 @@ export const MessageList = memo(function MessageList({
       isAutoScrollingRef.current = true;
       shouldAutoScrollRef.current = true;
       scrollAttemptsRef.current = 0;
+      setIsScrollSettling(true);
 
       mutationObserverRef.current?.disconnect();
       mutationObserverRef.current = null;
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      if (settleCapTimeoutRef.current)
+        clearTimeout(settleCapTimeoutRef.current);
+      // Cap de segurança: nunca fica invisível por mais que isso, mesmo se
+      // o scrollHeight nunca estabilizar (cenário patológico). Também
+      // desarma o polling inteiro (MutationObserver + isAutoScrollingRef) —
+      // sem isso, o cap só escondia/revelava o conteúdo visualmente, mas o
+      // observer continuava brigando por até ~10s (MAX_SCROLL_ATTEMPTS) por
+      // qualquer scroll manual/programático feito depois do cap expirar.
+      settleCapTimeoutRef.current = setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+        isAutoScrollingRef.current = false;
+        mutationObserverRef.current?.disconnect();
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+        setIsScrollSettling(false);
+      }, 1500);
 
       const scrollContainer = scrollRef.current;
       let lastScrollHeight = 0;
@@ -198,6 +243,9 @@ export const MessageList = memo(function MessageList({
             isProgrammaticScrollRef.current = false;
             isAutoScrollingRef.current = false;
             mutationObserverRef.current?.disconnect();
+            if (settleCapTimeoutRef.current)
+              clearTimeout(settleCapTimeoutRef.current);
+            setIsScrollSettling(false);
           }, 200);
           return;
         }
@@ -218,6 +266,9 @@ export const MessageList = memo(function MessageList({
                 isProgrammaticScrollRef.current = false;
                 isAutoScrollingRef.current = false;
                 mutationObserverRef.current?.disconnect();
+                if (settleCapTimeoutRef.current)
+                  clearTimeout(settleCapTimeoutRef.current);
+                setIsScrollSettling(false);
               }, 200);
               return;
             }
@@ -261,6 +312,8 @@ export const MessageList = memo(function MessageList({
     return () => {
       mutationObserverRef.current?.disconnect();
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      if (settleCapTimeoutRef.current)
+        clearTimeout(settleCapTimeoutRef.current);
     };
   }, []);
 
@@ -431,80 +484,87 @@ export const MessageList = memo(function MessageList({
         {/* M4 — Skeletons de carregamento */}
         {isLoadingThread ? (
           <MessageSkeletons />
-        ) : shouldVirtualize ? (
-          // M1 — Renderização virtualizada (> 50 mensagens)
-          <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              position: "relative",
-            }}
-          >
-            {virtualizer.getVirtualItems().map((vItem) => {
-              const message = messages[vItem.index]!;
-              const isLastMessage = vItem.index === messages.length - 1;
-              return (
-                <div
-                  key={vItem.key}
-                  data-index={vItem.index}
-                  ref={virtualizer.measureElement}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    transform: `translateY(${vItem.start}px)`,
-                  }}
-                >
-                  <div
-                    className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-3"
-                    style={{
-                      animation:
-                        isLastMessage && message.role === "user"
-                          ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
-                          : "none",
-                    }}
-                  >
-                    <MessageItem
-                      message={message}
-                      isLastAssistant={message.id === lastAssistantId}
-                      humanMessageIndex={humanMessageRevIdx.get(message.id)}
-                      {...commonItemProps}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         ) : (
-          // Renderização direta (≤ 50 mensagens)
-          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-5 space-y-2">
-            {messages.map((message, idx) => {
-              const isLastMessage = idx === messages.length - 1;
-              return (
-                <div
-                  key={message.id}
-                  style={{
-                    animation:
-                      isLastMessage && message.role === "user"
-                        ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
-                        : "none",
-                  }}
-                >
-                  <MessageItem
-                    message={message}
-                    isLastAssistant={message.id === lastAssistantId}
-                    humanMessageIndex={humanMessageRevIdx.get(message.id)}
-                    {...commonItemProps}
-                  />
-                </div>
-              );
-            })}
+          <div
+            data-testid="message-list-content"
+            style={{ visibility: isScrollSettling ? "hidden" : "visible" }}
+          >
+            {shouldVirtualize ? (
+              // M1 — Renderização virtualizada (> 50 mensagens)
+              <div
+                style={{
+                  height: `${virtualizer.getTotalSize()}px`,
+                  position: "relative",
+                }}
+              >
+                {virtualizer.getVirtualItems().map((vItem) => {
+                  const message = messages[vItem.index]!;
+                  const isLastMessage = vItem.index === messages.length - 1;
+                  return (
+                    <div
+                      key={vItem.key}
+                      data-index={vItem.index}
+                      ref={virtualizer.measureElement}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        transform: `translateY(${vItem.start}px)`,
+                      }}
+                    >
+                      <div
+                        className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-3"
+                        style={{
+                          animation:
+                            isLastMessage && message.role === "user"
+                              ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                              : "none",
+                        }}
+                      >
+                        <MessageItem
+                          message={message}
+                          isLastAssistant={message.id === lastAssistantId}
+                          humanMessageIndex={humanMessageRevIdx.get(message.id)}
+                          {...commonItemProps}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              // Renderização direta (≤ 50 mensagens)
+              <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-5 space-y-2">
+                {messages.map((message, idx) => {
+                  const isLastMessage = idx === messages.length - 1;
+                  return (
+                    <div
+                      key={message.id}
+                      style={{
+                        animation:
+                          isLastMessage && message.role === "user"
+                            ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                            : "none",
+                      }}
+                    >
+                      <MessageItem
+                        message={message}
+                        isLastAssistant={message.id === lastAssistantId}
+                        humanMessageIndex={humanMessageRevIdx.get(message.id)}
+                        {...commonItemProps}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* M3 — Botão "Voltar ao fim" */}
-      {showScrollButton && !isLoadingThread && (
+      {showScrollButton && !isLoadingThread && !isScrollSettling && (
         <button
           onClick={scrollToBottom}
           // absolute (não fixed): posiciona relativo ao container de

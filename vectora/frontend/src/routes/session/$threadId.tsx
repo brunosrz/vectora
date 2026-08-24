@@ -24,6 +24,7 @@ import { WindowDock } from "@/components/workbench/windows/window-dock";
 import { DockedEditor } from "@/components/workbench/windows/docked-editor";
 import { SessionSwitcher } from "@/components/header/session-switcher";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useSlotOverlay } from "@/lib/hooks/use-slot-overlay";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { useIsNarrowViewport } from "@/lib/hooks/use-media-query";
 import { PANEL_TRANSITION } from "@/lib/motion/transitions";
@@ -68,19 +69,16 @@ import {
 import { useGlobalShortcuts } from "@/lib/hooks/use-global-shortcuts";
 import { m } from "@/lib/paraglide/messages";
 export const Route = createFileRoute("/session/$threadId")({
-  // Prefetch em paralelo: lista de threads (sidebar) + histórico da thread ativa.
-  // O histórico fica em cache no queryClient com chave ['thread-history', id]
+  // Só a lista de threads (sidebar) bloqueia a navegação — o histórico da
+  // thread ativa é prefetch em background (ver comentário abaixo). O
+  // histórico fica em cache no queryClient com chave ['thread-history', id]
   // e é consumido por chat-interface.tsx sem segunda viagem ao servidor.
   // Para "new", o histórico não existe ainda — só prefetch da lista de threads.
   //
   // Mesmo limit que useThreadsQuery (THREAD_FETCH_LIMIT) sob a mesma
   // threadsQueryKey — limit divergente aqui e no loader de "/" causava
   // colisão de cache (um populava a chave com lista truncada, o outro lia
-  // stale dentro do staleTime). Só o prefetch de histórico é isolado do
-  // resto (catch próprio): sem a lista de threads a sidebar não navega, mas
-  // uma falha transitória no histórico não pode bloquear a navegação quando
-  // a lista de threads já carregou com sucesso — degrada pra "sem
-  // pré-carregar histórico", não pra "não abre a sessão".
+  // stale dentro do staleTime).
   loader: async ({ params }) => {
     const threadsPromise = queryClient.ensureQueryData({
       queryKey: threadsQueryKey(),
@@ -91,7 +89,12 @@ export const Route = createFileRoute("/session/$threadId")({
       await threadsPromise;
       return;
     }
-    const historyPromise = queryClient
+    // Não aguardamos esta promise: histórico pode ser pesado (checkpoint
+    // grande) e travar a navegação pra tela anterior por vários segundos
+    // sem feedback. Roda em background — chat-interface.tsx consome o
+    // cache se chegar a tempo, e refaz o fetch se não (linhas ~479-486),
+    // com o skeleton (MessageSkeletons) cobrindo a espera na tela nova.
+    void queryClient
       .prefetchQuery({
         queryKey: ["thread-history", params.threadId],
         queryFn: () => getHistory(params.threadId),
@@ -100,7 +103,7 @@ export const Route = createFileRoute("/session/$threadId")({
       .catch((err: unknown) => {
         console.warn("[loader] prefetch de histórico falhou:", err);
       });
-    await Promise.all([threadsPromise, historyPromise]);
+    await threadsPromise;
   },
   component: SessionPage,
 });
@@ -217,6 +220,35 @@ function SessionPage() {
     },
     [],
   );
+
+  // ── Overlay de ChatInterface (instância única, nunca remontada) ───────────
+  // Cada modo hospeda o chat numa coluna de largura/offset diferente (IDE:
+  // painel lateral fixo com SessionSwitcher; Assistente: coluna do
+  // HorizontalSplit; Kanban: chat não aparece). Em vez de renderizar o
+  // <ChatInterface> fisicamente dentro de cada branch do AnimatePresence
+  // (o que o desmonta e remonta a cada troca de modo — reseta scroll e
+  // qualquer estado local do chat), cada branch só marca um placeholder
+  // invisível; um único <ChatInterface> hoisted é reposicionado por cima
+  // dele via useSlotOverlay (ver comentário do hook).
+  const [chatSlot, setChatSlot] = useState<{
+    el: HTMLDivElement;
+    kind: "ide" | "assistente";
+  } | null>(null);
+  const chatSlotRefIde = useCallback((el: HTMLDivElement | null) => {
+    setChatSlot((prev) => {
+      if (el) return { el, kind: "ide" };
+      return prev?.kind === "ide" ? null : prev;
+    });
+  }, []);
+  const chatSlotRefAssistente = useCallback((el: HTMLDivElement | null) => {
+    setChatSlot((prev) => {
+      if (el) return { el, kind: "assistente" };
+      return prev?.kind === "assistente" ? null : prev;
+    });
+  }, []);
+  const chatAnchorRef = useRef<HTMLDivElement>(null);
+  const chatOverlayRef = useRef<HTMLDivElement>(null);
+  useSlotOverlay(chatSlot?.el ?? null, chatOverlayRef, chatAnchorRef);
 
   const onSidebarResizeDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -640,28 +672,83 @@ function SessionPage() {
   // com o conteúdo: ver a nota no Header logo abaixo pelo mesmo motivo.
   const showSidebarPanel = !(uiMode === "ide" && !chatMode);
 
+  const isIdeChatSlot = chatSlot?.kind === "ide";
+  const chatOverlay = useMemo(
+    () => (
+      <div
+        ref={chatOverlayRef}
+        className="absolute flex flex-col overflow-hidden"
+        style={{ visibility: "hidden" }}
+      >
+        {isIdeChatSlot && (
+          <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/40 shrink-0 min-w-0">
+            <SessionSwitcher
+              threads={wsThreads}
+              currentThreadId={threadId}
+              onSelectThread={handleSelectThread}
+              onNewSession={handleNewChat}
+            />
+          </div>
+        )}
+        <div className="flex-1 min-h-0">
+          <ChatInterface
+            threadId={threadId}
+            showToolCalls={showToolCalls}
+            agentConfig={agentConfig}
+            onAgentConfigChange={setAgentConfig}
+            onThreadUpdate={handleThreadUpdate}
+            onThreadPersistFailed={handleThreadPersistFailed}
+            onThreadNotFound={handleThreadNotFound}
+            inputLocked={inputLocked}
+            isNewThread={isNew(threadId)}
+            compact={isIdeChatSlot}
+            onStartChat={
+              !isIdeChatSlot &&
+              hydrated &&
+              isNewRoute &&
+              !isWorkspaceChosen(threadId)
+                ? handleStartChatFromWelcome
+                : undefined
+            }
+            onStartCode={
+              !isIdeChatSlot &&
+              hydrated &&
+              isNewRoute &&
+              !isWorkspaceChosen(threadId)
+                ? () => setShowNewChatDialog(true)
+                : undefined
+            }
+          />
+        </div>
+      </div>
+    ),
+    [
+      isIdeChatSlot,
+      wsThreads,
+      threadId,
+      handleSelectThread,
+      handleNewChat,
+      showToolCalls,
+      agentConfig,
+      setAgentConfig,
+      handleThreadUpdate,
+      handleThreadPersistFailed,
+      handleThreadNotFound,
+      inputLocked,
+      hydrated,
+      isNewRoute,
+      handleStartChatFromWelcome,
+    ],
+  );
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
-      {/* Header único para os 3 modos — inclusive o mode-switch central.
-          Antes cada modo tinha sua própria cópia, aninhada em profundidades
-          diferentes (Kanban/Assistente: logo após a sidebar; IDE: dentro da
-          coluna do editor, deslocada pela navBar+workbenchContent). Como o
-          mode-switch centraliza via `max-w-4xl mx-auto` dentro do Header,
-          cada largura/offset de coluna diferente fazia os botões pularem de
-          lugar ao trocar de modo. Um único Header fora do AnimatePresence,
-          sempre com a largura total da janela, resolve os dois problemas de
-          uma vez: nunca reanima e nunca muda de posição. */}
-      <Header
-        showToolCalls={showToolCalls}
-        onToggleToolCalls={() => setShowToolCalls((v) => !v)}
-        onShowShortcuts={() => setShowShortcutsDialog(true)}
-        onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-        showModeSwitch={!chatMode}
-      />
-
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div
+        ref={chatAnchorRef}
+        className="relative flex flex-1 min-h-0 overflow-hidden"
+      >
         {showSidebarPanel && sidebarPanel}
         {showSidebarPanel && (
           <Sheet
@@ -674,240 +761,230 @@ function SessionPage() {
           </Sheet>
         )}
 
-        <AnimatePresence mode="wait" initial={false}>
-          {uiMode === "kanban" && !chatMode ? (
-            // 3º bloco dentro do mesmo AnimatePresence: a transição entre
-            // modos continua com o mecanismo que já existia.
-            <motion.div
-              key="kanban"
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -18 }}
-              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              className="flex flex-1 min-h-0 overflow-hidden"
-            >
-              {/* min-w-[360px]: piso mínimo pro conteúdo continuar legível
+        <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
+          {/* Header único para os 3 modos — inclusive o mode-switch central.
+              Antes cada modo tinha sua própria cópia, aninhada em
+              profundidades diferentes (Kanban/Assistente: logo após a
+              sidebar; IDE: dentro da coluna do editor, deslocada pela
+              navBar+workbenchContent). Como o mode-switch centraliza via
+              `max-w-4xl mx-auto` dentro do Header, cada largura/offset de
+              coluna diferente fazia os botões pularem de lugar ao trocar de
+              modo. Um único Header fora do AnimatePresence — mas dentro
+              desta coluna de conteúdo, não acima da sidebar também: a
+              sidebar precisa continuar do topo ao rodapé da tela, e a
+              largura desta coluna já é a mesma nos 3 modos (viewport menos
+              a sidebar, quando ela aparece) — resolve os dois problemas
+              sem tirar a sidebar do lugar. */}
+          <Header
+            showToolCalls={showToolCalls}
+            onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+            onShowShortcuts={() => setShowShortcutsDialog(true)}
+            onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+            showModeSwitch={!chatMode}
+          />
+
+          <AnimatePresence mode="wait" initial={false}>
+            {uiMode === "kanban" && !chatMode ? (
+              // 3º bloco dentro do mesmo AnimatePresence: a transição entre
+              // modos continua com o mecanismo que já existia.
+              <motion.div
+                key="kanban"
+                initial={{ opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -18 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                className="flex flex-1 min-h-0 overflow-hidden"
+              >
+                {/* min-w-[360px]: piso mínimo pro conteúdo continuar legível
                   quando a janela encolhe. */}
-              <div className="flex flex-col flex-1 min-w-[360px] min-h-0 overflow-hidden">
-                <KanbanBoard threadId={threadId} />
-              </div>
-            </motion.div>
-          ) : uiMode === "ide" && !chatMode ? (
-            // ── Layout IDE: sidebars ao topo, Header fica no topo geral ──
-            <motion.div
-              key="ide"
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -18 }}
-              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              className="flex flex-1 min-h-0 overflow-hidden"
-            >
-              <IdeModeLayout
-                isNarrow={isNarrowViewport}
-                navBar={<WorkbenchNavBar threadId={threadId} side="left" />}
-                workbenchContent={
-                  hydrated && workbenchOpen ? (
+                <div className="flex flex-col flex-1 min-w-[360px] min-h-0 overflow-hidden">
+                  <KanbanBoard threadId={threadId} />
+                </div>
+              </motion.div>
+            ) : uiMode === "ide" && !chatMode ? (
+              // ── Layout IDE: sidebars ao topo, Header fica no topo geral ──
+              <motion.div
+                key="ide"
+                initial={{ opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -18 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                className="flex flex-1 min-h-0 overflow-hidden"
+              >
+                <IdeModeLayout
+                  isNarrow={isNarrowViewport}
+                  navBar={<WorkbenchNavBar threadId={threadId} side="left" />}
+                  workbenchContent={
+                    hydrated && workbenchOpen ? (
+                      <div
+                        ref={workbenchResizeRef}
+                        className={
+                          isNarrowViewport
+                            ? "relative flex-1 min-w-0"
+                            : "relative shrink-0"
+                        }
+                        style={
+                          isNarrowViewport ? undefined : { width: splitSize }
+                        }
+                      >
+                        <WorkbenchContent
+                          threadId={threadId}
+                          side="left"
+                          onAddToContext={pushMention}
+                          onSendPrompt={pushDraft}
+                        />
+                        {!isNarrowViewport && (
+                          <div
+                            role="separator"
+                            aria-orientation="vertical"
+                            aria-label="Redimensionar workbench"
+                            onPointerDown={onWorkbenchResizeDown}
+                            onPointerMove={onWorkbenchResizeMove}
+                            onPointerUp={onWorkbenchResizeUp}
+                            onPointerCancel={onWorkbenchResizeUp}
+                            className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
+                          />
+                        )}
+                      </div>
+                    ) : null
+                  }
+                  editor={
+                    // min-w-[360px]: piso mínimo pro editor continuar usável
+                    // ao encolher a janela ou puxar o painel do workbench largo.
+                    <div className="flex flex-col flex-1 min-w-[360px] h-full overflow-hidden">
+                      <DockedEditor activeWorkspaceId={activeWorkspaceId} />
+                    </div>
+                  }
+                  chat={
                     <div
-                      ref={workbenchResizeRef}
+                      ref={chatSidebarRef}
                       className={
                         isNarrowViewport
-                          ? "relative flex-1 min-w-0"
-                          : "relative shrink-0"
+                          ? "relative flex flex-col h-full bg-sidebar"
+                          : "relative shrink-0 flex flex-col h-full border-l border-border/60 bg-sidebar"
                       }
                       style={
-                        isNarrowViewport ? undefined : { width: splitSize }
+                        isNarrowViewport
+                          ? undefined
+                          : { width: hydrated ? chatSidebarWidth : 256 }
                       }
                     >
-                      <WorkbenchContent
-                        threadId={threadId}
-                        side="left"
-                        onAddToContext={pushMention}
-                        onSendPrompt={pushDraft}
-                      />
                       {!isNarrowViewport && (
                         <div
                           role="separator"
                           aria-orientation="vertical"
-                          aria-label="Redimensionar workbench"
-                          onPointerDown={onWorkbenchResizeDown}
-                          onPointerMove={onWorkbenchResizeMove}
-                          onPointerUp={onWorkbenchResizeUp}
-                          onPointerCancel={onWorkbenchResizeUp}
-                          className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
+                          aria-label="Redimensionar chat"
+                          onPointerDown={onChatSidebarResizeDown}
+                          onPointerMove={onChatSidebarResizeMove}
+                          onPointerUp={onChatSidebarResizeUp}
+                          onPointerCancel={onChatSidebarResizeUp}
+                          className="absolute left-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
                         />
                       )}
-                    </div>
-                  ) : null
-                }
-                editor={
-                  // min-w-[360px]: piso mínimo pro editor continuar usável
-                  // ao encolher a janela ou puxar o painel do workbench largo.
-                  <div className="flex flex-col flex-1 min-w-[360px] h-full overflow-hidden">
-                    <DockedEditor activeWorkspaceId={activeWorkspaceId} />
-                  </div>
-                }
-                chat={
-                  <div
-                    ref={chatSidebarRef}
-                    className={
-                      isNarrowViewport
-                        ? "relative flex flex-col h-full bg-sidebar"
-                        : "relative shrink-0 flex flex-col h-full border-l border-border/60 bg-sidebar"
-                    }
-                    style={
-                      isNarrowViewport
-                        ? undefined
-                        : { width: hydrated ? chatSidebarWidth : 256 }
-                    }
-                  >
-                    {!isNarrowViewport && (
+                      {/* Placeholder — o <ChatInterface> real (com o
+                        SessionSwitcher acima dele) é uma instância única
+                        hoisted fora do AnimatePresence, reposicionada por
+                        cima deste retângulo via useSlotOverlay. Ver
+                        comentário em chatSlotRefIde. */}
                       <div
-                        role="separator"
-                        aria-orientation="vertical"
-                        aria-label="Redimensionar chat"
-                        onPointerDown={onChatSidebarResizeDown}
-                        onPointerMove={onChatSidebarResizeMove}
-                        onPointerUp={onChatSidebarResizeUp}
-                        onPointerCancel={onChatSidebarResizeUp}
-                        className="absolute left-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
-                      />
-                    )}
-                    <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/40 shrink-0 min-w-0">
-                      <SessionSwitcher
-                        threads={wsThreads}
-                        currentThreadId={threadId}
-                        onSelectThread={handleSelectThread}
-                        onNewSession={handleNewChat}
+                        ref={chatSlotRefIde}
+                        className="flex-1 min-h-0 min-w-0"
                       />
                     </div>
-                    <div className="flex-1 min-h-0">
-                      <ChatInterface
-                        threadId={threadId}
-                        showToolCalls={showToolCalls}
-                        agentConfig={agentConfig}
-                        onAgentConfigChange={setAgentConfig}
-                        onThreadUpdate={handleThreadUpdate}
-                        onThreadPersistFailed={handleThreadPersistFailed}
-                        onThreadNotFound={handleThreadNotFound}
-                        inputLocked={inputLocked}
-                        isNewThread={isNew(threadId)}
-                        compact
-                      />
-                    </div>
-                  </div>
-                }
-              />
+                  }
+                />
 
-              <KeyboardShortcutsDialog
-                open={showShortcutsDialog}
-                onOpenChange={setShowShortcutsDialog}
-              />
-              <CommandPalette
-                open={showCommandPalette}
-                onOpenChange={setShowCommandPalette}
-                commands={paletteCommands}
-              />
-              <NewChatDialog
-                open={showNewChatDialog}
-                onOpenChange={setShowNewChatDialog}
-                onConfirm={(workspaceId) =>
-                  void handleConfirmNewChat(workspaceId)
-                }
-              />
-            </motion.div>
-          ) : (
-            // ── Layout Assistente/Chat (atual) ─────────────────────────────────
-            <motion.div
-              key="assistente"
-              initial={{ opacity: 0, x: -18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 18 }}
-              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              className="flex flex-1 min-h-0 overflow-visible"
-            >
-              {/* Área principal — split ocupa altura total para que o painel do
+                <KeyboardShortcutsDialog
+                  open={showShortcutsDialog}
+                  onOpenChange={setShowShortcutsDialog}
+                />
+                <CommandPalette
+                  open={showCommandPalette}
+                  onOpenChange={setShowCommandPalette}
+                  commands={paletteCommands}
+                />
+                <NewChatDialog
+                  open={showNewChatDialog}
+                  onOpenChange={setShowNewChatDialog}
+                  onConfirm={(workspaceId) =>
+                    void handleConfirmNewChat(workspaceId)
+                  }
+                />
+              </motion.div>
+            ) : (
+              // ── Layout Assistente/Chat (atual) ─────────────────────────────────
+              <motion.div
+                key="assistente"
+                initial={{ opacity: 0, x: -18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 18 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                className="flex flex-1 min-h-0 overflow-visible"
+              >
+                {/* Área principal — split ocupa altura total para que o painel do
                 workbench (right) vá do topo ao rodapé; a nav-bar do workbench
                 (faixa de 48px, sempre visível) fica fora do split, à direita —
                 não é redimensionável; só o painel de conteúdo é. */}
-              <div className="flex-1 min-w-0 flex h-full">
-                <HorizontalSplit
-                  className="flex-1 min-w-0"
-                  side={sidebarOnRight ? "left" : "right"}
-                  showRight={hydrated && workbenchOpen && !chatMode}
-                  rightSize={splitSize}
-                  onResize={setSplitSize}
-                  left={
-                    <div className="flex flex-col h-full min-w-0 overflow-visible">
-                      <div className="flex-1 min-h-0">
-                        <ChatInterface
-                          threadId={threadId}
-                          showToolCalls={showToolCalls}
-                          agentConfig={agentConfig}
-                          onAgentConfigChange={setAgentConfig}
-                          onThreadUpdate={handleThreadUpdate}
-                          onThreadPersistFailed={handleThreadPersistFailed}
-                          onThreadNotFound={handleThreadNotFound}
-                          inputLocked={inputLocked}
-                          isNewThread={isNew(threadId)}
-                          onStartChat={
-                            hydrated &&
-                            isNewRoute &&
-                            !isWorkspaceChosen(threadId)
-                              ? handleStartChatFromWelcome
-                              : undefined
-                          }
-                          onStartCode={
-                            hydrated &&
-                            isNewRoute &&
-                            !isWorkspaceChosen(threadId)
-                              ? () => setShowNewChatDialog(true)
-                              : undefined
-                          }
-                        />
-                      </div>
+                <div className="flex-1 min-w-0 flex h-full">
+                  <HorizontalSplit
+                    className="flex-1 min-w-0"
+                    side={sidebarOnRight ? "left" : "right"}
+                    showRight={hydrated && workbenchOpen && !chatMode}
+                    rightSize={splitSize}
+                    onResize={setSplitSize}
+                    left={
+                      // Placeholder — o <ChatInterface> real é uma instância
+                      // única hoisted fora do AnimatePresence, reposicionada
+                      // por cima deste retângulo via useSlotOverlay (ver
+                      // chatSlotRefAssistente).
+                      <div
+                        ref={chatSlotRefAssistente}
+                        className="h-full min-w-0 overflow-visible"
+                      />
+                    }
+                    right={
+                      <WorkbenchContent
+                        threadId={threadId}
+                        onAddToContext={pushMention}
+                        onSendPrompt={pushDraft}
+                      />
+                    }
+                  />
+                  {!chatMode && (
+                    <div
+                      className={`shrink-0 ${sidebarOnRight ? "order-first" : ""}`}
+                    >
+                      <WorkbenchNavBar threadId={threadId} />
                     </div>
-                  }
-                  right={
-                    <WorkbenchContent
-                      threadId={threadId}
-                      onAddToContext={pushMention}
-                      onSendPrompt={pushDraft}
-                    />
+                  )}
+                </div>
+
+                {/* Dialogs globais */}
+                <KeyboardShortcutsDialog
+                  open={showShortcutsDialog}
+                  onOpenChange={setShowShortcutsDialog}
+                />
+                <CommandPalette
+                  open={showCommandPalette}
+                  onOpenChange={setShowCommandPalette}
+                  commands={paletteCommands}
+                />
+                <NewChatDialog
+                  open={showNewChatDialog}
+                  onOpenChange={setShowNewChatDialog}
+                  onConfirm={(workspaceId) =>
+                    void handleConfirmNewChat(workspaceId)
                   }
                 />
-                {!chatMode && (
-                  <div
-                    className={`shrink-0 ${sidebarOnRight ? "order-first" : ""}`}
-                  >
-                    <WorkbenchNavBar threadId={threadId} />
-                  </div>
-                )}
-              </div>
 
-              {/* Dialogs globais */}
-              <KeyboardShortcutsDialog
-                open={showShortcutsDialog}
-                onOpenChange={setShowShortcutsDialog}
-              />
-              <CommandPalette
-                open={showCommandPalette}
-                onOpenChange={setShowCommandPalette}
-                commands={paletteCommands}
-              />
-              <NewChatDialog
-                open={showNewChatDialog}
-                onOpenChange={setShowNewChatDialog}
-                onConfirm={(workspaceId) =>
-                  void handleConfirmNewChat(workspaceId)
-                }
-              />
-
-              {/* Workstation: janelas flutuantes de arquivos + dock de minimizadas */}
-              <WindowLayer />
-              <WindowDock />
-            </motion.div>
-          )}
-        </AnimatePresence>
+                {/* Workstation: janelas flutuantes de arquivos + dock de minimizadas */}
+                <WindowLayer />
+                <WindowDock />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        {chatOverlay}
       </div>
     </div>
   );

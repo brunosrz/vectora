@@ -101,6 +101,26 @@ describe("loader de / e /session/$threadId — mesma query key, mesmo limit", ()
     expect(listThreadsMock).toHaveBeenCalledWith(THREAD_FETCH_LIMIT);
   });
 
+  it("loader não espera getHistory resolver — navegação não pode ficar presa no histórico pesado", async () => {
+    let historyResolved = false;
+    let resolveHistory!: () => void;
+    const historyPromise = new Promise<void>((resolve) => {
+      resolveHistory = () => {
+        historyResolved = true;
+        resolve();
+      };
+    });
+    prefetchQueryMock.mockImplementation(async () => historyPromise);
+
+    await (SessionRoute as unknown as LoaderOpts).loader!({
+      params: { threadId: "t1" },
+    });
+
+    expect(historyResolved).toBe(false);
+    resolveHistory();
+    await historyPromise;
+  });
+
   it("falha em listThreads (ensureQueryData rejeita) propaga — sem lista de threads não há sidebar navegável", async () => {
     ensureQueryDataMock.mockRejectedValue(new Error("backend indisponível"));
 
