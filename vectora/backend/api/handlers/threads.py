@@ -992,6 +992,11 @@ class CheckpointsResponse(BaseModel):
 
 class RewindRequest(BaseModel):
     checkpoint_id: str
+    # `id` da mensagem no SessionStore (ver HistoryMessage.checkpoint_id/
+    # Message.checkpointId), alvo de SessionStore.set_branch_head — trunca
+    # a conversa junto com os arquivos do workspace. Opcional: mantém
+    # compatibilidade com clientes antigos que só revertiam arquivos.
+    message_checkpoint_id: str = ""
 
 
 class RewindResponse(BaseModel):
@@ -1158,6 +1163,26 @@ async def rewind_thread(
             status_code=422,
             detail=f"Estratégia de checkpoint {strategy!r} ainda não suportada pelo rewind.",
         )
+
+    # Trunca a conversa junto com os arquivos: reaponta a branch ativa da
+    # thread pra mensagem alvo (mesmo mecanismo de fork usado por editar/
+    # regenerar, SessionStore.set_branch_head) — não apaga nada (append-
+    # only), só faz `get_history` parar de devolver o que vem depois.
+    # Best-effort: se falhar, os arquivos já foram restaurados com sucesso
+    # (não desfaz isso) — só loga, não derruba a resposta.
+    if body.message_checkpoint_id:
+        try:
+            from backend.services import agent_factory
+
+            store = await agent_factory.get_session_store()
+            await store.set_branch_head(thread_id, int(body.message_checkpoint_id))
+        except Exception:
+            logger.exception(
+                "rewind_thread: falha ao truncar histórico da conversa "
+                "(arquivos já restaurados) thread=%s message_checkpoint_id=%s",
+                thread_id,
+                body.message_checkpoint_id,
+            )
 
     return RewindResponse(status="ok")
 

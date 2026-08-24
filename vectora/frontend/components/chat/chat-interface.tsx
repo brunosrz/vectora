@@ -566,6 +566,32 @@ export function ChatInterface({
     loadThreadHistory();
   }, [threadId, uiDispatch, isNewThread, setMessages, onThreadNotFound]);
 
+  // Retroceder ("rewind") trunca a conversa no backend (SessionStore) além
+  // de reverter os arquivos do workspace — sem isso, a UI continuava
+  // mostrando as mensagens já truncadas até um F5 (o cache local não sabia
+  // da mudança). MessageItem dispara este evento após o rewind ter sucesso.
+  useEffect(() => {
+    const onThreadRewound = (event: Event) => {
+      const detail = (event as CustomEvent<{ threadId?: string }>).detail;
+      if (!detail || detail.threadId !== threadId) return;
+      getHistory(threadId)
+        .then(({ messages: historyMessages }) => {
+          const convertedMessages: Message[] = historyMessages
+            .map((hist, idx) =>
+              historyMessageToMessage(hist, `history-${threadId}-${idx}`),
+            )
+            .filter((message) => message.content.trim().length > 0);
+          setMessages(convertedMessages);
+        })
+        .catch((err: unknown) => {
+          console.error("Erro ao recarregar histórico após rewind:", err);
+        });
+    };
+    document.addEventListener("vectora:thread-rewound", onThreadRewound);
+    return () =>
+      document.removeEventListener("vectora:thread-rewound", onThreadRewound);
+  }, [threadId, setMessages]);
+
   // Auto-focus textarea when loading completes and userId is available
   useEffect(() => {
     if (!uiState.isLoadingThread && userId && textareaRef.current) {

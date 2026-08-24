@@ -46,6 +46,7 @@ import { useToastStore } from "@/lib/stores/toast-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR, es as esLocale, enUS } from "date-fns/locale";
+import { useQueryClient } from "@tanstack/react-query";
 import { m } from "@/lib/paraglide/messages";
 
 /** Locale do date-fns a partir do idioma da UI (item 9 — "há quanto tempo"). */
@@ -427,6 +428,7 @@ export const MessageItem = memo(
     // ── A.2d — Rewind ─────────────────────────────────────────────────────
     const [rewindOpen, setRewindOpen] = useState(false);
     const [rewinding, setRewinding] = useState(false);
+    const queryClient = useQueryClient();
 
     // ── Trilha C — Lightbox de imagem ───────────────────────────────────
     const [lightboxImage, setLightboxImage] = useState<{
@@ -458,7 +460,14 @@ export const MessageItem = memo(
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ checkpoint_id: target.checkpoint_id }),
+            body: JSON.stringify({
+              checkpoint_id: target.checkpoint_id,
+              // `id` da própria mensagem no SessionStore (ver
+              // HistoryMessage.checkpoint_id) — o backend reaponta a
+              // branch ativa da conversa pra este ponto, truncando o
+              // histórico junto com os arquivos do workspace.
+              message_checkpoint_id: message.checkpointId ?? "",
+            }),
           },
         );
         if (rewindRes.status === 409) {
@@ -467,6 +476,16 @@ export const MessageItem = memo(
           useToastStore.getState().error(m.chat_rewind_error());
         } else {
           useToastStore.getState().success(m.chat_rewind_ok());
+          // Sem isso a UI continuava mostrando as mensagens truncadas até
+          // um F5 — o backend já truncou, mas nada local sabia da mudança.
+          // invalidateQueries cobre a próxima navegação (cache do router
+          // loader); o evento cobre o ChatInterface já montado agora.
+          await queryClient.invalidateQueries({
+            queryKey: ["thread-history", threadId],
+          });
+          document.dispatchEvent(
+            new CustomEvent("vectora:thread-rewound", { detail: { threadId } }),
+          );
         }
       } catch {
         useToastStore.getState().error(m.chat_rewind_error());
@@ -474,7 +493,13 @@ export const MessageItem = memo(
         setRewinding(false);
         setRewindOpen(false);
       }
-    }, [threadId, workspaceId, humanMessageIndex]);
+    }, [
+      threadId,
+      workspaceId,
+      humanMessageIndex,
+      message.checkpointId,
+      queryClient,
+    ]);
 
     // Track code block index to generate stable IDs during streaming
     const codeBlockIndexRef = useRef(0);
