@@ -12,6 +12,7 @@ isso ``post_json`` e ``post_bytes`` são métodos distintos.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
@@ -235,42 +236,81 @@ class OpenRouterClient:
         return corpo
 
     async def stream_sse(
-        self, path: str, payload: dict, *, headers: dict[str, str] | None = None
+        self,
+        path: str,
+        payload: dict,
+        *,
+        headers: dict[str, str] | None = None,
+        retry_attempts: int = 3,
+        retry_backoff_s: float = 0.3,
     ) -> AsyncIterator[dict]:
         """Consome o stream SSE do `/chat/completions`.
 
         Uma linha malformada é descartada com aviso em vez de abortar: o que
         já chegou é conteúdo válido que o usuário está lendo.
+
+        Retry (backoff exponencial, `retry_attempts` tentativas) só cobre a
+        fase de CONEXÃO — `httpx.ConnectError`/`ConnectTimeout` levantados
+        antes do primeiro byte do stream chegar ao chamador. Uma falha
+        depois que já entregamos algum evento nunca é retentada: reconectar
+        reenviaria a resposta inteira, duplicando conteúdo que o usuário já
+        está lendo. Sem isso, um blip de rede de milissegundos (DNS,
+        roteamento) derrubava o turno inteiro mesmo com o provider saudável
+        — foi o que aconteceu num log real de produção sem nenhuma outra
+        chamada de rede do mesmo boot falhando.
         """
+        import httpx
+
         client = await self._ensure_client()
         corpo = {**payload, "stream": True}
-        async with client.stream(
-            "POST",
-            f"{self._base_url}{path}",
-            json=corpo,
-            headers=self._headers({"Accept": "text/event-stream", **(headers or {})}),
-        ) as resp:
-            if resp.status_code >= 400:
-                await resp.aread()
-                try:
-                    erro = resp.json()
-                except Exception:
-                    erro = None
-                self._raise_for_status(resp.status_code, erro)
-            async for bruta in resp.aiter_lines():
-                linha = bruta.strip()
-                if not linha or not linha.startswith("data:"):
-                    continue
-                dado = linha[len("data:") :].strip()
-                if dado == "[DONE]":
-                    return
-                try:
-                    evento = json.loads(dado)
-                except json.JSONDecodeError:
-                    logger.warning(
-                        "openrouter: chunk SSE malformado descartado",
-                        extra={"path": path, "trecho": dado[:120]},
-                    )
-                    continue
-                if isinstance(evento, dict):
-                    yield evento
+        request_headers = self._headers(
+            {"Accept": "text/event-stream", **(headers or {})}
+        )
+
+        tentativa = 0
+        while True:
+            entregou_algo = False
+            try:
+                async with client.stream(
+                    "POST",
+                    f"{self._base_url}{path}",
+                    json=corpo,
+                    headers=request_headers,
+                ) as resp:
+                    if resp.status_code >= 400:
+                        await resp.aread()
+                        try:
+                            erro = resp.json()
+                        except Exception:
+                            erro = None
+                        self._raise_for_status(resp.status_code, erro)
+                    async for bruta in resp.aiter_lines():
+                        linha = bruta.strip()
+                        if not linha or not linha.startswith("data:"):
+                            continue
+                        dado = linha[len("data:") :].strip()
+                        if dado == "[DONE]":
+                            return
+                        try:
+                            evento = json.loads(dado)
+                        except json.JSONDecodeError:
+                            logger.warning(
+                                "openrouter: chunk SSE malformado descartado",
+                                extra={"path": path, "trecho": dado[:120]},
+                            )
+                            continue
+                        if isinstance(evento, dict):
+                            entregou_algo = True
+                            yield evento
+                return
+            except (httpx.ConnectError, httpx.ConnectTimeout):
+                tentativa += 1
+                if entregou_algo or tentativa >= retry_attempts:
+                    raise
+                logger.warning(
+                    "openrouter: falha ao conectar (tentativa %d/%d) — retentando",
+                    tentativa,
+                    retry_attempts,
+                    extra={"path": path},
+                )
+                await asyncio.sleep(retry_backoff_s * (2 ** (tentativa - 1)))

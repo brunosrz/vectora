@@ -144,3 +144,105 @@ class TestStreamNdjsonSse:
             "antes",
             "depois",
         ]
+
+
+class TestStreamSseRetryDeConexao:
+    """S0-3: log real do usuário mostrou `httpx.ConnectError` em
+    `stream_sse` — as outras chamadas de rede do mesmo boot funcionaram, o
+    que aponta pra uma falha transitória (DNS/roteamento), não um provider
+    fora do ar. Reproduzido ao vivo 6/6 sem falha (chamada simples +
+    streaming), então não é uma condição permanente reproduzível — mas o
+    caminho não tinha NENHUM retry pra esse tipo de erro, então qualquer
+    blip de rede de milissegundos derrubava o turno inteiro. O fix é
+    reter só a fase de CONEXÃO (antes de qualquer byte do stream chegar ao
+    chamador) — depois que o primeiro chunk já foi entregue, retry
+    duplicaria conteúdo."""
+
+    @pytest.mark.asyncio
+    async def test_connecterror_transitorio_reteta_e_entrega_o_stream(self):
+        tentativas = {"n": 0}
+        corpo = b'data: {"choices":[{"delta":{"content":"ok"}}]}\n\ndata: [DONE]\n\n'
+
+        def handler(_request: httpx.Request) -> httpx.Response:
+            tentativas["n"] += 1
+            if tentativas["n"] < 3:
+                raise httpx.ConnectError("connection refused")
+            return httpx.Response(
+                200, content=corpo, headers={"content-type": "text/event-stream"}
+            )
+
+        async with _client(handler) as c:
+            eventos = [
+                e
+                async for e in c.stream_sse(
+                    "/chat/completions", {}, retry_backoff_s=0.0
+                )
+            ]
+
+        assert tentativas["n"] == 3
+        assert eventos[0]["choices"][0]["delta"]["content"] == "ok"
+
+    @pytest.mark.asyncio
+    async def test_erro_persistente_esgota_as_tentativas_e_propaga(self):
+        """Erro/borda: falha permanente (provider genuinamente fora do ar)
+        não pode ficar retentando pra sempre — esgota o teto e propaga o
+        `ConnectError` original, sem mascarar a causa real."""
+        tentativas = {"n": 0}
+
+        def handler(_request: httpx.Request) -> httpx.Response:
+            tentativas["n"] += 1
+            raise httpx.ConnectError("connection refused")
+
+        async with _client(handler) as c:
+            with pytest.raises(httpx.ConnectError):
+                async for _ in c.stream_sse(
+                    "/chat/completions", {}, retry_backoff_s=0.0
+                ):
+                    pass
+
+        # 1 tentativa original + teto de retries — nunca infinito.
+        assert 1 < tentativas["n"] <= 4
+
+    @pytest.mark.asyncio
+    async def test_erro_apos_stream_ja_comecado_nao_reteta(self):
+        """Erro/borda: um chunk já entregue ao chamador não pode ser
+        retentado — reconectar reenviaria a resposta inteira, duplicando
+        conteúdo que o usuário já está lendo."""
+        tentativas = {"n": 0}
+
+        def handler(_request: httpx.Request) -> httpx.Response:
+            tentativas["n"] += 1
+            # Simula queda de conexão NO MEIO do corpo, via stream que
+            # levanta ao iterar em vez de na resposta inicial.
+            return httpx.Response(
+                200,
+                stream=_StreamQueQuebraNoMeio(),
+                headers={"content-type": "text/event-stream"},
+            )
+
+        async with _client(handler) as c:
+            eventos = []
+            # Precisa coletar o evento parcial ANTES da exceção estourar —
+            # não dá pra reduzir a um único statement (PT012 não se aplica).
+            with pytest.raises(httpx.ReadError):  # noqa: PT012
+                async for e in c.stream_sse(
+                    "/chat/completions", {}, retry_backoff_s=0.0
+                ):
+                    eventos.append(e)  # noqa: PERF401
+
+        # Só uma tentativa de conexão — o erro veio depois do 1º evento.
+        assert tentativas["n"] == 1
+        assert eventos[0]["choices"][0]["delta"]["content"] == "parcial"
+
+
+class _StreamQueQuebraNoMeio(httpx.AsyncByteStream):
+    """Entrega 1 chunk válido e então levanta — simula queda de conexão a
+    meio do stream (diferente de falhar ao conectar, que é síncrono e
+    acontece antes de qualquer `yield`)."""
+
+    async def __aiter__(self):
+        yield b'data: {"choices":[{"delta":{"content":"parcial"}}]}\n\n'
+        raise httpx.ReadError("connection reset")
+
+    async def aclose(self) -> None:
+        return None
