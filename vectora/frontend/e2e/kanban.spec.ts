@@ -18,6 +18,11 @@ const PROMPT = "Responda apenas com a palavra: pronto";
 
 async function startSession(page: Page): Promise<void> {
   await page.goto("/");
+  // A tela inicial exige escolher Chat ou Code session antes do input
+  // aparecer — o Kanban só existe numa Code session (o workspace dedicado
+  // é criado automaticamente pelo backend ao confirmar sem selecionar nada).
+  await page.getByRole("button", { name: /Code session/ }).click();
+  await page.getByRole("button", { name: "Start conversation" }).click();
   const input = page.getByTestId("chat-input");
   await expect(input).toBeVisible({ timeout: 30_000 });
   await input.fill(PROMPT);

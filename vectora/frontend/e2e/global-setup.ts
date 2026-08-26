@@ -25,8 +25,8 @@ async function globalSetup(_config: FullConfig): Promise<void> {
         "O backend do Vectora está rodando em :8080?",
     );
   }
-  const { has_users: hasUsers } = (await hasUsersRes.json()) as {
-    has_users: boolean;
+  const { exists: hasUsers } = (await hasUsersRes.json()) as {
+    exists: boolean;
   };
 
   const endpoint = hasUsers ? "/auth/signin" : "/auth/signup";

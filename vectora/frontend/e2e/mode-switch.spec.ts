@@ -28,6 +28,12 @@ async function sendPrompt(page: Page, text: string): Promise<void> {
 
 async function startSession(page: Page): Promise<void> {
   await page.goto("/");
+  // A tela inicial exige escolher Chat ou Code session antes do input
+  // aparecer — os modos IDE/Kanban só existem numa Code session (o
+  // workspace dedicado é criado automaticamente pelo backend ao confirmar
+  // sem selecionar nada).
+  await page.getByRole("button", { name: /Code session/ }).click();
+  await page.getByRole("button", { name: "Start conversation" }).click();
   await sendPrompt(page, PROMPT);
   const assistant = page.getByTestId("message-content-assistant").last();
   await expect(assistant).toBeAttached({ timeout: 30_000 });

@@ -12,6 +12,7 @@ import json
 
 import httpx
 import pytest
+from pydantic import BaseModel
 
 from backend.llm.google.chat_client import GoogleChatClient
 from backend.llm.google.client import GoogleGenAIClient, GoogleGenAIResponseError
@@ -23,6 +24,17 @@ from backend.vtypes.message import (
     VMessage,
     text_message,
 )
+
+
+class _ItemAninhado(BaseModel):
+    """Modelo Pydantic usado como parâmetro de tool aninhado — reproduz o
+    schema `$defs`/`$ref` que o Gemini rejeita (ver
+    `TestToolCalling.test_tool_com_parametro_de_modelo_aninhado_...`).
+    Definido em escopo de módulo porque `get_type_hints` (chamado por
+    `vtool`) resolve anotações via `globalns` do módulo, não localns."""
+
+    nome: str
+    qtd: int
 
 
 def _client(handler, **kwargs) -> GoogleChatClient:
@@ -217,6 +229,46 @@ class TestToolCalling:
         declaracoes = capturado["tools"][0]["functionDeclarations"]
         assert declaracoes[0]["name"] == "buscar"
         assert "additionalProperties" not in declaracoes[0]["parameters"]
+
+    async def test_tool_com_parametro_de_modelo_aninhado_inline_refs_em_vez_de_defs(
+        self,
+    ):
+        """Pydantic v2 sempre emite `$defs`/`$ref` pra qualquer parâmetro
+        tipado como `BaseModel` aninhado (mesmo usado uma única vez) — e a
+        API do Gemini rejeita as duas chaves com 400 ("Cannot find field"),
+        reproduzido ao vivo com uma tool real de 166 do agente nativo. O
+        schema enviado ao Gemini precisa ter o `$ref` resolvido inline
+        (cópia real do `$defs`), não só removido — removê-lo sem inlinar
+        apagaria a definição do campo por completo."""
+        capturado: dict = {}
+
+        def handler(req: httpx.Request) -> httpx.Response:
+            capturado.update(json.loads(req.content))
+            return httpx.Response(200, json=_resposta_ok())
+
+        @vtool(extras=ToolExtras())
+        async def criar_itens(itens: list[_ItemAninhado]) -> str:
+            """cria itens.
+            Args:
+                itens: lista de itens
+            """
+            return ""
+
+        from backend.tools.registry import TOOL_REGISTRY
+
+        spec = TOOL_REGISTRY.get("criar_itens")
+        assert spec is not None
+
+        await _client(handler).agenerate(
+            [text_message(MessageRole.USER, "cria 2 itens")], tools=[spec]
+        )
+
+        parametros = capturado["tools"][0]["functionDeclarations"][0]["parameters"]
+        assert "$defs" not in parametros
+        item_schema = parametros["properties"]["itens"]["items"]
+        assert "$ref" not in item_schema
+        assert item_schema["properties"]["nome"]["type"] == "string"
+        assert item_schema["properties"]["qtd"]["type"] == "integer"
 
     async def test_function_call_nao_streaming_volta_montada(self):
         def handler(_req):

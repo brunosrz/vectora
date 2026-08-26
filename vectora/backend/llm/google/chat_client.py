@@ -56,13 +56,38 @@ def _safety_settings_permissivos() -> list[dict]:
     ]
 
 
+def _inline_refs(schema: Any, defs: dict[str, Any], seen: frozenset[str]) -> Any:
+    """Resolve `$ref: "#/$defs/Nome"` substituindo pela definição real —
+    o Gemini não suporta `$ref`/`$defs` (schema de function-calling é um
+    subconjunto de OpenAPI 3.0), então só removê-los apagaria o campo
+    inteiro em vez de expandi-lo. Pydantic v2 emite esse par sempre que um
+    parâmetro de tool usa um `BaseModel` aninhado, mesmo uma única vez —
+    reproduzido ao vivo com uma tool real do agente nativo (166 tools).
+    `seen` evita recursão infinita em modelo auto-referenciado: nesse caso
+    o Gemini não tem como representar a referência, então vira um objeto
+    genérico em vez de travar."""
+    if isinstance(schema, dict):
+        ref = schema.get("$ref")
+        if isinstance(ref, str) and ref.startswith("#/$defs/"):
+            nome = ref[len("#/$defs/") :]
+            if nome in seen or nome not in defs:
+                return {"type": "object"}
+            return _inline_refs(defs[nome], defs, seen | {nome})
+        return {
+            k: _inline_refs(v, defs, seen) for k, v in schema.items() if k != "$defs"
+        }
+    if isinstance(schema, list):
+        return [_inline_refs(item, defs, seen) for item in schema]
+    return schema
+
+
 def _strip_gemini_unsupported_keys(schema: Any) -> Any:
     """Remove chaves de JSON Schema que a API do Gemini rejeita com 400
-    ("Cannot find field") — o schema de function-calling do Gemini é um
-    subconjunto de OpenAPI 3.0, sem `additionalProperties`. Recursa em
+    ("Cannot find field") — sem `additionalProperties`. Recursa em
     `properties`/`items`/`anyOf`/`oneOf`/`allOf` porque o Pydantic v2 injeta
     `additionalProperties:false` em todo objeto, inclusive dentro de cada
-    branch de `anyOf` gerado por campo `Optional[...]`."""
+    branch de `anyOf` gerado por campo `Optional[...]`. `$defs`/`$ref` já
+    saíram antes, via `_inline_refs`."""
     if isinstance(schema, dict):
         return {
             k: _strip_gemini_unsupported_keys(v)
@@ -78,11 +103,17 @@ def _to_google_tool(spec: ToolSpec) -> dict:
     """`functionDeclarations` do Gemini — sem wrapper `type:"function"`,
     schema direto em `parameters`."""
     convertida = spec.openai_schema()["function"]
-    parametros = convertida.get("parameters") or {"type": "object", "properties": {}}
+    parametros: dict[str, Any] = convertida.get("parameters") or {
+        "type": "object",
+        "properties": {},
+    }
+    defs_brutos = parametros.get("$defs")
+    defs: dict[str, Any] = defs_brutos if isinstance(defs_brutos, dict) else {}
+    sem_refs = _inline_refs(parametros, defs, frozenset())
     return {
         "name": convertida.get("name", ""),
         "description": convertida.get("description", ""),
-        "parameters": _strip_gemini_unsupported_keys(parametros),
+        "parameters": _strip_gemini_unsupported_keys(sem_refs),
     }
 
 
