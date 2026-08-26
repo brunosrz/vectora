@@ -13,7 +13,13 @@
  */
 
 import { describe, expect, it, afterEach, beforeAll, vi } from "vitest";
-import { act, render, screen, cleanup } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+} from "@testing-library/react";
 import { MessageList } from "../message-list";
 import type { Message } from "@/lib/types";
 
@@ -213,6 +219,104 @@ describe("MessageList — scroll sobrevive à remontagem (troca de modo)", () =>
     });
 
     expect(container.scrollTop).toBe(4000);
+  });
+});
+
+describe("MessageList — botão 'Voltar ao fim'", () => {
+  it("aparece ao rolar pra cima e some ao voltar ao fim", async () => {
+    vi.useFakeTimers();
+    render(<MessageList {...baseProps([msg("m1", "olá")])} threadId="t-btn" />);
+
+    const container = screen.getByLabelText("Messages");
+    mockScrollMetrics(container);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+
+    // Nenhum botão enquanto o scroll está no fim.
+    expect(screen.queryByLabelText("Voltar ao fim")).not.toBeInTheDocument();
+
+    // Usuário rola pra cima.
+    container.scrollTop = 200;
+    await act(async () => {
+      fireEvent.scroll(container);
+    });
+    expect(screen.getByLabelText("Voltar ao fim")).toBeInTheDocument();
+
+    // E volta ao fim: 2000 - 500 = 1500 é o scrollTop máximo aqui.
+    container.scrollTop = 1500;
+    await act(async () => {
+      fireEvent.scroll(container);
+    });
+    expect(screen.queryByLabelText("Voltar ao fim")).not.toBeInTheDocument();
+  });
+
+  it("clicar no botão leva ao fim de uma vez, sem posição intermediária", async () => {
+    vi.useFakeTimers();
+    render(
+      <MessageList {...baseProps([msg("m1", "olá")])} threadId="t-btn2" />,
+    );
+
+    const container = screen.getByLabelText("Messages");
+    mockScrollMetrics(container);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+
+    container.scrollTop = 100;
+    await act(async () => {
+      fireEvent.scroll(container);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText("Voltar ao fim"));
+    });
+
+    expect(container.scrollTop).toBe(2000);
+    expect(screen.queryByLabelText("Voltar ao fim")).not.toBeInTheDocument();
+  });
+});
+
+describe("MessageList — skeletons de carregamento", () => {
+  it("mostra skeletons e esconde a lista enquanto o histórico carrega", () => {
+    render(
+      <MessageList
+        {...baseProps([msg("m1", "olá")])}
+        threadId="t-load"
+        isLoadingThread
+      />,
+    );
+
+    expect(screen.getByTestId("message-skeletons")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("message-list-content"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("erro/borda: o botão 'Voltar ao fim' nunca aparece durante o carregamento", async () => {
+    vi.useFakeTimers();
+    const { rerender } = render(
+      <MessageList {...baseProps([msg("m1", "olá")])} threadId="t-load2" />,
+    );
+    const container = screen.getByLabelText("Messages");
+    mockScrollMetrics(container);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    container.scrollTop = 100;
+    await act(async () => {
+      fireEvent.scroll(container);
+    });
+    expect(screen.getByLabelText("Voltar ao fim")).toBeInTheDocument();
+
+    rerender(
+      <MessageList
+        {...baseProps([msg("m1", "olá")])}
+        threadId="t-load2"
+        isLoadingThread
+      />,
+    );
+    expect(screen.queryByLabelText("Voltar ao fim")).not.toBeInTheDocument();
   });
 });
 
