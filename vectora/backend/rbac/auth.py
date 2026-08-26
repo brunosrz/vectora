@@ -408,6 +408,23 @@ async def has_users() -> bool:
     return await _count_users(db) > 0
 
 
+async def setup_complete() -> bool:
+    """True quando a instância já passou pelo wizard, em qualquer modo.
+
+    Não basta olhar a tabela `users`: o modo local (sem conta) grava o
+    perfil em `app_settings` via ``runtime_settings.set_local_user`` e
+    deliberadamente não cria linha em `users` (ver
+    ``api/handlers/auth.py::setup_local_endpoint``). Perguntar só
+    ``has_users()`` faz uma instância local configurada parecer virgem
+    para sempre.
+    """
+    if await has_users():
+        return True
+    from backend.workspace.runtime_settings import runtime_settings
+
+    return bool(runtime_settings.local_user_name.strip())
+
+
 async def username_taken(username: str) -> bool:
     """True se o username (normalizado) já pertence a algum usuário."""
     from backend.rbac.username import normalize_username

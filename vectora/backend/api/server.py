@@ -192,11 +192,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao configurar telemetria nativa: %s", exc)
 
-    # Setup wizard: avisa o operador se ainda não há usuários cadastrados
+    # Setup wizard: avisa o operador enquanto a instância não foi configurada
+    # em nenhum dos modos. `setup_complete` (não `has_users`) porque o modo
+    # local grava o perfil em app_settings sem criar linha em `users`.
     try:
-        from backend.rbac.auth import has_users as _has_users
+        from backend.rbac.auth import setup_complete as _setup_complete
 
-        if not await _has_users():
+        if not await _setup_complete():
             logger.warning(
                 "\n\n"
                 "  ✨  Vectora aguardando setup inicial.\n"

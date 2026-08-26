@@ -176,13 +176,24 @@ interface WebhookSseEvent {
   data: KanbanSseEventData;
 }
 
+//: Espelha `backend/scheduling/kanban.py::KANBAN_STATUSES` menos `archived`,
+//: que entra por filtro. Toda tarefa precisa de uma coluna: sem `triage`,
+//: `scheduled` e `review` aqui, tarefas nesses status eram descartadas pelo
+//: filtro de visibilidade e sumiam do board sem nenhum aviso.
 const COLUNAS: { status: string; label: () => string }[] = [
+  { status: "triage", label: () => m.kanban_column_triage() },
   { status: "todo", label: () => m.kanban_column_todo() },
+  { status: "scheduled", label: () => m.kanban_column_scheduled() },
   { status: "ready", label: () => m.kanban_column_ready() },
   { status: "running", label: () => m.kanban_column_running() },
   { status: "blocked", label: () => m.kanban_column_blocked() },
+  { status: "review", label: () => m.kanban_column_review() },
   { status: "done", label: () => m.kanban_column_done() },
 ];
+
+//: Coluna de escape pra status que o backend passe a emitir e o frontend
+//: ainda não conheça — melhor uma lane "Outros" do que a tarefa evaporar.
+const FALLBACK_STATUS = "__other__";
 
 //: Pares acionáveis por drag-and-drop — espelha
 //: `backend/scheduling/kanban.py::MANUAL_TRANSITIONS`. `running` e `done`
@@ -461,30 +472,74 @@ function Column({
   status,
   label,
   count,
+  collapsed,
+  onToggle,
   children,
 }: {
   status: string;
   label: string;
   count: number;
+  /** Trilho vertical estreito em vez da coluna inteira — lane vazia num
+   *  board que tem trabalho em outra coluna. */
+  collapsed: boolean;
+  onToggle: () => void;
   children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
+  if (collapsed) {
+    return (
+      <button
+        ref={setNodeRef}
+        type="button"
+        onClick={onToggle}
+        aria-label={m.kanban_lane_expand()}
+        aria-expanded={false}
+        data-testid={`kanban-col-${status}`}
+        data-collapsed="true"
+        className={`h-full w-9 shrink-0 flex flex-col items-center gap-2 rounded-md border border-border/40 py-2 transition-colors hover:bg-accent/30 ${
+          isOver ? "bg-accent/40" : ""
+        }`}
+      >
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground [writing-mode:vertical-rl]">
+          {label}
+        </span>
+        {count > 0 && (
+          <span className="text-[10px] text-muted-foreground">{count}</span>
+        )}
+      </button>
+    );
+  }
+
   return (
     <div
       ref={setNodeRef}
-      className={`w-60 shrink-0 flex flex-col gap-2 rounded-md ${
+      className={`h-full w-60 shrink-0 flex flex-col gap-2 rounded-md ${
         isOver ? "bg-accent/40" : ""
       }`}
       data-testid={`kanban-col-${status}`}
+      data-collapsed="false"
     >
-      <div className="flex items-center justify-between px-1">
+      <div className="flex shrink-0 items-center justify-between px-1">
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
           {label}
         </span>
-        <span className="text-[10px] text-muted-foreground">{count}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-muted-foreground">{count}</span>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={m.kanban_lane_collapse()}
+            aria-expanded
+            className="rounded px-1 text-[10px] text-muted-foreground/60 hover:bg-accent/40 hover:text-foreground"
+          >
+            ‹
+          </button>
+        </div>
       </div>
-      <div className="space-y-2">
+      {/* Rolagem por lane, nunca do board inteiro: com o board rolando, uma
+          coluna cheia arrastava as outras junto e o rodapé sumia. */}
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
         {count === 0 ? (
           <p className="px-1 text-[10px] text-muted-foreground/60">
             {m.kanban_column_empty()}
@@ -523,6 +578,11 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   const [tenantFilter, setTenantFilter] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  //: Colapso manual por lane, sobrepondo o automático (lane vazia colapsa
+  //: sozinha quando o board tem trabalho). Chave ausente = segue o automático.
+  const [laneOverrides, setLaneOverrides] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const carregar = () => {
     let cancelado = false;
@@ -626,8 +686,7 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     };
   }, [threadId]);
 
-  // `triage` nunca tem coluna (dropzone própria); `archived` só entra
-  // quando o filtro "mostrar arquivadas" está ativo.
+  // `archived` só entra quando o filtro "mostrar arquivadas" está ativo.
   const colunasAtivas = showArchived
     ? [
         ...COLUNAS,
@@ -646,7 +705,10 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
 
   const buscaLower = search.trim().toLowerCase();
   const visiveis = tasks.filter((t) => {
-    if (!colunasAtivas.some((c) => c.status === t.status)) return false;
+    // `archived` é o único status que pode ser escondido, e só por filtro.
+    // Qualquer outro status desconhecido cai na lane de fallback — nunca
+    // some do board.
+    if (!showArchived && t.status === "archived") return false;
     if (buscaLower && !t.name.toLowerCase().includes(buscaLower)) return false;
     if (tenantFilter && t.workspace_id !== tenantFilter) return false;
     if (assigneeFilter && t.agent_profile_id !== assigneeFilter) return false;
@@ -697,84 +759,119 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     });
   };
 
+  // Lanes vazias viram trilho quando o board tem trabalho em alguma outra —
+  // sem isso, 8 colunas de 240px forçam scroll horizontal em qualquer janela.
+  const boardTemTrabalho = visiveis.length > 0;
+
+  const temOrfas = visiveis.some(
+    (t) => !colunasAtivas.some((c) => c.status === t.status),
+  );
+  const lanes = temOrfas
+    ? [
+        ...colunasAtivas,
+        { status: FALLBACK_STATUS, label: () => m.kanban_column_other() },
+      ]
+    : colunasAtivas;
+
   return (
-    <div className="flex-1 min-h-0 overflow-x-auto p-4">
-      <NewTaskForm threadId={threadId} onCreated={carregar} />
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={m.kanban_filter_search_placeholder()}
-          aria-label={m.kanban_filter_search_label()}
-          className="w-40 rounded border bg-background px-2 py-1 text-xs"
-        />
-        {tenants.length > 0 && (
-          <select
-            value={tenantFilter}
-            onChange={(e) => setTenantFilter(e.target.value)}
-            aria-label={m.kanban_filter_tenant_all()}
-            className="rounded border bg-background px-2 py-1 text-xs"
-          >
-            <option value="">{m.kanban_filter_tenant_all()}</option>
-            {tenants.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
-        )}
-        {assignees.length > 0 && (
-          <select
-            value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
-            aria-label={m.kanban_filter_assignee_all()}
-            className="rounded border bg-background px-2 py-1 text-xs"
-          >
-            <option value="">{m.kanban_filter_assignee_all()}</option>
-            {assignees.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
-        )}
-        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden p-4">
+      <div className="shrink-0">
+        <NewTaskForm threadId={threadId} onCreated={carregar} />
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           <input
-            type="checkbox"
-            checked={showArchived}
-            onChange={(e) => setShowArchived(e.target.checked)}
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={m.kanban_filter_search_placeholder()}
+            aria-label={m.kanban_filter_search_label()}
+            className="w-40 rounded border bg-background px-2 py-1 text-xs"
           />
-          {m.kanban_filter_show_archived()}
-        </label>
-      </div>
-      {selected.size > 0 && (
-        <div className="mb-3 flex items-center gap-3 rounded-md border bg-card px-3 py-1.5">
-          <span className="text-xs">
-            {m.kanban_selection_count({ n: selected.size })}
-          </span>
-          <button
-            onClick={arquivarSelecionadas}
-            className="text-xs text-primary hover:underline"
-          >
-            {m.kanban_action_archive()}
-          </button>
+          {tenants.length > 0 && (
+            <select
+              value={tenantFilter}
+              onChange={(e) => setTenantFilter(e.target.value)}
+              aria-label={m.kanban_filter_tenant_all()}
+              className="rounded border bg-background px-2 py-1 text-xs"
+            >
+              <option value="">{m.kanban_filter_tenant_all()}</option>
+              {tenants.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+          )}
+          {assignees.length > 0 && (
+            <select
+              value={assigneeFilter}
+              onChange={(e) => setAssigneeFilter(e.target.value)}
+              aria-label={m.kanban_filter_assignee_all()}
+              className="rounded border bg-background px-2 py-1 text-xs"
+            >
+              <option value="">{m.kanban_filter_assignee_all()}</option>
+              {assignees.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+          )}
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+            />
+            {m.kanban_filter_show_archived()}
+          </label>
         </div>
-      )}
-      {tasks.length === 0 && (
-        <p className="mb-2 text-xs text-muted-foreground">{m.kanban_empty()}</p>
-      )}
+        {selected.size > 0 && (
+          <div className="mb-3 flex items-center gap-3 rounded-md border bg-card px-3 py-1.5">
+            <span className="text-xs">
+              {m.kanban_selection_count({ n: selected.size })}
+            </span>
+            <button
+              onClick={arquivarSelecionadas}
+              className="text-xs text-primary hover:underline"
+            >
+              {m.kanban_action_archive()}
+            </button>
+          </div>
+        )}
+        {tasks.length === 0 && (
+          <p className="mb-2 text-xs text-muted-foreground">
+            {m.kanban_empty()}
+          </p>
+        )}
+      </div>
       <DndContext onDragEnd={handleDragEnd}>
-        <TriageDropzone />
-        <div className="flex gap-3 min-w-max h-full">
-          {colunasAtivas.map((coluna) => {
-            const daColuna = visiveis.filter((t) => t.status === coluna.status);
+        <div className="shrink-0">
+          <TriageDropzone />
+        </div>
+        {/* Só as lanes rolam — horizontalmente aqui, verticalmente cada uma
+            por dentro. A raiz é overflow-hidden, então o board nunca produz
+            scrollbar própria estando vazio. */}
+        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto">
+          {lanes.map((coluna) => {
+            const daColuna = visiveis.filter((t) =>
+              coluna.status === FALLBACK_STATUS
+                ? !colunasAtivas.some((c) => c.status === t.status)
+                : t.status === coluna.status,
+            );
+            const autoColapsada = boardTemTrabalho && daColuna.length === 0;
             return (
               <Column
                 key={coluna.status}
                 status={coluna.status}
                 label={coluna.label()}
                 count={daColuna.length}
+                collapsed={laneOverrides[coluna.status] ?? autoColapsada}
+                onToggle={() =>
+                  setLaneOverrides((prev) => ({
+                    ...prev,
+                    [coluna.status]: !(prev[coluna.status] ?? autoColapsada),
+                  }))
+                }
               >
                 {daColuna.map((task) => (
                   <TaskCard

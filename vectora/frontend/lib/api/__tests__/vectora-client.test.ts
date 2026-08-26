@@ -221,3 +221,27 @@ describe("ThreadService pins", () => {
     await expect(getThreadPins("t8")).rejects.toThrow(/503/);
   });
 });
+
+describe("getHistory — guarda de thread_id vazio", () => {
+  it("erro/borda: id vazio não vai à rede e devolve histórico vazio", async () => {
+    // Regressão: pedir histórico antes de existir um id produzia
+    // `404: Thread '' not found` com traceback no backend em todo boot.
+    const r = await getHistory("");
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(r.messages).toEqual([]);
+  });
+
+  it("id só com espaços também é recusado (não vira request)", async () => {
+    await expect(getHistory("   ")).resolves.toMatchObject({ messages: [] });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("id válido continua indo à rede normalmente", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ messages: [{ id: "m1" }] }));
+    const r = await getHistory("t1");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(r.messages).toHaveLength(1);
+  });
+});

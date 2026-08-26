@@ -32,6 +32,10 @@ export default defineConfig({
     TanStackRouterVite({
       routesDirectory: "./src/routes",
       generatedRouteTree: "./src/routeTree.gen.ts",
+      // Testes convivem com as rotas que exercitam (`src/routes/**/__tests__/`)
+      // e nunca exportam uma `Route`; sem isto o gerador avisa sobre cada um
+      // deles em todo build.
+      routeFileIgnorePattern: "__tests__",
     }),
     paraglideVitePlugin({
       project: "./project.inlang",

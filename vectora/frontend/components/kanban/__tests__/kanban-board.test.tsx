@@ -2,9 +2,9 @@
 /**
  * Board do 3º modo de interface, feature pública.
  *
- * Cinco colunas fixas, sempre visíveis mesmo com 0 tasks; `triage` fica fora
- * (dropzone própria) e `archived` só aparece com o filtro "mostrar
- * arquivadas" ligado.
+ * Uma lane por status do backend (`KANBAN_STATUSES` menos `archived`, que
+ * entra por filtro). Lane vazia colapsa em trilho quando o board tem
+ * trabalho em outra; board totalmente vazio mostra todas expandidas.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -223,32 +223,73 @@ describe("KanbanBoard", () => {
     expect(screen.getByText(/nenhuma execução ainda/i)).toBeInTheDocument();
   });
 
-  it("triage e archived não aparecem nas cinco colunas por padrão", async () => {
-    // Erro/borda: mostrá-los junto encheria o board de cards fora do fluxo
-    // ativo — os dois existem no modelo mas não têm coluna aqui (archived só
-    // aparece com o filtro "mostrar arquivadas" ligado).
+  it("tarefa em triage/scheduled/review aparece — antes sumia do board", async () => {
+    // Regressão: o board só declarava 5 colunas e o filtro de visibilidade
+    // descartava qualquer status sem lane, então tarefas nesses três status
+    // desapareciam sem nenhum aviso ao usuário.
     mockTasks([
       task({ id: "a", name: "em triagem", status: "triage" }),
-      task({ id: "b", name: "arquivada", status: "archived" }),
+      task({ id: "b", name: "agendada", status: "scheduled" }),
+      task({ id: "c", name: "em revisão", status: "review" }),
     ]);
 
     await montar();
 
-    expect(screen.queryByText("em triagem")).not.toBeInTheDocument();
-    expect(screen.queryByText("arquivada")).not.toBeInTheDocument();
+    expect(screen.getByText("em triagem")).toBeInTheDocument();
+    expect(screen.getByText("agendada")).toBeInTheDocument();
+    expect(screen.getByText("em revisão")).toBeInTheDocument();
   });
 
-  it("colunas ficam visíveis mesmo com 0 tasks (não é bug, é board novo)", async () => {
+  it("erro/borda: status desconhecido cai na lane de fallback em vez de sumir", async () => {
+    mockTasks([
+      task({ id: "a", name: "status novo do backend", status: "quantum" }),
+    ]);
+
+    await montar();
+
+    expect(screen.getByText("status novo do backend")).toBeInTheDocument();
+    expect(screen.getByTestId("kanban-col-__other__")).toBeInTheDocument();
+  });
+
+  it("archived continua escondida por padrão e aparece com o filtro", async () => {
+    mockTasks([task({ id: "b", name: "arquivada", status: "archived" })]);
+
+    await montar();
+    expect(screen.queryByText("arquivada")).not.toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText(/arquivadas/i));
+    });
+    expect(screen.getByText("arquivada")).toBeInTheDocument();
+  });
+
+  it("board vazio mostra todas as lanes expandidas (nenhuma colapsa sem trabalho)", async () => {
     mockTasks([]);
 
     await montar();
 
-    expect(screen.getByTestId("kanban-col-todo")).toBeInTheDocument();
-    expect(screen.getByTestId("kanban-col-ready")).toBeInTheDocument();
-    expect(screen.getByTestId("kanban-col-running")).toBeInTheDocument();
-    expect(screen.getByTestId("kanban-col-blocked")).toBeInTheDocument();
-    expect(screen.getByTestId("kanban-col-done")).toBeInTheDocument();
+    for (const status of ["triage", "todo", "ready", "running", "done"]) {
+      expect(screen.getByTestId(`kanban-col-${status}`)).toHaveAttribute(
+        "data-collapsed",
+        "false",
+      );
+    }
     expect(screen.getByText(/nenhuma tarefa/i)).toBeInTheDocument();
+  });
+
+  it("com trabalho no board, lane vazia colapsa em trilho e a preenchida fica expandida", async () => {
+    mockTasks([task({ id: "a", name: "só essa", status: "todo" })]);
+
+    await montar();
+
+    expect(screen.getByTestId("kanban-col-todo")).toHaveAttribute(
+      "data-collapsed",
+      "false",
+    );
+    expect(screen.getByTestId("kanban-col-done")).toHaveAttribute(
+      "data-collapsed",
+      "true",
+    );
   });
 
   it("botão Desbloquear só aparece em cards blocked e chama /unblock", async () => {

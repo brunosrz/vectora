@@ -395,8 +395,13 @@ export const updateThread = (
 
 export const getHistory = (
   thread_id: string,
-): Promise<{ messages: HistoryMessage[]; todos?: TodoItem[] }> =>
-  postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
+): Promise<{ messages: HistoryMessage[]; todos?: TodoItem[] }> => {
+  // Sessão ainda sem id (rota /session/new antes do primeiro turno, efeito
+  // disparando durante a hidratação): pedir histórico de "" só rende um 404
+  // com traceback no backend. Thread sem id é thread sem histórico.
+  if (!thread_id.trim()) return Promise.resolve({ messages: [] });
+  return postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
+};
 
 export interface PagedHistoryResponse {
   messages: HistoryMessage[];

@@ -97,3 +97,48 @@ def test_setup_local_username_ausente_nao_quebra(_isolated_runtime_settings):
 
     assert result.ok is True
     assert _isolated_runtime_settings.local_username == ""
+
+
+# ---------------------------------------------------------------------------
+# setup_complete() — predicado de "instância já configurada" usado no boot
+# ---------------------------------------------------------------------------
+
+
+def test_setup_complete_falso_em_instalacao_virgem():
+    """Sem usuários E sem perfil local: o wizard ainda precisa rodar."""
+    from backend.rbac.auth import setup_complete
+
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
+        assert asyncio.run(setup_complete()) is False
+
+
+def test_setup_complete_verdadeiro_apos_setup_local(_isolated_runtime_settings):
+    """Regressão: o modo local NÃO cria linha em `users` (por design, ver
+    docstring de `setup_local_endpoint`), então `has_users()` sozinho diz
+    "não configurado" para sempre — e o boot repetia o aviso de setup
+    pendente em toda inicialização, mesmo com o wizard já concluído."""
+    from backend.rbac.auth import setup_complete
+
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
+        asyncio.run(
+            setup_local_endpoint(SetupLocalRequest(name="Bruno", company="Vectora"))
+        )
+        assert asyncio.run(setup_complete()) is True
+
+
+def test_setup_complete_verdadeiro_com_usuarios_cadastrados():
+    """Modo servidor/VPS: existe usuário na tabela, nada de perfil local."""
+    from backend.rbac.auth import setup_complete
+
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(True)):
+        assert asyncio.run(setup_complete()) is True
+
+
+def test_setup_complete_ignora_perfil_local_vazio(_isolated_runtime_settings):
+    """Erro/borda: chave gravada com nome em branco não conta como setup
+    concluído — senão um write parcial silenciaria o wizard para sempre."""
+    from backend.rbac.auth import setup_complete
+
+    _isolated_runtime_settings.set_local_user("", "")
+    with patch("backend.rbac.auth.has_users", lambda: _async_bool(False)):
+        assert asyncio.run(setup_complete()) is False

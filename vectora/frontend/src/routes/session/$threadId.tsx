@@ -748,9 +748,13 @@ function SessionPage() {
               </div>
             </div>
           ) : uiMode === "ide" && !chatMode ? (
-            // ── Layout IDE: sidebars ao topo, Header fica no topo geral ──
+            // ── Layout IDE ──────────────────────────────────────────────
+            // O Header NÃO fica acima da linha de painéis: ele vive dentro
+            // da coluna do editor (ver slot `editor` abaixo). Acima de tudo
+            // ele roubaria a faixa de topo da navBar, do workbench e do
+            // chat, que precisam ir do topo ao rodapé como a sidebar no
+            // modo Assistente.
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              {headerEl}
               <IdeModeLayout
                 isNarrow={isNarrowViewport}
                 navBar={<WorkbenchNavBar threadId={threadId} side="left" />}
@@ -792,7 +796,10 @@ function SessionPage() {
                   // min-w-[360px]: piso mínimo pro editor continuar usável
                   // ao encolher a janela ou puxar o painel do workbench largo.
                   <div className="flex flex-col flex-1 min-w-[360px] h-full overflow-hidden">
-                    <DockedEditor activeWorkspaceId={activeWorkspaceId} />
+                    {headerEl}
+                    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                      <DockedEditor activeWorkspaceId={activeWorkspaceId} />
+                    </div>
                   </div>
                 }
                 chat={
