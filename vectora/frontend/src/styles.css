@@ -221,7 +221,11 @@
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
-  scroll-behavior: smooth;
+  /* Sem `scroll-behavior: smooth`: ele transforma QUALQUER escrita de
+     scrollTop numa animação de velocidade constante, então ir ao fim de
+     uma conversa longa levava tempo proporcional ao tamanho dela e
+     engasgava enquanto o conteúdo do caminho era medido. O posicionamento
+     no fim precisa ser um salto direto. */
   will-change: scroll-position;
 }
 .custom-scrollbar:hover {

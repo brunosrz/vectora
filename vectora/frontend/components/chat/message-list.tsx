@@ -23,6 +23,18 @@ const VIRTUALIZE_THRESHOLD = 50;
 // Estimativa de altura por mensagem (será refinada via measureElement).
 const ESTIMATE_SIZE_PX = 200;
 
+// Posição de scroll por thread, preservada entre montagens (troca de modo
+// Assistente/IDE/Kanban remonta o chat). Módulo, não state: sobreviver ao
+// unmount é justamente o ponto.
+const savedScrollTops = new Map<string, number>();
+
+// Janela máxima em que o conteúdo ainda é reposicionado no fim enquanto a
+// altura cresce (markdown/syntax highlight sendo medidos). Não é um
+// polling de N tentativas: o reposicionamento é disparado pelo
+// ResizeObserver e este teto só evita ficar preso se a altura nunca
+// estabilizar.
+const SETTLE_WINDOW_MS = 1200;
+
 interface MessageListProps {
   messages: Message[];
   showToolCalls?: boolean;
@@ -109,7 +121,7 @@ export const MessageList = memo(function MessageList({
   // Refs para debounce de scroll na thread inicial
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const mutationObserverRef = useRef<MutationObserver | null>(null);
-  const scrollAttemptsRef = useRef(0);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   // M1 — Ativa virtualização somente acima do threshold
   const shouldVirtualize = messages.length > VIRTUALIZE_THRESHOLD;
@@ -199,118 +211,74 @@ export const MessageList = memo(function MessageList({
       firstMessageIdRef.current !== currentFirstMessageId;
 
     if (isInitialLoad || threadChanged) {
+      const scrollContainer = scrollRef.current;
       isProgrammaticScrollRef.current = true;
       isAutoScrollingRef.current = true;
       shouldAutoScrollRef.current = true;
-      scrollAttemptsRef.current = 0;
       setIsScrollSettling(true);
 
-      mutationObserverRef.current?.disconnect();
-      mutationObserverRef.current = null;
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       if (settleCapTimeoutRef.current)
         clearTimeout(settleCapTimeoutRef.current);
-      // Cap de segurança: nunca fica invisível por mais que isso, mesmo se
-      // o scrollHeight nunca estabilizar (cenário patológico). Também
-      // desarma o polling inteiro (MutationObserver + isAutoScrollingRef) —
-      // sem isso, o cap só escondia/revelava o conteúdo visualmente, mas o
-      // observer continuava brigando por até ~10s (MAX_SCROLL_ATTEMPTS) por
-      // qualquer scroll manual/programático feito depois do cap expirar.
-      settleCapTimeoutRef.current = setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-        isAutoScrollingRef.current = false;
-        mutationObserverRef.current?.disconnect();
-        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-        setIsScrollSettling(false);
-      }, 1500);
+      resizeObserverRef.current?.disconnect();
 
-      const scrollContainer = scrollRef.current;
-      let lastScrollHeight = 0;
-      let stabilityCheckCount = 0;
-      const MAX_SCROLL_ATTEMPTS = 100;
-      const STABILITY_THRESHOLD = 5;
-      const CHECK_INTERVAL = 100;
+      // Posição alvo: o fim, ou a posição salva se o usuário já tinha
+      // rolado esta thread antes de trocar de modo.
+      const saved = threadId ? savedScrollTops.get(threadId) : undefined;
 
-      const scrollAndCheck = () => {
-        if (!isAutoScrollingRef.current) return;
-        if (
-          !scrollContainer ||
-          scrollAttemptsRef.current >= MAX_SCROLL_ATTEMPTS
-        ) {
-          scrollToAbsoluteBottom();
-          setTimeout(() => {
-            scrollToAbsoluteBottom();
-            isProgrammaticScrollRef.current = false;
-            isAutoScrollingRef.current = false;
-            mutationObserverRef.current?.disconnect();
-            if (settleCapTimeoutRef.current)
-              clearTimeout(settleCapTimeoutRef.current);
-            setIsScrollSettling(false);
-          }, 200);
-          return;
-        }
-
-        scrollAttemptsRef.current++;
-        const currentScrollHeight = scrollContainer.scrollHeight;
-        scrollToAbsoluteBottom();
-
-        if (currentScrollHeight === lastScrollHeight) {
-          stabilityCheckCount++;
-          if (stabilityCheckCount >= STABILITY_THRESHOLD) {
-            const maxScrollTop =
-              scrollContainer.scrollHeight - scrollContainer.clientHeight;
-            const distanceFromBottom = maxScrollTop - scrollContainer.scrollTop;
-            if (distanceFromBottom <= 10) {
-              setTimeout(() => {
-                scrollToAbsoluteBottom();
-                isProgrammaticScrollRef.current = false;
-                isAutoScrollingRef.current = false;
-                mutationObserverRef.current?.disconnect();
-                if (settleCapTimeoutRef.current)
-                  clearTimeout(settleCapTimeoutRef.current);
-                setIsScrollSettling(false);
-              }, 200);
-              return;
-            }
-            stabilityCheckCount = 0;
-          }
+      const applyTarget = () => {
+        if (saved !== undefined) {
+          scrollContainer.scrollTop = saved;
+          lastScrollTopRef.current = saved;
+          shouldAutoScrollRef.current = isAtAbsoluteBottom();
         } else {
-          stabilityCheckCount = 0;
-          lastScrollHeight = currentScrollHeight;
+          scrollToAbsoluteBottom();
         }
-
-        scrollTimeoutRef.current = setTimeout(scrollAndCheck, CHECK_INTERVAL);
       };
 
-      mutationObserverRef.current = new MutationObserver((mutations) => {
-        if (mutations.length > 0) {
-          scrollToAbsoluteBottom();
-          stabilityCheckCount = 0;
-        }
-      });
+      const finish = () => {
+        resizeObserverRef.current?.disconnect();
+        resizeObserverRef.current = null;
+        if (settleCapTimeoutRef.current)
+          clearTimeout(settleCapTimeoutRef.current);
+        applyTarget();
+        isProgrammaticScrollRef.current = false;
+        isAutoScrollingRef.current = false;
+        setIsScrollSettling(false);
+      };
 
-      mutationObserverRef.current.observe(scrollContainer, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true,
+      // Salto direto, sem rolagem incremental: reposiciona a cada mudança
+      // real de altura do conteúdo e para assim que ela estabiliza. Sem
+      // requestAnimationFrame — ele fica throttled em janela oculta/sem
+      // foco (boot do Electron), o que travava a convergência pela metade.
+      applyTarget();
+      resizeObserverRef.current = new ResizeObserver(() => {
+        applyTarget();
       });
+      resizeObserverRef.current.observe(scrollContainer);
+      const contentEl = scrollContainer.firstElementChild;
+      if (contentEl) resizeObserverRef.current.observe(contentEl);
 
-      scrollToAbsoluteBottom();
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          scrollTimeoutRef.current = setTimeout(scrollAndCheck, 150);
-        });
-      });
+      settleCapTimeoutRef.current = setTimeout(finish, SETTLE_WINDOW_MS);
     }
 
     firstMessageIdRef.current = currentFirstMessageId;
-  }, [messages, scrollToAbsoluteBottom, isAtAbsoluteBottom]);
+  }, [messages, threadId, scrollToAbsoluteBottom, isAtAbsoluteBottom]);
 
-  // Cleanup ao desmontar
+  // Guarda a posição de scroll da thread ao desmontar (troca de modo
+  // remonta o chat) — restaurada no efeito acima.
+  useEffect(() => {
+    const el = scrollRef.current;
+    return () => {
+      if (threadId && el) savedScrollTops.set(threadId, el.scrollTop);
+    };
+  }, [threadId]);
+
+  // Cleanup ao desmontar — desarma sempre o observer/timer mais recente,
+  // por isso lê `.current` aqui em vez de capturar no corpo do efeito.
   useEffect(() => {
     return () => {
       mutationObserverRef.current?.disconnect();
+      resizeObserverRef.current?.disconnect();
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       if (settleCapTimeoutRef.current)
         clearTimeout(settleCapTimeoutRef.current);
@@ -381,20 +349,21 @@ export const MessageList = memo(function MessageList({
     shouldAutoScrollRef.current = true;
     setShowScrollButton(false);
 
+    // Salto direto. `behavior:"smooth"` rola a passo constante, então
+    // quanto mais longa a conversa mais tempo levava pra chegar ao fim —
+    // e o percurso ainda passava por todo o conteúdo intermediário sendo
+    // medido, o que produzia os engasgos.
     if (shouldVirtualize) {
       virtualizer.scrollToIndex(messages.length - 1, { align: "end" });
     } else {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight - scrollRef.current.clientHeight,
-        behavior: "smooth",
-      });
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
 
     setTimeout(() => {
       if (scrollRef.current)
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       isProgrammaticScrollRef.current = false;
-    }, 400);
+    }, 100);
   }, [shouldVirtualize, virtualizer, messages.length]);
 
   // ──────────────────────────────────────────────────────────────────────────

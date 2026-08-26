@@ -11,14 +11,28 @@ import {
   cleanup,
   fireEvent,
 } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MessageItem } from "../message-item";
 import type { Message } from "@/lib/types";
 
 afterEach(cleanup);
 
+// MessageItem usa useQueryClient (invalida o histórico após "Retroceder"),
+// então precisa de um provider mesmo nos testes que não exercitam rewind.
+// Passado como `wrapper` (não inline no elemento) porque `rerender` do RTL
+// substitui a árvore inteira e perderia um provider inline.
 function render(ui: React.ReactElement) {
-  return rtlRender(<TooltipProvider>{ui}</TooltipProvider>);
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return rtlRender(ui, {
+    wrapper: ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>{children}</TooltipProvider>
+      </QueryClientProvider>
+    ),
+  });
 }
 
 type Props = Parameters<typeof MessageItem>[0];
