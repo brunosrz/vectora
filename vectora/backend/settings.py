@@ -64,7 +64,7 @@ class Settings(BaseSettings):
 
     # Google Generative AI
     google_api_key: str | None = None
-    google_model: str = "gemini-2.5-flash"
+    google_model: str = "gemini-3.6-flash"
 
     # OpenAI
     openai_api_key: str | None = None
@@ -1069,11 +1069,14 @@ class Settings(BaseSettings):
 AVAILABLE_MODELS: dict[str, list[str]] = {
     "google-genai": [
         # Gemini 3.x — geração atual
+        "gemini-3.6-flash",
         "gemini-3.5-flash",
         "gemini-3.1-pro-preview",
         "gemini-3-flash-preview",
         "gemini-3.1-flash-lite",
-        # Gemini 2.5 — ainda ativos e recomendados
+        # Gemini 2.5 — bloqueado pro Google pra API keys novas desde
+        # jul/2026 ("no longer available to new users"); mantido na lista
+        # só pra quem já tinha acesso concedido antes do bloqueio.
         "gemini-2.5-flash",
         "gemini-2.5-pro",
     ],
@@ -1211,6 +1214,7 @@ TOOL_CALLING_INCOMPATIBLE_MODELS: set[str] = {"cohere:command-a-plus-05-2026"}
 #   Cohere: https://docs.cohere.com/docs/{command-a-plus,command-r7b}
 MODEL_CONTEXT_WINDOWS: dict[str, int] = {
     # Gemini — toda família roda em 1M
+    "gemini-3.6-flash": 1_000_000,
     "gemini-3.5-flash": 1_000_000,
     "gemini-3.1-pro-preview": 1_000_000,
     "gemini-3-flash-preview": 1_000_000,

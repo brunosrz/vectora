@@ -25,6 +25,7 @@ CLI:
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import re
@@ -34,6 +35,14 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+#: Tentativas e intervalo pra ler schema.sql sob `PermissionError` — cobre
+#: lock transitório de AV/indexador escaneando o arquivo recém-extraído
+#: pelo instalador (comum logo após instalação no Windows). Não mascara
+#: uma permissão genuinamente permanente: esgotadas as tentativas, o
+#: `PermissionError` original propaga.
+_READ_SCHEMA_RETRIES = 3
+_READ_SCHEMA_RETRY_DELAY_S = 0.2
 
 _CONTROL_SCHEMA = """
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -111,11 +120,32 @@ class MigrationRunner:
             )
         await self._conn.commit()
 
-    def _read_schema(self) -> tuple[str, str]:
-        """Retorna ``(conteúdo, checksum)`` do schema.sql."""
-        content = self._file.read_text(encoding="utf-8")
-        checksum = hashlib.sha256(content.encode()).hexdigest()
-        return content, checksum
+    async def _read_schema(self) -> tuple[str, str]:
+        """Retorna ``(conteúdo, checksum)`` do schema.sql.
+
+        Retry com backoff curto sob ``PermissionError`` — lock transitório
+        (AV/indexador) no arquivo recém-extraído pelo instalador some
+        sozinho em milissegundos; sem retry, essa janela vira uma falha de
+        boot inteira (schema nunca aplicado nessa sessão).
+        """
+        for attempt in range(1, _READ_SCHEMA_RETRIES + 1):
+            try:
+                content = self._file.read_text(encoding="utf-8")
+                checksum = hashlib.sha256(content.encode()).hexdigest()
+                return content, checksum
+            except PermissionError:
+                if attempt == _READ_SCHEMA_RETRIES:
+                    raise
+                logger.warning(
+                    "storage/migrations: PermissionError lendo %s "
+                    "(tentativa %d/%d) — retentando em %.1fs",
+                    self._file,
+                    attempt,
+                    _READ_SCHEMA_RETRIES,
+                    _READ_SCHEMA_RETRY_DELAY_S,
+                )
+                await asyncio.sleep(_READ_SCHEMA_RETRY_DELAY_S)
+        raise AssertionError("unreachable")  # loop sempre retorna ou raise
 
     async def _stored(self) -> dict[str, str] | None:
         await self._ensure_control_table()
@@ -129,7 +159,7 @@ class MigrationRunner:
 
     async def status(self) -> MigrationStatus:
         """Retorna o status do schema.sql em relação ao banco."""
-        _content, checksum = self._read_schema()
+        _content, checksum = await self._read_schema()
         stored = await self._stored()
         if stored is None:
             return MigrationStatus(
@@ -168,7 +198,7 @@ class MigrationRunner:
             True se o schema foi (re)aplicado nesta chamada, False se já
             estava atualizado.
         """
-        content, checksum = self._read_schema()
+        content, checksum = await self._read_schema()
         stored = await self._stored()
         if stored is not None and stored["checksum"] == checksum:
             logger.info("storage/migrations: schema já atualizado — nada a fazer")

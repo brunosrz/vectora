@@ -14,16 +14,16 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.1113.0",
-    "@aws-sdk/lib-storage": "^3.1113.0",
+    "@aws-sdk/client-s3": "^3.1116.0",
+    "@aws-sdk/lib-storage": "^3.1116.0",
     "@cloudflare/vitest-pool-workers": "^0.22.0",
-    "@cloudflare/workers-types": "^5.20260819.1",
+    "@cloudflare/workers-types": "^5.20260823.1",
     "@vitest/coverage-istanbul": "^4.1.11",
     "prettier": "3.9.6",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11",
-    "wrangler": "^4.124.0"
+    "wrangler": "^4.125.0"
   },
   "dependencies": {
     "@react-email/render": "^2.1.0",

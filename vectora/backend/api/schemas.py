@@ -239,9 +239,14 @@ class TranscribeAudioResponse(BaseModel):
 
 class CreateThreadRequest(BaseModel):
     """`workspace_id` vazio deixa o backend criar o workspace dedicado da
-    sessão (`~/Documents/vectora/<thread_id>`) na primeira mensagem."""
+    sessão (`~/Documents/vectora/<thread_id>`) na primeira mensagem.
+
+    `mode` vazio mantém o default histórico deste endpoint (`"code"`) —
+    caller que sabe a intenção (chat vs código) deve informar explicitamente
+    em vez de depender do default."""
 
     workspace_id: str = ""
+    mode: str = ""
 
 
 class GetThreadRequest(BaseModel):

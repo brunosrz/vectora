@@ -67,6 +67,7 @@ import {
   BROADCAST_WORKSPACES,
 } from "@/lib/hooks/use-broadcast-sync";
 import { useGlobalShortcuts } from "@/lib/hooks/use-global-shortcuts";
+import { buildOptimisticThread } from "./-thread-cache-helpers";
 import { m } from "@/lib/paraglide/messages";
 export const Route = createFileRoute("/session/$threadId")({
   // Só a lista de threads (sidebar) bloqueia a navegação — o histórico da
@@ -550,14 +551,12 @@ function SessionPage() {
           (old) => {
             const existing = old?.threads ?? [];
             if (existing.some((th) => th.id === id)) return old;
-            const now = new Date().toISOString();
-            const optimistic: VectoraThread = {
+            const optimistic = buildOptimisticThread({
               id,
-              created_at: now,
-              updated_at: now,
               title,
-              workspace_id: useWorkspacesStore.getState().active_id ?? "",
-            };
+              workspaceId: useWorkspacesStore.getState().active_id ?? "",
+              chatMode,
+            });
             return { threads: [optimistic, ...existing] };
           },
         );
@@ -593,19 +592,19 @@ function SessionPage() {
               ),
             };
           }
-          const inserted: VectoraThread = {
+          const inserted = buildOptimisticThread({
             id,
-            created_at: now,
-            updated_at: now,
             title,
-            workspace_id: useWorkspacesStore.getState().active_id ?? "",
-          };
+            workspaceId: useWorkspacesStore.getState().active_id ?? "",
+            chatMode,
+            now,
+          });
           return { threads: [inserted, ...existing] };
         },
       );
       void updateThreadMutation.mutate({ id, updates: { title } });
     },
-    [updateThreadMutation, isNewRoute, navigate],
+    [updateThreadMutation, isNewRoute, navigate, chatMode],
   );
 
   // ── Command palette — lista de ações navegáveis (C.30) ───────────────────

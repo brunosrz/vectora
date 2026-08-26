@@ -270,6 +270,14 @@ async def consolidate_memory(user_id: str) -> None:
     Best-effort: qualquer exceção é capturada e logada sem propagar.
     """
     try:
+        if not settings.configured_llm_providers():
+            logger.debug(
+                "memory_consolidation: nenhum provider de LLM configurado — "
+                "job periódico pulado user=%s",
+                user_id,
+            )
+            return
+
         threads = await _fetch_recent_threads(user_id)
         if not threads:
             logger.debug("memory_consolidation: sem threads para user=%s", user_id)

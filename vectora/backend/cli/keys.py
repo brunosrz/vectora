@@ -39,7 +39,7 @@ LLM_PROVIDERS: dict[str, dict[str, str]] = {
         "provider_id": "google-genai",
         "env_var": "GOOGLE_API_KEY",
         "url": "https://aistudio.google.com/app/apikey",
-        "default_model": "gemini-2.5-flash",
+        "default_model": "gemini-3.6-flash",
     },
     "2": {
         "name": "Cohere",

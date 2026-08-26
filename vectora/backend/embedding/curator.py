@@ -81,7 +81,14 @@ async def curate_workspace_knowledge(workspace_id: str) -> str:
         Mensagem de status da curadoria
     """
     try:
+        from backend.settings import settings
         from backend.workspace.workspace import workspace_registry
+
+        if not settings.configured_llm_providers():
+            return (
+                f"workspace {workspace_id}: nenhum provider de LLM configurado, "
+                "curadoria pulada"
+            )
 
         ws = workspace_registry.get(workspace_id)
         if ws is None:

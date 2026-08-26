@@ -42,10 +42,9 @@ _MODEL_TO_PROVIDER: list[tuple[str, str]] = [
 
 _PROVIDER_MODELS: dict[str, list[str]] = {
     "google-genai": [
-        "gemini-2.5-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
         "gemini-2.5-pro",
-        "gemini-2.0-flash-lite",
-        "gemini-2.0-flash",
     ],
     "openai": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "o1-preview", "o4-mini"],
     "anthropic": [

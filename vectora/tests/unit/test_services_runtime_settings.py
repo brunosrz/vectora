@@ -33,10 +33,14 @@ def rs(tmp_settings_path: Path) -> RuntimeSettings:
 
 class TestDefaults:
     def test_no_file_uses_defaults(self, tmp_settings_path: Path) -> None:
+        """Provider/modelo NUNCA têm default inventado — string vazia até o
+        usuário escolher explicitamente (`set_active_model`); só
+        theme/language (cosméticos) têm default de fábrica."""
         assert not tmp_settings_path.exists()
         rs = RuntimeSettings(path=tmp_settings_path)
-        assert rs.active_provider == "google-genai"
-        assert rs.active_model == "gemini-2.5-flash"
+        assert rs.active_provider == ""
+        assert rs.active_model == ""
+        assert rs.theme == "dark"
 
     def test_get_unknown_key_returns_default(self, rs: RuntimeSettings) -> None:
         assert rs.get("chave_inexistente", "fallback") == "fallback"
@@ -106,6 +110,20 @@ class TestSetActiveModel:
         assert rs2.active_provider == "openai"
         assert rs2.active_model == "gpt-4o"
 
+    def test_has_distingue_nunca_configurado_de_configurado(
+        self, rs: RuntimeSettings
+    ) -> None:
+        """Erro/borda: `has()` é a forma correta de checar se o usuário
+        configurou algo — `active_provider`/`active_model` sozinhos não
+        distinguem "nunca configurado" de "configurado com valor vazio"."""
+        assert rs.has("active_provider") is False
+        assert rs.has("active_model") is False
+
+        rs.set_active_model("openai", "gpt-4o")
+
+        assert rs.has("active_provider") is True
+        assert rs.has("active_model") is True
+
 
 # ---------------------------------------------------------------------------
 # Tolerância a falhas
@@ -127,22 +145,26 @@ class TestFaultTolerance:
             RuntimeSettings(path=tmp_settings_path)
 
     def test_empty_file_falls_back_to_defaults(self, tmp_settings_path: Path) -> None:
-        """SQLite trata um arquivo de 0 bytes como banco novo válido."""
+        """SQLite trata um arquivo de 0 bytes como banco novo válido —
+        provider/modelo continuam vazios (nenhum default inventado)."""
         tmp_settings_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_settings_path.write_text("", encoding="utf-8")
 
         rs = RuntimeSettings(path=tmp_settings_path)
-        assert rs.active_provider == "google-genai"
+        assert rs.active_provider == ""
 
     def test_partial_state_uses_defaults_for_missing_keys(
         self, tmp_settings_path: Path
     ) -> None:
+        """Provider escolhido sem o modelo correspondente não deve inventar
+        um modelo — a chave que falta continua vazia, nunca um valor de
+        outro provider/fábrica."""
         rs1 = RuntimeSettings(path=tmp_settings_path)
         rs1.set("active_provider", "openai")
 
         rs2 = RuntimeSettings(path=tmp_settings_path)
         assert rs2.active_provider == "openai"
-        assert rs2.active_model == "gemini-2.5-flash"  # fallback to default
+        assert rs2.active_model == ""
 
 
 # ---------------------------------------------------------------------------

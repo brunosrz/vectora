@@ -22,6 +22,7 @@ from backend.scheduling.memory_consolidation import (
     section_path,
     split_by_category,
 )
+from backend.settings import Settings
 
 # ---------------------------------------------------------------------------
 # _build_consolidation_prompt
@@ -213,6 +214,36 @@ async def test_consolidate_memory_no_threads_skips_llm():
         await consolidate_memory(user_id="user-1")
 
     mock_llm.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_consolidate_memory_skips_without_provider_but_runs_with_one(
+    monkeypatch,
+):
+    """Job periódico, sem usuário no loop — nunca pode chamar o LLM sem
+    nenhum provider configurado (ex.: instalação recém-extraída ainda sem
+    setup). Caso de borda no mesmo teste: com 1 provider, roda normal."""
+    fetch = AsyncMock(return_value=[("t1", [("human", "hi"), ("assistant", "hello")])])
+    with (
+        patch(
+            "backend.scheduling.memory_consolidation._fetch_recent_threads",
+            new=fetch,
+        ),
+        patch(
+            "backend.scheduling.memory_consolidation._invoke_llm",
+            new=AsyncMock(),
+        ) as mock_llm,
+    ):
+        monkeypatch.setattr(Settings, "configured_llm_providers", lambda self: [])
+        await consolidate_memory(user_id="user-1")
+        mock_llm.assert_not_called()
+        fetch.assert_not_called()
+
+        monkeypatch.setattr(
+            Settings, "configured_llm_providers", lambda self: ["google-genai"]
+        )
+        await consolidate_memory(user_id="user-1")
+        mock_llm.assert_called_once()
 
 
 @pytest.mark.asyncio

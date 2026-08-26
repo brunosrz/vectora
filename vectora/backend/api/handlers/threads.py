@@ -598,7 +598,7 @@ async def create_thread(body: CreateThreadRequest, http_request: Request) -> Thr
         thread_id,
         user_id=user_id,
         workspace_id=workspace_id or None,
-        mode="code",
+        mode=_normalize_mode(body.mode) if body.mode else "code",
     )
 
     extra = json.dumps({"workspace_id": workspace_id} if workspace_id else {})

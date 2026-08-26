@@ -11,6 +11,7 @@ from backend.services.remember_trigger import (
     REMEMBER_TRIGGER_EVERY_N_TURNS,
     maybe_trigger_remember,
 )
+from backend.settings import Settings
 
 
 @pytest.fixture
@@ -18,6 +19,17 @@ def _no_pending(monkeypatch):
     monkeypatch.setattr(
         "backend.api.handlers.threads.get_remember_pending",
         AsyncMock(return_value=False),
+    )
+
+
+@pytest.fixture(autouse=True)
+def _provider_configured(monkeypatch):
+    """Hermético: os testes de "caminho feliz" não podem depender de haver
+    (ou não) uma API key real na máquina que roda a suíte — fixam um
+    provider configurado por padrão. `test_gatilho_pula_sem_provider...`
+    abaixo sobrescreve isso explicitamente pra testar o caso vazio."""
+    monkeypatch.setattr(
+        Settings, "configured_llm_providers", lambda self: ["google-genai"]
     )
 
 
@@ -222,6 +234,42 @@ async def test_fato_ja_salvo_nao_e_proposto_de_novo(monkeypatch, _no_pending):
     content = artifact_calls[0]["content"]
     assert "Fato genuinamente novo" in content
     assert "Usuário prefere respostas em PT-BR" not in content
+
+
+@pytest.mark.asyncio
+async def test_gatilho_pula_sem_provider_configurado_mas_dispara_com_um(
+    monkeypatch, _no_pending
+):
+    """Gatilho automático (fire-and-forget, sem usuário no loop) nunca pode
+    chamar uma LLM sem nenhum provider configurado — ex.: instalação recém-
+    extraída ainda sem setup. Caso de borda no mesmo teste: com exatamente
+    1 provider configurado, o gatilho volta a funcionar normalmente."""
+    monkeypatch.setattr(
+        "backend.api.handlers.threads.increment_remember_turn_count",
+        AsyncMock(return_value=REMEMBER_TRIGGER_EVERY_N_TURNS),
+    )
+    distill = AsyncMock(return_value=DistillationResult())
+    monkeypatch.setattr("backend.services.learning.distill_transcript", distill)
+    # Mensagens reais nas DUAS chamadas — sem isso o teste passaria mesmo
+    # sem a guarda, só porque a thread não tem histórico de verdade e o
+    # early-return de "transcript vazio" mascararia o comportamento real.
+    from backend.services import agent_factory
+
+    monkeypatch.setattr(
+        agent_factory,
+        "aget_thread_messages",
+        AsyncMock(return_value=[("human", "oi", "", [])]),
+    )
+
+    monkeypatch.setattr(Settings, "configured_llm_providers", lambda self: [])
+    await maybe_trigger_remember("t1", "u1")
+    distill.assert_not_called()
+
+    monkeypatch.setattr(
+        Settings, "configured_llm_providers", lambda self: ["google-genai"]
+    )
+    await maybe_trigger_remember("t1", "u1")
+    distill.assert_called_once()
 
 
 @pytest.mark.asyncio

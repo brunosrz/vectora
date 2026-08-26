@@ -13,8 +13,15 @@ imediatamente persistidas e aplicadas sem reiniciar.
 
 Uso:
     from backend.workspace.runtime_settings import runtime_settings
-    runtime_settings.set_active_model("google-genai", "gemini-2.5-flash")
+    runtime_settings.set_active_model("google-genai", "gemini-3.6-flash")
     print(runtime_settings.active_provider)  # "google-genai"
+
+``active_provider``/``active_model`` devolvem string vazia quando o
+usuário nunca configurou nada explicitamente (``set_active_model`` nunca
+chamado) — nenhum provider/modelo é inventado como default silencioso;
+ver ``backend/services/utils.py::load_native_llm`` para o consumidor
+principal, que trata string vazia como "nada configurado" e levanta erro
+em vez de adivinhar.
 """
 
 import json
@@ -46,9 +53,11 @@ def _bootstrap_vectora_home() -> Path:
 
 _DB_PATH = _bootstrap_vectora_home() / "checkpoints.db"
 
+#: Sem entrada pra "active_provider"/"active_model" de propósito — um
+#: default aqui seria adotado silenciosamente por qualquer chamador
+#: antes do usuário escolher provider/modelo nenhum (ver docstring do
+#: módulo). `theme`/`language` são cosméticos, sem esse risco.
 _DEFAULTS: dict = {
-    "active_provider": "google-genai",
-    "active_model": "gemini-2.5-flash",
     "theme": "dark",
     "language": "en",
 }
@@ -175,11 +184,13 @@ class RuntimeSettings:
 
     @property
     def active_provider(self) -> str:
-        return str(self.get("active_provider", "google-genai"))
+        """Provider ativo, ou string vazia se o usuário nunca escolheu um."""
+        return str(self.get("active_provider", ""))
 
     @property
     def active_model(self) -> str:
-        return str(self.get("active_model", "gemini-2.5-flash"))
+        """Modelo ativo, ou string vazia se o usuário nunca escolheu um."""
+        return str(self.get("active_model", ""))
 
     @property
     def theme(self) -> str:

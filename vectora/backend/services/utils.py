@@ -19,16 +19,23 @@ if TYPE_CHECKING:
     from backend.llm.base import ChatClient
 
 
-# provider canônico (underscore) → (env var do modelo, modelo default).
+# provider canônico (underscore) → env var do modelo.
 # A UI/LLM_PROVIDER pode usar hífen ("google-genai"); normalizamos p/ underscore.
-_PROVIDER_SPEC: dict[str, tuple[str, str]] = {
-    "google_genai": ("GOOGLE_MODEL", "gemini-2.5-flash"),
-    "openai": ("OPENAI_MODEL", "gpt-4o"),
-    "anthropic": ("ANTHROPIC_MODEL", "claude-opus-4-1"),
-    "cohere": ("COHERE_CHAT_MODEL", "command-a-03-2025"),
-    "ollama": ("OLLAMA_MODEL", "gpt-oss:20b"),
-    "openrouter": ("OPENROUTER_MODEL", "openrouter/auto"),
-    "nine_router": ("NINE_ROUTER_MODEL", ""),
+#
+# Sem modelo default por provider de propósito: um default aqui seria
+# adotado silenciosamente sempre que o usuário configurou o provider mas
+# não o modelo — mesmo anti-padrão que `RuntimeSettings._DEFAULTS` tinha
+# (ver `backend/workspace/runtime_settings.py`). Sem env var nem
+# `runtime_settings.active_model` setados, `load_native_llm` levanta
+# erro em vez de inventar um modelo.
+_PROVIDER_SPEC: dict[str, str] = {
+    "google_genai": "GOOGLE_MODEL",
+    "openai": "OPENAI_MODEL",
+    "anthropic": "ANTHROPIC_MODEL",
+    "cohere": "COHERE_CHAT_MODEL",
+    "ollama": "OLLAMA_MODEL",
+    "openrouter": "OPENROUTER_MODEL",
+    "nine_router": "NINE_ROUTER_MODEL",
 }
 
 
@@ -48,31 +55,32 @@ def load_native_llm(model_id: str = "") -> ChatClient:
     if model_id:
         prov, _sep, name = model_id.partition(":")
         provider = prov.replace("-", "_")
-        spec = _PROVIDER_SPEC.get(provider)
-        env_var = spec[0] if spec else ""
-        model_name = (
-            name
-            or (os.getenv(env_var) if env_var else None)
-            or (spec[1] if spec else "")
-        )
+        env_var = _PROVIDER_SPEC.get(provider, "")
+        model_name = name or (os.getenv(env_var) if env_var else None) or ""
     else:
         provider = (
             os.getenv("LLM_PROVIDER") or runtime_settings.active_provider
         ).replace("-", "_")
-        spec = _PROVIDER_SPEC.get(provider)
-        if spec is None:
+        if not provider:
+            msg = (
+                "Nenhum provider de LLM configurado — configure um "
+                "provider (setup/`/model`) antes de usar recursos que "
+                "dependem de LLM."
+            )
+            raise ValueError(msg)
+        env_var = _PROVIDER_SPEC.get(provider)
+        if env_var is None:
             msg = (
                 f"LLM_PROVIDER desconhecido: {provider!r}. Suportados: "
                 "google_genai, openai, anthropic, cohere, ollama, openrouter"
             )
             raise ValueError(msg)
-        env_var, default_model = spec
         active = (
             runtime_settings.active_model
             if runtime_settings.active_provider.replace("-", "_") == provider
             else ""
         )
-        model_name = os.getenv(env_var) or active or default_model
+        model_name = os.getenv(env_var) or active or ""
 
     if not model_name and provider == "nine_router":
         from backend.settings import settings
@@ -80,7 +88,11 @@ def load_native_llm(model_id: str = "") -> ChatClient:
         model_name = settings.nine_router_default_model or ""
 
     if not model_name:
-        msg = f"Modelo de LLM não resolvido para provider {provider!r}."
+        msg = (
+            f"Nenhum modelo de LLM configurado para o provider {provider!r} "
+            "— configure um modelo (setup/`/model`) em vez de depender de "
+            "um default automático."
+        )
         raise ValueError(msg)
 
     mid = f"{provider}:{model_name}"

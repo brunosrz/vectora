@@ -6,6 +6,7 @@ DataMigration: dry-run em memória.
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -273,6 +274,88 @@ class TestMigrationRunner:
         status = await runner.status()
         assert status.applied is True
         assert status.drift is False
+
+
+class TestReadSchemaPermissionRetry:
+    """Lock transitório (AV/indexador) em schema.sql recém-extraído pelo
+    instalador — `_read_schema` reage a `PermissionError` com retry curto
+    em vez de derrubar o boot inteiro nessa janela."""
+
+    @pytest.fixture
+    async def runner_conn(self, tmp_path):
+        import aiosqlite
+
+        db_path = str(tmp_path / "test_migrations.db")
+        conn = await aiosqlite.connect(db_path)
+        conn.row_factory = aiosqlite.Row
+        yield conn
+        await conn.close()
+
+    @pytest.mark.asyncio
+    async def test_retry_ate_sucesso_quando_lock_solta_antes_do_teto(
+        self, runner_conn, tmp_path, monkeypatch
+    ):
+        """Lock (simulado por abrir o arquivo em modo exclusivo) solta antes
+        do teto de tentativas — `apply()` retenta e conclui normalmente."""
+        import msvcrt
+
+        from backend.storage.migrations import runner as runner_mod
+        from backend.storage.migrations.runner import MigrationRunner
+
+        schema_file = tmp_path / "schema.sql"
+        schema_file.write_text(
+            "CREATE TABLE IF NOT EXISTS _retry_marker (id INTEGER PRIMARY KEY);",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(runner_mod, "_READ_SCHEMA_RETRY_DELAY_S", 0.01)
+
+        # Abre em modo exclusivo (nega leitura de outros handles no Windows)
+        # e libera antes da última tentativa — reproduz o lock transitório
+        # de verdade, não um mock de exceção.
+        fh = schema_file.open("r+b")
+        msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+
+        async def _release_soon():
+            await asyncio.sleep(0.02)
+            msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+            fh.close()
+
+        release_task = asyncio.ensure_future(_release_soon())
+        try:
+            runner = MigrationRunner(runner_conn, schema_file=schema_file)
+            applied = await runner.apply()
+        finally:
+            await release_task
+        assert applied is True
+
+        cur = await runner_conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='_retry_marker'"
+        )
+        assert await cur.fetchone() is not None
+
+    @pytest.mark.asyncio
+    async def test_permission_error_persistente_propaga_apos_esgotar_tentativas(
+        self, runner_conn, tmp_path, monkeypatch
+    ):
+        """Erro/borda: lock que NUNCA solta (permissão genuinamente negada)
+        continua falhando após as tentativas — sem mascarar um erro real."""
+        from pathlib import Path
+
+        from backend.storage.migrations import runner as runner_mod
+        from backend.storage.migrations.runner import MigrationRunner
+
+        schema_file = tmp_path / "schema.sql"
+        schema_file.write_text("CREATE TABLE x (id INTEGER);", encoding="utf-8")
+        monkeypatch.setattr(runner_mod, "_READ_SCHEMA_RETRY_DELAY_S", 0.01)
+
+        def _sempre_nega(self, *args, **kwargs):
+            raise PermissionError("Permission denied (simulado)")
+
+        monkeypatch.setattr(Path, "read_text", _sempre_nega)
+
+        runner = MigrationRunner(runner_conn, schema_file=schema_file)
+        with pytest.raises(PermissionError):
+            await runner.apply()
 
 
 class TestDataMigrationDryRun:

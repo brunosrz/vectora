@@ -258,3 +258,33 @@ class TestCreateThreadRegistersOwnership:
         session = await session_store.get_session(thread.id)
         assert session is not None
         assert session["user_id"] == "alice"
+
+    async def test_create_thread_usa_mode_explicito_quando_informado(
+        self, session_store
+    ):
+        """Regressão: sem `mode` explícito no request, o endpoint gravava
+        "code" fixo mesmo pra uma conversa criada em modo Chat — o campo
+        precisa ser respeitado quando o caller informa."""
+        from backend.api.schemas import CreateThreadRequest
+
+        thread = await th.create_thread(
+            CreateThreadRequest(workspace_id="", mode="chat"), _http_request("alice")
+        )
+
+        session = await session_store.get_session(thread.id)
+        assert session is not None
+        assert session["mode"] == "chat"
+
+    async def test_create_thread_sem_mode_mantem_default_code(self, session_store):
+        """Erro/borda: `mode` ausente/vazio preserva o comportamento
+        histórico do endpoint (default "code"), sem quebrar callers
+        existentes que nunca informaram o campo."""
+        from backend.api.schemas import CreateThreadRequest
+
+        thread = await th.create_thread(
+            CreateThreadRequest(workspace_id=""), _http_request("alice")
+        )
+
+        session = await session_store.get_session(thread.id)
+        assert session is not None
+        assert session["mode"] == "code"

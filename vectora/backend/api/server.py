@@ -405,28 +405,37 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
                 mq = await get_mq()
                 await mq.close()
         except Exception:
-            logger.debug("api/server: erro ao fechar message queue")
+            logger.warning("api/server: erro ao fechar message queue", exc_info=True)
 
         try:
             from backend.services.connect.manager import stop_all
 
             await stop_all()
         except Exception:
-            logger.debug("api/server: erro ao parar adapters de Connect")
+            logger.warning(
+                "api/server: erro ao parar adapters de Connect", exc_info=True
+            )
 
         try:
             from backend.scheduling.nats_sidecar import stop_nats_sidecar
 
             await stop_nats_sidecar()
         except Exception:
-            logger.debug("api/server: erro ao encerrar sidecar NATS")
+            logger.warning("api/server: erro ao encerrar sidecar NATS", exc_info=True)
 
         try:
             from backend.services.electron_sidecar import stop_electron_sidecar
 
             await stop_electron_sidecar()
         except Exception:
-            logger.debug("api/server: erro ao encerrar sidecar Electron")
+            # Nível WARNING de propósito: um Ctrl+C que não fecha a janela do
+            # Electron (usuário precisa fechar pela bandeja) só é
+            # diagnosticável se essa falha aparecer no log padrão — em DEBUG
+            # ficava invisível no console normal, indistinguível de "não
+            # aconteceu nada".
+            logger.warning(
+                "api/server: erro ao encerrar sidecar Electron", exc_info=True
+            )
         from backend.api.handlers.chat import aclose_graph
         from backend.services.pty_registry import pty_registry
 

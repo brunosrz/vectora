@@ -45,6 +45,22 @@ async def maybe_trigger_remember(thread_id: str, user_id: str) -> None:
             )
             return
 
+        # Gatilho automático, sem usuário no loop — nunca pode chamar uma
+        # LLM só porque `load_native_llm()` resolveria pro provider de
+        # fábrica (nunca escolhido pelo usuário, ex.: instalação recém-
+        # extraída ainda sem setup). Sem nenhuma credencial configurada,
+        # a chamada abaixo falharia de qualquer forma; a diferença é não
+        # tentar às cegas.
+        from backend.settings import settings
+
+        if not settings.configured_llm_providers():
+            logger.debug(
+                "remember_trigger: nenhum provider de LLM configurado — "
+                "gatilho automático pulado thread=%s",
+                thread_id,
+            )
+            return
+
         from backend.services import agent_factory
         from backend.services.learning import (
             dedupe_fact_drafts,
