@@ -42,8 +42,20 @@ async function startSession(page: Page): Promise<void> {
   });
 }
 
+/** Rótulo interno (usado nas assinaturas dos testes) → texto real do botão
+ * no DOM. O browser do Playwright roda em inglês por padrão — só "Kanban"
+ * é igual nos dois idiomas, o que mascarou esse mismatch: os testes que só
+ * clicavam "Kanban" passavam, e qualquer um que precisasse voltar pra
+ * "Assistente" ficava esperando pra sempre um botão "Assistente" que nunca
+ * existe (o real é "Assistant", `messages/en.json::ide_mode_assistente`). */
+const MODE_LABEL = {
+  Assistente: "Assistant",
+  IDE: "IDE",
+  Kanban: "Kanban",
+} as const;
+
 function modeButton(page: Page, label: "Assistente" | "IDE" | "Kanban") {
-  return page.getByRole("button", { name: label, exact: true });
+  return page.getByRole("button", { name: MODE_LABEL[label], exact: true });
 }
 
 test.describe("troca de modo de layout (Assistente/IDE/Kanban)", () => {
