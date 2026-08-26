@@ -269,3 +269,54 @@ class TestMediaNaListagem:
 
         out = await mod.list_artifacts(session_id="sessao-3")
         assert [a.title for a in out.artifacts] == ["guia"]
+
+
+class TestGetMediaArtifact:
+    """`GET /artifacts/{session_id}/media/{filename}` — serve o binário que
+    `generate_image`/`text_to_speech`/`generate_video` (`tools/media.py`)
+    persistem, pra dar ao frontend uma URL de verdade em vez de um `path`
+    de arquivo no servidor (contrato que `ImagePreview`/`ArtifactCard`
+    esperam)."""
+
+    @pytest.mark.asyncio
+    async def test_serve_arquivo_existente(self, monkeypatch, tmp_path):
+        from backend.api.handlers import artifacts as mod
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "vectora_home", tmp_path)
+        base = tmp_path / "artifacts" / "sessao-1" / "media"
+        base.mkdir(parents=True)
+        (base / "gato.png").write_bytes(b"\x89PNG-fake")
+
+        resp = await mod.get_media_artifact(session_id="sessao-1", filename="gato.png")
+
+        assert Path(resp.path).read_bytes() == b"\x89PNG-fake"
+
+    @pytest.mark.asyncio
+    async def test_arquivo_ausente_devolve_404_e_path_traversal_e_neutralizado(
+        self, monkeypatch, tmp_path
+    ):
+        """Erro/borda no mesmo teste: arquivo inexistente vira 404 (não
+        `FileNotFoundError` cru), e um `filename`/`session_id` tentando
+        escapar via `..`/barras não pode servir nada fora de
+        `<vectora_home>/artifacts/<session_id>/media/` — mesma sanitização
+        anti-traversal já usada em `_artifacts_dir`/`get_artifact`."""
+        from fastapi import HTTPException
+
+        from backend.api.handlers import artifacts as mod
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "vectora_home", tmp_path)
+        # Arquivo real fora da pasta de mídia — o alvo do traversal.
+        secret = tmp_path / "segredo.txt"
+        secret.write_text("nao pode vazar")
+
+        with pytest.raises(HTTPException) as exc:
+            await mod.get_media_artifact(
+                session_id="sessao-1", filename="nunca-existiu.png"
+            )
+        assert exc.value.status_code == 404
+
+        with pytest.raises(HTTPException) as exc2:
+            await mod.get_media_artifact(session_id="..", filename="../../segredo.txt")
+        assert exc2.value.status_code == 404

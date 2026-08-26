@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from backend.settings import settings
 from backend.tools.context import ToolContext
 from backend.tools.registry import ToolExtras, vtool
 
@@ -63,9 +64,23 @@ def _active_model(ctx: ToolContext) -> str:
 
 
 def _media_dir(session_id: str) -> Path:
-    return (
-        Path.home() / ".vectora" / "artifacts" / (session_id or "sem-sessao") / "media"
-    )
+    # `settings.vectora_home` (não `Path.home()` direto) — respeita
+    # `VECTORA_HOME` e é o mesmo diretório que
+    # `api/handlers/artifacts.py::_artifacts_dir` usa pra servir o binário
+    # de volta; hardcoded diferente quebraria a URL servível em qualquer
+    # instalação com `VECTORA_HOME` customizado.
+    return settings.vectora_home / "artifacts" / (session_id or "sem-sessao") / "media"
+
+
+def _media_url(session_id: str, path: Path) -> str:
+    """URL relativa e servível (`GET /artifacts/{session_id}/media/
+    {filename}`, `api/handlers/artifacts.py::get_media_artifact`) pro
+    binário que acabou de ser persistido — sem isso, `generate_image`/
+    `text_to_speech`/`generate_video` devolviam só um `path` de arquivo NO
+    SERVIDOR, que o `<img src>`/`<audio src>` do chat não consegue
+    carregar (contrato que `ImagePreview`, `tool-call-renderer.tsx`, já
+    espera: `url`/`src`/`image_url`)."""
+    return f"/artifacts/{session_id or 'sem-sessao'}/media/{path.name}"
 
 
 def _unsupported(provider: str, capability: str, hint: str) -> str:
@@ -190,7 +205,12 @@ def _synthesize_speech_bytes(provider: str, text: str, voice: str) -> bytes:
 
 @vtool(
     extras=ToolExtras(
-        render_hint="image",
+        # `"image_preview"` — a CHAVE que `RENDERERS` (frontend/components/
+        # chat/tool-call-renderer.tsx) de fato reconhece. `"image"` (valor
+        # antigo) não bate com nenhuma chave do mapa, então SEMPRE caía no
+        # fallback `RENDERERS.json` — a imagem gerada nunca apareceu inline
+        # no chat, mesmo depois do `url` virar servível.
+        render_hint="image_preview",
         category="media",
         destructive=False,
         icon="image",
@@ -230,10 +250,16 @@ async def generate_image(ctx: ToolContext, prompt: str) -> str:
         data = await asyncio.to_thread(_generate_image_bytes, provider, prompt)
         if not data:
             return json.dumps({"error": "provider devolveu imagem vazia"})
-        path = await asyncio.to_thread(_persist, _session_id(ctx), data, ".png")
+        session_id = _session_id(ctx)
+        path = await asyncio.to_thread(_persist, session_id, data, ".png")
         logger.info("generate_image: %s bytes → %s", len(data), path)
         return json.dumps(
-            {"path": str(path), "provider": provider, "bytes": len(data)},
+            {
+                "path": str(path),
+                "url": _media_url(session_id, path),
+                "provider": provider,
+                "bytes": len(data),
+            },
             ensure_ascii=False,
         )
     except Exception as exc:
@@ -245,7 +271,12 @@ async def generate_image(ctx: ToolContext, prompt: str) -> str:
 
 @vtool(
     extras=ToolExtras(
-        render_hint="audio",
+        # `"audio"` não existe em `RenderHint` (frontend/lib/types/render.ts)
+        # — sempre caiu no fallback JSON cru. Sem player de áudio inline
+        # ainda (fora de escopo desta sprint), `"artifact"` dá um link de
+        # download real via `ArtifactCard`, em vez de um path de servidor
+        # inútil que era o comportamento de antes.
+        render_hint="artifact",
         category="media",
         destructive=False,
         icon="volume-2",
@@ -281,10 +312,18 @@ async def text_to_speech(ctx: ToolContext, text: str, voice: str = "") -> str:
         data = await asyncio.to_thread(_synthesize_speech_bytes, provider, text, voice)
         if not data:
             return json.dumps({"error": "provider devolveu áudio vazio"})
-        path = await asyncio.to_thread(_persist, _session_id(ctx), data, ".mp3")
+        session_id = _session_id(ctx)
+        path = await asyncio.to_thread(_persist, session_id, data, ".mp3")
         logger.info("text_to_speech: %s bytes → %s", len(data), path)
         return json.dumps(
-            {"path": str(path), "provider": provider, "bytes": len(data)},
+            {
+                "title": path.name,
+                "artifact_type": "audio",
+                "path": str(path),
+                "url": _media_url(session_id, path),
+                "provider": provider,
+                "bytes": len(data),
+            },
             ensure_ascii=False,
         )
     except Exception as exc:
@@ -473,10 +512,18 @@ async def generate_video(ctx: ToolContext, prompt: str) -> str:
         data = await _generate_video_bytes(provider, prompt)
         if not data:
             return json.dumps({"error": "provider devolveu vídeo vazio"})
-        path = await asyncio.to_thread(_persist, _session_id(ctx), data, ".mp4")
+        session_id = _session_id(ctx)
+        path = await asyncio.to_thread(_persist, session_id, data, ".mp4")
         logger.info("generate_video: %s bytes → %s", len(data), path)
         return json.dumps(
-            {"path": str(path), "provider": provider, "bytes": len(data)},
+            {
+                "title": path.name,
+                "artifact_type": "video",
+                "path": str(path),
+                "url": _media_url(session_id, path),
+                "provider": provider,
+                "bytes": len(data),
+            },
             ensure_ascii=False,
         )
     except Exception as exc:

@@ -13,9 +13,10 @@
 "use client";
 
 import { memo } from "react";
-import { Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { m } from "@/lib/paraglide/messages";
 import type { ToolCall, RenderHint } from "@/lib/types";
 
 // ============================================================================
@@ -319,10 +320,22 @@ function QueueProgress({ data }: { data: unknown }) {
 function ImagePreview({ data }: { data: unknown }) {
   let url = "";
   let alt = "";
-  if (typeof data === "string") {
-    url = data;
-  } else if (data && typeof data === "object") {
-    const d = data as Record<string, unknown>;
+  // `browser_screenshot` devolve a URL/data-URI crua como string; tools
+  // como `generate_image` devolvem `json.dumps({...})` — uma string que
+  // PARECE objeto. Sem distinguir os dois, `generate_image` nunca
+  // renderizava (a string JSON inteira virava `src`, um `<img>` quebrado).
+  let parsed: unknown = data;
+  if (typeof data === "string" && data.trim().startsWith("{")) {
+    try {
+      parsed = JSON.parse(data);
+    } catch {
+      parsed = data;
+    }
+  }
+  if (typeof parsed === "string") {
+    url = parsed;
+  } else if (parsed && typeof parsed === "object") {
+    const d = parsed as Record<string, unknown>;
     url = String(d.url ?? d.src ?? d.image_url ?? "");
     alt = String(d.alt ?? d.description ?? "");
   }
@@ -387,6 +400,10 @@ function ArtifactCard({ data }: { data: unknown }) {
   const title = String(info.title ?? "Artifact");
   const path = String(info.path ?? "");
   const type = String(info.artifact_type ?? "");
+  // `url` só existe pra mídia gerada pelo assistente (generate_video/
+  // text_to_speech, via `media.py::_media_url`) — artifacts de markdown
+  // (create_artifact) nunca tiveram e continuam mostrando só o path.
+  const url = String(info.url ?? "");
   return (
     <div className="mt-1 rounded border border-border bg-muted/30 px-3 py-2 text-[12px]">
       <div className="font-semibold text-foreground">{title}</div>
@@ -395,10 +412,21 @@ function ArtifactCard({ data }: { data: unknown }) {
           {type}
         </div>
       )}
-      {path && (
-        <div className="text-[10px] font-mono text-muted-foreground mt-0.5 break-all">
-          {path}
-        </div>
+      {url ? (
+        <a
+          href={url}
+          download
+          className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+        >
+          <Download className="w-3 h-3" />
+          {m.workbench_files_download()}
+        </a>
+      ) : (
+        path && (
+          <div className="text-[10px] font-mono text-muted-foreground mt-0.5 break-all">
+            {path}
+          </div>
+        )
       )}
     </div>
   );

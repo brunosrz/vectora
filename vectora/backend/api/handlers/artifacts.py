@@ -13,7 +13,8 @@ from datetime import UTC
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from backend.settings import settings
@@ -177,6 +178,29 @@ async def get_artifact(
         content=content,
         artifact_type=_read_artifact_type(path),
     )
+
+
+def _safe_path_segment(value: str) -> str:
+    """Mesma sanitização anti-traversal já usada em `_artifacts_dir`/
+    `get_artifact` pro slug — aqui aplicada a `session_id` e `filename`."""
+    return value.replace("/", "").replace("\\", "").replace("..", "")
+
+
+@router.get("/{session_id}/media/{filename}")
+async def get_media_artifact(session_id: str, filename: str) -> FileResponse:
+    """Serve o binário de mídia gerada por `generate_image`/
+    `text_to_speech`/`generate_video` (`tools/media.py::_persist`) — sem
+    isso, as tools devolviam só um `path` de arquivo NO SERVIDOR, que o
+    `<img src>`/link de download do chat não conseguem carregar. A URL
+    servível (`tools/media.py::_media_url`) aponta exatamente pra cá."""
+    safe_session = _safe_path_segment(session_id)
+    safe_filename = _safe_path_segment(filename)
+    path = _artifacts_dir(safe_session) / "media" / safe_filename
+
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="mídia não encontrada")
+
+    return FileResponse(path)
 
 
 def _format_mtime(ts: float) -> str:

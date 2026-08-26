@@ -94,6 +94,23 @@ async def test_generate_image_happy_path_persiste_arquivo(monkeypatch, tmp_path)
     from pathlib import Path
 
     assert Path(out["path"]).read_bytes() == b"\x89PNG-fake"
+    # `url` servível — sem isso, `<img src>` no chat não tem o que carregar
+    # (só o `path` de arquivo no servidor, inútil no browser).
+    assert out["url"] == f"/artifacts/t-media/media/{Path(out['path']).name}"
+
+
+def test_generate_image_render_hint_bate_com_chave_reconhecida_pelo_frontend():
+    """`render_hint="image"` (valor antigo) não bate com nenhuma chave do
+    `RENDERERS` do frontend (`tool-call-renderer.tsx`) — só `"image_preview"`
+    e `"browser_screenshot"` disparam `ImagePreview`. Com o valor errado, a
+    imagem gerada sempre caía no fallback `RENDERERS.json`, mesmo com `url`
+    servível — reproduzido lendo os dois arquivos lado a lado, não em
+    browser real (não é testável em Python, mas o contrato É)."""
+    from backend.tools.registry import TOOL_REGISTRY
+
+    spec = TOOL_REGISTRY.get("generate_image")
+    assert spec is not None
+    assert spec.extras.render_hint == "image_preview"
 
 
 async def test_generate_image_prompt_vazio_e_sdk_quebrado_viram_erro_tipado(
