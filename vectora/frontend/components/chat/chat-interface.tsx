@@ -444,8 +444,15 @@ export function ChatInterface({
     const currentThreadId = threadId;
 
     const loadThreadHistory = async () => {
-      // Skip loading for new threads - they don't exist in backend yet
-      if (isNewThread) {
+      // threadId vazio (S1-F): `isNewThread` só cobre o fluxo "new"
+      // (`isNew(threadId)`, lib/stores/new-thread-registry.ts) — uma
+      // renderização transitória com `threadId === ""` (route param ainda
+      // não resolvido) escapava dessa guarda e chamava `getHistory("")`,
+      // que o backend sempre rejeita com 404 (`Thread '' not found`,
+      // backend/api/handlers/threads.py::get_thread) — traceback
+      // recorrente a cada boot, sem quebrar nada visível, mas poluindo o
+      // log de diagnóstico.
+      if (!currentThreadId || isNewThread) {
         console.log("New thread detected - skipping backend load");
         setMessages([]);
         uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
