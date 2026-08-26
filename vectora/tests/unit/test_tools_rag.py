@@ -762,6 +762,61 @@ class TestIngestDocs:
         assert mock_emb.called
 
     @pytest.mark.asyncio
+    async def test_pdf_docx_xlsx_reais_extraem_texto_em_vez_de_binario_cru(
+        self, tmp_path
+    ):
+        """PDF/DOCX/XLSX passavam por `read_text(errors="ignore")` puro —
+        um arquivo binário real virava lixo decodificado, indexado no RAG
+        sem nenhum valor. Assets reais de `tests/assets/` (não fixtures
+        sintéticas) provam que o dispatch por extensão chama os parsers de
+        `context_graph/detect.py` de verdade. Erro/borda no mesmo teste:
+        um PDF corrompido não pode derrubar a ingestão do diretório inteiro
+        — `extract_pdf_text` já devolve string vazia nesse caso (tools
+        defensivas, CLAUDE.md #11), então o arquivo só produz zero chunks,
+        nunca uma exceção que interrompe os demais."""
+        import shutil
+        from pathlib import Path
+
+        assets = Path(__file__).resolve().parents[1] / "assets"
+        shutil.copy(assets / "sample.pdf", tmp_path / "sample.pdf")
+        shutil.copy(assets / "sample.docx", tmp_path / "sample.docx")
+        shutil.copy(assets / "sample.xlsx", tmp_path / "sample.xlsx")
+        shutil.copy(assets / "corrupted.pdf", tmp_path / "corrupted.pdf")
+
+        from backend.tools.rag import ingest_docs
+
+        capturado: list[str] = []
+
+        async def _fake_embedding(*, text, collection, metadata):
+            capturado.append(text)
+            return json.dumps({"status": "fire_and_forget", "queue_id": "q1"})
+
+        with patch("backend.tools.rag.settings") as mock_settings:
+            mock_settings.enable_file_operations = True
+            with patch("backend.tools.fs._confine", return_value=(tmp_path, "")):
+                with patch("backend.services.ignore.is_ignored", return_value=False):
+                    with patch(
+                        "backend.services.ignore.load_ignore_spec",
+                        return_value=None,
+                    ):
+                        with patch("backend.tools.rag.embedding", _fake_embedding):
+                            result = await ingest_docs(
+                                ctx=ToolContext(),
+                                directory_path=str(tmp_path),
+                                collection="articles",
+                                glob_pattern="**/*",
+                            )
+
+        data = json.loads(result)
+        assert data["status"] == "completed"
+
+        todo_texto = "\n".join(capturado)
+        assert "Vectora RAG teste de extracao de PDF" in todo_texto
+        assert "Vectora RAG teste" in todo_texto  # heading do DOCX
+        assert "coluna_a" in todo_texto  # tabela do DOCX e planilha do XLSX
+        # PDF corrompido: zero chunks pra ele, mas não quebra os demais.
+        assert "not a real pdf" not in todo_texto
+
     async def test_path_traversal_e_rejeitado_de_verdade(self, tmp_path, monkeypatch):
         """`directory_path` vem do modelo (tool call) — precisa da mesma
         defesa forte que `file_read`/`file_write` já usam

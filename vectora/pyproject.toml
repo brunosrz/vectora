@@ -103,6 +103,12 @@ dependencies = [
     "discord.py>=2.7.1",
     "slack-bolt>=1.30.0",
     "tree-sitter-language-pack>=1.14,<2",
+    # Parsers de documento reais para `ingest_docs`/`context_graph/detect.py`
+    # (antes só existiam atrás de `try/except ImportError` — nunca rodavam
+    # em nenhuma instalação real, PDF/DOCX/XLSX viravam lixo binário no RAG).
+    "pypdf>=6.16.2",
+    "python-docx>=1.2.0",
+    "openpyxl>=3.1.5",
 ]
 
 [project.scripts]

@@ -7,6 +7,7 @@ import json
 import logging
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Literal
 
 from backend.embedding.queue import get_embedding_queue
@@ -523,6 +524,34 @@ async def vector_search(
         return json.dumps({"status": "failed", "error": err or "Vector search failed"})
 
 
+_DOC_EXTRACTORS: dict[str, Any] = {}
+
+
+def _extract_text_for_ingest(file_path: Path) -> str:
+    """Despacha por extensão pra extrair texto real de PDF/DOCX/XLSX antes
+    de cair no `read_text()` puro — sem isso, esses formatos viravam lixo
+    binário decodificado como UTF-8 (`errors="ignore"`), indexado no RAG
+    sem nenhum valor. Os 3 extratores (`context_graph/detect.py`) já são
+    defensivos por conta própria (devolvem `""` em qualquer falha, nunca
+    propagam) — um PDF corrompido produz zero chunks pro arquivo, não
+    derruba o resto do diretório."""
+    if not _DOC_EXTRACTORS:
+        from backend.context_graph.detect import (
+            docx_to_markdown,
+            extract_pdf_text,
+            xlsx_to_markdown,
+        )
+
+        _DOC_EXTRACTORS[".pdf"] = extract_pdf_text
+        _DOC_EXTRACTORS[".docx"] = docx_to_markdown
+        _DOC_EXTRACTORS[".xlsx"] = xlsx_to_markdown
+
+    extrator = _DOC_EXTRACTORS.get(file_path.suffix.lower())
+    if extrator is not None:
+        return extrator(file_path)
+    return file_path.read_text(encoding="utf-8", errors="ignore")
+
+
 @vtool(
     extras=ToolExtras(
         render_hint="queue_progress",
@@ -617,7 +646,7 @@ async def ingest_docs(
 
     for file_path in files_to_ingest:
         try:
-            text = file_path.read_text(encoding="utf-8", errors="ignore")
+            text = _extract_text_for_ingest(file_path)
         except Exception as e:
             logger.warning(
                 "ingest_docs: falha ao ler arquivo",
