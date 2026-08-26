@@ -913,11 +913,78 @@ def _action_help(target, source, env):
                            só antes de migração grande, com revisão manual depois
     scons nats             baixa o binário nats-server pra vectora/resources/
                            (sidecar de fila/KV com JetStream; precisa de rede)
+    scons ffmpeg           baixa ffmpeg+ffprobe pra vectora/resources/
+                           (backend/tools/media_native.py; precisa de rede)
 """)
     sys.stdout.flush()
 
 
 _NATS_VERSION = "2.10.22"
+
+_FFMPEG_TAG = "b6.1.2-rc.1"
+
+
+def _ffmpeg_assets() -> list[tuple[str, str]]:
+    """``[(url, nome_do_arquivo_final), ...]`` — ffmpeg e ffprobe pra esta
+    plataforma. Binários RAW (sem archive zip/tar, ao contrário do
+    nats-server) de github.com/descriptinc/ffmpeg-ffprobe-static — mesmo
+    projeto que ``ffmpeg-static``/``ffprobe-static`` do npm usam, cobre
+    Windows/macOS/Linux x64+arm64 (sem Windows arm64, raro o bastante pra
+    não bloquear)."""
+    import platform as _plat
+
+    sysname = {"windows": "win32", "linux": "linux", "darwin": "darwin"}.get(
+        _plat.system().lower(), ""
+    )
+    if not sysname:
+        raise RuntimeError(f"plataforma não suportada: {_plat.system()}")
+    machine = _plat.machine().lower()
+    arch = "arm64" if machine in ("arm64", "aarch64") else "x64"
+    is_win = sysname == "win32"
+
+    base = (
+        "https://github.com/descriptinc/ffmpeg-ffprobe-static/releases/download/"
+        f"{_FFMPEG_TAG}/"
+    )
+    return [
+        (
+            f"{base}ffmpeg-{sysname}-{arch}",
+            "ffmpeg.exe" if is_win else "ffmpeg",
+        ),
+        (
+            f"{base}ffprobe-{sysname}-{arch}",
+            "ffprobe.exe" if is_win else "ffprobe",
+        ),
+    ]
+
+
+def _action_fetch_ffmpeg(target, source, env):
+    """Baixa ffmpeg+ffprobe pra vectora/resources/ (media_native.py).
+
+    Idempotente (pula cada binário já presente). Mesma resolução de destino
+    que ``ffmpeg_binary.py::_resolve`` procura — sem os binários aqui, as
+    tools de mídia local caem pro fallback de PATH do sistema (dev) e
+    ficam indisponíveis em qualquer build empacotado sem ffmpeg instalado
+    separadamente. Precisa de rede.
+    """
+    import urllib.request
+
+    dest_dir = os.path.join(VECTORA, "resources")
+    os.makedirs(dest_dir, exist_ok=True)
+
+    for url, filename in _ffmpeg_assets():
+        dest = os.path.join(dest_dir, filename)
+        if os.path.isfile(dest):
+            print(f">> {filename} já presente em {dest}")
+            continue
+        print(f">> baixando {filename}: {url}")
+        with urllib.request.urlopen(url) as resp:  # noqa: S310 — release fixo do github
+            data = resp.read()
+        with open(dest, "wb") as out:
+            out.write(data)
+        if not filename.endswith(".exe"):
+            os.chmod(dest, 0o755)
+        print(f">> {filename} instalado em {dest}")
 
 
 def _nats_asset() -> tuple[str, str, str]:
@@ -1032,11 +1099,16 @@ _build_chat    = _node("build-chat",      _action_build_chat)
 # explicitamente, não só como irmãos em _FULL_DEPS (SCons não garante ordem
 # entre irmãos sem edge de dependência).
 _fetch_nats    = _node("fetch-nats",      _action_fetch_nats)
-_build_nuitka  = _node("build-nuitka",    _action_build_nuitka,   deps=[_build_chat, _fetch_nats])
+# Mesmo motivo do nats: ffmpeg/ffprobe precisam estar em vectora/resources/
+# ANTES do PyInstaller (--add-binary) e do electron-builder (extraResources)
+# empacotarem — sem isso, media_native.py cai pro fallback de PATH do
+# sistema em qualquer build empacotado sem ffmpeg instalado separadamente.
+_fetch_ffmpeg  = _node("fetch-ffmpeg",    _action_fetch_ffmpeg)
+_build_nuitka  = _node("build-nuitka",    _action_build_nuitka,   deps=[_build_chat, _fetch_nats, _fetch_ffmpeg])
 _inst_desktop  = _node("install-desktop", _action_install_desktop)
-_build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_desktop, _fetch_nats])
+_build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_desktop, _fetch_nats, _fetch_ffmpeg])
 
-_FULL_DEPS = [_build_chat, _fetch_nats, _build_nuitka, _build_desktop]
+_FULL_DEPS = [_build_chat, _fetch_nats, _fetch_ffmpeg, _build_nuitka, _build_desktop]
 
 _cmd("release", lambda target, source, env: _action_package(target, source, env), deps=_FULL_DEPS)
 # Sem deps=[_build_nuitka]: esse node é AlwaysBuild, então depender dele
@@ -1056,6 +1128,7 @@ _cmd("tests-live", _action_tests_live)
 _cmd("lint",          _action_lint)
 _cmd("update",        _action_update)
 _cmd("nats",          _action_fetch_nats)
+_cmd("ffmpeg",        _action_fetch_ffmpeg)
 _cmd("clean",         _action_clean)
 _cmd("help",          _action_help)
 _cmd("docker",        _action_docker)

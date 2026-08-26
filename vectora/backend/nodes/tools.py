@@ -65,6 +65,9 @@ from backend.tools import (
     media as _media_module,
 )
 from backend.tools import (
+    media_native as _media_native_module,
+)
+from backend.tools import (
     memory as _memory_module,
 )
 from backend.tools import (
@@ -279,6 +282,10 @@ generate_image = _bridge("generate_image")
 text_to_speech = _bridge("text_to_speech")
 generate_video = _bridge("generate_video")
 analyze_video = _bridge("analyze_video")
+probe_media = _bridge("probe_media")
+extract_frame = _bridge("extract_frame")
+extract_audio = _bridge("extract_audio")
+transcribe_local = _bridge("transcribe_local")
 write_todos = _bridge("write_todos")
 
 # ---------------------------------------------------------------------------
@@ -630,6 +637,11 @@ for _t in [
     text_to_speech,
     generate_video,
     analyze_video,
+    # Mídia LOCAL (ffmpeg/ffprobe embutido, sem custo de API)
+    probe_media,
+    extract_frame,
+    extract_audio,
+    transcribe_local,
     # Casa conectada (Home Assistant)
     ha_list_entities,
     ha_get_state,

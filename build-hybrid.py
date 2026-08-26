@@ -141,6 +141,22 @@ def main() -> None:
             "(baixa o binário nats-server pra vectora/resources/)."
         )
 
+    # ffmpeg/ffprobe — mesmo motivo/mecanismo do nats-server acima
+    # (baixados por `scons ffmpeg`, resolvidos em runtime via
+    # backend.services.ffmpeg_binary._frozen_bundle_bases, mesmo padrão de
+    # sys._MEIPASS). Sem eles, backend/tools/media_native.py degrada pro
+    # fallback de PATH do sistema — silencioso, não falha o boot.
+    ffmpeg_exe = "ffmpeg.exe" if sys.platform == "win32" else "ffmpeg"
+    ffprobe_exe = "ffprobe.exe" if sys.platform == "win32" else "ffprobe"
+    ffmpeg_binary = VECTORA / "resources" / ffmpeg_exe
+    ffprobe_binary = VECTORA / "resources" / ffprobe_exe
+    if not ffmpeg_binary.is_file() or not ffprobe_binary.is_file():
+        sys.exit(
+            f"{ffmpeg_binary}/{ffprobe_binary} não encontrados. Rode `scons "
+            "ffmpeg` antes do build (baixa ffmpeg+ffprobe pra "
+            "vectora/resources/)."
+        )
+
     # Fase 2 — PyInstaller: launcher + backend.pyd + libs -> vectora.exe
     collect: list[str] = []
     for pkg in COLLECT_ALL:
@@ -183,6 +199,10 @@ def main() -> None:
             f"{pyd}{SEP}.",
             "--add-binary",
             f"{nats_binary}{SEP}nats",
+            "--add-binary",
+            f"{ffmpeg_binary}{SEP}ffmpeg",
+            "--add-binary",
+            f"{ffprobe_binary}{SEP}ffmpeg",
             "--add-data",
             f"{VECTORA / 'frontend' / 'dist'}{SEP}chat_static",
             "--add-data",
@@ -222,6 +242,14 @@ def main() -> None:
         sys.exit(
             f"nats/{nats_exe} não apareceu em {dist_dir} após o PyInstaller "
             "— o sidecar de fila/KV vai degradar pra memória em produção."
+        )
+    if not any(dist_dir.rglob(f"ffmpeg/{ffmpeg_exe}")) or not any(
+        dist_dir.rglob(f"ffmpeg/{ffprobe_exe}")
+    ):
+        sys.exit(
+            f"ffmpeg/{ffmpeg_exe} ou ffmpeg/{ffprobe_exe} não apareceram em "
+            f"{dist_dir} após o PyInstaller — as tools de mídia local vão "
+            "degradar pro fallback de PATH do sistema em produção."
         )
     total_mb = (
         sum(f.stat().st_size for f in dist_dir.rglob("*") if f.is_file()) / 1048576

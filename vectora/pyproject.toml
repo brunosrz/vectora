@@ -116,6 +116,15 @@ dependencies = [
     "yt-dlp>=2026.3.17",
 ]
 
+[project.optional-dependencies]
+# Transcrição local (`backend/tools/media_native.py::transcribe_local`) —
+# CTranslate2 (~150MB de modelo baixado sob demanda na primeira chamada,
+# cacheado em ~/.vectora/models/whisper/) não deve inflar o install padrão
+# de quem nunca usa transcrição 100% offline. `uv sync --extra media`.
+media = [
+    "faster-whisper>=1.2.1",
+]
+
 [project.scripts]
 vectora = "backend.main:run"
 
