@@ -85,6 +85,18 @@ async def _tipo_composto(itens: list[_Item]) -> str:
     return str(len(itens))
 
 
+@vtool(extras=ToolExtras(category="test"))
+async def _com_parametro_title(title: str, content: str = "") -> str:
+    """Tool com um parâmetro literalmente chamado `title` — mesmo nome da
+    chave de metadado que Pydantic injeta em todo nó de schema.
+
+    Args:
+        title: título do item
+        content: conteúdo opcional
+    """
+    return title
+
+
 class TestVtoolSchemaGeneration:
     def test_registra_tool_no_registry_global(self):
         spec = _get("_hash_text")
@@ -143,6 +155,27 @@ class TestVtoolSchemaGeneration:
         item_key = next(iter(params["$defs"]))
         assert params["$defs"][item_key]["properties"].keys() == {"nome", "qtd"}
         assert params["properties"]["itens"]["items"]["$ref"] == f"#/$defs/{item_key}"
+
+    def test_parametro_chamado_title_sobrevive_ao_strip_de_metadado(self):
+        """Erro/borda: `_strip_titles` remove a chave `title` de metadado
+        (ex.: `{"type": "string", "title": "Query"}` que o Pydantic injeta
+        por campo) — mas não pode remover uma PROPRIEDADE cujo nome real é
+        `title` só porque a chave do mapa `properties` coincide com o nome
+        do metadado. Reproduzido ao vivo: `create_artifact`/
+        `linear_create_issue`/`notion_create_page` (todas com parâmetro
+        `title`) quebravam toda chamada ao Gemini com "required[N]:
+        property is not defined" — `required` listava `title`, mas
+        `properties` não tinha mais a chave."""
+        schema = _get("_com_parametro_title").openai_schema()
+        params = schema["function"]["parameters"]
+
+        assert "title" in params["properties"]
+        assert params["properties"]["title"]["type"] == "string"
+        assert "title" in params["required"]
+        # O metadado `title` (auto-gerado por campo) continua removido —
+        # não é isso que este teste contesta.
+        assert "title" not in params["properties"]["title"]
+        assert "title" not in params
 
 
 class TestToolSpecAinvoke:

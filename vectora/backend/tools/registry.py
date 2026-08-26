@@ -142,15 +142,31 @@ def _parse_arg_descriptions(docstring: str | None) -> dict[str, str]:
     return descriptions
 
 
+_NAME_KEYED_MAPS = ("properties", "$defs")
+
+
 def _strip_titles(node: Any) -> None:
-    """Remove ``title`` recursivamente de todo o schema (raiz, ``properties``
-    e ``$defs``) — Pydantic emite ``title`` por campo por padrão, mas
-    ``convert_to_openai_tool`` (o gerador legado que este módulo substitui)
-    nunca emitia; providers como Gemini rejeitam a chave em ``Schema``."""
+    """Remove ``title`` recursivamente de todo NÓ de schema — Pydantic emite
+    ``title`` por campo por padrão, mas ``convert_to_openai_tool`` (o
+    gerador legado que este módulo substitui) nunca emitia; providers como
+    Gemini rejeitam a chave em ``Schema``.
+
+    ``properties``/``$defs`` são mapas nome→schema: as CHAVES são nomes de
+    campo/definição, não metadado. Um parâmetro literalmente chamado
+    ``title`` (ex.: ``create_artifact(title: str)``) não pode ser apagado
+    só porque a chave do mapa coincide com o metadado que este helper
+    remove — reproduzido ao vivo: `.pop("title", None)` no próprio dict de
+    ``properties`` derrubava a propriedade inteira, deixando ``required``
+    apontar pra um campo que não existe mais (Gemini rejeitava a chamada
+    inteira com "required[N]: property is not defined")."""
     if isinstance(node, dict):
         node.pop("title", None)
-        for value in node.values():
-            _strip_titles(value)
+        for key, value in node.items():
+            if key in _NAME_KEYED_MAPS and isinstance(value, dict):
+                for sub_schema in value.values():
+                    _strip_titles(sub_schema)
+            else:
+                _strip_titles(value)
     elif isinstance(node, list):
         for item in node:
             _strip_titles(item)
