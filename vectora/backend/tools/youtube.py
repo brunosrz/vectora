@@ -9,8 +9,11 @@ depende de ffmpeg vendorizado) + transcrição remota
 
 Baixar VÍDEO do YouTube sem permissão viola os Termos de Uso (não é crime,
 mas pode gerar suspensão de conta/ação civil por quebra de contrato) — por
-isso o fallback baixa só o stream de ÁUDIO, nunca o vídeo, e só quando
-legendas públicas não existem.
+isso o fallback de transcrição baixa só o stream de ÁUDIO, nunca o vídeo.
+A única exceção deliberada é `youtube_frame_at`: baixa um TRECHO CURTO
+(poucos segundos, `--download-sections`) em torno de um timestamp
+específico que o agente já decidiu (via a transcrição) que precisa de
+contexto visual — nunca o vídeo inteiro.
 """
 
 from __future__ import annotations
@@ -23,6 +26,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from backend.tools.context import ToolContext
 from backend.tools.registry import ToolExtras, vtool
 
 logger = logging.getLogger(__name__)
@@ -185,3 +189,115 @@ async def get_transcript(url: str, language: str = "") -> str:
             {"error": f"não foi possível obter transcrição: {exc}"},
             ensure_ascii=False,
         )
+
+
+def _download_clip_sync(url: str, timestamp_s: float, window_s: float = 6.0) -> str:
+    """Baixa um TRECHO CURTO do vídeo (nunca o vídeo inteiro) via
+    `yt-dlp --download-sections`, centrado no `timestamp_s` pedido — a
+    única exceção deliberada à regra de "nunca baixar vídeo" deste módulo
+    (ver docstring do módulo). Devolve o path do clipe num diretório
+    temporário — quem chama é responsável por limpar depois de usar."""
+    import yt_dlp
+
+    start = max(0.0, timestamp_s - window_s / 2)
+    end = start + window_s
+
+    tmpdir = tempfile.mkdtemp()
+    outtmpl = str(Path(tmpdir) / "clip.%(ext)s")
+    opts = {
+        "format": "bestvideo[ext=mp4]/best[ext=mp4]/best",
+        "outtmpl": outtmpl,
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "download_ranges": yt_dlp.utils.download_range_func(None, [(start, end)]),
+        "force_keyframes_at_cuts": True,
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        ydl.download([url])
+
+    files = [p for p in Path(tmpdir).iterdir() if p.is_file()]
+    if not files:
+        raise RuntimeError("yt-dlp não produziu nenhum clipe de vídeo")
+    return str(files[0])
+
+
+@vtool(
+    extras=ToolExtras(
+        render_hint="image_preview",
+        category="web",
+        destructive=False,
+        icon="globe",
+    )
+)
+async def youtube_frame_at(ctx: ToolContext, url: str, timestamp_s: float) -> str:
+    """Extrai um frame (print) de um momento específico de um vídeo do
+    YouTube — depois que `get_transcript` já identificou, pelo texto, que
+    aquele momento precisa de contexto visual. Baixa só um TRECHO CURTO em
+    torno do timestamp (nunca o vídeo inteiro), reusando o mesmo ffmpeg
+    embutido de `probe_media`/`extract_frame`
+    (`backend/tools/media_native.py`).
+
+    Args:
+        url: URL do vídeo.
+        timestamp_s: Segundo exato do frame desejado.
+
+    Returns:
+        JSON com `url` (servível — aparece inline no chat) e `path`, ou
+        `error`.
+    """
+    if timestamp_s < 0:
+        return json.dumps({"error": "timestamp_s não pode ser negativo"})
+
+    video_id = _extract_video_id(url)
+    if not video_id:
+        return json.dumps(
+            {"error": f"não reconheci um ID de vídeo do YouTube em: {url}"},
+            ensure_ascii=False,
+        )
+
+    from backend.services.ffmpeg_binary import resolve_ffmpeg
+    from backend.tools.media import _media_url, _persist
+    from backend.tools.media_native import extract_frame_to
+
+    ffmpeg = resolve_ffmpeg()
+    if not ffmpeg:
+        return json.dumps(
+            {"error": "ffmpeg não disponível — instale ffmpeg ou rode `scons ffmpeg`"}
+        )
+
+    try:
+        clip_path = await asyncio.to_thread(_download_clip_sync, url, timestamp_s)
+    except Exception as exc:
+        logger.exception(
+            "youtube_frame_at: falha ao baixar trecho do vídeo",
+            extra={"video_id": video_id},
+        )
+        return json.dumps(
+            {"error": f"falha ao baixar trecho do vídeo: {exc}"}, ensure_ascii=False
+        )
+
+    try:
+        # O clipe já começa `window_s/2` segundos ANTES do timestamp pedido
+        # (ver `_download_clip_sync`) — o frame fica sempre no meio dele,
+        # exceto perto do início do vídeo (clipe mais curto, `start=0`).
+        offset_in_clip = min(timestamp_s, 3.0)
+        with tempfile.TemporaryDirectory() as out_tmpdir:
+            frame_tmp = str(Path(out_tmpdir) / "frame.png")
+            ok, err_out = await extract_frame_to(
+                ffmpeg, clip_path, offset_in_clip, frame_tmp
+            )
+            if not ok:
+                return json.dumps(
+                    {"error": f"ffmpeg falhou ao extrair frame: {err_out[:500]}"}
+                )
+            frame_bytes = Path(frame_tmp).read_bytes()
+    finally:
+        Path(clip_path).unlink(missing_ok=True)
+
+    session_id = ctx.thread_id
+    path = await asyncio.to_thread(_persist, session_id, frame_bytes, ".png")
+    return json.dumps(
+        {"path": str(path), "url": _media_url(session_id, path), "video_id": video_id},
+        ensure_ascii=False,
+    )

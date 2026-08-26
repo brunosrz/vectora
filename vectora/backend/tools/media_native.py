@@ -148,20 +148,33 @@ async def extract_frame(ctx: ToolContext, path: str, timestamp_s: float) -> str:
     out_dir.mkdir(exist_ok=True)
     out_path = out_dir / f"{resolved.stem}-{uuid4().hex[:8]}.png"
 
+    ok, err_out = await extract_frame_to(
+        ffmpeg, str(resolved), timestamp_s, str(out_path)
+    )
+    if not ok:
+        return json.dumps({"error": f"ffmpeg falhou ao extrair frame: {err_out[:500]}"})
+    return json.dumps({"path": str(out_path)}, ensure_ascii=False)
+
+
+async def extract_frame_to(
+    ffmpeg: str, video_path: str, timestamp_s: float, out_path: str
+) -> tuple[bool, str]:
+    """Extração de frame reutilizável fora do contexto de tool — usada
+    tanto pela tool `extract_frame` (vídeo do workspace) quanto por
+    `backend/tools/youtube.py::youtube_frame_at` (clipe baixado sob
+    demanda, sem workspace nenhum envolvido). Devolve (sucesso, stderr)."""
     code, _out, err_out = await _run(
         ffmpeg,
         "-y",
         "-ss",
         str(timestamp_s),
         "-i",
-        str(resolved),
+        video_path,
         "-frames:v",
         "1",
-        str(out_path),
+        out_path,
     )
-    if code != 0 or not out_path.is_file():
-        return json.dumps({"error": f"ffmpeg falhou ao extrair frame: {err_out[:500]}"})
-    return json.dumps({"path": str(out_path)}, ensure_ascii=False)
+    return code == 0 and Path(out_path).is_file(), err_out
 
 
 @vtool(

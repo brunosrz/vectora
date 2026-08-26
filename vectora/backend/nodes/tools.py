@@ -270,6 +270,7 @@ fetch_url = _bridge("fetch_url")
 web_crawl = _bridge("web_crawl")
 web_map = _bridge("web_map")
 get_transcript = _bridge("get_transcript")
+youtube_frame_at = _bridge("youtube_frame_at")
 embedding = _bridge("embedding")
 vector_search = _bridge("vector_search")
 ingest_docs = _bridge("ingest_docs")
@@ -299,6 +300,7 @@ SEARCH_TOOLS: list[ToolSpec] = [
     web_crawl,
     web_map,
     get_transcript,
+    youtube_frame_at,
     vector_search,
     embedding,
     ingest_docs,
@@ -487,6 +489,7 @@ for _t in [
     web_crawl,
     web_map,
     get_transcript,
+    youtube_frame_at,
     vector_search,
     embedding,
     ingest_docs,
@@ -686,6 +689,7 @@ CHAT_TOOLS: list[ToolSpec] = [
     web_crawl,
     web_map,
     get_transcript,
+    youtube_frame_at,
     vector_search,
     save_memory,
     get_memory,

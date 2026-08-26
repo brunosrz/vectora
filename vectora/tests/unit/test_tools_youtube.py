@@ -12,14 +12,17 @@ Guardado em duas camadas, mesmo padrão de ``test_llm_live.py``:
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from backend.tools.context import ToolContext
 from backend.tools.youtube import (
     _extract_video_id,
     _format_transcript,
     get_transcript,
+    youtube_frame_at,
 )
 
 # ---------------------------------------------------------------------------
@@ -163,6 +166,107 @@ class TestGetTranscript:
 
 
 # ---------------------------------------------------------------------------
+# youtube_frame_at — orquestração (rede/ffmpeg mockados)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestYoutubeFrameAt:
+    async def test_timestamp_negativo_e_erro_sem_tocar_em_rede(self):
+        result = json.loads(
+            await youtube_frame_at(
+                ctx=ToolContext(thread_id="t1"),
+                url="https://www.youtube.com/watch?v=jNQXAC9IVRw",
+                timestamp_s=-1.0,
+            )
+        )
+        assert "error" in result
+
+    async def test_url_invalida_e_erro_sem_tocar_em_rede(self):
+        result = json.loads(
+            await youtube_frame_at(
+                ctx=ToolContext(thread_id="t1"),
+                url="https://example.com/nao-e-youtube",
+                timestamp_s=1.0,
+            )
+        )
+        assert "error" in result
+
+    async def test_baixa_so_um_trecho_curto_e_extrai_o_frame(
+        self, monkeypatch, tmp_path
+    ):
+        """Prova que o fluxo é: baixar CLIPE curto (nunca o vídeo inteiro)
+        → extrair frame do clipe → persistir → devolver url servível."""
+        import backend.tools.youtube as mod
+
+        clip_path = tmp_path / "clip.mp4"
+        clip_path.write_bytes(b"fake-clip")
+        monkeypatch.setattr(mod, "_download_clip_sync", lambda *_a: str(clip_path))
+
+        async def _fake_extract(_ffmpeg, video_path, _ts, out_path):
+            assert video_path == str(
+                clip_path
+            )  # extrai do CLIPE, não do vídeo original
+            Path(out_path).write_bytes(b"\x89PNG-fake-frame")
+            return True, ""
+
+        monkeypatch.setattr(
+            "backend.tools.media_native.extract_frame_to", _fake_extract
+        )
+        monkeypatch.setattr(
+            "backend.services.ffmpeg_binary.resolve_ffmpeg", lambda: "/usr/bin/ffmpeg"
+        )
+
+        persisted = {}
+
+        def _fake_persist(session_id, data, suffix):
+            path = tmp_path / f"{session_id}{suffix}"
+            path.write_bytes(data)
+            persisted["session_id"] = session_id
+            persisted["data"] = data
+            return path
+
+        monkeypatch.setattr("backend.tools.media._persist", _fake_persist)
+
+        result = json.loads(
+            await youtube_frame_at(
+                ctx=ToolContext(thread_id="t-frame"),
+                url="https://www.youtube.com/watch?v=jNQXAC9IVRw",
+                timestamp_s=5.0,
+            )
+        )
+
+        assert "error" not in result
+        assert result["url"].startswith("/artifacts/t-frame/media/")
+        assert persisted["data"] == b"\x89PNG-fake-frame"
+        # O clipe temporário some depois de usado — não pode acumular lixo.
+        assert not clip_path.exists()
+
+    async def test_falha_no_download_do_clipe_vira_erro_tipado(self, monkeypatch):
+        """Erro/borda: vídeo indisponível/geobloqueado — erro legível, nunca
+        traceback cru."""
+        import backend.tools.youtube as mod
+
+        def _falha(*_a):
+            raise RuntimeError("vídeo indisponível")
+
+        monkeypatch.setattr(mod, "_download_clip_sync", _falha)
+        monkeypatch.setattr(
+            "backend.services.ffmpeg_binary.resolve_ffmpeg", lambda: "/usr/bin/ffmpeg"
+        )
+
+        result = json.loads(
+            await youtube_frame_at(
+                ctx=ToolContext(thread_id="t1"),
+                url="https://www.youtube.com/watch?v=jNQXAC9IVRw",
+                timestamp_s=1.0,
+            )
+        )
+
+        assert "error" in result
+
+
+# ---------------------------------------------------------------------------
 # Live — vídeo público real, sem mock (rede de verdade)
 # ---------------------------------------------------------------------------
 
@@ -183,3 +287,26 @@ async def test_get_transcript_video_publico_real_via_captions():
     assert result["video_id"] == "jNQXAC9IVRw"
     assert "elephant" in result["transcript"].lower()
     assert result["transcript"].startswith("[00:")
+
+
+@pytest.mark.live
+@pytest.mark.asyncio
+async def test_youtube_frame_at_video_publico_real_extrai_frame_de_verdade():
+    """Baixa um clipe curto real de "Me at the zoo" e extrai um frame PNG
+    real — prova o fluxo completo (yt-dlp + ffmpeg) contra a rede/binário
+    de verdade, sem nenhum mock."""
+    result = json.loads(
+        await youtube_frame_at(
+            ctx=ToolContext(thread_id="t-live-frame"),
+            url="https://www.youtube.com/watch?v=jNQXAC9IVRw",
+            timestamp_s=3.0,
+        )
+    )
+
+    assert "error" not in result
+    assert result["video_id"] == "jNQXAC9IVRw"
+    frame_path = Path(result["path"])
+    assert frame_path.is_file()
+    assert frame_path.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    frame_path.unlink()
+    frame_path.parent.rmdir()
