@@ -94,6 +94,9 @@ from backend.tools import (
 from backend.tools import (
     workspace as _workspace_module,
 )
+from backend.tools import (
+    youtube as _youtube_module,
+)
 from backend.tools.registry import TOOL_REGISTRY, ToolSpec
 
 
@@ -263,6 +266,7 @@ web_search = _bridge("web_search")
 fetch_url = _bridge("fetch_url")
 web_crawl = _bridge("web_crawl")
 web_map = _bridge("web_map")
+get_transcript = _bridge("get_transcript")
 embedding = _bridge("embedding")
 vector_search = _bridge("vector_search")
 ingest_docs = _bridge("ingest_docs")
@@ -287,6 +291,7 @@ SEARCH_TOOLS: list[ToolSpec] = [
     fetch_url,
     web_crawl,
     web_map,
+    get_transcript,
     vector_search,
     embedding,
     ingest_docs,
@@ -474,6 +479,7 @@ for _t in [
     fetch_url,
     web_crawl,
     web_map,
+    get_transcript,
     vector_search,
     embedding,
     ingest_docs,
@@ -667,6 +673,7 @@ CHAT_TOOLS: list[ToolSpec] = [
     fetch_url,
     web_crawl,
     web_map,
+    get_transcript,
     vector_search,
     save_memory,
     get_memory,

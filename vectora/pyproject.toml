@@ -109,6 +109,11 @@ dependencies = [
     "pypdf>=6.16.2",
     "python-docx>=1.2.0",
     "openpyxl>=3.1.5",
+    # YouTube/outras plataformas (backend/tools/youtube.py) — captions
+    # públicas primeiro (sem baixar mídia nenhuma), yt-dlp só como
+    # fallback (áudio, sem captions) ou pra extrair um frame sob demanda.
+    "youtube-transcript-api>=1.2.4",
+    "yt-dlp>=2026.3.17",
 ]
 
 [project.scripts]
