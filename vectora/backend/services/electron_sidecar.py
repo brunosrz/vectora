@@ -168,11 +168,32 @@ async def stop_electron_sidecar() -> None:
         _watch_task = None
 
     if _proc is None:
+        # S0-7: se uma janela do Electron ainda estiver na tela quando este
+        # log aparecer, a causa não é o mecanismo de kill (confirmado
+        # funcional — `terminate_gracefully` mata processo + renderers sem
+        # órfão) — é `_proc` já estar `None`/desincronizado da janela real
+        # nesse ponto (ex.: `_watch_for_unexpected_exit` limpou a
+        # referência por engano). Nível INFO: idempotente e comum (chamado
+        # de novo num shutdown que já rodou), não é por si só um problema.
+        logger.info(
+            "electron_sidecar: stop chamado sem processo rastreado "
+            "(já encerrado, ou nunca chegou a subir)"
+        )
         return
     proc = _proc
     _proc = None
     if proc.returncode is not None:
+        logger.info(
+            "electron_sidecar: processo pid=%d já havia saído (code=%s)",
+            proc.pid,
+            proc.returncode,
+        )
         return
     await terminate_gracefully(
         proc, timeout_seconds=10.0, logger=logger, log_prefix="electron_sidecar"
+    )
+    logger.info(
+        "electron_sidecar: processo pid=%d encerrado (code=%s)",
+        proc.pid,
+        proc.returncode,
     )

@@ -11,6 +11,7 @@ backend segue de pé sem janela.
 from __future__ import annotations
 
 import asyncio
+import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -191,6 +192,55 @@ async def test_stop_electron_sidecar_termina_e_limpa_estado():
 async def test_stop_electron_sidecar_sem_processo_e_noop():
     await electron_sidecar.stop_electron_sidecar()
     assert electron_sidecar._proc is None
+
+
+# ---------------------------------------------------------------------------
+# S0-7: diagnóstico do "Ctrl+C não fecha a janela do Electron" — cada ramo
+# de stop_electron_sidecar() precisa deixar rastro distinguível no log, já
+# que o mecanismo de kill em si já foi confirmado funcional (reproduzido ao
+# vivo: spawnar um Electron real + terminate_gracefully mata processo e
+# renderers, sem órfão). Se a janela ficar presa de novo, o log agora diz
+# QUAL dos três estados aconteceu, em vez de nada.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_stop_sem_processo_rastreado_loga_o_motivo(caplog):
+    caplog.set_level(logging.INFO, logger="backend.services.electron_sidecar")
+
+    await electron_sidecar.stop_electron_sidecar()
+
+    assert "sem processo rastreado" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_stop_com_processo_ja_morto_loga_o_code_sem_chamar_terminate(caplog):
+    caplog.set_level(logging.INFO, logger="backend.services.electron_sidecar")
+    fake_proc = MagicMock()
+    fake_proc.returncode = 0
+    fake_proc.terminate = MagicMock()
+    electron_sidecar._proc = fake_proc
+
+    await electron_sidecar.stop_electron_sidecar()
+
+    fake_proc.terminate.assert_not_called()
+    assert "já havia saído" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_stop_com_processo_vivo_loga_sucesso_apos_terminar(caplog):
+    caplog.set_level(logging.INFO, logger="backend.services.electron_sidecar")
+    fake_proc = MagicMock()
+    fake_proc.pid = 4242
+    fake_proc.returncode = None
+    fake_proc.terminate = MagicMock()
+    fake_proc.wait = AsyncMock(return_value=None)
+    electron_sidecar._proc = fake_proc
+
+    await electron_sidecar.stop_electron_sidecar()
+
+    assert "encerrado" in caplog.text
+    assert "4242" in caplog.text
 
 
 # ---------------------------------------------------------------------------
