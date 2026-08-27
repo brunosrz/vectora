@@ -17,15 +17,18 @@ from fastapi import BackgroundTasks, HTTPException
 
 import backend
 from backend.api.handlers.background import (
+    CreateLinkRequest,
     CreateTaskRequest,
     ResumeRunRequest,
     UpdateTaskRequest,
+    add_link_endpoint,
     approve_review_endpoint,
     delete_task_endpoint,
     get_runs,
     get_tasks,
     patch_task,
     post_task,
+    remove_link_endpoint,
     resume_run_endpoint,
     run_task_endpoint,
 )
@@ -271,6 +274,84 @@ async def test_approve_review_endpoint_move_para_done(db):
     # que os outros endpoints de task já têm.
     with pytest.raises(HTTPException) as wrong_session:
         await approve_review_endpoint(_req(), "thread-B", out.id)
+    assert wrong_session.value.status_code == 404
+
+
+async def test_links_endpoint_adiciona_e_remove_dependencia(db):
+    """Sprint 4 Fase 4d — `add_dependency` só era chamada internamente
+    pela tool `kanban_decompose` do agente, sem rota HTTP nenhuma."""
+    pai = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="Pai", instruction="i", trigger_type="manual"
+        ),
+    )
+    filho = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="Filho", instruction="i", trigger_type="manual"
+        ),
+    )
+
+    updated = await add_link_endpoint(
+        _req(), "thread-1", filho.id, CreateLinkRequest(parent_id=pai.id)
+    )
+    assert [d.id for d in updated.dependencies] == [pai.id]
+
+    updated = await remove_link_endpoint(_req(), "thread-1", filho.id, pai.id)
+    assert updated.dependencies == []
+
+
+async def test_links_endpoint_recusa_ciclo_com_409(db):
+    """Erro/borda: fechar um ciclo pelo HTTP devolve 409 (conflito com o
+    estado do grafo de dependências), não 500 nem um vínculo criado."""
+    a = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="a", instruction="i", trigger_type="manual"
+        ),
+    )
+    b = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="b", instruction="i", trigger_type="manual"
+        ),
+    )
+    await add_link_endpoint(_req(), "thread-1", b.id, CreateLinkRequest(parent_id=a.id))
+
+    with pytest.raises(HTTPException) as ciclo:
+        await add_link_endpoint(
+            _req(), "thread-1", a.id, CreateLinkRequest(parent_id=b.id)
+        )
+    assert ciclo.value.status_code == 409
+
+
+async def test_links_endpoint_recusa_task_de_outra_session(db):
+    """Erro/borda: linkar contra uma task de outra thread vazaria dado
+    entre sessions — os dois lados do vínculo precisam pertencer à mesma."""
+    out = await post_task(
+        _req(),
+        "thread-A",
+        CreateTaskRequest(
+            kind="routine", name="a", instruction="i", trigger_type="manual"
+        ),
+    )
+    outra = await post_task(
+        _req(),
+        "thread-B",
+        CreateTaskRequest(
+            kind="routine", name="b", instruction="i", trigger_type="manual"
+        ),
+    )
+
+    with pytest.raises(HTTPException) as wrong_session:
+        await add_link_endpoint(
+            _req(), "thread-A", out.id, CreateLinkRequest(parent_id=outra.id)
+        )
     assert wrong_session.value.status_code == 404
 
 

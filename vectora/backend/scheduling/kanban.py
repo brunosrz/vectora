@@ -453,6 +453,21 @@ async def add_dependency(parent_id: str, child_id: str) -> None:
     await db.commit()
 
 
+async def remove_dependency(parent_id: str, child_id: str) -> bool:
+    """Remove o vínculo `parent_id → child_id`, se existir.
+
+    `False` quando o vínculo não existia (nada a remover) — o caller (HTTP
+    handler) decide se isso é 404 ou um no-op silencioso; aqui é só o fato.
+    """
+    db = await _get_db()
+    cur = await db.execute(
+        "DELETE FROM vectora_task_links WHERE parent_id = ? AND child_id = ?",
+        (parent_id, child_id),
+    )
+    await db.commit()
+    return cur.rowcount > 0
+
+
 async def recompute_ready() -> int:
     """Promove pra `ready` as tasks em `todo` com todos os pais concluídos.
 

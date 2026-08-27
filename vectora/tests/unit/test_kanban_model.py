@@ -405,6 +405,36 @@ class TestDependencias:
         with pytest.raises(ValueError, match=r"circular|ciclo|si mesma"):
             await add_dependency("a", "a")
 
+    @pytest.mark.asyncio
+    async def test_remove_dependency_apaga_o_vinculo(self, db):
+        """Sprint 4 Fase 4d — links HTTP: `add_dependency` só era chamado
+        internamente pela tool `kanban_decompose`, sem endpoint pra editar
+        dependências no drawer."""
+        from backend.scheduling.kanban import (
+            add_dependency,
+            get_dependencies,
+            remove_dependency,
+        )
+
+        await _cria(db, "pai", status="done")
+        await _cria(db, "filho", status="todo")
+        await add_dependency("pai", "filho")
+
+        assert await remove_dependency("pai", "filho") is True
+        assert await get_dependencies("filho") == []
+
+    @pytest.mark.asyncio
+    async def test_remove_dependency_inexistente_devolve_false_sem_lancar(self, db):
+        """Erro/borda: remover um vínculo que nunca existiu (ou já foi
+        removido) não pode lançar — o caller HTTP decide o que fazer com
+        `False`, não é um estado excepcional aqui."""
+        from backend.scheduling.kanban import remove_dependency
+
+        await _cria(db, "pai")
+        await _cria(db, "filho")
+
+        assert await remove_dependency("pai", "filho") is False
+
 
 class TestStatusValidos:
     @pytest.mark.asyncio

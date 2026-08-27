@@ -310,6 +310,53 @@ async def delete_task_endpoint(request: Request, thread_id: str, task_id: str) -
     await delete_task(task_id)
 
 
+class CreateLinkRequest(BaseModel):
+    parent_id: str
+
+
+@router.post("/tasks/{task_id}/links", response_model=TaskOut, status_code=201)
+async def add_link_endpoint(
+    request: Request, thread_id: str, task_id: str, body: CreateLinkRequest
+) -> TaskOut:
+    """`add_dependency` (`kanban.py`) só era chamada internamente pela tool
+    `kanban_decompose` do agente — sem rota HTTP, o drawer não tinha como
+    editar dependências. Os dois lados do vínculo precisam pertencer à
+    mesma session (`_require_task` valida posse), senão um usuário
+    linkaria a task de outra thread."""
+    from backend.scheduling.background_tasks import get_task
+    from backend.scheduling.kanban import add_dependency
+
+    _user_id(request)
+    await _require_task(thread_id, task_id)
+    await _require_task(thread_id, body.parent_id)
+    try:
+        await add_dependency(body.parent_id, task_id)
+    except ValueError as exc:
+        # Ciclo detectado — 409 (conflito com o estado atual do grafo de
+        # dependências), não 400 (não é o payload que está mal formado).
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    updated = await get_task(task_id)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Task não encontrada")
+    return await _to_out(updated)
+
+
+@router.delete("/tasks/{task_id}/links/{parent_id}", response_model=TaskOut)
+async def remove_link_endpoint(
+    request: Request, thread_id: str, task_id: str, parent_id: str
+) -> TaskOut:
+    from backend.scheduling.background_tasks import get_task
+    from backend.scheduling.kanban import remove_dependency
+
+    _user_id(request)
+    await _require_task(thread_id, task_id)
+    await remove_dependency(parent_id, task_id)
+    updated = await get_task(task_id)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Task não encontrada")
+    return await _to_out(updated)
+
+
 @router.post("/tasks/{task_id}/unblock", response_model=TaskOut)
 async def unblock_task_endpoint(
     request: Request, thread_id: str, task_id: str
