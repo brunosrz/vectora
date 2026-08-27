@@ -21,11 +21,15 @@ const ICON_ONLY_BELOW = 160;
 //: Cor de destaque só no estado ativo — inativo fica neutro pra não brigar
 //: com o resto do header (mesmo princípio de contenção visual do HITLPanel).
 const MODE_ACTIVE_CLASS: Record<UiMode, string> = {
-  assistant: "bg-blue-500/10 text-blue-400 font-medium",
-  ide: "bg-violet-500/10 text-violet-400 font-medium",
-  kanban: "bg-amber-500/10 text-amber-400 font-medium",
+  assistant: "bg-blue-500/10 text-blue-400 border-blue-400",
+  ide: "bg-violet-500/10 text-violet-400 border-violet-400",
+  kanban: "bg-amber-500/10 text-amber-400 border-amber-400",
 };
 
+//: Aba plana no estilo VS Code — sem pílula/grupo arredondado: cada modo é
+//: seu próprio retângulo, ativo destacado por uma borda inferior colorida
+//: (mesma lógica de tab ativa de um editor de código), não por um contorno
+//: envolvendo os 3 botões.
 function ModeButton({
   mode,
   active,
@@ -47,10 +51,10 @@ function ModeButton({
       onClick={onClick}
       aria-pressed={active}
       title={label}
-      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors min-w-0 ${
+      className={`flex items-center gap-1.5 px-2.5 h-11 text-xs border-b-2 transition-colors min-w-0 ${
         active
           ? MODE_ACTIVE_CLASS[mode]
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+          : "text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/40"
       }`}
     >
       <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -88,11 +92,11 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
     // ao próprio conteúdo (shrink-to-fit), então medir ele diretamente
     // convergiria sempre pro estado mínimo (ícone-only). O wrapper com
     // `flex-1` é quem de fato reflete o espaço disponível no header.
-    <div ref={ref} className="min-w-0 flex-1 flex justify-center">
+    <div ref={ref} className="min-w-0 flex-1 flex justify-center self-stretch">
       <div
         role="group"
         aria-label={m.ide_mode_switcher_label()}
-        className="flex rounded-lg border border-border/40 overflow-hidden min-w-0"
+        className="flex items-end min-w-0"
       >
         <ModeButton
           mode="assistant"
@@ -104,7 +108,6 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
           label={m.ide_mode_assistente()}
           labelSize={labelSize}
         />
-        <div className="w-px bg-border/40 self-stretch" />
         <ModeButton
           mode="ide"
           active={uiMode === "ide"}
@@ -115,7 +118,6 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
           label={m.ide_mode_ide()}
           labelSize={labelSize}
         />
-        <div className="w-px bg-border/40 self-stretch" />
         <ModeButton
           mode="kanban"
           active={uiMode === "kanban"}
