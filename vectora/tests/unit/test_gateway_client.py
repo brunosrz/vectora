@@ -252,6 +252,85 @@ class TestGatewayClientStop:
         await client.stop()  # não deve lançar erro
 
 
+class _AsyncCtx:
+    """Async context manager mínimo — envolve um valor síncrono, mesmo
+    padrão de `aiohttp.ClientSession()`/`session.ws_connect()`."""
+
+    def __init__(self, value):
+        self._value = value
+
+    async def __aenter__(self):
+        return self._value
+
+    async def __aexit__(self, *exc_info) -> None:
+        return None
+
+
+class TestGatewayClientConnectOnce:
+    def _client(self):
+        from backend.services.gateway import GatewayClient
+
+        return GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
+        )
+
+    @pytest.mark.asyncio
+    async def test_fechamento_limpo_do_servidor_loga_warning_antes_de_reconectar(
+        self, caplog
+    ) -> None:
+        """`_handle_messages` retornando sem lançar significa que o servidor
+        fechou o socket sem frame de erro — sem log nenhum, isso reconecta
+        em silêncio (várias linhas "conectado" seguidas, sem nenhum
+        "desconectado" no meio), dificultando diagnosticar se o padrão
+        coincide com outros sintomas."""
+        client = self._client()
+        ws = AsyncMock()
+        session = MagicMock()
+        session.ws_connect = MagicMock(return_value=_AsyncCtx(ws))
+
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession",
+            return_value=_AsyncCtx(session),
+        ):
+            with patch.object(client, "_handle_messages", new=AsyncMock()):
+                with caplog.at_level("WARNING", logger="backend.services.gateway"):
+                    await client._connect_once("tok123")
+
+        assert any(
+            "fechada pelo servidor sem erro" in rec.message for rec in caplog.records
+        )
+
+    @pytest.mark.asyncio
+    async def test_conexao_com_erro_nao_loga_o_warning_de_fechamento_limpo(
+        self, caplog
+    ) -> None:
+        """Erro/borda: quando `_handle_messages` lança (ws error de verdade,
+        já reportado por `_connect_loop` como "desconectado"), o novo
+        warning de fechamento limpo não deve duplicar o log."""
+        client = self._client()
+        ws = AsyncMock()
+        session = MagicMock()
+        session.ws_connect = MagicMock(return_value=_AsyncCtx(ws))
+
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession",
+            return_value=_AsyncCtx(session),
+        ):
+            with patch.object(
+                client,
+                "_handle_messages",
+                new=AsyncMock(side_effect=ConnectionError("ws error: boom")),
+            ):
+                with caplog.at_level("WARNING", logger="backend.services.gateway"):
+                    with pytest.raises(ConnectionError):
+                        await client._connect_once("tok123")
+
+        assert not any(
+            "fechada pelo servidor sem erro" in rec.message for rec in caplog.records
+        )
+
+
 class TestGatewayClientDispatch:
     def _client(self):
         from backend.services.gateway import GatewayClient

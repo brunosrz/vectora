@@ -110,6 +110,16 @@ class GatewayClient:
             async with session.ws_connect(ws_url) as ws:
                 logger.info("gateway: conectado em %s", ws_url)
                 await self._handle_messages(ws)
+                # `_handle_messages` só retorna sem lançar quando o servidor
+                # fecha o socket sem frame de erro (`async for` simplesmente
+                # esgota). Sem este log, isso reconecta em silêncio — várias
+                # linhas "conectado" seguidas, sem nenhum "desconectado" no
+                # meio, dificultando diagnosticar se o padrão coincide com
+                # outros sintomas (ex.: o processo sendo derrubado logo
+                # depois de conectar).
+                logger.warning(
+                    "gateway: conexão fechada pelo servidor sem erro — reconectando"
+                )
 
     async def _handle_messages(self, ws: aiohttp.ClientWebSocketResponse) -> None:
         """Recebe mensagens do gateway e despacha ao FastAPI local."""
