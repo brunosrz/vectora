@@ -9,9 +9,8 @@ import { usePreferenciasDialogStore } from "@/lib/stores/preferencias-dialog-sto
 import { useEnvironmentDialogStore } from "@/lib/stores/environment-dialog-store";
 import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
 import { ROLE_COLORS, ROLE_LABELS } from "@/lib/types/auth";
-import { PreferenciasDialog } from "@/components/settings/preferencias";
-import { EnvironmentDialog } from "@/components/settings/environment";
-import { AdminDialog } from "@/components/settings/administracao";
+import { SettingsOverlay } from "@/components/settings/settings-overlay";
+import { m } from "@/lib/paraglide/messages";
 
 export function SettingsMenu() {
   const router = useRouter();
@@ -108,7 +107,7 @@ export function SettingsMenu() {
                 }}
               >
                 <Settings className="w-4 h-4 shrink-0 text-muted-foreground" />
-                Preferências
+                {m.settings_group_preferencias()}
               </button>
 
               <button
@@ -119,7 +118,7 @@ export function SettingsMenu() {
                 }}
               >
                 <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
-                Ambiente
+                {m.settings_group_environment()}
               </button>
 
               {(user?.role === "root" || user?.role === "admin") && (
@@ -131,7 +130,7 @@ export function SettingsMenu() {
                   }}
                 >
                   <Shield className="w-4 h-4 shrink-0 text-muted-foreground" />
-                  Administração
+                  {m.settings_group_admin()}
                 </button>
               )}
 
@@ -141,7 +140,7 @@ export function SettingsMenu() {
                   onClick={handleLogout}
                 >
                   <LogOut className="w-4 h-4 shrink-0" />
-                  Sair
+                  {m.user_logout()}
                 </button>
               )}
             </div>
@@ -149,9 +148,7 @@ export function SettingsMenu() {
         )}
       </div>
 
-      <PreferenciasDialog />
-      <EnvironmentDialog />
-      <AdminDialog />
+      <SettingsOverlay />
     </>
   );
 }

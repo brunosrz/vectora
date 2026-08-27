@@ -11,6 +11,7 @@
  */
 
 import { create } from "zustand";
+import { useSettingsOverlayStore } from "./settings-overlay-store";
 
 /** Sub-abas internas do painel de Administração. */
 export type AdminSubTab =
@@ -32,7 +33,10 @@ interface AdminDialogState {
 export const useAdministracaoDialogStore = create<AdminDialogState>((set) => ({
   open: false,
   subTab: undefined,
-  openAt: (subTab) => set({ open: true, subTab }),
+  openAt: (subTab) => {
+    set({ open: true, subTab });
+    useSettingsOverlayStore.getState().openCategory("administracao");
+  },
   setOpen: (v) => set({ open: v }),
   setSubTab: (subTab) => set({ subTab }),
 }));

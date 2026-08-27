@@ -11,9 +11,20 @@
  */
 
 import { create } from "zustand";
+import {
+  useSettingsOverlayStore,
+  type SettingsCategoryId,
+} from "./settings-overlay-store";
 
 export type PreferenciasTab =
   "preferencias" | "fallbacks" | "conta" | "memoria";
+
+const CATEGORY_BY_TAB: Record<PreferenciasTab, SettingsCategoryId> = {
+  preferencias: "geral",
+  fallbacks: "fallbacks",
+  conta: "conta",
+  memoria: "memoria",
+};
 
 interface PreferenciasDialogState {
   open: boolean;
@@ -27,7 +38,10 @@ export const usePreferenciasDialogStore = create<PreferenciasDialogState>(
   (set) => ({
     open: false,
     tab: "preferencias",
-    openAt: (tab = "preferencias") => set({ open: true, tab }),
+    openAt: (tab = "preferencias") => {
+      set({ open: true, tab });
+      useSettingsOverlayStore.getState().openCategory(CATEGORY_BY_TAB[tab]);
+    },
     setOpen: (v) => set({ open: v }),
     setTab: (tab) => set({ tab }),
   }),

@@ -21,14 +21,16 @@ vi.mock("@/lib/stores/environment-dialog-store", () => ({
 vi.mock("@/lib/stores/administracao-dialog-store", () => ({
   useAdministracaoDialogStore: () => vi.fn(),
 }));
-vi.mock("@/components/settings/preferencias", () => ({
-  PreferenciasDialog: () => null,
+vi.mock("@/components/settings/settings-overlay", () => ({
+  SettingsOverlay: () => null,
 }));
-vi.mock("@/components/settings/environment", () => ({
-  EnvironmentDialog: () => null,
-}));
-vi.mock("@/components/settings/administracao", () => ({
-  AdminDialog: () => null,
+vi.mock("@/lib/paraglide/messages", () => ({
+  m: {
+    settings_group_preferencias: () => "Preferências",
+    settings_group_environment: () => "Ambiente",
+    settings_group_admin: () => "Administração",
+    user_logout: () => "Sair",
+  },
 }));
 
 const LOCAL_USER = {

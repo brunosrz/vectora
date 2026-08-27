@@ -1,22 +1,16 @@
 // @vitest-environment jsdom
 /**
- * Tests para os stores de diálogo de configurações (open/openAt/setTab)
- * e o componente SettingsGroupTabs que navega entre eles.
+ * Tests para os stores de diálogo de configurações (open/openAt/setTab).
+ *
+ * `openAt` também abre o `SettingsOverlay` unificado (settings-overlay-
+ * store) — cobertura própria em settings-overlay.test.tsx. Aqui só o
+ * comportamento local de cada store (open/tab/subTab).
  */
 
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { describe, expect, it, beforeEach } from "vitest";
 import { useEnvironmentDialogStore } from "../environment-dialog-store";
 import { usePreferenciasDialogStore } from "../preferencias-dialog-store";
 import { useAdministracaoDialogStore } from "../administracao-dialog-store";
-
-vi.mock("@/lib/paraglide/messages", () => ({
-  m: {
-    settings_group_preferencias: () => "Preferências",
-    settings_group_environment: () => "Ambiente",
-    settings_group_admin: () => "Administração",
-  },
-}));
 
 describe("environment-dialog-store", () => {
   beforeEach(() =>
@@ -74,73 +68,5 @@ describe("administracao-dialog-store", () => {
     useAdministracaoDialogStore.getState().setSubTab("users");
     useAdministracaoDialogStore.getState().setSubTab(undefined);
     expect(useAdministracaoDialogStore.getState().subTab).toBeUndefined();
-  });
-});
-
-// ── SettingsGroupTabs — integração com os stores ──────────────────────────────
-
-import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
-
-function resetStores() {
-  usePreferenciasDialogStore.setState({ open: false, tab: "preferencias" });
-  useEnvironmentDialogStore.setState({ open: false, tab: "integracoes" });
-  useAdministracaoDialogStore.setState({ open: false, subTab: undefined });
-}
-
-describe("SettingsGroupTabs", () => {
-  beforeEach(resetStores);
-  afterEach(cleanup);
-
-  it("renderiza os 3 botões de navegação", () => {
-    render(<SettingsGroupTabs active="preferencias" />);
-    expect(screen.getAllByRole("button")).toHaveLength(3);
-    expect(screen.getByText("Preferências")).toBeTruthy();
-    expect(screen.getByText("Ambiente")).toBeTruthy();
-    expect(screen.getByText("Administração")).toBeTruthy();
-  });
-
-  it("botão do grupo ativo tem aria-current=page", () => {
-    render(<SettingsGroupTabs active="environment" />);
-    const buttons = screen.getAllByRole("button");
-    const active = buttons.find(
-      (b) => b.getAttribute("aria-current") === "page",
-    );
-    expect(active?.textContent).toBe("Ambiente");
-    const inactive = buttons.filter(
-      (b) => b.getAttribute("aria-current") !== "page",
-    );
-    expect(inactive).toHaveLength(2);
-  });
-
-  it("clicar em grupo inativo fecha o atual e abre o target", () => {
-    usePreferenciasDialogStore.setState({ open: true, tab: "preferencias" });
-    render(<SettingsGroupTabs active="preferencias" />);
-
-    fireEvent.click(screen.getByText("Ambiente"));
-
-    expect(usePreferenciasDialogStore.getState().open).toBe(false);
-    expect(useEnvironmentDialogStore.getState().open).toBe(true);
-    expect(useAdministracaoDialogStore.getState().open).toBe(false);
-  });
-
-  it("clicar em Administração fecha preferências e abre admin", () => {
-    usePreferenciasDialogStore.setState({ open: true, tab: "preferencias" });
-    render(<SettingsGroupTabs active="preferencias" />);
-
-    fireEvent.click(screen.getByText("Administração"));
-
-    expect(usePreferenciasDialogStore.getState().open).toBe(false);
-    expect(useAdministracaoDialogStore.getState().open).toBe(true);
-  });
-
-  it("clicar no grupo ativo não muda estado dos stores", () => {
-    usePreferenciasDialogStore.setState({ open: true, tab: "preferencias" });
-    render(<SettingsGroupTabs active="preferencias" />);
-
-    fireEvent.click(screen.getByText("Preferências"));
-
-    expect(usePreferenciasDialogStore.getState().open).toBe(true);
-    expect(useEnvironmentDialogStore.getState().open).toBe(false);
-    expect(useAdministracaoDialogStore.getState().open).toBe(false);
   });
 });
