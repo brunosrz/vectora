@@ -242,6 +242,46 @@ class TestYoutubeFrameAt:
         # O clipe temporário some depois de usado — não pode acumular lixo.
         assert not clip_path.exists()
 
+    async def test_aceita_url_de_outra_plataforma_suportada_pelo_ytdlp(
+        self, monkeypatch, tmp_path
+    ):
+        """`video_id` (regex do YouTube) nunca deveria ser um requisito pra
+        extrair frame — `_download_clip_sync` já recebe a `url` original e
+        funciona com qualquer extrator do yt-dlp. Prova com uma URL do
+        Vimeo (nunca bate com `_extract_video_id`) que o fluxo completa,
+        em vez de rejeitar cedo achando que só YouTube é suportado."""
+        import backend.tools.youtube as mod
+
+        clip_path = tmp_path / "clip.mp4"
+        clip_path.write_bytes(b"fake-clip")
+        monkeypatch.setattr(mod, "_download_clip_sync", lambda *_a: str(clip_path))
+
+        async def _fake_extract(_ffmpeg, video_path, _ts, out_path):
+            assert video_path == str(clip_path)
+            Path(out_path).write_bytes(b"\x89PNG-fake-frame")
+            return True, ""
+
+        monkeypatch.setattr(
+            "backend.tools.media_native.extract_frame_to", _fake_extract
+        )
+        monkeypatch.setattr(
+            "backend.services.ffmpeg_binary.resolve_ffmpeg", lambda: "/usr/bin/ffmpeg"
+        )
+        monkeypatch.setattr(
+            "backend.tools.media._persist",
+            lambda session_id, data, suffix: tmp_path / f"{session_id}{suffix}",
+        )
+
+        result = json.loads(
+            await youtube_frame_at(
+                ctx=ToolContext(thread_id="t-vimeo"),
+                url="https://vimeo.com/56015672",
+                timestamp_s=2.0,
+            )
+        )
+
+        assert "error" not in result
+
     async def test_falha_no_download_do_clipe_vira_erro_tipado(self, monkeypatch):
         """Erro/borda: vídeo indisponível/geobloqueado — erro legível, nunca
         traceback cru."""

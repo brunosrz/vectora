@@ -62,6 +62,22 @@ def _extract_video_id(url: str) -> str | None:
     return None
 
 
+def _is_supported_media_url(url: str) -> bool:
+    """Confirma OFFLINE (sem tocar rede) que `url` bate com algum extrator
+    real do yt-dlp — não só YouTube. Usado por `youtube_frame_at`, que
+    (ao contrário de `get_transcript`) não depende de `_extract_video_id`
+    pra funcionar: `_download_clip_sync` recebe a `url` original e já
+    funciona com qualquer plataforma suportada. O extrator `generic`
+    (fallback de última instância do yt-dlp, bate com qualquer http(s))
+    não conta — rejeitaria URL inválida só depois de tentar baixar."""
+    import yt_dlp.extractor as ie_module
+
+    return any(
+        cls.suitable(url) and cls.IE_NAME != "generic"
+        for cls in ie_module.gen_extractor_classes()
+    )
+
+
 def _format_transcript(entries: list[dict[str, Any]]) -> str:
     """`[MM:SS] texto` por linha — mesmo formato que o Gemini usa pra
     transcrição de vídeo, familiar pro modelo interpretar timestamps."""
@@ -231,11 +247,12 @@ def _download_clip_sync(url: str, timestamp_s: float, window_s: float = 6.0) -> 
     )
 )
 async def youtube_frame_at(ctx: ToolContext, url: str, timestamp_s: float) -> str:
-    """Extrai um frame (print) de um momento específico de um vídeo do
-    YouTube — depois que `get_transcript` já identificou, pelo texto, que
-    aquele momento precisa de contexto visual. Baixa só um TRECHO CURTO em
-    torno do timestamp (nunca o vídeo inteiro), reusando o mesmo ffmpeg
-    embutido de `probe_media`/`extract_frame`
+    """Extrai um frame (print) de um momento específico de um vídeo —
+    YouTube ou qualquer outra plataforma suportada pelo yt-dlp (Vimeo,
+    Twitter/X, TikTok, etc.) — depois que `get_transcript` já identificou,
+    pelo texto, que aquele momento precisa de contexto visual. Baixa só um
+    TRECHO CURTO em torno do timestamp (nunca o vídeo inteiro), reusando o
+    mesmo ffmpeg embutido de `probe_media`/`extract_frame`
     (`backend/tools/media_native.py`).
 
     Args:
@@ -249,10 +266,15 @@ async def youtube_frame_at(ctx: ToolContext, url: str, timestamp_s: float) -> st
     if timestamp_s < 0:
         return json.dumps({"error": "timestamp_s não pode ser negativo"})
 
+    # Ao contrário de `get_transcript` (que depende do ID pra chamar a API
+    # de captions, exclusiva do YouTube), esta tool não usa `video_id` em
+    # nada além de log — `_download_clip_sync` recebe a `url` original e
+    # já funciona com qualquer extrator do yt-dlp. Exigir o regex do
+    # YouTube aqui bloquearia Vimeo/Twitter/TikTok/etc. sem motivo.
     video_id = _extract_video_id(url)
-    if not video_id:
+    if not _is_supported_media_url(url):
         return json.dumps(
-            {"error": f"não reconheci um ID de vídeo do YouTube em: {url}"},
+            {"error": f"URL não reconhecida por nenhuma plataforma suportada: {url}"},
             ensure_ascii=False,
         )
 
