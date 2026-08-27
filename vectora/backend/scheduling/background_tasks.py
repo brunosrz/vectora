@@ -94,6 +94,10 @@ class BackgroundTask:
     #: Sinal visual do card no Kanban — "low" | "normal" | "high" | "urgent".
     #: Não afeta ordem real de claim (`claim_task` é FIFO por status).
     priority: str = "normal"
+    #: Coluna já existe no SQL desde `claim_task` (Sprint 4 Fase 3) — só
+    #: nunca era lida de volta. `None` quando não há claim ativo (task não
+    #: `running`, ou já finalizada).
+    claim_expires_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -116,6 +120,7 @@ class BackgroundTask:
             "block_reason": self.block_reason,
             "agent_profile_id": self.agent_profile_id,
             "priority": self.priority,
+            "claim_expires_at": self.claim_expires_at,
         }
 
 
@@ -145,6 +150,7 @@ def _row_to_task(row: dict[str, Any]) -> BackgroundTask:
         block_reason=row.get("block_reason"),
         agent_profile_id=row.get("agent_profile_id"),
         priority=row.get("priority") or "normal",
+        claim_expires_at=row.get("claim_expires_at"),
     )
 
 
@@ -732,6 +738,33 @@ async def _worktree_workspace_id(workspace_id: str, task_id: str) -> str:
     return ws.id
 
 
+#: Bem abaixo do TTL do claim (900s, `kanban._DEFAULT_CLAIM_TTL_S`) — margem
+#: generosa pra um heartbeat perdido não custar o claim inteiro.
+_HEARTBEAT_INTERVAL_S = 60
+
+
+async def _heartbeat_watchdog(task_id: str, run_id: str) -> None:
+    """Estende o claim periodicamente enquanto a run está viva.
+
+    Roda até ser cancelado (`run_task` cancela no `finally`, cobrindo
+    sucesso/erro/interrupção/HITL pause). Falha ao estender não derruba a
+    run — só fica sem o log de sucesso; `release_stale_claims()` no pior
+    caso trata como run morta, o mesmo comportamento de antes deste
+    watchdog existir."""
+    from backend.scheduling.kanban import heartbeat_claim
+
+    while True:
+        await asyncio.sleep(_HEARTBEAT_INTERVAL_S)
+        try:
+            await heartbeat_claim(task_id, run_id)
+        except Exception:
+            logger.warning(
+                "background_tasks: heartbeat_claim falhou para %s",
+                task_id,
+                exc_info=True,
+            )
+
+
 async def run_task(
     task: BackgroundTask,
     trigger_source: str,
@@ -780,6 +813,17 @@ async def run_task(
     run_thread_id = f"bg-{task.id}-{int(datetime.now(UTC).timestamp())}"
     await _insert_run(run_id, task, run_thread_id, trigger_source)
     _emit_run_event("started", task, run_id, run_thread_id)
+
+    # Watchdog do claim: `run_task` executa a run INLINE numa única coroutine
+    # (sem subprocess/PID/heartbeat externo, diferente do Hermes) — sem isso,
+    # uma run genuína que passa do TTL do claim (900s) é devolvida pra `ready`
+    # por `release_stale_claims()` no tick seguinte do scheduler, permitindo
+    # reclaim/execução duplicada da MESMA task enquanto a primeira ainda roda.
+    # Só prova que a coroutine está viva, não que está progredindo — uma run
+    # travada num tool call infinito continua batendo heartbeat; estagnação
+    # semântica é `classify_liveness`, que já roda no fim da run (linha acima
+    # não mexida) e não tem relação com este watchdog.
+    _watchdog_task = asyncio.create_task(_heartbeat_watchdog(task.id, run_id))
 
     try:
         from backend.services import agent_factory
@@ -1041,6 +1085,10 @@ async def run_task(
             # card mostrar o certo.
             await block_task(task.id, "transient", str(exc)[:500])
         return None
+    finally:
+        _watchdog_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await _watchdog_task
 
 
 async def _mark_kanban_after_success(task: BackgroundTask) -> None:

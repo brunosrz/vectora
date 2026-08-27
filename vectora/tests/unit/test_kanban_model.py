@@ -171,6 +171,53 @@ class TestClaimExpirado:
         assert await claim_task("t1", "outra") is False
 
 
+class TestHeartbeatClaim:
+    """Sprint 4 Fase 3 — `heartbeat_claim` existia sem nenhum caller até
+    aqui (código morto): uma run genuína que passasse do TTL (900s) seria
+    devolvida pra `ready` por `release_stale_claims()` no tick seguinte,
+    permitindo reclaim/execução duplicada da mesma task enquanto a
+    primeira ainda rodava. O watchdog em `background_tasks.run_task`
+    (Sprint 4 Fase 3) chama isto de verdade agora."""
+
+    @pytest.mark.asyncio
+    async def test_heartbeat_estende_o_ttl_e_evita_a_liberacao_prematura(self, db):
+        """Reproduz o bug: sem heartbeat, um claim de TTL curto que ainda
+        está genuinamente em uso seria liberado — com heartbeat estendendo
+        antes do vencimento original, `release_stale_claims()` não libera
+        mais nesse ponto."""
+        from backend.scheduling.kanban import (
+            claim_task,
+            heartbeat_claim,
+            release_stale_claims,
+        )
+
+        await _cria(db, "t1", status="ready")
+        await claim_task("t1", "run-longa", ttl_s=-1)
+
+        # Sem o heartbeat abaixo, o teste anterior (test_claim_expirado_e_
+        # liberado_e_fica_reclamavel) já prova que release_stale_claims()
+        # liberaria aqui. O heartbeat precisa rodar ANTES dessa checagem.
+        assert await heartbeat_claim("t1", "run-longa", ttl_s=600) is True
+        assert await release_stale_claims() == 0
+
+    @pytest.mark.asyncio
+    async def test_heartbeat_de_dono_errado_nao_estende_nem_atrapalha(self, db):
+        """Erro/borda: um heartbeat de um `run_id` que não é o dono do claim
+        (worker zumbi, race de cancelamento) não pode estender o claim de
+        outro — senão um worker morto manteria vivo o claim de um vivo."""
+        from backend.scheduling.kanban import (
+            claim_task,
+            heartbeat_claim,
+            release_stale_claims,
+        )
+
+        await _cria(db, "t1", status="ready")
+        await claim_task("t1", "run-real", ttl_s=-1)
+
+        assert await heartbeat_claim("t1", "run-zumbi", ttl_s=600) is False
+        assert await release_stale_claims() == 1
+
+
 class TestBloqueioTipado:
     @pytest.mark.asyncio
     async def test_dependencia_fica_em_todo_e_nao_em_blocked(self, db):

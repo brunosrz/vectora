@@ -8,8 +8,10 @@ webhook→IA. Cada caminho feliz tem o par de erro/borda no mesmo teste.
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -643,6 +645,103 @@ async def test_run_task_invokes_agent_registers_session_and_records_run(
     historico = await native_session_store.get_history(run_thread_id)
     assert [m.role.value for m in historico] == ["system", "user", "assistant"]
     assert historico[-1].text() == "Tudo certo hoje."
+
+
+async def test_run_task_watchdog_cancela_ao_final_sem_deixar_task_pendente(
+    db, native_session_store, monkeypatch
+):
+    """Sprint 4 Fase 3 — o watchdog de heartbeat roda no `finally` de
+    `run_task`, cobrindo todo caminho de saída (aqui, sucesso). Sem o
+    cancelamento, uma task asyncio ficaria viva pra sempre depois de cada
+    run — vazamento silencioso a cada tarefa executada."""
+    client = _ScriptedChatClient([[_texto_chunk("ok")]])
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=client
+    )
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+
+    task = await bg.create_task(
+        session_id="sess-watchdog",
+        user_id="uuid-bbb",
+        kind="routine",
+        name="Watchdog",
+        instruction="i",
+        trigger_type="manual",
+    )
+
+    antes = {t for t in asyncio.all_tasks() if not t.done()}
+    await bg.run_task(task, "manual")
+    depois = {t for t in asyncio.all_tasks() if not t.done()}
+
+    novas = depois - antes
+    assert not any("_heartbeat_watchdog" in repr(t) for t in novas), (
+        "watchdog não foi cancelado — vazou uma task asyncio viva"
+    )
+
+
+async def test_run_task_heartbeat_e_chamado_periodicamente_durante_execucao_longa(
+    db, native_session_store, monkeypatch
+):
+    """Reproduz o bug real: sem o watchdog, uma run que passa do TTL do
+    claim (900s) enquanto ainda genuinamente executando seria devolvida
+    pra `ready` por `release_stale_claims()` no tick seguinte do
+    scheduler — permitindo reclaim/execução duplicada da MESMA task.
+    Prova que `heartbeat_claim` é chamado de verdade (não mais código
+    morto) enquanto a run está em andamento, com o mesmo `task_id`."""
+    import backend.scheduling.background_tasks as bg_mod
+
+    class _SlowChatClient:
+        chamadas = 0
+
+        async def astream(
+            self, messages, *, tools=None, temperature=None, max_tokens=None
+        ):
+            _SlowChatClient.chamadas += 1
+            await asyncio.sleep(0.3)
+            yield _texto_chunk("devagar mas certo")
+
+        async def agenerate(self, *a, **kw):
+            raise NotImplementedError
+
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=_SlowChatClient()
+    )
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+    # Watchdog dispara bem mais rápido que o real (60s) — só pra caber num
+    # teste de segundos sem mockar o event loop inteiro.
+    monkeypatch.setattr(bg_mod, "_HEARTBEAT_INTERVAL_S", 0.05)
+
+    from backend.scheduling.kanban import heartbeat_claim as _heartbeat_claim_real
+
+    chamadas_heartbeat: list[tuple[str, str]] = []
+
+    async def _spy_heartbeat(task_id: str, run_id: str, *, ttl_s: int = 900) -> bool:
+        chamadas_heartbeat.append((task_id, run_id))
+        return await _heartbeat_claim_real(task_id, run_id, ttl_s=ttl_s)
+
+    # `_heartbeat_watchdog` importa `heartbeat_claim` localmente (padrão do
+    # arquivo, evita import circular) — o patch precisa mirar o módulo de
+    # origem (`kanban`), não `background_tasks`, que nunca tem esse nome no
+    # próprio namespace.
+    monkeypatch.setattr("backend.scheduling.kanban.heartbeat_claim", _spy_heartbeat)
+
+    task = await bg.create_task(
+        session_id="sess-heartbeat-longo",
+        user_id="uuid-bbb",
+        kind="routine",
+        name="Devagar",
+        instruction="i",
+        trigger_type="manual",
+    )
+
+    await bg_mod.run_task(task, "manual")
+
+    assert _SlowChatClient.chamadas == 1
+    assert len(chamadas_heartbeat) >= 1, (
+        "heartbeat_claim nunca foi chamado durante uma run de 0.3s com "
+        "watchdog de 0.05s — o watchdog não está disparando"
+    )
+    assert all(tid == task.id for tid, _run_id in chamadas_heartbeat)
 
 
 async def test_run_task_subagent_type_usa_soul_tool_registry_com_o_usuario_da_task(

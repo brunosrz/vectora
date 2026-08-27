@@ -62,6 +62,10 @@ class TaskOut(BaseModel):
     #: do contador N/M do editor de dependência no card (antes o frontend
     #: declarava `blocked_by` mas nada preenchia).
     dependencies: list[TaskDependencyOut] = []
+    #: `None` sem claim ativo (task não `running`, ou já finalizada). Prova
+    #: que o watchdog (Sprint 4 Fase 3) está vivo — junto do heartbeat real,
+    #: destrava o arc animado da Fase 5.
+    claim_expires_at: str | None = None
 
 
 class CreateTaskRequest(BaseModel):
@@ -166,6 +170,7 @@ async def _to_out(t: BackgroundTask) -> TaskOut:
         agent_profile_id=t.agent_profile_id,
         priority=t.priority,
         dependencies=[TaskDependencyOut(**d) for d in deps],
+        claim_expires_at=t.claim_expires_at,
     )
 
 
