@@ -350,3 +350,53 @@ async def test_youtube_frame_at_video_publico_real_extrai_frame_de_verdade():
     assert frame_path.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
     frame_path.unlink()
     frame_path.parent.rmdir()
+
+
+@pytest.mark.live
+@pytest.mark.asyncio
+async def test_youtube_frame_at_video_youtube_ultracurto_menos_de_15s():
+    """ "Shortest Video on Youtube" (tPEE9ZwTmy0) — 1 segundo, público,
+    permanente. Prova o requisito de vídeo <15s no próprio YouTube, além
+    do "Me at the zoo" (19s) usado acima."""
+    result = json.loads(
+        await youtube_frame_at(
+            ctx=ToolContext(thread_id="t-live-short"),
+            url="https://www.youtube.com/watch?v=tPEE9ZwTmy0",
+            timestamp_s=0.3,
+        )
+    )
+
+    assert "error" not in result
+    assert result["video_id"] == "tPEE9ZwTmy0"
+    frame_path = Path(result["path"])
+    assert frame_path.is_file()
+    assert frame_path.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    frame_path.unlink()
+    frame_path.parent.rmdir()
+
+
+@pytest.mark.live
+@pytest.mark.asyncio
+async def test_youtube_frame_at_plataforma_nao_youtube_archive_org():
+    """Internet Archive ("test.m4v", ~10.78s) — hospedagem sem fins
+    lucrativos, sem login, permanente. Vimeo foi descartado como
+    plataforma de teste: seus fixtures antigos (mantidos no próprio
+    test suite do yt-dlp) hoje exigem login ("The web client only works
+    when logged-in"), confirmado ao vivo nesta sessão — mudança de
+    política da Vimeo, não bug daqui. Prova de fato — não só de prosa —
+    que o pipeline de frame extraction funciona fora do YouTube, sem
+    chamar LLM nenhuma (só yt-dlp + ffmpeg)."""
+    result = json.loads(
+        await youtube_frame_at(
+            ctx=ToolContext(thread_id="t-live-archive-org"),
+            url="https://archive.org/details/testvideo_20230410_202304",
+            timestamp_s=3.0,
+        )
+    )
+
+    assert "error" not in result
+    frame_path = Path(result["path"])
+    assert frame_path.is_file()
+    assert frame_path.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    frame_path.unlink()
+    frame_path.parent.rmdir()
