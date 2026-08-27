@@ -436,6 +436,49 @@ class TestDependencias:
         assert await remove_dependency("pai", "filho") is False
 
 
+class TestProgressRollup:
+    """Sprint 4 Fase 4c — `TaskOut.dependencies` só traz os pais; nada
+    expunha quantas SUBTASKS (`kanban_decompose`) de uma task já
+    terminaram."""
+
+    @pytest.mark.asyncio
+    async def test_task_sem_subtask_devolve_none_nao_zero_zero(self, db):
+        """`None` (não `{0,0}`) é a distinção que muda o que o card
+        desenha — {0,0} renderizaria uma barra vazia em toda task folha."""
+        from backend.scheduling.kanban import get_progress
+
+        await _cria(db, "solo", status="todo")
+
+        assert await get_progress("solo") is None
+
+    @pytest.mark.asyncio
+    async def test_progress_conta_subtasks_done_sobre_o_total(self, db):
+        from backend.scheduling.kanban import add_dependency, get_progress
+
+        await _cria(db, "pai", status="todo")
+        await _cria(db, "sub1", status="done")
+        await _cria(db, "sub2", status="todo")
+        await _cria(db, "sub3", status="running")
+        await add_dependency("pai", "sub1")
+        await add_dependency("pai", "sub2")
+        await add_dependency("pai", "sub3")
+
+        assert await get_progress("pai") == {"done": 1, "total": 3}
+
+    @pytest.mark.asyncio
+    async def test_subtask_arquivada_conta_como_done(self, db):
+        """Erro/borda: uma subtask arquivada (não `done`) ainda representa
+        trabalho concluído — travado em teste pra não regredir por
+        acidente se alguém achar que só `done` deveria contar."""
+        from backend.scheduling.kanban import add_dependency, get_progress
+
+        await _cria(db, "pai", status="todo")
+        await _cria(db, "sub1", status="archived")
+        await add_dependency("pai", "sub1")
+
+        assert await get_progress("pai") == {"done": 1, "total": 1}
+
+
 class TestStatusValidos:
     @pytest.mark.asyncio
     async def test_status_fora_da_taxonomia_e_recusado(self, db):

@@ -355,6 +355,40 @@ async def test_links_endpoint_recusa_task_de_outra_session(db):
     assert wrong_session.value.status_code == 404
 
 
+async def test_task_out_expoe_progress_de_subtasks(db):
+    """Sprint 4 Fase 4c — `TaskOut.progress` é `None` pra task folha e
+    `{done, total}` real assim que ela ganha subtasks via links."""
+    from backend.scheduling.kanban import set_status
+
+    pai = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="Pai", instruction="i", trigger_type="manual"
+        ),
+    )
+    assert pai.progress is None
+
+    sub = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="Sub", instruction="i", trigger_type="manual"
+        ),
+    )
+    await add_link_endpoint(
+        _req(), "thread-1", sub.id, CreateLinkRequest(parent_id=pai.id)
+    )
+    await set_status(sub.id, "done")
+
+    tasks = {t.id: t for t in await get_tasks(_req(), "thread-1")}
+    pai_progress = tasks[pai.id].progress
+    assert pai_progress is not None
+    assert pai_progress.done == 1
+    assert pai_progress.total == 1
+    assert tasks[sub.id].progress is None
+
+
 async def test_manual_run_creates_run_and_registers_thread(
     db, monkeypatch, native_session_store
 ):

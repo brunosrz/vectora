@@ -412,6 +412,32 @@ async def get_dependencies(task_id: str) -> list[dict[str, Any]]:
     return [{"id": r["id"], "name": r["name"], "status": r["status"]} for r in rows]
 
 
+async def get_progress(task_id: str) -> dict[str, int] | None:
+    """Rollup de subtasks diretas (`task_id` como pai) — `{done, total}`.
+
+    `None` (não `{"done": 0, "total": 0}`) quando a task não tem subtask
+    nenhuma: o card do Kanban desenha a barra de progresso só quando há
+    algo pra medir — `{0, 0}` renderizaria uma barra vazia sem sentido
+    pra toda task folha (a maioria delas).
+    """
+    db = await _get_db()
+    async with db.execute(
+        """
+        SELECT COUNT(*) AS total,
+               COUNT(*) FILTER (WHERE t.status IN ('done', 'archived')) AS done
+        FROM vectora_task_links l
+        JOIN vectora_background_tasks t ON t.id = l.child_id
+        WHERE l.parent_id = ?
+        """,
+        (task_id,),
+    ) as cur:
+        row = await cur.fetchone()
+    total = row["total"] if row else 0
+    if not total:
+        return None
+    return {"done": row["done"], "total": total}
+
+
 async def _depende_de(task_id: str) -> set[str]:
     """Ancestrais de `task_id` — usado pra detectar ciclo."""
     db = await _get_db()

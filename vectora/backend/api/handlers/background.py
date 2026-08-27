@@ -39,6 +39,11 @@ class TaskDependencyOut(BaseModel):
     status: str
 
 
+class ProgressOut(BaseModel):
+    done: int
+    total: int
+
+
 class TaskOut(BaseModel):
     id: str
     session_id: str
@@ -66,6 +71,10 @@ class TaskOut(BaseModel):
     #: que o watchdog (Sprint 4 Fase 3) está vivo — junto do heartbeat real,
     #: destrava o arc animado da Fase 5.
     claim_expires_at: str | None = None
+    #: Rollup de subtasks diretas (`kanban_decompose`). `None` — não
+    #: `{0,0}` — quando a task não tem subtask nenhuma (a maioria); o card
+    #: só desenha barra de progresso quando há algo pra medir.
+    progress: ProgressOut | None = None
 
 
 class CreateTaskRequest(BaseModel):
@@ -149,9 +158,10 @@ def _user_id(request: Request) -> str:
 
 
 async def _to_out(t: BackgroundTask) -> TaskOut:
-    from backend.scheduling.kanban import get_dependencies
+    from backend.scheduling.kanban import get_dependencies, get_progress
 
     deps = await get_dependencies(t.id)
+    progress = await get_progress(t.id)
     return TaskOut(
         id=t.id,
         session_id=t.session_id,
@@ -171,6 +181,7 @@ async def _to_out(t: BackgroundTask) -> TaskOut:
         priority=t.priority,
         dependencies=[TaskDependencyOut(**d) for d in deps],
         claim_expires_at=t.claim_expires_at,
+        progress=ProgressOut(**progress) if progress else None,
     )
 
 
