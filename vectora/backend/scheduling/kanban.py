@@ -97,7 +97,7 @@ def _agora() -> datetime:
     return datetime.now(UTC)
 
 
-def _emit_kanban_event(
+async def _emit_kanban_event(
     task_id: str,
     status: str,
     *,
@@ -115,11 +115,31 @@ def _emit_kanban_event(
     try:
         from backend.api.handlers.webhooks import _emit_sse_event
 
+        # `board_id` não chega por parâmetro dos callers (set_status,
+        # unblock_task, block_task) — uma query pequena aqui, não um
+        # replay de assinatura em cada call site. Sprint 4 Fase 6: sem
+        # isso, um board reconciliando por SSE não sabe se o evento é
+        # dele (cairia sempre no fallback de refetch completo).
+        board_id = None
+        try:
+            db = await _get_db()
+            async with db.execute(
+                "SELECT board_id FROM vectora_background_tasks WHERE id = ?",
+                (task_id,),
+            ) as cur:
+                row = await cur.fetchone()
+            board_id = row["board_id"] if row else None
+        except Exception:
+            logger.debug(
+                "kanban: falha ao buscar board_id pro evento SSE", exc_info=True
+            )
+
         _emit_sse_event(
             provider="kanban",
             event_type="kanban_task.status_changed",
             data={
                 "task_id": task_id,
+                "board_id": board_id,
                 "status": status,
                 "block_kind": block_kind,
                 "block_reason": block_reason,
@@ -208,7 +228,7 @@ async def set_status(task_id: str, status: str) -> None:
             (status, task_id),
         )
     await db.commit()
-    _emit_kanban_event(task_id, status)
+    await _emit_kanban_event(task_id, status)
     await _record_task_event(task_id, from_status, status)
 
 
@@ -339,7 +359,7 @@ async def block_task(task_id: str, kind: str, reason: str) -> None:
             (kind, reason, task_id),
         )
         await db.commit()
-        _emit_kanban_event(task_id, "todo", block_kind=kind, block_reason=reason)
+        await _emit_kanban_event(task_id, "todo", block_kind=kind, block_reason=reason)
         await _record_task_event(
             task_id, from_status, "todo", block_kind=kind, block_reason=reason
         )
@@ -368,7 +388,7 @@ async def block_task(task_id: str, kind: str, reason: str) -> None:
         (status, kind, reason, novo_count, task_id),
     )
     await db.commit()
-    _emit_kanban_event(task_id, status, block_kind=kind, block_reason=reason)
+    await _emit_kanban_event(task_id, status, block_kind=kind, block_reason=reason)
     await _record_task_event(
         task_id, from_status, status, block_kind=kind, block_reason=reason
     )
@@ -388,7 +408,7 @@ async def unblock_task(task_id: str) -> None:
         (task_id,),
     )
     await db.commit()
-    _emit_kanban_event(task_id, "ready", block_kind=None, block_reason=None)
+    await _emit_kanban_event(task_id, "ready", block_kind=None, block_reason=None)
     await _record_task_event(task_id, from_status, "ready")
 
 

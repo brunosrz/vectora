@@ -52,6 +52,7 @@ async def db(tmp_path, monkeypatch):
             claim_lock     TEXT,
             claim_expires_at TEXT,
             block_count    INTEGER NOT NULL DEFAULT 0,
+            board_id       TEXT,
             created_at     TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
         );
@@ -688,10 +689,36 @@ class TestEventoSSE:
         assert len(chamadas) == 1
         assert chamadas[0]["data"] == {
             "task_id": "t1",
+            # Sprint 4 Fase 6 — sem board associado, None (não a chave
+            # ausente): o frontend sempre pode checar `data.board_id`.
+            "board_id": None,
             "status": "blocked",
             "block_kind": "needs_input",
             "block_reason": "falta a chave da API",
         }
+
+    @pytest.mark.asyncio
+    async def test_evento_leva_o_board_id_real_da_task(self, db, monkeypatch):
+        """Sprint 4 Fase 6 — um board reconciliando por SSE precisa saber
+        se o evento é dele; sem `board_id` no payload, cairia sempre no
+        fallback de refetch completo (perde o ponto de usar SSE)."""
+        from backend.api.handlers import webhooks
+        from backend.scheduling.kanban import set_status
+
+        await _cria(db, "t1", status="ready")
+        await db.execute(
+            "UPDATE vectora_background_tasks SET board_id = ? WHERE id = ?",
+            ("board-xyz", "t1"),
+        )
+        await db.commit()
+        chamadas: list[dict] = []
+        monkeypatch.setattr(
+            webhooks, "_emit_sse_event", lambda **kw: chamadas.append(kw)
+        )
+
+        await set_status("t1", "running")
+
+        assert chamadas[0]["data"]["board_id"] == "board-xyz"
 
     @pytest.mark.asyncio
     async def test_unblock_task_emite_status_ready_sem_block_kind(
