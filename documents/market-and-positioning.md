@@ -1074,7 +1074,7 @@ candidatos avaliados condicionalmente conforme tração.
 
 ### Contato
 
-**Bruno Soares** — fundador e único desenvolvedor (por enquanto)
+**Vectora Ltda**
 
 - Suporte comercial: support@vectora.company
 - Site: vectora.company (em construção)

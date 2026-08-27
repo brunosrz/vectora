@@ -123,7 +123,7 @@ class Settings(BaseSettings):
     """Vectora version (synced with pyproject.toml)."""
 
     app_name: str = "Vectora"
-    creator_name: str = "Bruno Soares"
+    creator_name: str = "Vectora Ltda"
 
     # ============================================================================
     # RUNTIME BEHAVIOR

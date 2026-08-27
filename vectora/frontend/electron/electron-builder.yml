@@ -141,7 +141,7 @@ linux:
   synopsis: Vectora — AI-first development assistant
   description: Self-hosted AI assistant with RAG, terminals, code editing and workflows.
   vendor: Vectora Company
-  maintainer: Bruno Soares <bruno@vectora.company>
+  maintainer: Vectora Ltda <contato@vectora.company>
 
 deb:
   depends:

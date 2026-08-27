@@ -7,7 +7,7 @@ name = "vectora"
 version = "0.1.11"
 description = "Vectora - Advanced AI Assistant"
 readme = "README.md"
-authors = [{name = "Bruno Soares", email = "bruno.soarxz@gmail.com"}]
+authors = [{name = "Vectora Ltda", email = "contato@vectora.company"}]
 requires-python = ">=3.13"
 # `Private :: Do Not Upload` impede `twine upload`/`uv publish` acidental.
 classifiers = [
