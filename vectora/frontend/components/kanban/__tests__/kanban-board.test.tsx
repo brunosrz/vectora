@@ -292,6 +292,103 @@ describe("KanbanBoard", () => {
     );
   });
 
+  it("linha de lanes quebra em grid (flex-wrap), sem depender de scroll horizontal", async () => {
+    // Regressão do commit a08593bf: ele só MOVEU o overflow-x-auto do
+    // container raiz pro container de lanes — nunca eliminou o scroll
+    // horizontal nem adicionou quebra de linha real.
+    mockTasks([task({ id: "a", status: "todo" })]);
+
+    await montar();
+
+    const linhaDeLanes = screen.getByTestId("kanban-col-todo").parentElement;
+    expect(linhaDeLanes).not.toHaveClass("overflow-x-auto");
+    expect(linhaDeLanes).toHaveClass("flex-wrap");
+  });
+
+  it("lane colapsada manualmente reexpande sozinha ao receber uma tarefa nova (self-heal)", async () => {
+    mockTasks([task({ id: "a", status: "todo" })]);
+
+    await montar();
+
+    // "done" está vazia com o board tendo trabalho em "todo" — colapsa
+    // automaticamente. Expande manualmente (override), depois confirma que
+    // uma tarefa nova em "done" reexpande sozinha, sem exigir novo clique.
+    expect(screen.getByTestId("kanban-col-done")).toHaveAttribute(
+      "data-collapsed",
+      "true",
+    );
+    fireEvent.click(screen.getByTestId("kanban-col-done"));
+    expect(screen.getByTestId("kanban-col-done")).toHaveAttribute(
+      "data-collapsed",
+      "false",
+    );
+    fireEvent.click(
+      within(screen.getByTestId("kanban-col-done")).getByRole("button", {
+        name: /recolher/i,
+      }),
+    );
+    expect(screen.getByTestId("kanban-col-done")).toHaveAttribute(
+      "data-collapsed",
+      "true",
+    );
+
+    // Override manual ainda ativo (colapsada) — chega uma tarefa nova via
+    // SSE. O self-heal precisa descartar o override quando a fase muda de
+    // vazia pra não-vazia, senão a tarefa fica escondida sem o usuário
+    // perceber.
+    mockTasks([
+      task({ id: "a", status: "todo" }),
+      task({ id: "b", status: "done" }),
+    ]);
+    const es = MockEventSource.instances[0]!;
+    await act(async () => {
+      es.emit({
+        provider: "kanban",
+        data: { task_id: "b", status: "done" },
+      });
+    });
+
+    expect(screen.getByTestId("kanban-col-done")).toHaveAttribute(
+      "data-collapsed",
+      "false",
+    );
+  });
+
+  it("card usa a cor de tone do próprio status na borda esquerda, não uma cor fixa", async () => {
+    mockTasks([task({ id: "a", name: "tarefa bloqueada", status: "blocked" })]);
+
+    await montar();
+
+    const card = screen.getByText("tarefa bloqueada").closest("[style]");
+    expect(card).toHaveStyle({
+      borderLeftColor: "var(--color-kanban-tone-blocked)",
+    });
+  });
+
+  it("chip de prioridade só aparece quando a prioridade não é 'normal'", async () => {
+    mockTasks([
+      task({
+        id: "a",
+        name: "tarefa urgente",
+        status: "todo",
+        priority: "urgent",
+      }),
+      task({
+        id: "b",
+        name: "tarefa comum",
+        status: "todo",
+        priority: "normal",
+      }),
+    ]);
+
+    await montar();
+
+    expect(screen.getByText("urgent")).toBeInTheDocument();
+    // Erro/borda: prioridade "normal" é ruído em todo card — não deve
+    // renderizar chip nenhum pra ela.
+    expect(screen.queryByText("normal")).not.toBeInTheDocument();
+  });
+
   it("botão Desbloquear só aparece em cards blocked e chama /unblock", async () => {
     const chamadas: string[] = [];
     vi.stubGlobal(

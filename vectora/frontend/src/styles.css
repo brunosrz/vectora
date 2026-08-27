@@ -59,6 +59,20 @@
      mais escuro que --background para criar contraste visual com o chat. */
   --sidebar: #181818;
 
+  /* Tone por status do Kanban — borda esquerda do card, dot da coluna e
+     (Sprint 4 Fase 5) cor do arc animado. Reaproveita tokens neutros onde
+     faz sentido semântico (blocked = destructive); cores novas só onde a
+     paleta neutra não distingue nada. */
+  --kanban-tone-triage: var(--muted-foreground);
+  --kanban-tone-todo: var(--muted-foreground);
+  --kanban-tone-scheduled: #8957e5;
+  --kanban-tone-ready: #4a9eff;
+  --kanban-tone-running: #5ec26a;
+  --kanban-tone-blocked: var(--destructive);
+  --kanban-tone-review: #d9a441;
+  --kanban-tone-done: #5ec26a;
+  --kanban-tone-archived: var(--muted-foreground);
+
   /* Thumb da scrollbar customizada (.custom-scrollbar, ver regra global
      abaixo) — usa color-mix em vez de valor fixo pra herdar corretamente
      em .light (var(--foreground)/var(--background) são resolvidos no
@@ -116,6 +130,17 @@
   /* Fundo dos painéis laterais no tema claro — cinza suave sobre fundo branco. */
   --sidebar: #f3f3f3;
 
+  /* Tone por status do Kanban — tons mais escuros p/ contraste no claro. */
+  --kanban-tone-triage: var(--muted-foreground);
+  --kanban-tone-todo: var(--muted-foreground);
+  --kanban-tone-scheduled: #6639b7;
+  --kanban-tone-ready: #1f6feb;
+  --kanban-tone-running: #2da44e;
+  --kanban-tone-blocked: var(--destructive);
+  --kanban-tone-review: #b6790a;
+  --kanban-tone-done: #2da44e;
+  --kanban-tone-archived: var(--muted-foreground);
+
   color-scheme: light;
 }
 
@@ -157,6 +182,16 @@
   --color-user-bubble-foreground: var(--user-bubble-foreground);
 
   --color-sidebar: var(--sidebar);
+
+  --color-kanban-tone-triage: var(--kanban-tone-triage);
+  --color-kanban-tone-todo: var(--kanban-tone-todo);
+  --color-kanban-tone-scheduled: var(--kanban-tone-scheduled);
+  --color-kanban-tone-ready: var(--kanban-tone-ready);
+  --color-kanban-tone-running: var(--kanban-tone-running);
+  --color-kanban-tone-blocked: var(--kanban-tone-blocked);
+  --color-kanban-tone-review: var(--kanban-tone-review);
+  --color-kanban-tone-done: var(--kanban-tone-done);
+  --color-kanban-tone-archived: var(--kanban-tone-archived);
 
   --radius: 0.5rem;
 

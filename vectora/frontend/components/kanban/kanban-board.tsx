@@ -180,20 +180,41 @@ interface WebhookSseEvent {
 //: que entra por filtro. Toda tarefa precisa de uma coluna: sem `triage`,
 //: `scheduled` e `review` aqui, tarefas nesses status eram descartadas pelo
 //: filtro de visibilidade e sumiam do board sem nenhum aviso.
-const COLUNAS: { status: string; label: () => string }[] = [
-  { status: "triage", label: () => m.kanban_column_triage() },
-  { status: "todo", label: () => m.kanban_column_todo() },
-  { status: "scheduled", label: () => m.kanban_column_scheduled() },
-  { status: "ready", label: () => m.kanban_column_ready() },
-  { status: "running", label: () => m.kanban_column_running() },
-  { status: "blocked", label: () => m.kanban_column_blocked() },
-  { status: "review", label: () => m.kanban_column_review() },
-  { status: "done", label: () => m.kanban_column_done() },
+//:
+//: `tone` é o token `--kanban-tone-*` (definido em `src/styles.css`) que
+//: alimenta a borda esquerda do card e o dot do header da coluna — um mapa,
+//: dois consumidores (Sprint 4 Fase 5 soma um terceiro: a cor do arc).
+const COLUNAS: { status: string; label: () => string; tone: string }[] = [
+  { status: "triage", label: () => m.kanban_column_triage(), tone: "triage" },
+  { status: "todo", label: () => m.kanban_column_todo(), tone: "todo" },
+  {
+    status: "scheduled",
+    label: () => m.kanban_column_scheduled(),
+    tone: "scheduled",
+  },
+  { status: "ready", label: () => m.kanban_column_ready(), tone: "ready" },
+  {
+    status: "running",
+    label: () => m.kanban_column_running(),
+    tone: "running",
+  },
+  {
+    status: "blocked",
+    label: () => m.kanban_column_blocked(),
+    tone: "blocked",
+  },
+  { status: "review", label: () => m.kanban_column_review(), tone: "review" },
+  { status: "done", label: () => m.kanban_column_done(), tone: "done" },
 ];
 
 //: Coluna de escape pra status que o backend passe a emitir e o frontend
 //: ainda não conheça — melhor uma lane "Outros" do que a tarefa evaporar.
 const FALLBACK_STATUS = "__other__";
+
+function kanbanToneVar(status: string): string {
+  const tone = COLUNAS.find((c) => c.status === status)?.tone ?? "archived";
+  return `var(--color-kanban-tone-${tone})`;
+}
 
 //: Pares acionáveis por drag-and-drop — espelha
 //: `backend/scheduling/kanban.py::MANUAL_TRANSITIONS`. `running` e `done`
@@ -320,18 +341,21 @@ function TaskCard({
     );
   };
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        zIndex: isDragging ? 10 : undefined,
-      }
-    : undefined;
+  const style = {
+    ...(transform
+      ? {
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+          zIndex: isDragging ? 10 : undefined,
+        }
+      : undefined),
+    borderLeftColor: kanbanToneVar(task.status),
+  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="rounded-md border bg-card px-2.5 py-2 space-y-1"
+      className="rounded-md border border-l-2 bg-card p-2.5 space-y-1"
     >
       <div className="flex items-start gap-1.5">
         <input
@@ -346,7 +370,7 @@ function TaskCard({
           className="mt-0.5 shrink-0"
         />
         <p
-          className="text-xs font-medium leading-snug flex-1 cursor-grab active:cursor-grabbing"
+          className="text-[0.8125rem] font-medium leading-snug flex-1 cursor-grab active:cursor-grabbing"
           {...attributes}
           {...listeners}
         >
@@ -485,6 +509,7 @@ function Column({
   onToggle: () => void;
   children: React.ReactNode;
 }) {
+  const tone = kanbanToneVar(status);
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   if (collapsed) {
@@ -497,7 +522,7 @@ function Column({
         aria-expanded={false}
         data-testid={`kanban-col-${status}`}
         data-collapsed="true"
-        className={`h-full w-9 shrink-0 flex flex-col items-center gap-2 rounded-md border border-border/40 py-2 transition-colors hover:bg-accent/30 ${
+        className={`min-h-[12rem] max-h-[26rem] shrink-0 grow-0 basis-9 flex flex-col items-center gap-2 rounded-md border border-border/40 py-2 transition-colors hover:bg-accent/30 ${
           isOver ? "bg-accent/40" : ""
         }`}
       >
@@ -514,14 +539,19 @@ function Column({
   return (
     <div
       ref={setNodeRef}
-      className={`h-full w-60 shrink-0 flex flex-col gap-2 rounded-md ${
+      className={`min-h-[12rem] max-h-[26rem] shrink-0 grow basis-60 flex flex-col gap-2 rounded-md ${
         isOver ? "bg-accent/40" : ""
       }`}
       data-testid={`kanban-col-${status}`}
       data-collapsed="false"
     >
       <div className="flex shrink-0 items-center justify-between px-1">
-        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+          <span
+            aria-hidden
+            className="h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: tone }}
+          />
           {label}
         </span>
         <div className="flex items-center gap-1">
@@ -690,7 +720,11 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   const colunasAtivas = showArchived
     ? [
         ...COLUNAS,
-        { status: "archived", label: () => m.kanban_column_archived() },
+        {
+          status: "archived",
+          label: () => m.kanban_column_archived(),
+          tone: "archived",
+        },
       ]
     : COLUNAS;
 
@@ -769,7 +803,11 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   const lanes = temOrfas
     ? [
         ...colunasAtivas,
-        { status: FALLBACK_STATUS, label: () => m.kanban_column_other() },
+        {
+          status: FALLBACK_STATUS,
+          label: () => m.kanban_column_other(),
+          tone: "archived",
+        },
       ]
     : colunasAtivas;
 
@@ -848,10 +886,12 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
         <div className="shrink-0">
           <TriageDropzone />
         </div>
-        {/* Só as lanes rolam — horizontalmente aqui, verticalmente cada uma
-            por dentro. A raiz é overflow-hidden, então o board nunca produz
-            scrollbar própria estando vazio. */}
-        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto">
+        {/* Lanes quebram em grid (flex-wrap com flex-basis heterogêneo —
+            colunas abertas crescem, trilhos colapsados ficam fixos em
+            2.25rem), nunca scroll horizontal. Só o trilho de lanes rola
+            verticalmente quando não cabem todas na altura disponível; cada
+            lane aberta também rola por dentro (ver Column). */}
+        <div className="flex min-h-0 flex-1 flex-wrap content-start gap-3 overflow-y-auto lg:max-h-[38rem]">
           {lanes.map((coluna) => {
             const daColuna = visiveis.filter((t) =>
               coluna.status === FALLBACK_STATUS
@@ -865,7 +905,15 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
                 status={coluna.status}
                 label={coluna.label()}
                 count={daColuna.length}
-                collapsed={laneOverrides[coluna.status] ?? autoColapsada}
+                collapsed={
+                  // Self-heal: um override manual só vale enquanto a lane
+                  // segue vazia. Task nova (ex.: via SSE) descarta o
+                  // colapso manual — senão ela fica escondida sem o
+                  // usuário perceber.
+                  daColuna.length > 0
+                    ? autoColapsada
+                    : (laneOverrides[coluna.status] ?? autoColapsada)
+                }
                 onToggle={() =>
                   setLaneOverrides((prev) => ({
                     ...prev,
