@@ -345,6 +345,12 @@ class TestLlmKeyPrecedence:
         monkeypatch.setattr(Path, "home", lambda: home_dir)
         monkeypatch.chdir(project_dir)
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+        # `tests/conftest.py::pytest_configure` isola VECTORA_HOME por
+        # padrão pra suíte inteira nunca vazar pro ~/.vectora real — este
+        # teste testa especificamente o fallback pra Path.home() quando
+        # VECTORA_HOME NÃO está setado, então precisa desfazer o default
+        # da sessão pra exercitar o caminho que quer testar.
+        monkeypatch.delenv("VECTORA_HOME", raising=False)
 
         with caplog.at_level(logging.DEBUG, logger="backend.settings"):
             Settings()
@@ -368,6 +374,12 @@ class TestLlmKeyPrecedence:
         monkeypatch.setattr(Path, "home", lambda: home_dir)
         monkeypatch.chdir(project_dir)
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+        # `tests/conftest.py::pytest_configure` isola VECTORA_HOME por
+        # padrão pra suíte inteira nunca vazar pro ~/.vectora real — este
+        # teste testa especificamente o fallback pra Path.home() quando
+        # VECTORA_HOME NÃO está setado, então precisa desfazer o default
+        # da sessão pra exercitar o caminho que quer testar.
+        monkeypatch.delenv("VECTORA_HOME", raising=False)
 
         with caplog.at_level(logging.DEBUG, logger="backend.settings"):
             Settings()

@@ -29,8 +29,10 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
+import shutil
 import socket
 import sys
+import tempfile
 from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -45,6 +47,47 @@ if TYPE_CHECKING:
 _exit_status: int = 0
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# Diretório isolado criado por `pytest_configure` (abaixo), removido em
+# `pytest_unconfigure` — `None` quando o processo não é o responsável por
+# essa limpeza (VECTORA_HOME já veio setado de fora, ver docstring).
+_isolated_vectora_home: str | None = None
+
+
+def pytest_configure(config: Any) -> None:
+    """Isola `VECTORA_HOME` para a sessão inteira ANTES de qualquer módulo
+    de teste ser coletado/importado — rede de segurança contra teste
+    vazando pro `~/.vectora` real do usuário.
+
+    Achado ao vivo (não hipotético): duas threads de teste (`thread-dedup-
+    e2e`, `tid`) apareceram no `~/.vectora/checkpoints.db` REAL do usuário,
+    poluindo a sidebar do app instalado. Causa raiz: `backend.settings.
+    settings` (Pydantic Settings) e `backend.workspace.runtime_settings.
+    _DB_PATH` são singletons de PROCESSO computados a partir de
+    `VECTORA_HOME` no momento do import — `spawned_backend` (fixture
+    abaixo) já isola isso corretamente, mas só porque roda o backend num
+    SUBPROCESSO com o env var setado antes do import. Qualquer teste que
+    importe `backend.*` diretamente no MESMO processo do pytest (sem
+    subprocess) — comum, é como a maioria dos testes unitários funciona —
+    herda o `VECTORA_HOME` que estava no ambiente no instante do primeiro
+    import, que é o real `~/.vectora` se ninguém tiver setado nada antes.
+
+    `pytest_configure` roda antes da coleta de qualquer módulo de teste —
+    é o ÚNICO ponto cedo o bastante pra garantir que o PRIMEIRO import de
+    `backend.settings` em todo o processo já veja um `VECTORA_HOME`
+    isolado, não importa qual teste dispara esse import primeiro.
+
+    Se `VECTORA_HOME` já vier setado no ambiente (CI com isolamento
+    próprio, ou alguém depurando contra um diretório específico de
+    propósito), respeitamos e não sobrescrevemos — só criamos um novo
+    quando a variável está ausente, que é exatamente o caso em que o
+    processo cairia no `Path.home()` real por default."""
+    global _isolated_vectora_home
+    if os.environ.get("VECTORA_HOME"):
+        return
+    home_dir = tempfile.mkdtemp(prefix="vectora-test-home-")
+    os.environ["VECTORA_HOME"] = home_dir
+    _isolated_vectora_home = home_dir
 
 
 def pytest_sessionfinish(exitstatus: int) -> None:
@@ -63,6 +106,12 @@ def pytest_unconfigure(config: Any) -> None:
     Roda no fim do ciclo do pytest, depois que o summary e o coverage já foram
     emitidos — antes do ``threading._shutdown()`` que travaria no join.
     """
+    # Remove o VECTORA_HOME isolado criado por `pytest_configure` — precisa
+    # rodar ANTES do `os._exit()` abaixo, que pula qualquer cleanup
+    # registrado via atexit.
+    if _isolated_vectora_home is not None:
+        shutil.rmtree(_isolated_vectora_home, ignore_errors=True)
+
     # Em workers do pytest-xdist NÃO forçamos o exit: quebraria o protocolo de
     # coleta de resultados do processo controlador. Só o principal encerra.
     if hasattr(config, "workerinput"):

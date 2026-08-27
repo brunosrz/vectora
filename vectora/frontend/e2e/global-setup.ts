@@ -15,7 +15,36 @@ const EMAIL = process.env.E2E_EMAIL ?? "e2e@vectora.local";
 const PASSWORD = process.env.E2E_PASSWORD ?? "Vectora-e2e-2026!";
 const STATE_PATH = "./e2e/.auth/state.json";
 
+/**
+ * Guarda contra a suíte poluir o `~/.vectora` REAL do desenvolvedor.
+ *
+ * Achado ao vivo: threads de teste (`thread-dedup-e2e`, `tid`) apareceram
+ * na sidebar do app instalado de um usuário real — vieram de uma suíte e2e
+ * (ou verificação manual equivalente) rodando contra um backend em :8080
+ * que nunca teve `VECTORA_HOME` isolado. Este setup não controla o
+ * processo do backend (é iniciado à parte, `vectora start`/`vectora web`
+ * numa janela separada — ver o comentário no topo de `playwright.config.ts`),
+ * então não dá pra GARANTIR isolamento por código aqui — só torna o risco
+ * impossível de passar despercebido, em vez de silencioso.
+ */
+function warnIfHomeNotIsolated(): void {
+  if (process.env.VECTORA_HOME) return;
+  // eslint-disable-next-line no-console
+  console.warn(
+    "\n⚠️  VECTORA_HOME não está setado neste shell.\n" +
+      "   Se o backend em " +
+      BASE_URL +
+      " também não tiver VECTORA_HOME isolado,\n" +
+      "   esta suíte e2e vai criar threads/usuários reais no seu ~/.vectora " +
+      "de verdade.\n" +
+      "   Pra isolar: pare o backend atual e suba de novo com\n" +
+      "   VECTORA_HOME=/caminho/temporario vectora web (ou o equivalente " +
+      "do seu shell no Windows).\n",
+  );
+}
+
 async function globalSetup(_config: FullConfig): Promise<void> {
+  warnIfHomeNotIsolated();
   const ctx = await request.newContext({ baseURL: BASE_URL });
 
   const hasUsersRes = await ctx.get("/auth/has-users");
