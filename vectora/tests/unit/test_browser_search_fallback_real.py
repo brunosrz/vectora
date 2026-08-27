@@ -73,9 +73,15 @@ def test_fetch_fallback_url_invalida_levanta_em_vez_de_retornar_string_vazia():
     # Par de erro: URL inexistente/malformada deve levantar (o caller —
     # backend/tools/web.py — é quem decide degradar pro erro textual),
     # nunca retornar silenciosamente uma string vazia.
-    from playwright.sync_api import Error as PlaywrightError
-
-    with pytest.raises(PlaywrightError):
+    #
+    # `.invalid` é um TLD reservado (RFC 2606) que nunca resolve em DNS
+    # nenhum — então `ssrf_guard.is_url_ssrf_safe` (fail-closed por design:
+    # falha de resolução também é tratada como não-seguro, ver seu
+    # docstring) sempre recusa essa URL ANTES de chegar no Chromium.
+    # Esperar um erro do Playwright aqui pressupunha que o guard deixasse a
+    # URL passar — nunca foi verdade em nenhum ambiente com DNS correto, só
+    # não se manifestava porque este teste ficava skipped sem Chromium.
+    with pytest.raises(ValueError, match="SSRF"):
         search_fallback.fetch_fallback(
             "https://este-dominio-nao-existe-de-verdade.invalid"
         )
