@@ -45,9 +45,14 @@ interface AgentProfileOption {
 
 function NewTaskForm({
   threadId,
+  boardId,
   onCreated,
 }: {
   threadId: string;
+  //: Board ativo (Fase 6) — task nova entra associada a ele quando um
+  //: board está selecionado. `null` na visão por session, comportamento
+  //: pré-Fase-6 inalterado.
+  boardId: string | null;
   onCreated: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -85,6 +90,7 @@ function NewTaskForm({
         priority,
         workspace_id: workspaceId || null,
         agent_profile_id: agentProfileId || null,
+        board_id: boardId,
       }),
     }).then(() => {
       setName("");
@@ -225,6 +231,94 @@ function NewTaskForm({
   );
 }
 
+//: Switcher de board (Sprint 4 Fase 6) — "Board da sessão" (null) é a
+//: visão pré-Fase-6, sempre disponível mesmo sem nenhum board criado
+//: ainda. Criar um board novo seleciona ele na hora, sem passo extra.
+function BoardSwitcher({
+  boards,
+  activeBoardId,
+  onChange,
+  onCreated,
+}: {
+  boards: KanbanBoardOption[];
+  activeBoardId: string | null;
+  onChange: (boardId: string) => void;
+  onCreated: (board: KanbanBoardOption) => void;
+}) {
+  const [criando, setCriando] = useState(false);
+  const [novoNome, setNovoNome] = useState("");
+
+  const criar = () => {
+    const nome = novoNome.trim();
+    if (!nome) return;
+    void fetch("/boards", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: nome }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((board) => {
+        if (!board) return;
+        onCreated(board);
+        setNovoNome("");
+        setCriando(false);
+      });
+  };
+
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <select
+        value={activeBoardId ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={m.kanban_board_switcher_label()}
+        className="rounded border bg-background px-2 py-1 text-xs"
+      >
+        <option value="">{m.kanban_board_session_view()}</option>
+        {boards.map((b) => (
+          <option key={b.id} value={b.id}>
+            {b.name}
+          </option>
+        ))}
+      </select>
+      {criando ? (
+        <>
+          <input
+            type="text"
+            value={novoNome}
+            onChange={(e) => setNovoNome(e.target.value)}
+            placeholder={m.kanban_board_new_placeholder()}
+            aria-label={m.kanban_board_new_placeholder()}
+            className="w-32 rounded border bg-background px-2 py-1 text-xs"
+          />
+          <button
+            onClick={criar}
+            className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground"
+          >
+            {m.kanban_create()}
+          </button>
+          <button
+            onClick={() => {
+              setCriando(false);
+              setNovoNome("");
+            }}
+            className="text-xs text-muted-foreground hover:underline"
+          >
+            {m.kanban_action_cancel()}
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => setCriando(true)}
+          className="text-xs text-primary hover:underline"
+        >
+          {m.kanban_board_new()}
+        </button>
+      )}
+    </div>
+  );
+}
+
 //: Atualização em tempo real vem por push (SSE, ver `useKanbanSse` abaixo).
 //: Este polling é só reconciliação de baixa frequência — cobre o evento
 //: perdido numa reconexão de rede — não a via principal de atualização.
@@ -305,9 +399,25 @@ const PRIORITY_CLASS: Record<string, string> = {
 
 interface KanbanSseEventData {
   task_id: string;
+  //: `None` pra task sem board — Sprint 4 Fase 6. Presente mesmo na visão
+  //: por session (não só na visão por board), então a checagem de
+  //: relevância do evento é sempre a mesma código, os dois modos.
+  board_id?: string | null;
   status: string;
   block_kind: string | null;
   block_reason: string | null;
+}
+
+interface KanbanBoardOption {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+//: Chave de persistência do board ativo — por thread, já que o board
+//: escolhido numa sessão não deveria "vazar" pra outra.
+function boardStorageKey(threadId: string): string {
+  return `vectora-kanban-active-board-${threadId}`;
 }
 
 interface WebhookSseEvent {
@@ -771,17 +881,64 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     {},
   );
 
+  // Sprint 4 Fase 6 — multi-board. `null` = visão por session (padrão,
+  // comportamento pré-Fase-6 inalterado). Persistido por thread: o board
+  // escolhido não deveria "vazar" pra outra sessão.
+  const [boards, setBoards] = useState<KanbanBoardOption[]>([]);
+  const [activeBoardId, setActiveBoardId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(boardStorageKey(threadId));
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    void fetch("/boards", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setBoards(Array.isArray(data) ? data : []))
+      .catch(() => setBoards([]));
+  }, []);
+
+  const trocarBoard = (boardId: string) => {
+    setActiveBoardId(boardId || null);
+    try {
+      if (boardId) localStorage.setItem(boardStorageKey(threadId), boardId);
+      else localStorage.removeItem(boardStorageKey(threadId));
+    } catch {
+      // localStorage indisponível (modo privado, quota) — só perde a
+      // persistência entre sessões, não é motivo pra quebrar a troca.
+    }
+  };
+
   const carregar = () => {
     let cancelado = false;
-    void fetch(`/sessions/${threadId}/background/tasks`, {
-      credentials: "include",
-    })
-      .then((r) => (r.ok ? r.json() : []))
+    const url = activeBoardId
+      ? `/boards/${activeBoardId}/board`
+      : `/sessions/${threadId}/background/tasks`;
+    void fetch(url, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : activeBoardId ? { columns: [] } : []))
       .then((data) => {
-        // A resposta real é `list[TaskOut]` (array puro) — não um envelope
-        // `{tasks: [...]}`. Um formato inesperado degrada pro board vazio
-        // em vez de lançar.
-        if (!cancelado) setTasks(Array.isArray(data) ? data : []);
+        if (cancelado) return;
+        if (activeBoardId) {
+          // `GET /boards/{id}/board` devolve `{columns: [{status, tasks}]}`
+          // já agrupado — achata de volta pra lista plana, que é o
+          // formato que todo o resto do componente (COLUNAS/colunasAtivas/
+          // filtros) já sabe consumir. Reagrupar do zero pra consumir a
+          // resposta pré-agrupada seria reescrever a lógica existente só
+          // pra fazer a mesma coisa duas vezes.
+          const columns = Array.isArray(data?.columns) ? data.columns : [];
+          setTasks(
+            columns.flatMap((c: { tasks?: unknown[] }) =>
+              Array.isArray(c.tasks) ? c.tasks : [],
+            ),
+          );
+        } else {
+          // A resposta de /tasks é `list[TaskOut]` (array puro) — não um
+          // envelope `{tasks: [...]}`. Formato inesperado degrada pro
+          // board vazio em vez de lançar.
+          setTasks(Array.isArray(data) ? data : []);
+        }
       })
       .catch(() => {
         // Board vazio é melhor que tela de erro — as tarefas seguem
@@ -792,7 +949,7 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     };
   };
 
-  useEffect(carregar, [threadId]);
+  useEffect(carregar, [threadId, activeBoardId]);
 
   // Ref sempre com a versão mais recente de `carregar` — o interval abaixo
   // só precisa ser recriado quando `threadId` muda, não a cada render.
@@ -813,6 +970,10 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   // refazer o fetch do board inteiro. Task ainda desconhecida localmente
   // (ex.: criada por outra sessão/processo) cai no fallback de `carregar`.
   const aplicarEventoSse = (data: KanbanSseEventData) => {
+    // Visão por board (Fase 6): evento de uma task de OUTRO board não é
+    // relevante aqui — nem atualiza card nenhum, nem dispara refetch (que
+    // recarregaria a lista certa, mas sem necessidade nenhuma).
+    if (activeBoardId && data.board_id !== activeBoardId) return;
     // Checa contra o `tasks` do último render (via ref abaixo), não dentro
     // do updater funcional: `setTasks` não roda o updater de forma
     // síncrona, então ler o resultado logo depois de chamá-lo é uma corrida
@@ -971,7 +1132,20 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden p-4">
       <div className="shrink-0">
-        <NewTaskForm threadId={threadId} onCreated={carregar} />
+        <BoardSwitcher
+          boards={boards}
+          activeBoardId={activeBoardId}
+          onChange={trocarBoard}
+          onCreated={(board) => {
+            setBoards((prev) => [...prev, board]);
+            trocarBoard(board.id);
+          }}
+        />
+        <NewTaskForm
+          threadId={threadId}
+          boardId={activeBoardId}
+          onCreated={carregar}
+        />
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <input
             type="text"

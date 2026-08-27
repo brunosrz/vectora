@@ -22,10 +22,58 @@ import { applyDragTransition, arcState, KanbanBoard } from "../kanban-board";
 
 function mockTasks(tasks: unknown[]) {
   // A resposta real de GET /sessions/{id}/background/tasks é `list[TaskOut]`
-  // — um array puro, não um envelope `{tasks: [...]}`.
+  // — um array puro, não um envelope `{tasks: [...]}`. `/boards` (Fase 6,
+  // buscado sem condição nenhuma ao montar o board) precisa da própria
+  // resposta vazia — senão o array de tasks vaza pro switcher de board
+  // como se cada task fosse um board, e nomes de task acabam aparecendo
+  // duas vezes na árvore (o card + a opção espúria no <select>).
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => new Response(JSON.stringify(tasks), { status: 200 })),
+    vi.fn(async (url: string) => {
+      if (url.endsWith("/boards")) return new Response("[]", { status: 200 });
+      return new Response(JSON.stringify(tasks), { status: 200 });
+    }),
+  );
+}
+
+/** Stub de fetch pros testes de multi-board (Sprint 4 Fase 6) — cobre
+ * /boards (GET/POST), /boards/{id}/board e o fallback de sessão. */
+function mockMultiBoard(
+  opts: {
+    boards?: unknown[];
+    boardView?: { columns: { status: string; tasks: unknown[] }[] };
+    sessionTasks?: unknown[];
+  },
+  chamadas?: { url: string; method: string; body?: string }[],
+) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string, init?: RequestInit) => {
+      chamadas?.push({
+        url,
+        method: init?.method ?? "GET",
+        body: init?.body as string | undefined,
+      });
+      if (url.endsWith("/boards") && (init?.method ?? "GET") === "GET") {
+        return new Response(JSON.stringify(opts.boards ?? []), {
+          status: 200,
+        });
+      }
+      if (url.endsWith("/boards") && init?.method === "POST") {
+        return new Response(
+          JSON.stringify({ id: "board-novo", slug: "novo", name: "Novo" }),
+          { status: 201 },
+        );
+      }
+      if (url.includes("/boards/") && url.endsWith("/board")) {
+        return new Response(JSON.stringify(opts.boardView ?? { columns: [] }), {
+          status: 200,
+        });
+      }
+      return new Response(JSON.stringify(opts.sessionTasks ?? []), {
+        status: 200,
+      });
+    }),
   );
 }
 
@@ -91,6 +139,11 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   overwriteGetLocale(() => baseLocale);
+  // Sprint 4 Fase 6 — o board ativo persiste em localStorage por thread;
+  // sem limpar, um teste que troca de board vaza o valor pro próximo
+  // teste que monta a MESMA thread ("s1", usada em quase todo teste
+  // deste arquivo).
+  localStorage.clear();
 });
 
 async function montar() {
@@ -1065,6 +1118,118 @@ describe("KanbanBoard", () => {
     expect(
       within(screen.getByTestId("kanban-col-archived")).getByText("arquivada"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("KanbanBoard — multi-board (Sprint 4 Fase 6)", () => {
+  it("switcher lista os boards do usuário e a opção 'board da sessão'", async () => {
+    mockMultiBoard({
+      boards: [{ id: "b1", slug: "b1", name: "Sprint 4" }],
+    });
+
+    await montar();
+
+    const select = screen.getByLabelText(/board ativo/i) as HTMLSelectElement;
+    const opcoes = Array.from(select.options).map((o) => o.textContent);
+    expect(opcoes).toEqual(["Board da sessão", "Sprint 4"]);
+  });
+
+  it("trocar pra um board busca /boards/{id}/board e mostra as tasks agrupadas", async () => {
+    mockMultiBoard({
+      boards: [{ id: "b1", slug: "b1", name: "Sprint 4" }],
+      boardView: {
+        columns: [
+          { status: "todo", tasks: [task({ id: "t1", name: "do board" })] },
+        ],
+      },
+      sessionTasks: [task({ id: "t2", name: "da sessão" })],
+    });
+
+    await montar();
+    // Sem board ativo: mostra a task da session.
+    expect(screen.getByText("da sessão")).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(/board ativo/i), {
+        target: { value: "b1" },
+      });
+    });
+
+    // Com o board ativo: mostra a task do board, não mais a da session.
+    expect(await screen.findByText("do board")).toBeInTheDocument();
+    expect(screen.queryByText("da sessão")).not.toBeInTheDocument();
+  });
+
+  it("criar um board novo o seleciona automaticamente", async () => {
+    const chamadas: { url: string; method: string; body?: string }[] = [];
+    mockMultiBoard(
+      {
+        boards: [],
+        boardView: { columns: [] },
+      },
+      chamadas,
+    );
+
+    await montar();
+    await act(async () => {
+      screen.getByRole("button", { name: /\+ novo board/i }).click();
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(/nome do board/i), {
+        target: { value: "Board X" },
+      });
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: /^criar$/i }).click();
+    });
+
+    const post = chamadas.find(
+      (c) => c.method === "POST" && c.url.endsWith("/boards"),
+    );
+    expect(post).toBeTruthy();
+    expect(JSON.parse(post?.body ?? "{}")).toMatchObject({ name: "Board X" });
+
+    const select =
+      await screen.findByLabelText<HTMLSelectElement>(/board ativo/i);
+    expect(select.value).toBe("board-novo");
+  });
+
+  it("nova tarefa criada com um board ativo envia board_id no POST", async () => {
+    const chamadas: { url: string; method: string; body?: string }[] = [];
+    mockMultiBoard(
+      {
+        boards: [{ id: "b1", slug: "b1", name: "Sprint 4" }],
+        boardView: { columns: [] },
+      },
+      chamadas,
+    );
+
+    await montar();
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(/board ativo/i), {
+        target: { value: "b1" },
+      });
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: /nova tarefa/i }).click();
+    });
+    fireEvent.change(screen.getByLabelText(/^nome$/i), {
+      target: { value: "tarefa do board" },
+    });
+    fireEvent.change(screen.getByLabelText(/instru[çc][ãa]o/i), {
+      target: { value: "faça algo" },
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: /^criar$/i }).click();
+    });
+
+    const post = chamadas.find(
+      (c) => c.method === "POST" && c.url.endsWith("/background/tasks"),
+    );
+    expect(post).toBeTruthy();
+    expect(JSON.parse(post?.body ?? "{}")).toMatchObject({
+      board_id: "b1",
+    });
   });
 });
 
