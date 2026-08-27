@@ -263,6 +263,9 @@ export interface KanbanTask {
   //: se o heartbeat (backend/scheduling/background_tasks.py, watchdog de
   //: 60s) está fresco ou parou.
   claim_expires_at?: string | null;
+  //: Rollup de subtasks diretas (`kanban_decompose`). `undefined`/`null`
+  //: — não `{done:0,total:0}` — quando a task não tem subtask nenhuma.
+  progress?: { done: number; total: number } | null;
 }
 
 //: Mesmos valores de `backend/scheduling/kanban.py::_DEFAULT_CLAIM_TTL_S`
@@ -360,10 +363,20 @@ function kanbanToneVar(status: string): string {
 //: da run terminando de verdade, respectivamente. O backend recusa de novo
 //: se este mapa algum dia divergir — esta cópia é só pra recusar o drop
 //: antes de qualquer chamada de rede.
-const DRAG_TRANSITIONS: Record<string, string[]> = {
+//: Exportado pro menu de status do drawer (Fase 7) reusar exatamente os
+//: mesmos alvos legais que o drag-and-drop já valida — um mapa só, dois
+//: consumidores.
+export const DRAG_TRANSITIONS: Record<string, string[]> = {
   todo: ["ready", "triage"],
   ready: ["triage"],
   blocked: ["ready"],
+  //: Reprovar review — devolve pro fluxo ativo (Fase 4a). `review→done`
+  //: nunca entra aqui de propósito: é o endpoint dedicado de aprovação
+  //: (`/review/approve`), que registra quem aprovou — não um `PATCH`
+  //: genérico de drag-and-drop.
+  review: ["ready"],
+  //: Reabertura manual de uma task já concluída.
+  done: ["review"],
 };
 
 function isDragAllowed(from: string, to: string): boolean {
@@ -613,10 +626,10 @@ function TaskCard({
       </div>
       <TaskDetailPanel
         threadId={threadId}
-        taskId={task.id}
-        taskName={task.name}
+        task={task}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        onChanged={onChanged}
       />
       {runsOpen ? (
         <ul className="text-[10px] text-muted-foreground space-y-0.5 pl-2">
