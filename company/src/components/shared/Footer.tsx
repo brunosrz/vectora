@@ -35,6 +35,9 @@ export default function Footer() {
             >
               {m.footer_docs()}
             </a>
+            <Link to="/features" className={linkClass}>
+              {m.footer_features()}
+            </Link>
             <Link to="/faq" className={linkClass}>
               {m.footer_faq()}
             </Link>
