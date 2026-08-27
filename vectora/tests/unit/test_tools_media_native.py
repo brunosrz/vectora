@@ -1,11 +1,14 @@
 """``backend/tools/media_native.py`` — análise de mídia LOCAL via
 ffmpeg/ffprobe, sem provider remoto nenhum.
 
-Assets reais em ``tests/assets/`` (``sample.mp4``/``sample.wav``, gerados
-localmente via ``ffmpeg -f lavfi``) — mesma convenção de
-``test_tools_rag.py`` pros parsers de documento. Roda contra o ffmpeg de
-verdade (resolvido por ``ffmpeg_binary.py``, PATH do sistema em dev) —
-sem mock de subprocess, prova que a integração real funciona.
+Assets reais em ``tests/assets/`` (``sample.mp4``/``sample.wav``/
+``sample.ogg``/``sample.mp3``/``sample.png``/``sample.jpg``/
+``sample.webp``/``sample.gif``/``sample.webm``, gerados localmente via
+``ffmpeg -f lavfi``) — mesma convenção de ``test_tools_rag.py`` pros
+parsers de documento. Roda contra o ffmpeg de verdade (resolvido por
+``ffmpeg_binary.py``, PATH do sistema em dev) — sem mock de subprocess,
+prova que a integração real funciona contra a diversidade de
+container/codec que o ffmpeg embutido precisa suportar na prática.
 """
 
 from __future__ import annotations
@@ -60,6 +63,34 @@ class TestProbeMedia:
 
         assert "error" in result
 
+    @pytest.mark.parametrize(
+        ("filename", "expected_codec_types"),
+        [
+            ("sample.wav", {"audio"}),
+            ("sample.ogg", {"audio"}),
+            ("sample.mp3", {"audio"}),
+            ("sample.png", {"video"}),
+            ("sample.jpg", {"video"}),
+            ("sample.webp", {"video"}),
+            ("sample.gif", {"video"}),
+            ("sample.webm", {"video", "audio"}),
+        ],
+    )
+    async def test_formatos_variados_sao_reconhecidos_sem_erro(
+        self, tmp_path, filename, expected_codec_types
+    ):
+        """Diversidade de container/codec que o ffmpeg embutido precisa
+        suportar na prática — não só o mp4/wav já cobertos acima."""
+        asset = tmp_path / filename
+        asset.write_bytes((_ASSETS / filename).read_bytes())
+
+        with patch("backend.tools.fs._confine", return_value=(asset, "")):
+            result = json.loads(await probe_media(ctx=ToolContext(), path=filename))
+
+        assert "error" not in result
+        codec_types = {s["codec_type"] for s in result["streams"]}
+        assert codec_types == expected_codec_types
+
 
 @pytest.mark.asyncio
 @requires_ffmpeg
@@ -98,6 +129,26 @@ class TestExtractFrame:
             )
 
         assert "error" in result
+
+    async def test_extrai_frame_do_gif_animado(self, tmp_path):
+        """ffprobe lê GIF animado como stream de vídeo — prova que
+        extract_frame funciona igual a um container de vídeo comum."""
+        gif = tmp_path / "sample.gif"
+        gif.write_bytes((_ASSETS / "sample.gif").read_bytes())
+
+        with patch("backend.tools.fs._confine", return_value=(gif, "")):
+            result = json.loads(
+                await extract_frame(
+                    ctx=ToolContext(), path="sample.gif", timestamp_s=0.5
+                )
+            )
+
+        assert "error" not in result
+        frame_path = Path(result["path"])
+        assert frame_path.is_file()
+        assert (
+            frame_path.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+        )  # assinatura PNG real
 
 
 @pytest.mark.asyncio
