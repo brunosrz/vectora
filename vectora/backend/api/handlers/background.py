@@ -328,6 +328,28 @@ async def unblock_task_endpoint(
     return await _to_out(updated)
 
 
+@router.post("/tasks/{task_id}/review/approve", response_model=TaskOut)
+async def approve_review_endpoint(
+    request: Request, thread_id: str, task_id: str
+) -> TaskOut:
+    """Aprova uma task em `review`, movendo pra `done` — endpoint dedicado
+    (não a transição genérica `PATCH .../tasks/{id}`) pra registrar quem
+    aprovou e nunca abrir `review→done` pro drag-and-drop genérico."""
+    from backend.scheduling.background_tasks import get_task
+    from backend.scheduling.kanban import approve_review
+
+    uid = _user_id(request)
+    await _require_task(thread_id, task_id)
+    try:
+        await approve_review(task_id, uid)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    updated = await get_task(task_id)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Task não encontrada")
+    return await _to_out(updated)
+
+
 @router.post("/tasks/{task_id}/run", status_code=202)
 async def run_task_endpoint(
     request: Request,

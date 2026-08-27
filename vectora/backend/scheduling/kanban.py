@@ -61,6 +61,14 @@ MANUAL_TRANSITIONS: dict[str, frozenset[str]] = {
     "todo": frozenset({"ready", "triage"}),
     "ready": frozenset({"triage"}),
     "blocked": frozenset({"ready"}),
+    #: Reprovar review — devolve pro fluxo ativo. Aprovar (`review` →
+    #: `done`) NÃO entra aqui de propósito: é um endpoint dedicado
+    #: (`POST /tasks/{id}/review/approve`), pra não abrir um `*→done`
+    #: genérico pro drag-and-drop e pra registrar quem aprovou.
+    "review": frozenset({"ready"}),
+    #: Reabertura manual de uma task já concluída — único caminho de volta
+    #: pra `done`, nunca automático.
+    "done": frozenset({"review"}),
 }
 
 #: Bloqueios consecutivos (não-`dependency`) antes de escalar pra `triage`
@@ -480,6 +488,23 @@ async def recompute_ready() -> int:
         )
     await db.commit()
     return len(prontas)
+
+
+async def approve_review(task_id: str, user_id: str) -> None:
+    """Aprova uma task em `review`, movendo pra `done`.
+
+    Endpoint dedicado (não `manual_transition`/`MANUAL_TRANSITIONS`) de
+    propósito: `review → done` nunca deveria abrir como transição genérica
+    de drag-and-drop — precisa registrar QUEM aprovou, o que
+    `manual_transition` não faz. `review → ready` (reprovar) segue pelo
+    caminho genérico normalmente.
+    """
+    estado = await get_task_status(task_id)
+    if estado["status"] != "review":
+        msg = f"task está em {estado['status']!r}, não em 'review' — nada a aprovar"
+        raise ValueError(msg)
+    await set_status(task_id, "done")
+    await add_comment(task_id, user_id, "✓ Review aprovada.")
 
 
 async def add_comment(task_id: str, user_id: str, body: str) -> dict[str, Any]:

@@ -744,6 +744,62 @@ async def test_run_task_heartbeat_e_chamado_periodicamente_durante_execucao_long
     assert all(tid == task.id for tid, _run_id in chamadas_heartbeat)
 
 
+async def test_run_task_com_requires_review_termina_em_review_nao_done(
+    db, native_session_store, monkeypatch
+):
+    """Sprint 4 Fase 4a — `trigger_config.requires_review` desvia o fim de
+    uma run bem-sucedida pra `review` em vez de `done` direto."""
+    client = _ScriptedChatClient([[_texto_chunk("Pronto pra revisão.")]])
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=client
+    )
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+
+    task = await bg.create_task(
+        session_id="sess-review",
+        user_id="uuid-bbb",
+        kind="routine",
+        name="Precisa revisão",
+        instruction="i",
+        trigger_type="manual",
+        trigger_config={"requires_review": True},
+    )
+
+    await bg.run_task(task, "manual")
+
+    from backend.scheduling.kanban import get_task_status
+
+    assert (await get_task_status(task.id))["status"] == "review"
+
+
+async def test_run_task_sem_requires_review_termina_em_done_como_antes(
+    db, native_session_store, monkeypatch
+):
+    """Erro/borda: sem o campo (ou `False`), o comportamento pré-existente
+    não muda — `done` direto, mesma regressão que quebraria qualquer task
+    manual/webhook/once já em produção."""
+    client = _ScriptedChatClient([[_texto_chunk("Feito.")]])
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=client
+    )
+    monkeypatch.setattr("backend.api.handlers.threads._upsert_session", AsyncMock())
+
+    task = await bg.create_task(
+        session_id="sess-no-review",
+        user_id="uuid-bbb",
+        kind="routine",
+        name="Sem revisão",
+        instruction="i",
+        trigger_type="manual",
+    )
+
+    await bg.run_task(task, "manual")
+
+    from backend.scheduling.kanban import get_task_status
+
+    assert (await get_task_status(task.id))["status"] == "done"
+
+
 async def test_run_task_subagent_type_usa_soul_tool_registry_com_o_usuario_da_task(
     db, native_session_store, monkeypatch
 ):

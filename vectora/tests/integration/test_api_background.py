@@ -20,6 +20,7 @@ from backend.api.handlers.background import (
     CreateTaskRequest,
     ResumeRunRequest,
     UpdateTaskRequest,
+    approve_review_endpoint,
     delete_task_endpoint,
     get_runs,
     get_tasks,
@@ -240,6 +241,37 @@ async def test_patch_and_delete_enforce_session_scope(db):
 
     await delete_task_endpoint(_req(), "thread-A", out.id)
     assert await get_tasks(_req(), "thread-A") == []
+
+
+async def test_approve_review_endpoint_move_para_done(db):
+    """Sprint 4 Fase 4a — endpoint dedicado de aprovação, não a transição
+    genérica de status (que recusa `review→done` de propósito)."""
+    from backend.scheduling.kanban import set_status
+
+    out = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="Revisar", instruction="i", trigger_type="manual"
+        ),
+    )
+    await set_status(out.id, "review")
+
+    approved = await approve_review_endpoint(_req(), "thread-1", out.id)
+
+    assert approved.status == "done"
+
+    # Erro/borda: aprovar de novo (já não está mais em review) → 400, não
+    # um sucesso silencioso que reescreve o mesmo status.
+    with pytest.raises(HTTPException) as again:
+        await approve_review_endpoint(_req(), "thread-1", out.id)
+    assert again.value.status_code == 400
+
+    # Erro/borda: task de outra session → 404, mesmo enforcement de posse
+    # que os outros endpoints de task já têm.
+    with pytest.raises(HTTPException) as wrong_session:
+        await approve_review_endpoint(_req(), "thread-B", out.id)
+    assert wrong_session.value.status_code == 404
 
 
 async def test_manual_run_creates_run_and_registers_thread(

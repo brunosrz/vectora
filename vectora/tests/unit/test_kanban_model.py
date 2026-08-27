@@ -218,6 +218,69 @@ class TestHeartbeatClaim:
         assert await release_stale_claims() == 1
 
 
+class TestReviewFuncional:
+    """Sprint 4 Fase 4a — antes desta fase, `MANUAL_TRANSITIONS` nunca
+    incluía `review` em lugar nenhum: a coluna era permanentemente vazia
+    se desenhada no board, decorativa."""
+
+    @pytest.mark.asyncio
+    async def test_manual_transition_aceita_review_para_ready_reprovar(self, db):
+        from backend.scheduling.kanban import get_task_status, manual_transition
+
+        await _cria(db, "t1", status="review")
+        await manual_transition("t1", "ready")
+
+        assert (await get_task_status("t1"))["status"] == "ready"
+
+    @pytest.mark.asyncio
+    async def test_manual_transition_recusa_review_para_done_direto(self, db):
+        """Erro/borda: aprovar não pode passar pela transição genérica —
+        só o endpoint dedicado (`approve_review`) registra quem aprovou."""
+        from backend.scheduling.kanban import manual_transition
+
+        await _cria(db, "t1", status="review")
+
+        with pytest.raises(ValueError, match="não é permitida"):
+            await manual_transition("t1", "done")
+
+    @pytest.mark.asyncio
+    async def test_manual_transition_aceita_done_para_review_reabertura(self, db):
+        from backend.scheduling.kanban import get_task_status, manual_transition
+
+        await _cria(db, "t1", status="done")
+        await manual_transition("t1", "review")
+
+        assert (await get_task_status("t1"))["status"] == "review"
+
+    @pytest.mark.asyncio
+    async def test_approve_review_move_para_done_e_registra_comentario(self, db):
+        from backend.scheduling.kanban import (
+            approve_review,
+            get_task_status,
+            list_comments,
+        )
+
+        await _cria(db, "t1", status="review")
+        await approve_review("t1", "user-1")
+
+        assert (await get_task_status("t1"))["status"] == "done"
+        comentarios = await list_comments("t1")
+        assert len(comentarios) == 1
+        assert comentarios[0]["user_id"] == "user-1"
+
+    @pytest.mark.asyncio
+    async def test_approve_review_recusa_task_fora_de_review(self, db):
+        """Erro/borda: aprovar uma task que não está em review (já
+        aprovada, ou nunca chegou lá) não pode silenciosamente mover
+        status nenhum."""
+        from backend.scheduling.kanban import approve_review
+
+        await _cria(db, "t1", status="todo")
+
+        with pytest.raises(ValueError, match="não em 'review'"):
+            await approve_review("t1", "user-1")
+
+
 class TestBloqueioTipado:
     @pytest.mark.asyncio
     async def test_dependencia_fica_em_todo_e_nao_em_blocked(self, db):

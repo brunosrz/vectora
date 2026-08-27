@@ -1097,13 +1097,20 @@ async def _mark_kanban_after_success(task: BackgroundTask) -> None:
     Recorrente (`interval`) nunca termina de verdade — volta pra `ready`
     pro próximo disparo, nunca `done` (que seria um estado terminal errado
     pra algo que roda de novo amanhã). Qualquer outro `trigger_type` (
-    `manual`/`webhook`/`once`) é execução única: `done` é terminal.
+    `manual`/`webhook`/`once`) é execução única: `done` é terminal — a
+    menos que `trigger_config.requires_review` peça revisão humana antes,
+    caso em que vai pra `review` em vez de `done` diretamente.
     `recompute_ready()` promove tasks que dependiam desta, quando existirem.
     """
     try:
         from backend.scheduling.kanban import recompute_ready, set_status
 
-        novo_status = "ready" if task.trigger_type == "interval" else "done"
+        if task.trigger_type == "interval":
+            novo_status = "ready"
+        elif task.trigger_config.get("requires_review"):
+            novo_status = "review"
+        else:
+            novo_status = "done"
         await set_status(task.id, novo_status)
         await recompute_ready()
     except Exception:
