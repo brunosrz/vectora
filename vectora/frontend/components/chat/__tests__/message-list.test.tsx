@@ -339,3 +339,30 @@ describe("MessageList — thread virtualizada (> 50 mensagens)", () => {
     expect(scrollToIndexMock).toHaveBeenLastCalledWith(79, { align: "end" });
   });
 });
+
+describe("MessageList — padding compacto (modo IDE)", () => {
+  it("compact=true usa px-3 em vez de px-4/sm:px-6", () => {
+    const { container } = render(
+      <MessageList
+        {...baseProps([msg("m1", "olá")])}
+        threadId="t-compact"
+        compact
+      />,
+    );
+
+    expect(container.querySelector(".px-3")).not.toBeNull();
+    expect(container.querySelector(".px-4")).toBeNull();
+  });
+
+  it("erro/borda: compact=false (padrão) preserva o padding original", () => {
+    const { container } = render(
+      <MessageList
+        {...baseProps([msg("m1", "olá")])}
+        threadId="t-nao-compacto"
+      />,
+    );
+
+    expect(container.querySelector(".px-4")).not.toBeNull();
+    expect(container.querySelector(".px-3")).toBeNull();
+  });
+});

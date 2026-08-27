@@ -172,6 +172,30 @@ export function migrateFontScaleValue(v: unknown): number {
   return clampFontScale(n);
 }
 
+/** Defaults antigos de largura de sidebar (v2 e antes), substituídos pelo
+ * padrão do VS Code na Sprint 5 Bloco A. */
+export const LEGACY_SIDEBAR_WIDTH_DEFAULT = 224;
+export const LEGACY_CHAT_SIDEBAR_WIDTH_DEFAULT = 256;
+
+/** Bumpa `sidebarWidth`/`chatSidebarWidth` do default antigo pro novo —
+ * só quando o valor persistido bate exatamente com o default antigo,
+ * pra nunca sobrescrever uma largura escolhida manualmente pelo usuário. */
+export function migrateSidebarWidths(
+  sidebarWidth: unknown,
+  chatSidebarWidth: unknown,
+): { sidebarWidth: unknown; chatSidebarWidth: unknown } {
+  return {
+    sidebarWidth:
+      sidebarWidth === LEGACY_SIDEBAR_WIDTH_DEFAULT
+        ? DEFAULTS.sidebarWidth
+        : sidebarWidth,
+    chatSidebarWidth:
+      chatSidebarWidth === LEGACY_CHAT_SIDEBAR_WIDTH_DEFAULT
+        ? DEFAULTS.chatSidebarWidth
+        : chatSidebarWidth,
+  };
+}
+
 function clampMonacoFontSize(v: number): number {
   return Math.max(
     MONACO_FONT_SIZE_MIN,
@@ -193,11 +217,11 @@ const DEFAULTS = {
   language: "en" as Lang, // Sobrescrito pelo detectLanguage() no create()
   permissionMode: "ask" as PermissionMode,
   reasoningEffort: "medium" as ReasoningEffort,
-  sidebarWidth: 224,
+  sidebarWidth: 280,
   sidebarPosition: "left" as SidebarPosition,
   chatMode: false,
   uiMode: "assistant" as UiMode,
-  chatSidebarWidth: 256,
+  chatSidebarWidth: 300,
   selectedModel: getDefaultModel(),
   autoUpdateEnabled: true,
   fontScaleUi: FONT_SCALE_BASE_PX,
@@ -298,7 +322,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: getStorageKey(), // Chave default; re-hidratada ao chamar loadUserSettings()
-      version: 2, // migrate() abaixo normaliza fontScale* (%→px) e uiMode ("ide"/ausente → "assistant")
+      version: 3, // migrate() abaixo normaliza fontScale* (%→px), uiMode ("ide"/ausente → "assistant") e larguras de sidebar (Sprint 5 Bloco A)
       migrate: (persistedState) => {
         const s = persistedState as Record<string, unknown>;
         if (s && typeof s === "object") {
@@ -311,6 +335,15 @@ export const useSettingsStore = create<SettingsState>()(
           if (s.uiMode === "ide" || s.uiMode === undefined) {
             s.uiMode = "assistant";
           }
+          // Default antigo (224/256) → novo (280/300), mesmo padrão do
+          // VS Code. Só bumpa quem está exatamente no default antigo —
+          // largura escolhida manualmente pelo usuário não é sobrescrita.
+          const widths = migrateSidebarWidths(
+            s.sidebarWidth,
+            s.chatSidebarWidth,
+          );
+          s.sidebarWidth = widths.sidebarWidth;
+          s.chatSidebarWidth = widths.chatSidebarWidth;
         }
         return s;
       },

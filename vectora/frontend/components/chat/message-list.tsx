@@ -405,6 +405,11 @@ export const MessageList = memo(function MessageList({
     compact,
   };
 
+  // Modo compacto (IDE): padding lateral reduzido — o chat divide espaço
+  // com o workbench, então não há como manter as mesmas margens do modo
+  // Assistente sem espremer o conteúdo útil.
+  const horizontalPadding = compact ? "px-3" : "px-4 sm:px-6";
+
   // ──────────────────────────────────────────────────────────────────────────
   // Render
   // ──────────────────────────────────────────────────────────────────────────
@@ -483,7 +488,7 @@ export const MessageList = memo(function MessageList({
                       }}
                     >
                       <div
-                        className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-3"
+                        className={`w-full max-w-4xl mx-auto ${horizontalPadding} py-3`}
                         style={{
                           animation:
                             isLastMessage && message.role === "user"
@@ -504,7 +509,9 @@ export const MessageList = memo(function MessageList({
               </div>
             ) : (
               // Renderização direta (≤ 50 mensagens)
-              <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-5 space-y-2">
+              <div
+                className={`w-full max-w-4xl mx-auto ${horizontalPadding} py-5 sm:py-5 space-y-2`}
+              >
                 {messages.map((message, idx) => {
                   const isLastMessage = idx === messages.length - 1;
                   return (

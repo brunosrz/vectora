@@ -25,6 +25,28 @@ const EMPTY_LIST: TerminalInstance[] = [];
 /** Janela default para considerar uma entrada do cache "stale" (ms). */
 export const WORKBENCH_STALE_MS = 30_000;
 
+/** Default legado de `splitSize` (v0/v1), substituído pelo padrão do VS
+ * Code na Sprint 5 Bloco A. */
+export const LEGACY_SPLIT_SIZE_DEFAULT = 224;
+/** Default atual — casa com `sidebarWidth` do settings-store. */
+export const SPLIT_SIZE_DEFAULT = 280;
+
+/** Converte `splitSize` legado (%, v0) ou default antigo (px, v1) pro
+ * default atual — só bumpa quem está exatamente no valor antigo, largura
+ * escolhida manualmente pelo usuário não é sobrescrita. */
+export function migrateSplitSize(
+  splitSize: unknown,
+  fromVersion: number,
+): unknown {
+  if (fromVersion < 1 && typeof splitSize === "number" && splitSize <= 100) {
+    return LEGACY_SPLIT_SIZE_DEFAULT;
+  }
+  if (fromVersion < 2 && splitSize === LEGACY_SPLIT_SIZE_DEFAULT) {
+    return SPLIT_SIZE_DEFAULT;
+  }
+  return splitSize;
+}
+
 // ---------------------------------------------------------------------------
 // Tipos compartilhados
 // ---------------------------------------------------------------------------
@@ -347,7 +369,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         panelOpen: {},
         activeTabByThread: {},
         // Mesma largura default da sidebar esquerda (lib/stores/settings-store.ts).
-        splitSize: 224,
+        splitSize: SPLIT_SIZE_DEFAULT,
         viewerHeight: 280,
         pinnedFiles: {},
         pending: {},
@@ -677,20 +699,20 @@ export const useWorkbenchStore = create<WorkbenchState>()(
       }),
       {
         name: "vectora-workbench",
-        version: 1,
+        version: 2,
         // v0 guardava splitSize como % (default 40); v1 passa a usar px
         // (default = largura da sidebar). Valores antigos ficariam
         // minúsculos demais como largura — descarta e usa o novo default.
+        // v2 (Sprint 5 Bloco A): default 224→280 (casa com sidebarWidth do
+        // settings-store) — só bumpa quem está exatamente no default
+        // antigo, largura escolhida manualmente não é sobrescrita.
         migrate: (persisted, version) => {
           const state = persisted as Partial<WorkbenchState>;
-          if (
-            version < 1 &&
-            typeof state?.splitSize === "number" &&
-            state.splitSize <= 100
-          ) {
-            return { ...state, splitSize: 224 };
-          }
-          return state;
+          if (!state || typeof state.splitSize === "undefined") return state;
+          return {
+            ...state,
+            splitSize: migrateSplitSize(state.splitSize, version),
+          };
         },
         storage: createJSONStorage(() =>
           typeof window !== "undefined"
