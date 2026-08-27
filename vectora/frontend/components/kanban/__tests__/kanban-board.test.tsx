@@ -18,7 +18,7 @@ import {
 } from "@testing-library/react";
 
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
-import { applyDragTransition, KanbanBoard } from "../kanban-board";
+import { applyDragTransition, arcState, KanbanBoard } from "../kanban-board";
 
 function mockTasks(tasks: unknown[]) {
   // A resposta real de GET /sessions/{id}/background/tasks é `list[TaskOut]`
@@ -1065,5 +1065,50 @@ describe("KanbanBoard", () => {
     expect(
       within(screen.getByTestId("kanban-col-archived")).getByText("arquivada"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("arcState", () => {
+  it("running com heartbeat fresco (<120s desde o último) → running", () => {
+    const daqui900s = new Date(Date.now() + 900_000).toISOString();
+    expect(
+      arcState(task({ status: "running", claim_expires_at: daqui900s })),
+    ).toBe("running");
+  });
+
+  it("running sem claim_expires_at → stale, nunca running (sem dado, sem decoração)", () => {
+    // Erro/borda: o mandato desta fase é nunca fingir "ao vivo" sem prova —
+    // ausência do campo (backend antigo, ou task migrada) cai pro lado
+    // pessimista, não pro lado bonito.
+    expect(arcState(task({ status: "running", claim_expires_at: null }))).toBe(
+      "stale",
+    );
+  });
+
+  it("running com heartbeat vencido há mais de 120s → stale", () => {
+    // TTL total é 900s; heartbeat que não renovou nos últimos 120s deixa
+    // menos de 780s de claim restante.
+    const daqui700s = new Date(Date.now() + 700_000).toISOString();
+    expect(
+      arcState(task({ status: "running", claim_expires_at: daqui700s })),
+    ).toBe("stale");
+  });
+
+  it.each(["review", "triage"])("%s → queued (aguardando alguém)", (status) => {
+    expect(arcState(task({ status }))).toBe("queued");
+  });
+
+  it("ready com assignee → queued", () => {
+    expect(
+      arcState(task({ status: "ready", agent_profile_id: "perfil-1" })),
+    ).toBe("queued");
+  });
+
+  it("ready sem assignee → none (erro/borda: ninguém esperando por ela ainda)", () => {
+    expect(arcState(task({ status: "ready" }))).toBe("none");
+  });
+
+  it.each(["todo", "blocked", "done", "archived"])("%s → none", (status) => {
+    expect(arcState(task({ status }))).toBe("none");
   });
 });

@@ -25,6 +25,7 @@ import {
 } from "@dnd-kit/core";
 
 import { m } from "@/lib/paraglide/messages";
+import "./kanban.css";
 import { TaskDetailPanel } from "./task-detail-panel";
 
 //: Enum real do backend (`background_tasks.py::VALID_PRIORITIES`) — não um
@@ -258,6 +259,38 @@ export interface KanbanTask {
   //: "low" | "normal" | "high" | "urgent" — sinal visual, não afeta ordem
   //: real de claim.
   priority?: string;
+  //: `None` sem claim ativo. Fonte real do arc animado (Fase 5) — deriva
+  //: se o heartbeat (backend/scheduling/background_tasks.py, watchdog de
+  //: 60s) está fresco ou parou.
+  claim_expires_at?: string | null;
+}
+
+//: Mesmos valores de `backend/scheduling/kanban.py::_DEFAULT_CLAIM_TTL_S`
+//: e `backend/scheduling/background_tasks.py::_HEARTBEAT_INTERVAL_S` — o
+//: arc deriva "heartbeat fresco vs parado" de `claim_expires_at` sozinho
+//: (o backend não expõe o timestamp do último heartbeat em si), então
+//: esses dois números precisam ficar em sincronia com o backend.
+const CLAIM_TTL_S = 900;
+const ARC_STALE_AFTER_S = 120;
+
+export type KanbanArcState = "running" | "stale" | "queued" | "none";
+
+/** Estado do arc animado do card — Sprint 4 Fase 5. Só entra depois do
+ * heartbeat real (Fase 3): sem `claim_expires_at`, uma task `running`
+ * cai em "stale" (arco parado avisando que não há prova de vida), nunca
+ * em "running" — decoração sem dado por trás é exatamente a classe de
+ * problema que motivou reabrir esta sprint. */
+export function arcState(task: KanbanTask): KanbanArcState {
+  if (task.status === "running") {
+    if (!task.claim_expires_at) return "stale";
+    const remainingS =
+      (new Date(task.claim_expires_at).getTime() - Date.now()) / 1000;
+    const sinceHeartbeatS = CLAIM_TTL_S - remainingS;
+    return sinceHeartbeatS > ARC_STALE_AFTER_S ? "stale" : "running";
+  }
+  if (task.status === "review" || task.status === "triage") return "queued";
+  if (task.status === "ready" && task.agent_profile_id) return "queued";
+  return "none";
 }
 
 const PRIORITY_CLASS: Record<string, string> = {
@@ -456,11 +489,17 @@ function TaskCard({
     borderLeftColor: kanbanToneVar(task.status),
   };
 
+  const arc = arcState(task);
+  // Respeito a prefers-reduced-motion já vive no CSS (kanban.css), não
+  // aqui — a classe kanban-arc-* entra sempre que o estado pede, o
+  // @media da folha de estilo é quem decide se anima ou fica estático.
+  const arcClass = arc !== "none" ? `kanban-arc kanban-arc-${arc}` : "";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="rounded-md border border-l-2 bg-card p-2.5 space-y-1"
+      className={`rounded-md border border-l-2 bg-card p-2.5 space-y-1 ${arcClass}`}
     >
       <div className="flex items-start gap-1.5">
         <input

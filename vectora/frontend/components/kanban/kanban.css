@@ -1,0 +1,70 @@
+/* Efeito "arc" — anel cônico animado na borda do card, indicando run ao
+ * vivo. Sprint 4 Fase 5: só entra depois do heartbeat real (Fase 3) —
+ * antes disso seria decoração mentindo sobre estado.
+ *
+ * Técnica: uma custom property de ângulo animável via @property (Houdini)
+ * + conic-gradient + duplo-mask recortando só a borda (não preenche o
+ * card). App roda em Electron/Chromium — @property tem suporte garantido,
+ * sem necessidade de fallback pra browsers antigos.
+ */
+
+@property --kanban-arc-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes kanban-arc-spin {
+  to {
+    --kanban-arc-angle: 360deg;
+  }
+}
+
+.kanban-arc {
+  position: relative;
+}
+
+.kanban-arc::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--kanban-arc-angle),
+    transparent 0deg,
+    var(--kanban-arc-color, var(--color-kanban-tone-running)) 70deg,
+    transparent 140deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* running com heartbeat recente (<120s) — giro rápido, cor de "running". */
+.kanban-arc-running::before {
+  animation: kanban-arc-spin 2.2s linear infinite;
+}
+
+/* running com heartbeat vencido — o watchdog parou, a coroutine morreu ou
+ * o processo caiu. Giro lento + âmbar em vez de sumir silenciosamente. */
+.kanban-arc-stale::before {
+  animation: kanban-arc-spin 6s linear infinite;
+  --kanban-arc-color: var(--color-kanban-tone-review);
+}
+
+/* review/triage/ready-com-assignee — aguardando alguém, arco estático
+ * (sem animação) só pra indicar "na fila". */
+.kanban-arc-queued::before {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kanban-arc-running::before,
+  .kanban-arc-stale::before {
+    animation: none;
+  }
+}
