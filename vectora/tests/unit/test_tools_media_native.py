@@ -120,12 +120,16 @@ class TestExtractAudio:
 
 @pytest.mark.asyncio
 class TestTranscribeLocal:
+    @pytest.mark.live
     async def test_audio_real_via_faster_whisper(self, tmp_path):
         """Sem mock de faster-whisper — roda o modelo de verdade (baixado
-        sob demanda, cacheado em ~/.vectora/models/whisper/). O áudio é um
-        tom senoidal puro (sem fala), então o teste verifica a ESTRUTURA
-        da resposta, não o texto (que deve ficar vazio/quase vazio — não
-        há fala nenhuma pra reconhecer)."""
+        sob demanda da Hugging Face na primeira execução, cacheado em
+        ~/.vectora/models/whisper/). Toca rede real — marcado `live`
+        (mesmo padrão de `test_tools_youtube.py`), só roda via
+        `scons tests-live`. O áudio é um tom senoidal puro (sem fala),
+        então o teste verifica a ESTRUTURA da resposta, não o texto (que
+        deve ficar vazio/quase vazio — não há fala nenhuma pra
+        reconhecer)."""
         pytest.importorskip("faster_whisper")
 
         audio = tmp_path / "sample.wav"
