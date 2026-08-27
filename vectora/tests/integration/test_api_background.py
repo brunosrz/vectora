@@ -183,6 +183,39 @@ async def test_post_task_with_uuid_user_does_not_crash(db):
     assert bad_cron.value.status_code == 400
 
 
+async def test_post_task_aceita_agent_profile_id_do_formulario_de_criacao(db):
+    """``create_task`` (backend/scheduling/background_tasks.py) já suporta
+    ``agent_profile_id`` — só o schema HTTP não expõe o campo, então o
+    formulário de nova tarefa (Sprint 4 Fase 2, campo "assignee") não tinha
+    como setar isso na criação. Regressão: sem o campo no schema, o assignee
+    sempre volta ``None`` mesmo pedindo um perfil real."""
+    out = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine",
+            name="Com assignee",
+            instruction="Faça algo",
+            trigger_type="manual",
+            agent_profile_id="perfil-1",
+        ),
+    )
+    assert out.agent_profile_id == "perfil-1"
+
+    # Erro/borda: omitir o campo continua criando sem assignee (default None).
+    sem_assignee = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine",
+            name="Sem assignee",
+            instruction="Faça algo",
+            trigger_type="manual",
+        ),
+    )
+    assert sem_assignee.agent_profile_id is None
+
+
 async def test_patch_and_delete_enforce_session_scope(db):
     out = await post_task(
         _req(),

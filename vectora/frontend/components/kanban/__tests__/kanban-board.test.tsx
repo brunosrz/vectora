@@ -480,6 +480,73 @@ describe("KanbanBoard", () => {
     });
   });
 
+  it("Nova tarefa envia priority/workspace/assignee escolhidos, carregados de /workspaces e /agent-profiles", async () => {
+    const chamadas: { url: string; method: string; body?: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        chamadas.push({
+          url,
+          method: init?.method ?? "GET",
+          body: init?.body as string | undefined,
+        });
+        if (url === "/workspaces") {
+          return new Response(
+            JSON.stringify({
+              workspaces: [{ id: "ws1", name: "Meu workspace" }],
+            }),
+            { status: 200 },
+          );
+        }
+        if (url === "/agent-profiles") {
+          return new Response(
+            JSON.stringify([{ id: "ap1", name: "Backend agent" }]),
+            { status: 200 },
+          );
+        }
+        return new Response(JSON.stringify([]), { status: 200 });
+      }),
+    );
+
+    await montar();
+    await act(async () => {
+      screen.getByRole("button", { name: /nova tarefa/i }).click();
+    });
+    // Erro/borda: as duas listas vêm de endpoints reais (/workspaces,
+    // /agent-profiles), não são inventadas no frontend.
+    await screen.findByRole("option", { name: "Meu workspace" });
+    await screen.findByRole("option", { name: "Backend agent" });
+
+    fireEvent.change(screen.getByLabelText(/nome/i), {
+      target: { value: "tarefa com metadados" },
+    });
+    fireEvent.change(screen.getByLabelText(/instru[çc][ãa]o/i), {
+      target: { value: "faça algo" },
+    });
+    fireEvent.change(screen.getByLabelText(/^prioridade$/i), {
+      target: { value: "urgent" },
+    });
+    fireEvent.change(screen.getByLabelText(/^workspace$/i), {
+      target: { value: "ws1" },
+    });
+    fireEvent.change(screen.getByLabelText(/respons[áa]vel/i), {
+      target: { value: "ap1" },
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: /^criar$/i }).click();
+    });
+
+    const post = chamadas.find(
+      (c) => c.method === "POST" && c.url.includes("/background/tasks"),
+    );
+    expect(post).toBeTruthy();
+    expect(JSON.parse(post?.body ?? "{}")).toMatchObject({
+      priority: "urgent",
+      workspace_id: "ws1",
+      agent_profile_id: "ap1",
+    });
+  });
+
   it("Nova tarefa com nome vazio não envia POST", async () => {
     const chamadas: string[] = [];
     mockTasks([]);

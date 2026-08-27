@@ -72,6 +72,9 @@ class CreateTaskRequest(BaseModel):
     trigger_config: dict[str, Any] = {}
     workspace_id: str | None = None
     priority: str = "normal"
+    #: `create_task` (background_tasks.py) já suporta o campo — só faltava
+    #: expor no schema HTTP pro formulário de nova tarefa poder setá-lo.
+    agent_profile_id: str | None = None
 
 
 class UpdateTaskRequest(BaseModel):
@@ -211,6 +214,7 @@ async def post_task(
             trigger_config=body.trigger_config,
             workspace_id=body.workspace_id,
             priority=body.priority,
+            agent_profile_id=body.agent_profile_id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

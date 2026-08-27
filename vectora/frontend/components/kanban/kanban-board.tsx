@@ -27,6 +27,21 @@ import {
 import { m } from "@/lib/paraglide/messages";
 import { TaskDetailPanel } from "./task-detail-panel";
 
+//: Enum real do backend (`background_tasks.py::VALID_PRIORITIES`) — não um
+//: número livre como no Hermes. Vectora não tem esse conceito; um campo
+//: numérico aqui só produziria valores que o backend rejeitaria com 400.
+const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
+
+interface WorkspaceOption {
+  id: string;
+  name: string;
+}
+
+interface AgentProfileOption {
+  id: string;
+  name: string;
+}
+
 function NewTaskForm({
   threadId,
   onCreated,
@@ -37,6 +52,23 @@ function NewTaskForm({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [instruction, setInstruction] = useState("");
+  const [priority, setPriority] = useState("normal");
+  const [workspaceId, setWorkspaceId] = useState("");
+  const [agentProfileId, setAgentProfileId] = useState("");
+  const [workspaces, setWorkspaces] = useState<WorkspaceOption[]>([]);
+  const [profiles, setProfiles] = useState<AgentProfileOption[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch("/workspaces", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : { workspaces: [] }))
+      .then((data) => setWorkspaces(data.workspaces ?? []))
+      .catch(() => setWorkspaces([]));
+    void fetch("/agent-profiles", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setProfiles(Array.isArray(data) ? data : []))
+      .catch(() => setProfiles([]));
+  }, [open]);
 
   const criar = () => {
     if (!name.trim() || !instruction.trim()) return;
@@ -49,10 +81,16 @@ function NewTaskForm({
         name: name.trim(),
         instruction: instruction.trim(),
         trigger_type: "manual",
+        priority,
+        workspace_id: workspaceId || null,
+        agent_profile_id: agentProfileId || null,
       }),
     }).then(() => {
       setName("");
       setInstruction("");
+      setPriority("normal");
+      setWorkspaceId("");
+      setAgentProfileId("");
       setOpen(false);
       onCreated();
     });
@@ -100,6 +138,73 @@ function NewTaskForm({
           onChange={(e) => setInstruction(e.target.value)}
           className="w-full rounded border bg-background px-2 py-1 text-xs min-h-[60px]"
         />
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <label
+            htmlFor="kanban-new-priority"
+            className="text-[10px] text-muted-foreground"
+          >
+            {m.kanban_task_priority()}
+          </label>
+          <select
+            id="kanban-new-priority"
+            aria-label={m.kanban_task_priority()}
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+            className="w-full rounded border bg-background px-2 py-1 text-xs"
+          >
+            {PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="kanban-new-workspace"
+            className="text-[10px] text-muted-foreground"
+          >
+            {m.kanban_task_workspace()}
+          </label>
+          <select
+            id="kanban-new-workspace"
+            aria-label={m.kanban_task_workspace()}
+            value={workspaceId}
+            onChange={(e) => setWorkspaceId(e.target.value)}
+            className="w-full rounded border bg-background px-2 py-1 text-xs"
+          >
+            <option value="">{m.kanban_task_workspace_none()}</option>
+            {workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="kanban-new-assignee"
+            className="text-[10px] text-muted-foreground"
+          >
+            {m.kanban_task_assignee()}
+          </label>
+          <select
+            id="kanban-new-assignee"
+            aria-label={m.kanban_task_assignee()}
+            value={agentProfileId}
+            onChange={(e) => setAgentProfileId(e.target.value)}
+            className="w-full rounded border bg-background px-2 py-1 text-xs"
+          >
+            <option value="">{m.kanban_task_assignee_none()}</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="flex gap-2">
         <button
