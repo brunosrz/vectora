@@ -330,6 +330,34 @@ async def test_update_task_priority(db):
         await bg.update_task(task.id, priority="nao-existe")
 
 
+async def test_update_task_agent_profile_id_e_atribuivel_e_desatribuivel(db):
+    """Sprint 4 Fase 7 — o drawer precisa trocar o assignee depois da
+    criação, não só no formulário de nova tarefa (Fase 2). `None` explícito
+    precisa funcionar (desatribuir), então `update_task` distingue "campo
+    omitido" de "campo passado como None" pela PRESENÇA da chave em
+    `updates`, não por `is not None`."""
+    task = await bg.create_task(
+        session_id="s",
+        user_id="u",
+        kind="routine",
+        name="x",
+        instruction="i",
+        trigger_type="manual",
+    )
+    assert task.agent_profile_id is None
+
+    atribuida = await bg.update_task(task.id, agent_profile_id="perfil-1")
+    assert atribuida is not None
+    assert atribuida.agent_profile_id == "perfil-1"
+
+    # Erro/borda: None explícito desatribui — se `update_task` filtrasse
+    # por `is not None` como os outros campos, isto silenciosamente NÃO
+    # faria nada, e o assignee ficaria preso pra sempre.
+    desatribuida = await bg.update_task(task.id, agent_profile_id=None)
+    assert desatribuida is not None
+    assert desatribuida.agent_profile_id is None
+
+
 async def test_update_and_delete_roundtrip(db):
     task = await bg.create_task(
         session_id="s",

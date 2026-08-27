@@ -426,6 +426,13 @@ async def update_task(task_id: str, **updates: Any) -> BackgroundTask | None:
             raise ValueError(msg)
         sets.append("priority = ?")
         args.append(priority)
+    if "agent_profile_id" in updates:
+        # `None` explícito é um valor válido aqui (desatribuir) — por isso
+        # não se filtra `is not None` como os outros campos: a chave
+        # PRECISA estar presente em `updates` pra disparar o UPDATE, mas
+        # uma vez presente, `None` é intencional (drawer "sem assignee").
+        sets.append("agent_profile_id = ?")
+        args.append(updates["agent_profile_id"])
     if not sets:
         return task
 

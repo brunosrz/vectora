@@ -247,6 +247,38 @@ async def test_patch_and_delete_enforce_session_scope(db):
     assert await get_tasks(_req(), "thread-A") == []
 
 
+async def test_patch_task_agent_profile_id_atribui_e_desatribui_via_http(db):
+    """Sprint 4 Fase 7 — o drawer edita assignee depois da criação, campo
+    novo em UpdateTaskRequest. Omitir o campo no PATCH não pode apagar um
+    assignee já setado — só um PATCH que INCLUI o campo (mesmo como null)
+    conta como intenção de mudar."""
+    out = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine",
+            name="x",
+            instruction="i",
+            trigger_type="manual",
+            agent_profile_id="perfil-1",
+        ),
+    )
+
+    # PATCH que não menciona agent_profile_id (só troca o nome) preserva
+    # o assignee existente — regressão clássica de "campo omitido apaga
+    # tudo" se o handler filtrasse por is not None.
+    so_nome = await patch_task(
+        _req(), "thread-1", out.id, UpdateTaskRequest(name="renomeada")
+    )
+    assert so_nome.agent_profile_id == "perfil-1"
+
+    # PATCH que inclui agent_profile_id=None desatribui de propósito.
+    desatribuida = await patch_task(
+        _req(), "thread-1", out.id, UpdateTaskRequest(agent_profile_id=None)
+    )
+    assert desatribuida.agent_profile_id is None
+
+
 async def test_approve_review_endpoint_move_para_done(db):
     """Sprint 4 Fase 4a — endpoint dedicado de aprovação, não a transição
     genérica de status (que recusa `review→done` de propósito)."""

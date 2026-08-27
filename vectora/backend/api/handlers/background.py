@@ -119,6 +119,11 @@ class UpdateTaskRequest(BaseModel):
     #: `kanban.MANUAL_TRANSITIONS`, nunca um `UPDATE` direto.
     status: str | None = None
     priority: str | None = None
+    #: `None` é um valor válido aqui (desatribuir) — por isso o handler
+    #: só repassa este campo quando o cliente de fato o incluiu no corpo
+    #: (`model_fields_set`), nunca filtrando por `is not None` como os
+    #: demais campos.
+    agent_profile_id: str | None = None
 
 
 class BulkTaskActionRequest(BaseModel):
@@ -385,15 +390,17 @@ async def patch_task(
             await kanban.manual_transition(task_id, body.status)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+    update_kwargs: dict[str, Any] = {
+        "name": body.name,
+        "instruction": body.instruction,
+        "enabled": body.enabled,
+        "trigger_config": body.trigger_config,
+        "priority": body.priority,
+    }
+    if "agent_profile_id" in body.model_fields_set:
+        update_kwargs["agent_profile_id"] = body.agent_profile_id
     try:
-        updated = await update_task(
-            task_id,
-            name=body.name,
-            instruction=body.instruction,
-            enabled=body.enabled,
-            trigger_config=body.trigger_config,
-            priority=body.priority,
-        )
+        updated = await update_task(task_id, **update_kwargs)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if updated is None:
