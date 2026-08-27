@@ -438,6 +438,53 @@ async def get_progress(task_id: str) -> dict[str, int] | None:
     return {"done": row["done"], "total": total}
 
 
+async def get_progress_batch(task_ids: list[str]) -> dict[str, dict[str, int]]:
+    """Mesmo rollup de `get_progress`, em lote — usado pelo board agregado
+    (`GET .../board`) pra não virar uma query por card. Chaves ausentes no
+    dict de retorno = sem subtask (mesmo `None` implícito de `get_progress`).
+    """
+    if not task_ids:
+        return {}
+    db = await _get_db()
+    placeholders = ",".join("?" for _ in task_ids)
+    query = f"SELECT l.parent_id AS task_id, COUNT(*) AS total, COUNT(*) FILTER (WHERE t.status IN ('done', 'archived')) AS done FROM vectora_task_links l JOIN vectora_background_tasks t ON t.id = l.child_id WHERE l.parent_id IN ({placeholders}) GROUP BY l.parent_id"  # noqa: S608  # nosec B608
+    async with db.execute(query, task_ids) as cur:
+        rows = await cur.fetchall()
+    return {r["task_id"]: {"done": r["done"], "total": r["total"]} for r in rows}
+
+
+async def get_comment_counts_batch(task_ids: list[str]) -> dict[str, int]:
+    """Contagem de comentários por task, em lote — mesma razão de existir
+    de `get_progress_batch`."""
+    if not task_ids:
+        return {}
+    db = await _get_db()
+    placeholders = ",".join("?" for _ in task_ids)
+    query = f"SELECT task_id, COUNT(*) AS n FROM vectora_task_comments WHERE task_id IN ({placeholders}) GROUP BY task_id"  # noqa: S608  # nosec B608
+    async with db.execute(query, task_ids) as cur:
+        rows = await cur.fetchall()
+    return {r["task_id"]: r["n"] for r in rows}
+
+
+async def get_dependencies_batch(
+    task_ids: list[str],
+) -> dict[str, list[dict[str, Any]]]:
+    """Mesma lista de `get_dependencies` (pais diretos), em lote."""
+    if not task_ids:
+        return {}
+    db = await _get_db()
+    placeholders = ",".join("?" for _ in task_ids)
+    query = f"SELECT l.child_id AS task_id, t.id, t.name, t.status FROM vectora_task_links l JOIN vectora_background_tasks t ON t.id = l.parent_id WHERE l.child_id IN ({placeholders}) ORDER BY t.created_at"  # noqa: S608  # nosec B608
+    async with db.execute(query, task_ids) as cur:
+        rows = await cur.fetchall()
+    out: dict[str, list[dict[str, Any]]] = {tid: [] for tid in task_ids}
+    for r in rows:
+        out[r["task_id"]].append(
+            {"id": r["id"], "name": r["name"], "status": r["status"]}
+        )
+    return out
+
+
 async def _depende_de(task_id: str) -> set[str]:
     """Ancestrais de `task_id` — usado pra detectar ciclo."""
     db = await _get_db()

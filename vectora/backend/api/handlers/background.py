@@ -75,6 +75,26 @@ class TaskOut(BaseModel):
     #: `{0,0}` — quando a task não tem subtask nenhuma (a maioria); o card
     #: só desenha barra de progresso quando há algo pra medir.
     progress: ProgressOut | None = None
+    comment_count: int = 0
+
+
+class BoardColumnOut(BaseModel):
+    status: str
+    tasks: list[TaskOut]
+
+
+class BoardOut(BaseModel):
+    """`GET .../board` — Fase 4b. Substitui N chamadas client-side (uma
+    lista plana + o front reagrupando) por uma passada só: colunas já na
+    ordem canônica, com os agregados (progress/comment_count/dependencies)
+    computados em lote (`get_progress_batch` e afins), não um por card."""
+
+    columns: list[BoardColumnOut]
+    #: `workspace_id`/`agent_profile_id` distintos entre as tasks da
+    #: session — popula os dropdowns de filtro sem o frontend precisar
+    #: derivar isso da lista de tasks como faz hoje.
+    tenants: list[str]
+    assignees: list[str]
 
 
 class CreateTaskRequest(BaseModel):
@@ -157,11 +177,18 @@ def _user_id(request: Request) -> str:
     return str(user.id)
 
 
-async def _to_out(t: BackgroundTask) -> TaskOut:
-    from backend.scheduling.kanban import get_dependencies, get_progress
-
-    deps = await get_dependencies(t.id)
-    progress = await get_progress(t.id)
+def _build_task_out(
+    t: BackgroundTask,
+    *,
+    dependencies: list[dict[str, Any]],
+    progress: dict[str, int] | None,
+    comment_count: int,
+) -> TaskOut:
+    """Monta o `TaskOut` a partir de `BackgroundTask` + os 3 agregados
+    (dependências/progresso/comentários) — compartilhado entre `_to_out`
+    (busca 1 a 1) e `get_board` (busca em lote, Fase 4b), pra não duplicar
+    a lista de campos em dois lugares que precisariam ficar sincronizados
+    a cada campo novo."""
     return TaskOut(
         id=t.id,
         session_id=t.session_id,
@@ -179,9 +206,21 @@ async def _to_out(t: BackgroundTask) -> TaskOut:
         block_reason=t.block_reason,
         agent_profile_id=t.agent_profile_id,
         priority=t.priority,
-        dependencies=[TaskDependencyOut(**d) for d in deps],
+        dependencies=[TaskDependencyOut(**d) for d in dependencies],
         claim_expires_at=t.claim_expires_at,
         progress=ProgressOut(**progress) if progress else None,
+        comment_count=comment_count,
+    )
+
+
+async def _to_out(t: BackgroundTask) -> TaskOut:
+    from backend.scheduling.kanban import get_dependencies, get_progress, list_comments
+
+    deps = await get_dependencies(t.id)
+    progress = await get_progress(t.id)
+    comment_count = len(await list_comments(t.id))
+    return _build_task_out(
+        t, dependencies=deps, progress=progress, comment_count=comment_count
     )
 
 
@@ -206,6 +245,56 @@ async def get_tasks(request: Request, thread_id: str) -> list[TaskOut]:
 
     _user_id(request)
     return [await _to_out(t) for t in await list_tasks(thread_id)]
+
+
+@router.get("/board", response_model=BoardOut)
+async def get_board(request: Request, thread_id: str) -> BoardOut:
+    """Fase 4b — board agregado numa passada só. Query O(1) por agregado
+    (progress/comentários/dependências em lote), não O(n) por card — trava
+    a regressão de N+1 que a listagem plana (`get_tasks` + `_to_out` por
+    item) sempre teve."""
+    from backend.scheduling.background_tasks import list_tasks
+    from backend.scheduling.kanban import (
+        KANBAN_STATUSES,
+        get_comment_counts_batch,
+        get_dependencies_batch,
+        get_progress_batch,
+    )
+
+    _user_id(request)
+    tasks = await list_tasks(thread_id)
+    ids = [t.id for t in tasks]
+
+    progress_map = await get_progress_batch(ids)
+    comments_map = await get_comment_counts_batch(ids)
+    deps_map = await get_dependencies_batch(ids)
+
+    by_status: dict[str, list[TaskOut]] = {}
+    tenants: set[str] = set()
+    assignees: set[str] = set()
+    for t in tasks:
+        if t.workspace_id:
+            tenants.add(t.workspace_id)
+        if t.agent_profile_id:
+            assignees.add(t.agent_profile_id)
+        out = _build_task_out(
+            t,
+            dependencies=deps_map.get(t.id, []),
+            progress=progress_map.get(t.id),
+            comment_count=comments_map.get(t.id, 0),
+        )
+        by_status.setdefault(t.status, []).append(out)
+
+    # Ordem canônica primeiro; qualquer status fora de KANBAN_STATUSES (não
+    # deveria existir — set_status valida — mas defensivo contra dado
+    # legado/corrompido) entra depois, sem sumir da resposta.
+    ordem = list(KANBAN_STATUSES) + [s for s in by_status if s not in KANBAN_STATUSES]
+    columns = [BoardColumnOut(status=s, tasks=by_status.get(s, [])) for s in ordem]
+    return BoardOut(
+        columns=columns,
+        tenants=sorted(tenants),
+        assignees=sorted(assignees),
+    )
 
 
 @router.post("/tasks", response_model=TaskOut, status_code=201)

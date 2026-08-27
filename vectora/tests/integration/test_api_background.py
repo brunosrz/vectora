@@ -24,6 +24,7 @@ from backend.api.handlers.background import (
     add_link_endpoint,
     approve_review_endpoint,
     delete_task_endpoint,
+    get_board,
     get_runs,
     get_tasks,
     patch_task,
@@ -387,6 +388,110 @@ async def test_task_out_expoe_progress_de_subtasks(db):
     assert pai_progress.done == 1
     assert pai_progress.total == 1
     assert tasks[sub.id].progress is None
+
+
+async def test_get_board_agrupa_por_coluna_na_ordem_canonica(db):
+    """Sprint 4 Fase 4b — só existia `GET /tasks` (lista plana); agrupar
+    por coluna e contar comentários/progress exigia N chamadas
+    client-side. `GET /board` devolve tudo numa passada."""
+    from backend.scheduling.kanban import KANBAN_STATUSES, set_status
+
+    todo = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="A fazer", instruction="i", trigger_type="manual"
+        ),
+    )
+    await set_status(todo.id, "todo")  # create_task já entrega em "ready"
+    pronta = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="Pronta", instruction="i", trigger_type="manual"
+        ),
+    )
+
+    board = await get_board(_req(), "thread-1")
+
+    # Ordem canônica (KANBAN_STATUSES), não a ordem de criação das tasks.
+    assert [c.status for c in board.columns] == list(KANBAN_STATUSES)
+
+    by_status = {c.status: [t.id for t in c.tasks] for c in board.columns}
+    assert by_status["todo"] == [todo.id]
+    assert by_status["ready"] == [pronta.id]
+    assert by_status["done"] == []
+
+
+async def test_get_board_expoe_tenants_e_assignees_distintos(db):
+    """Erro/borda: tenants/assignees precisam ser distintos, não uma
+    entrada por task — senão os dropdowns de filtro repetiriam o mesmo
+    workspace/perfil uma vez por card."""
+    await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine",
+            name="a",
+            instruction="i",
+            trigger_type="manual",
+            workspace_id="ws1",
+            agent_profile_id="ap1",
+        ),
+    )
+    await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine",
+            name="b",
+            instruction="i",
+            trigger_type="manual",
+            workspace_id="ws1",
+            agent_profile_id="ap2",
+        ),
+    )
+
+    board = await get_board(_req(), "thread-1")
+
+    assert board.tenants == ["ws1"]
+    assert board.assignees == ["ap1", "ap2"]
+
+
+async def test_get_board_comment_count_e_progress_batelados_nao_por_card(db):
+    """Prova que os agregados vêm em lote — não é só sobre corretude do
+    valor (já coberto em test_kanban_model.py), é sobre o board devolver
+    o mesmo dado que `GET /tasks` devolveria um por um, só que agrupado."""
+    from backend.scheduling.kanban import add_comment, set_status
+
+    pai = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="Pai", instruction="i", trigger_type="manual"
+        ),
+    )
+    sub = await post_task(
+        _req(),
+        "thread-1",
+        CreateTaskRequest(
+            kind="routine", name="Sub", instruction="i", trigger_type="manual"
+        ),
+    )
+    await add_link_endpoint(
+        _req(), "thread-1", sub.id, CreateLinkRequest(parent_id=pai.id)
+    )
+    await set_status(sub.id, "done")
+    await add_comment(pai.id, "user-1", "comentário 1")
+    await add_comment(pai.id, "user-1", "comentário 2")
+
+    board = await get_board(_req(), "thread-1")
+    cartao_pai = next(t for c in board.columns for t in c.tasks if t.id == pai.id)
+
+    assert cartao_pai.comment_count == 2
+    assert cartao_pai.progress is not None
+    assert cartao_pai.progress.done == 1
+    assert cartao_pai.progress.total == 1
 
 
 async def test_manual_run_creates_run_and_registers_thread(
