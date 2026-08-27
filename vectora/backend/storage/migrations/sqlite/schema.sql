@@ -325,3 +325,28 @@ CREATE TABLE IF NOT EXISTS vectora_task_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_task_events_task ON vectora_task_events(task_id);
+
+-- Sprint 4 Fase 6 — multi-board. Um board é agrupamento NOMEADO por cima
+-- das tasks; a session (`vectora_background_tasks.session_id`) continua
+-- sendo o contexto de execução — um board não a substitui. `workspace_id`
+-- nullable é só o default herdado por cards novos criados dentro do
+-- board, não um filtro rígido. `slug` é único por usuário (não global),
+-- pra permitir URLs legíveis sem coordenar entre contas.
+CREATE TABLE IF NOT EXISTS vectora_boards (
+    id          TEXT PRIMARY KEY,
+    user_id     TEXT NOT NULL,
+    slug        TEXT NOT NULL,
+    name        TEXT NOT NULL,
+    workspace_id TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    archived_at TEXT,
+    UNIQUE (user_id, slug)
+);
+
+CREATE INDEX IF NOT EXISTS idx_boards_user ON vectora_boards(user_id);
+
+-- NULL = task pré-Fase-6, nunca associada a um board — absorve o legado
+-- sem exigir backfill; o board "Default" é criado sob demanda
+-- (`get_or_create_default_board`) na primeira vez que o usuário abre a
+-- visão de boards, não numa migração de dados em massa.
+ALTER TABLE vectora_background_tasks ADD COLUMN board_id TEXT;

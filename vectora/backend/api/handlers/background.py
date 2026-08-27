@@ -76,6 +76,8 @@ class TaskOut(BaseModel):
     #: só desenha barra de progresso quando há algo pra medir.
     progress: ProgressOut | None = None
     comment_count: int = 0
+    #: `None` = task pré-Fase-6 (multi-board), nunca associada a um board.
+    board_id: str | None = None
 
 
 class BoardColumnOut(BaseModel):
@@ -108,6 +110,10 @@ class CreateTaskRequest(BaseModel):
     #: `create_task` (background_tasks.py) já suporta o campo — só faltava
     #: expor no schema HTTP pro formulário de nova tarefa poder setá-lo.
     agent_profile_id: str | None = None
+    #: Board (Sprint 4 Fase 6) pra associar a task na criação. Opcional —
+    #: uma task sem board continua funcionando normalmente, só não
+    #: aparece em nenhuma visão de `/boards/{id}/board`.
+    board_id: str | None = None
 
 
 class UpdateTaskRequest(BaseModel):
@@ -215,6 +221,7 @@ def _build_task_out(
         claim_expires_at=t.claim_expires_at,
         progress=ProgressOut(**progress) if progress else None,
         comment_count=comment_count,
+        board_id=t.board_id,
     )
 
 
@@ -313,6 +320,12 @@ async def post_task(
         from backend.api.handlers.workspaces import require_workspace_access
 
         require_workspace_access(body.workspace_id, request)
+    if body.board_id:
+        from backend.scheduling.boards import get_board
+
+        board = await get_board(body.board_id)
+        if board is None or board.user_id != uid:
+            raise HTTPException(status_code=404, detail="Board não encontrado")
     try:
         task = await create_task(
             session_id=thread_id,
@@ -325,6 +338,7 @@ async def post_task(
             workspace_id=body.workspace_id,
             priority=body.priority,
             agent_profile_id=body.agent_profile_id,
+            board_id=body.board_id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -98,6 +98,10 @@ class BackgroundTask:
     #: nunca era lida de volta. `None` quando não há claim ativo (task não
     #: `running`, ou já finalizada).
     claim_expires_at: str | None = None
+    #: `None` = task pré-Fase-6 (multi-board), nunca associada a um board.
+    #: `session_id` continua sendo o contexto de execução — board é só
+    #: agrupamento nomeado por cima.
+    board_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -121,6 +125,7 @@ class BackgroundTask:
             "agent_profile_id": self.agent_profile_id,
             "priority": self.priority,
             "claim_expires_at": self.claim_expires_at,
+            "board_id": self.board_id,
         }
 
 
@@ -151,6 +156,7 @@ def _row_to_task(row: dict[str, Any]) -> BackgroundTask:
         agent_profile_id=row.get("agent_profile_id"),
         priority=row.get("priority") or "normal",
         claim_expires_at=row.get("claim_expires_at"),
+        board_id=row.get("board_id"),
     )
 
 
@@ -285,6 +291,7 @@ async def create_task(
     next_run_at: str | None = None,
     agent_profile_id: str | None = None,
     priority: str = "normal",
+    board_id: str | None = None,
 ) -> BackgroundTask:
     """Cria uma tarefa. Levanta ValueError em kind/trigger/cron/priority inválidos.
 
@@ -318,8 +325,8 @@ async def create_task(
             INSERT INTO vectora_background_tasks
               (id, session_id, workspace_id, user_id, kind, name, instruction,
                trigger_type, trigger_config, enabled, next_run_at, status,
-               agent_profile_id, priority)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
+               agent_profile_id, priority, board_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
             """,
             (
                 task_id,
@@ -335,6 +342,7 @@ async def create_task(
                 status,
                 agent_profile_id,
                 priority,
+                board_id,
             ),
         )
         await conn.commit()
@@ -357,6 +365,7 @@ async def create_task(
         status=status,
         agent_profile_id=agent_profile_id,
         priority=priority,
+        board_id=board_id,
     )
 
 
@@ -368,6 +377,23 @@ async def list_tasks(session_id: str) -> list[BackgroundTask]:
             "SELECT * FROM vectora_background_tasks WHERE session_id = ? "
             "ORDER BY created_at DESC",
             (session_id,),
+        )
+        rows = await cur.fetchall()
+    finally:
+        with contextlib.suppress(Exception):
+            await conn.close()
+    return [_row_to_task(r) for r in rows]
+
+
+async def list_tasks_by_board(board_id: str) -> list[BackgroundTask]:
+    """Lista tarefas de um board — Sprint 4 Fase 6. Mesmo formato de
+    `list_tasks`, escopado por `board_id` em vez de `session_id`."""
+    conn = await _get_db()
+    try:
+        cur = await conn.execute(
+            "SELECT * FROM vectora_background_tasks WHERE board_id = ? "
+            "ORDER BY created_at DESC",
+            (board_id,),
         )
         rows = await cur.fetchall()
     finally:
