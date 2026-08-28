@@ -1,8 +1,8 @@
-"""Multi-board (Sprint 4 Fase 6) — ``backend/scheduling/boards.py``.
+"""Multi-board — ``backend/scheduling/boards.py``.
 
 Board é agrupamento NOMEADO por cima das tasks; a session continua sendo
 o contexto de execução. Sem backfill em massa: ``board_id`` nullable
-absorve tasks pré-Fase-6, e o board "Default" nasce sob demanda.
+absorve tasks sem board associado, e o board "Default" nasce sob demanda.
 """
 
 from __future__ import annotations
@@ -75,11 +75,11 @@ class TestCreateBoard:
         cru; create_board precisa desambiguar antes."""
         from backend.scheduling.boards import create_board
 
-        a = await create_board("u1", "Sprint")
-        b = await create_board("u1", "Sprint")
+        a = await create_board("u1", "Alfa")
+        b = await create_board("u1", "Alfa")
 
-        assert a.slug == "sprint"
-        assert b.slug == "sprint-2"
+        assert a.slug == "alfa"
+        assert b.slug == "alfa-2"
 
     @pytest.mark.asyncio
     async def test_mesmo_slug_permitido_entre_usuarios_diferentes(self, db):

@@ -1,4 +1,4 @@
-"""MCP Marketplace — FASE 5.3.
+"""MCP Marketplace.
 
 Endpoints REST para descoberta e gerenciamento de MCP servers de terceiros.
 O registry embutido lista conectores curados; instalação grava em

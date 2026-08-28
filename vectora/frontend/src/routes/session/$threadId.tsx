@@ -718,12 +718,14 @@ function SessionPage() {
     <div className="flex flex-col h-full overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
+      {/* Linha própria, irmã da linha de sidebar+conteúdo (não filha) —
+          largura cheia e altura reservada em todos os 3 modos, então
+          nunca muda de lugar na tela ao trocar de modo nem sobrepõe o
+          Header (que vive dentro da linha abaixo, com largura/coluna
+          diferente por modo). */}
+      <IdeModeSwitch show={!chatMode} />
+
       <div className="relative flex flex-1 min-h-0 overflow-hidden">
-        {/* Posicionado sobre esta linha (comum aos 3 modos, mesma largura
-            em todos — a sidebar é filha dela, não reduz sua largura) em
-            vez de dentro do Header (que tem largura/coluna diferente por
-            modo) — nunca muda de lugar na tela ao trocar de modo. */}
-        <IdeModeSwitch show={!chatMode} />
         {showSidebarPanel && sidebarPanel}
         {showSidebarPanel && (
           <Sheet

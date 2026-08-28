@@ -173,12 +173,12 @@ class TestClaimExpirado:
 
 
 class TestHeartbeatClaim:
-    """Sprint 4 Fase 3 — `heartbeat_claim` existia sem nenhum caller até
+    """`heartbeat_claim` existia sem nenhum caller até
     aqui (código morto): uma run genuína que passasse do TTL (900s) seria
     devolvida pra `ready` por `release_stale_claims()` no tick seguinte,
     permitindo reclaim/execução duplicada da mesma task enquanto a
     primeira ainda rodava. O watchdog em `background_tasks.run_task`
-    (Sprint 4 Fase 3) chama isto de verdade agora."""
+    chama isto de verdade agora."""
 
     @pytest.mark.asyncio
     async def test_heartbeat_estende_o_ttl_e_evita_a_liberacao_prematura(self, db):
@@ -220,9 +220,9 @@ class TestHeartbeatClaim:
 
 
 class TestReviewFuncional:
-    """Sprint 4 Fase 4a — antes desta fase, `MANUAL_TRANSITIONS` nunca
-    incluía `review` em lugar nenhum: a coluna era permanentemente vazia
-    se desenhada no board, decorativa."""
+    """Antes, `MANUAL_TRANSITIONS` nunca incluía `review` em lugar nenhum:
+    a coluna era permanentemente vazia se desenhada no board,
+    decorativa."""
 
     @pytest.mark.asyncio
     async def test_manual_transition_aceita_review_para_ready_reprovar(self, db):
@@ -408,7 +408,7 @@ class TestDependencias:
 
     @pytest.mark.asyncio
     async def test_remove_dependency_apaga_o_vinculo(self, db):
-        """Sprint 4 Fase 4d — links HTTP: `add_dependency` só era chamado
+        """Links HTTP: `add_dependency` só era chamado
         internamente pela tool `kanban_decompose`, sem endpoint pra editar
         dependências no drawer."""
         from backend.scheduling.kanban import (
@@ -438,7 +438,7 @@ class TestDependencias:
 
 
 class TestProgressRollup:
-    """Sprint 4 Fase 4c — `TaskOut.dependencies` só traz os pais; nada
+    """`TaskOut.dependencies` só traz os pais; nada
     expunha quantas SUBTASKS (`kanban_decompose`) de uma task já
     terminaram."""
 
@@ -689,7 +689,7 @@ class TestEventoSSE:
         assert len(chamadas) == 1
         assert chamadas[0]["data"] == {
             "task_id": "t1",
-            # Sprint 4 Fase 6 — sem board associado, None (não a chave
+            # Sem board associado, None (não a chave
             # ausente): o frontend sempre pode checar `data.board_id`.
             "board_id": None,
             "status": "blocked",
@@ -699,7 +699,7 @@ class TestEventoSSE:
 
     @pytest.mark.asyncio
     async def test_evento_leva_o_board_id_real_da_task(self, db, monkeypatch):
-        """Sprint 4 Fase 6 — um board reconciliando por SSE precisa saber
+        """Um board reconciliando por SSE precisa saber
         se o evento é dele; sem `board_id` no payload, cairia sempre no
         fallback de refetch completo (perde o ponto de usar SSE)."""
         from backend.api.handlers import webhooks

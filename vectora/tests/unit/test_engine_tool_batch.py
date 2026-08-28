@@ -117,7 +117,7 @@ class TestTurnBudget:
 
 
 class TestRedacaoDeSegredosPosExecucao:
-    """Achado da Sprint 9.2 (comparação com o estágio `tools/post-execute`
+    """Achado de auditoria (comparação com o estágio `tools/post-execute`
     do deepseek-harness): a saída de uma tool pode vazar segredos reais
     (variável de ambiente ecoada por `terminal`, chave colada num arquivo
     lido por `file_read`) — sem um estágio de pós-processamento, esse

@@ -234,7 +234,7 @@ class TestSignup:
 
 
 # ---------------------------------------------------------------------------
-# provision_or_login_sso (Sprint 21 — SSO/OIDC)
+# provision_or_login_sso (SSO/OIDC)
 # ---------------------------------------------------------------------------
 
 
@@ -701,7 +701,7 @@ class TestInvites:
 
 
 # ---------------------------------------------------------------------------
-# _write_audit — redação de campos sensíveis (Sprint 24)
+# _write_audit — redação de campos sensíveis
 # ---------------------------------------------------------------------------
 
 
@@ -754,7 +754,7 @@ class TestAuditRedaction:
 
 
 # ---------------------------------------------------------------------------
-# request_password_reset / confirm_password_reset (Sprint 24)
+# request_password_reset / confirm_password_reset
 # ---------------------------------------------------------------------------
 
 

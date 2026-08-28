@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Tela de login (`/auth/signin`) — foco no botão de SSO (Sprint 21): só
+ * Tela de login (`/auth/signin`) — foco no botão de SSO: só
  * aparece quando `GET /auth/oidc/status` confirma um IDP configurado, e
  * nunca some silenciosamente em erro de rede (fica oculto, sem quebrar o
  * resto da tela).

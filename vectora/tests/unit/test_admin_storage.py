@@ -246,7 +246,7 @@ class TestFallbackOrderEndpoint:
 
 
 class TestImageFallbackModelEndpoint:
-    """GET/PATCH /admin/model/image-fallback (Sprint 22)."""
+    """GET/PATCH /admin/model/image-fallback."""
 
     def _fresh_runtime(self, tmp_path, monkeypatch):
         import backend.workspace.runtime_settings as rt_mod

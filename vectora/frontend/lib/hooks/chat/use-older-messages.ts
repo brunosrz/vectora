@@ -1,5 +1,5 @@
 /**
- * useOlderMessages — carrega mensagens antigas via IntersectionObserver (FASE 4.1).
+ * useOlderMessages — carrega mensagens antigas via IntersectionObserver.
  *
  * Observa um elemento sentinel no topo da lista. Quando fica visível e há
  * mensagens mais antigas (hasMore=true), faz fetch de 50 mensagens mais

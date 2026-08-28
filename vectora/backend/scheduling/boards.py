@@ -1,4 +1,4 @@
-"""Multi-board — Sprint 4 Fase 6.
+"""Multi-board.
 
 Um board é agrupamento NOMEADO por cima das tasks (`vectora_boards` +
 `vectora_background_tasks.board_id`); a session continua sendo o contexto
@@ -6,9 +6,10 @@ de execução (`session_id`), não é substituída por board nenhum. Ver o
 comentário em `schema.sql` sobre por que `workspace_id` do board é só um
 default herdado, não um filtro rígido.
 
-Nenhum backfill em massa: `board_id` nullable absorve tasks pré-Fase-6
-sem exigir migração de dados — `get_or_create_default_board` cria o board
-"Default" do usuário sob demanda, na primeira vez que ele precisa de um.
+Nenhum backfill em massa: `board_id` nullable absorve tasks sem board
+associado sem exigir migração de dados — `get_or_create_default_board`
+cria o board "Default" do usuário sob demanda, na primeira vez que ele
+precisa de um.
 """
 
 from __future__ import annotations

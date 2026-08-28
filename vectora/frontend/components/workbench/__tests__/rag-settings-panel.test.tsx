@@ -221,7 +221,7 @@ describe("RagSettingsPanel", () => {
     expect(modelSelect.options.length).toBe(1);
   });
 
-  it("provider de rerank sem chave aparece desabilitado no dropdown (Sprint 24)", async () => {
+  it("provider de rerank sem chave aparece desabilitado no dropdown", async () => {
     FETCH.mockImplementation((url: string) => {
       if (url.includes("/rag/settings"))
         return jsonRes({

@@ -1,4 +1,4 @@
-"""Electron sidecar (Fase 1, revisão) — spawn/readiness/shutdown do
+"""Electron sidecar — spawn/readiness/shutdown do
 Electron de dentro do lifespan do FastAPI.
 
 Mesmo padrão de sidecar que `backend/scheduling/nats_sidecar.py` já usa

@@ -291,7 +291,7 @@ class TestAuthMiddlewareIntegration:
         assert r_me.status_code == 200
 
     def test_private_route_with_valid_service_token_passes(self, auth_client):
-        """Erro/borda (feliz + inválido no mesmo teste, Sprint 24): um
+        """Erro/borda (feliz + inválido no mesmo teste): um
         token de serviço válido (`vst_...`) autentica como um JWT normal
         autenticaria; revogado é rejeitado com 401, igual a um JWT
         inválido."""

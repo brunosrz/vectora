@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Painel de detalhe de um card do Kanban — Sprint 4 Fase 7. Menu de status
+ * Painel de detalhe de um card do Kanban. Menu de status
  * (só alvos legais de `DRAG_TRANSITIONS`), aprovar/reprovar review,
  * assignee editável, progresso de subtasks, dependências editáveis, e
  * comentários + timeline de transições (já existentes).

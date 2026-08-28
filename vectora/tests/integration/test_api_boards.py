@@ -1,4 +1,4 @@
-"""Integração handler↔serviço de boards (Sprint 4 Fase 6 — multi-board).
+"""Integração handler↔serviço de boards (multi-board).
 
 Board é agrupamento nomeado por cima das tasks; session continua sendo o
 contexto de execução. Coexiste com `/sessions/{thread_id}/background/*`
@@ -64,10 +64,10 @@ async def db(tmp_path, monkeypatch):
 
 
 async def test_post_board_cria_com_slug_derivado(db):
-    board = await post_board(_req(), CreateBoardRequest(name="Sprint 5"))
+    board = await post_board(_req(), CreateBoardRequest(name="Board Alfa"))
 
-    assert board.name == "Sprint 5"
-    assert board.slug == "sprint-5"
+    assert board.name == "Board Alfa"
+    assert board.slug == "board-alfa"
     assert board.user_id == _UUID
     assert board.workspace_id is None
 

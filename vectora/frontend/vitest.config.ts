@@ -52,7 +52,7 @@ export default defineConfig({
         // Tudo que tem lógica testável continua incluído (e deve ser testado).
         "src/main.tsx", // bootstrap do app
         "src/router.tsx", // instancia o router
-        // src/routes/** NÃO é mais excluído em bloco (Sprint 15, achado de
+        // src/routes/** NÃO é mais excluído em bloco (achado de
         // auditoria): loaders de rota (ensureQueryData/prefetchQuery, branch
         // isNewRoute, etc) são lógica real testável, não só wiring — ficavam
         // invisíveis a qualquer métrica de cobertura antes desta mudança.

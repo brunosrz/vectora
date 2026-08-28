@@ -205,7 +205,7 @@ function dt(data: Record<string, string> = {}) {
   };
 }
 
-describe("DirNode — drag-and-drop (Sprint 27)", () => {
+describe("DirNode — drag-and-drop", () => {
   function subProps() {
     return { ...baseProps(), path: "sub", name: "sub", depth: 1 };
   }

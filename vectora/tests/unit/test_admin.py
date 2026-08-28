@@ -540,7 +540,7 @@ class TestTimezoneEndpoint:
 
 
 class TestServiceTokenEndpoints:
-    """POST/GET/DELETE /admin/service-tokens — apenas root (Sprint 24)."""
+    """POST/GET/DELETE /admin/service-tokens — apenas root."""
 
     @pytest.fixture(autouse=True)
     async def _isolate_db(self, tmp_path, monkeypatch):
@@ -614,8 +614,8 @@ class TestServiceTokenEndpoints:
 
 
 class TestResolveAgent:
-    """GET /admin/agents/resolve — dump do NativeAgent resolvido (Sprint 9.5,
-    equivalente nativo ao `dsh --dump-config` do deepseek-harness). Existe
+    """GET /admin/agents/resolve — dump do NativeAgent resolvido,
+    equivalente nativo ao `dsh --dump-config` do deepseek-harness. Existe
     pra debugar por que uma tool/subagente não aparece pra um usuário sem
     precisar vasculhar logs."""
 

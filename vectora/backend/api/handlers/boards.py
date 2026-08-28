@@ -1,4 +1,4 @@
-"""Handler REST de boards do Kanban — Sprint 4 Fase 6 (multi-board).
+"""Handler REST de boards do Kanban (multi-board).
 
 Endpoints (todos exigem autenticação, escopados ao usuário do request):
     GET    /boards               — lista boards do usuário
@@ -6,13 +6,12 @@ Endpoints (todos exigem autenticação, escopados ao usuário do request):
     PATCH  /boards/{board_id}     — atualiza nome/workspace
     DELETE /boards/{board_id}     — remove (409 se tiver tasks)
     GET    /boards/{board_id}/board — board agregado (rescopo do
-                                       `GET .../background/board` da
-                                       Fase 4b, por board em vez de
-                                       session)
+                                       `GET .../background/board`,
+                                       por board em vez de session)
 
-Coexiste com `/sessions/{thread_id}/background/*` (Fase 1-5/7) — não
-substitui essas rotas, que continuam servindo o board escopado por
-thread que a UI atual usa.
+Coexiste com `/sessions/{thread_id}/background/*` — não substitui essas
+rotas, que continuam servindo o board escopado por thread que a UI
+atual usa.
 """
 
 from __future__ import annotations
@@ -138,7 +137,7 @@ async def delete_board_endpoint(request: Request, board_id: str) -> None:
 @router.get("/{board_id}/board")
 async def get_board_view(request: Request, board_id: str) -> BackgroundBoardOut:
     """Board agregado escopado por `board_id` — mesma forma de resposta
-    de `GET /sessions/{thread_id}/background/board` (Fase 4b), só que a
+    de `GET /sessions/{thread_id}/background/board`, só que a
     fonte das tasks é `board_id`, não `session_id`. Reusa os batch
     helpers de `kanban.py` (progress/comentários/dependências), evitando
     reimplementar a agregação."""

@@ -331,8 +331,8 @@ async def test_update_task_priority(db):
 
 
 async def test_update_task_agent_profile_id_e_atribuivel_e_desatribuivel(db):
-    """Sprint 4 Fase 7 — o drawer precisa trocar o assignee depois da
-    criação, não só no formulário de nova tarefa (Fase 2). `None` explícito
+    """O drawer precisa trocar o assignee depois da
+    criação, não só no formulário de nova tarefa. `None` explícito
     precisa funcionar (desatribuir), então `update_task` distingue "campo
     omitido" de "campo passado como None" pela PRESENÇA da chave em
     `updates`, não por `is not None`."""
@@ -678,7 +678,7 @@ async def test_run_task_invokes_agent_registers_session_and_records_run(
 async def test_run_task_watchdog_cancela_ao_final_sem_deixar_task_pendente(
     db, native_session_store, monkeypatch
 ):
-    """Sprint 4 Fase 3 — o watchdog de heartbeat roda no `finally` de
+    """O watchdog de heartbeat roda no `finally` de
     `run_task`, cobrindo todo caminho de saída (aqui, sucesso). Sem o
     cancelamento, uma task asyncio ficaria viva pra sempre depois de cada
     run — vazamento silencioso a cada tarefa executada."""
@@ -775,7 +775,7 @@ async def test_run_task_heartbeat_e_chamado_periodicamente_durante_execucao_long
 async def test_run_task_com_requires_review_termina_em_review_nao_done(
     db, native_session_store, monkeypatch
 ):
-    """Sprint 4 Fase 4a — `trigger_config.requires_review` desvia o fim de
+    """`trigger_config.requires_review` desvia o fim de
     uma run bem-sucedida pra `review` em vez de `done` direto."""
     client = _ScriptedChatClient([[_texto_chunk("Pronto pra revisão.")]])
     _patch_native_engine(

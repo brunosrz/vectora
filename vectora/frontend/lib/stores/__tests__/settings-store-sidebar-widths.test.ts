@@ -1,8 +1,10 @@
 /**
- * settings-store — migração das larguras default de sidebar (Sprint 5
- * Bloco A): 224→280 (sidebarWidth) e 256→300 (chatSidebarWidth), padrão
- * mais próximo do VS Code. Só bumpa quem está exatamente no default
- * antigo — largura escolhida manualmente pelo usuário não é sobrescrita.
+ * settings-store — migração das larguras default de sidebar: 224→280
+ * (sidebarWidth) e 256→300 (chatSidebarWidth), padrão mais próximo do
+ * VS Code. Só bumpa quem está exatamente no default antigo — largura
+ * escolhida manualmente pelo usuário não é sobrescrita. Também clampa
+ * qualquer valor fora dos limites atuais, mesmo sem bater com o default
+ * legado exato.
  */
 
 import { describe, expect, it } from "vitest";
@@ -32,5 +34,10 @@ describe("settings-store — migrateSidebarWidths", () => {
       sidebarWidth: undefined,
       chatSidebarWidth: undefined,
     });
+  });
+
+  it("clampa resquício de arrasto antigo (teto do chat caiu de 800→480) mesmo sem bater com o default legado", () => {
+    const result = migrateSidebarWidths(600, 810);
+    expect(result).toEqual({ sidebarWidth: 480, chatSidebarWidth: 480 });
   });
 });

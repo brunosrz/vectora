@@ -1,4 +1,4 @@
-"""File Watcher (FASE 5.1).
+"""File Watcher.
 
 1 watcher por workspace: usa watchdog para detectar mudanças em disco
 com debounce 300ms. Publica evento de invalidação via KV pub/sub para que

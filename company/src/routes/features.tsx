@@ -16,6 +16,7 @@ import {
   TerminalSquare,
   Users,
   Video,
+  Workflow,
 } from "lucide-react";
 import { m } from "#/paraglide/messages";
 import Container from "#/components/shared/Container";
@@ -118,12 +119,26 @@ export function getFeatureCategories(): Category[] {
           summary: m.capability_sandbox_desc(),
           description: m.features_sandbox_desc(),
         },
+        {
+          id: "native-media",
+          Icon: Video,
+          title: m.features_native_media_title(),
+          summary: m.features_native_media_summary(),
+          description: m.features_native_media_desc(),
+        },
       ],
     },
     {
       id: "modelos",
       label: m.features_cat_modelos,
       items: [
+        {
+          id: "nine-router",
+          Icon: Workflow,
+          title: m.features_nine_router_title(),
+          summary: m.features_nine_router_summary(),
+          description: m.features_nine_router_desc(),
+        },
         {
           id: "ollama",
           Icon: Server,
@@ -155,16 +170,9 @@ export function getFeatureCategories(): Category[] {
       ],
     },
     {
-      id: "midia",
-      label: m.features_cat_midia,
+      id: "plataforma",
+      label: m.features_cat_plataforma,
       items: [
-        {
-          id: "native-media",
-          Icon: Video,
-          title: m.features_native_media_title(),
-          summary: m.features_native_media_summary(),
-          description: m.features_native_media_desc(),
-        },
         {
           id: "desktop",
           Icon: MonitorSmartphone,

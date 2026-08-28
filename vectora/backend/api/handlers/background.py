@@ -68,15 +68,15 @@ class TaskOut(BaseModel):
     #: declarava `blocked_by` mas nada preenchia).
     dependencies: list[TaskDependencyOut] = []
     #: `None` sem claim ativo (task não `running`, ou já finalizada). Prova
-    #: que o watchdog (Sprint 4 Fase 3) está vivo — junto do heartbeat real,
-    #: destrava o arc animado da Fase 5.
+    #: que o watchdog está vivo — junto do heartbeat real, destrava o arc
+    #: animado.
     claim_expires_at: str | None = None
     #: Rollup de subtasks diretas (`kanban_decompose`). `None` — não
     #: `{0,0}` — quando a task não tem subtask nenhuma (a maioria); o card
     #: só desenha barra de progresso quando há algo pra medir.
     progress: ProgressOut | None = None
     comment_count: int = 0
-    #: `None` = task pré-Fase-6 (multi-board), nunca associada a um board.
+    #: `None` = task sem board associado (multi-board opcional).
     board_id: str | None = None
 
 
@@ -86,7 +86,7 @@ class BoardColumnOut(BaseModel):
 
 
 class BoardOut(BaseModel):
-    """`GET .../board` — Fase 4b. Substitui N chamadas client-side (uma
+    """`GET .../board`. Substitui N chamadas client-side (uma
     lista plana + o front reagrupando) por uma passada só: colunas já na
     ordem canônica, com os agregados (progress/comment_count/dependencies)
     computados em lote (`get_progress_batch` e afins), não um por card."""
@@ -110,7 +110,7 @@ class CreateTaskRequest(BaseModel):
     #: `create_task` (background_tasks.py) já suporta o campo — só faltava
     #: expor no schema HTTP pro formulário de nova tarefa poder setá-lo.
     agent_profile_id: str | None = None
-    #: Board (Sprint 4 Fase 6) pra associar a task na criação. Opcional —
+    #: Board pra associar a task na criação. Opcional —
     #: uma task sem board continua funcionando normalmente, só não
     #: aparece em nenhuma visão de `/boards/{id}/board`.
     board_id: str | None = None
@@ -197,7 +197,7 @@ def _build_task_out(
 ) -> TaskOut:
     """Monta o `TaskOut` a partir de `BackgroundTask` + os 3 agregados
     (dependências/progresso/comentários) — compartilhado entre `_to_out`
-    (busca 1 a 1) e `get_board` (busca em lote, Fase 4b), pra não duplicar
+    (busca 1 a 1) e `get_board` (busca em lote), pra não duplicar
     a lista de campos em dois lugares que precisariam ficar sincronizados
     a cada campo novo."""
     return TaskOut(
@@ -261,7 +261,7 @@ async def get_tasks(request: Request, thread_id: str) -> list[TaskOut]:
 
 @router.get("/board", response_model=BoardOut)
 async def get_board(request: Request, thread_id: str) -> BoardOut:
-    """Fase 4b — board agregado numa passada só. Query O(1) por agregado
+    """Board agregado numa passada só. Query O(1) por agregado
     (progress/comentários/dependências em lote), não O(n) por card — trava
     a regressão de N+1 que a listagem plana (`get_tasks` + `_to_out` por
     item) sempre teve."""

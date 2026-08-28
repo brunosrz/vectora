@@ -1,4 +1,4 @@
-"""Sequential Thinking Tool (FASE 5.2).
+"""Sequential Thinking Tool.
 
 Implementa a spec MCP Anthropic de sequential thinking: permite ao agente
 raciocinar passo a passo, revisitar pensamentos anteriores e bifurcar o

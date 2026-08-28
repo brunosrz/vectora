@@ -145,6 +145,13 @@ export interface SettingsState {
 const SIDEBAR_MIN_WIDTH = 180;
 const SIDEBAR_MAX_WIDTH = 480;
 
+/** Limites de largura do painel de chat no modo IDE (px). Teto de 480: um
+ * valor arrastado até 800px deixava o chat maior que o próprio editor —
+ * nenhum caso de uso legítimo precisa de um rail de chat mais largo que o
+ * teto da sidebar de sessões. */
+const CHAT_SIDEBAR_MIN_WIDTH = 240;
+const CHAT_SIDEBAR_MAX_WIDTH = 480;
+
 /** Referência de conversão: 16px = "100%" no range legado em porcentagem. */
 export const FONT_SCALE_BASE_PX = 16;
 /** Limites de tamanho de fonte (px) — 13px a 24px, equivalente ao range
@@ -173,26 +180,44 @@ export function migrateFontScaleValue(v: unknown): number {
 }
 
 /** Defaults antigos de largura de sidebar (v2 e antes), substituídos pelo
- * padrão do VS Code na Sprint 5 Bloco A. */
+ * padrão do VS Code. */
 export const LEGACY_SIDEBAR_WIDTH_DEFAULT = 224;
 export const LEGACY_CHAT_SIDEBAR_WIDTH_DEFAULT = 256;
 
 /** Bumpa `sidebarWidth`/`chatSidebarWidth` do default antigo pro novo —
  * só quando o valor persistido bate exatamente com o default antigo,
- * pra nunca sobrescrever uma largura escolhida manualmente pelo usuário. */
+ * pra nunca sobrescrever uma largura escolhida manualmente pelo usuário.
+ * Além disso, sempre clampa pros limites atuais (`SIDEBAR_MIN/MAX_WIDTH`,
+ * `CHAT_SIDEBAR_MIN/MAX_WIDTH`) — um valor arrastado antes do teto do chat
+ * cair de 800→480 (ou qualquer resquício de bug antigo) nunca fica "preso"
+ * fora do range só porque não bate com o default legado exato. */
 export function migrateSidebarWidths(
   sidebarWidth: unknown,
   chatSidebarWidth: unknown,
 ): { sidebarWidth: unknown; chatSidebarWidth: unknown } {
+  const bumpedSidebar =
+    sidebarWidth === LEGACY_SIDEBAR_WIDTH_DEFAULT
+      ? DEFAULTS.sidebarWidth
+      : sidebarWidth;
+  const bumpedChat =
+    chatSidebarWidth === LEGACY_CHAT_SIDEBAR_WIDTH_DEFAULT
+      ? DEFAULTS.chatSidebarWidth
+      : chatSidebarWidth;
   return {
     sidebarWidth:
-      sidebarWidth === LEGACY_SIDEBAR_WIDTH_DEFAULT
-        ? DEFAULTS.sidebarWidth
-        : sidebarWidth,
+      typeof bumpedSidebar === "number"
+        ? Math.max(
+            SIDEBAR_MIN_WIDTH,
+            Math.min(SIDEBAR_MAX_WIDTH, bumpedSidebar),
+          )
+        : bumpedSidebar,
     chatSidebarWidth:
-      chatSidebarWidth === LEGACY_CHAT_SIDEBAR_WIDTH_DEFAULT
-        ? DEFAULTS.chatSidebarWidth
-        : chatSidebarWidth,
+      typeof bumpedChat === "number"
+        ? Math.max(
+            CHAT_SIDEBAR_MIN_WIDTH,
+            Math.min(CHAT_SIDEBAR_MAX_WIDTH, bumpedChat),
+          )
+        : bumpedChat,
   };
 }
 
@@ -299,7 +324,12 @@ export const useSettingsStore = create<SettingsState>()(
       },
       setUiMode: (v) => set({ uiMode: v }),
       setChatSidebarWidth: (v) =>
-        set({ chatSidebarWidth: Math.max(240, Math.min(800, Math.round(v))) }),
+        set({
+          chatSidebarWidth: Math.max(
+            CHAT_SIDEBAR_MIN_WIDTH,
+            Math.min(CHAT_SIDEBAR_MAX_WIDTH, Math.round(v)),
+          ),
+        }),
       setSelectedModel: (v) => {
         set({ selectedModel: v });
         void pushPrefs({ selectedModel: v });
@@ -322,7 +352,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: getStorageKey(), // Chave default; re-hidratada ao chamar loadUserSettings()
-      version: 3, // migrate() abaixo normaliza fontScale* (%→px), uiMode ("ide"/ausente → "assistant") e larguras de sidebar (Sprint 5 Bloco A)
+      version: 4, // v4: clampa sidebarWidth/chatSidebarWidth pros limites atuais mesmo fora do default legado exato (teto do chat caiu de 800→480)
       migrate: (persistedState) => {
         const s = persistedState as Record<string, unknown>;
         if (s && typeof s === "object") {

@@ -393,7 +393,7 @@ function ProviderSelect({
   providers: readonly string[];
   //: Providers sem key/config — ficam no dropdown mas desabilitados, com
   //: sufixo "(sem chave)". Escolher um provider que sabidamente não vai
-  //: funcionar é pior que impedir a escolha (Sprint 18/24).
+  //: funcionar é pior que impedir a escolha.
   unavailable?: Set<string>;
 }) {
   return (

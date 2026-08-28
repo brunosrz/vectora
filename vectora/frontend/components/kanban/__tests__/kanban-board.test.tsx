@@ -22,8 +22,8 @@ import { applyDragTransition, arcState, KanbanBoard } from "../kanban-board";
 
 function mockTasks(tasks: unknown[]) {
   // A resposta real de GET /sessions/{id}/background/tasks é `list[TaskOut]`
-  // — um array puro, não um envelope `{tasks: [...]}`. `/boards` (Fase 6,
-  // buscado sem condição nenhuma ao montar o board) precisa da própria
+  // — um array puro, não um envelope `{tasks: [...]}`. `/boards` (buscado
+  // sem condição nenhuma ao montar o board) precisa da própria
   // resposta vazia — senão o array de tasks vaza pro switcher de board
   // como se cada task fosse um board, e nomes de task acabam aparecendo
   // duas vezes na árvore (o card + a opção espúria no <select>).
@@ -36,7 +36,7 @@ function mockTasks(tasks: unknown[]) {
   );
 }
 
-/** Stub de fetch pros testes de multi-board (Sprint 4 Fase 6) — cobre
+/** Stub de fetch pros testes de multi-board — cobre
  * /boards (GET/POST), /boards/{id}/board e o fallback de sessão. */
 function mockMultiBoard(
   opts: {
@@ -139,8 +139,8 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   overwriteGetLocale(() => baseLocale);
-  // Sprint 4 Fase 6 — o board ativo persiste em localStorage por thread;
-  // sem limpar, um teste que troca de board vaza o valor pro próximo
+  // O board ativo persiste em localStorage por thread; sem limpar, um
+  // teste que troca de board vaza o valor pro próximo
   // teste que monta a MESMA thread ("s1", usada em quase todo teste
   // deste arquivo).
   localStorage.clear();
@@ -1121,22 +1121,22 @@ describe("KanbanBoard", () => {
   });
 });
 
-describe("KanbanBoard — multi-board (Sprint 4 Fase 6)", () => {
+describe("KanbanBoard — multi-board", () => {
   it("switcher lista os boards do usuário e a opção 'board da sessão'", async () => {
     mockMultiBoard({
-      boards: [{ id: "b1", slug: "b1", name: "Sprint 4" }],
+      boards: [{ id: "b1", slug: "b1", name: "Board Alfa" }],
     });
 
     await montar();
 
     const select = screen.getByLabelText(/board ativo/i) as HTMLSelectElement;
     const opcoes = Array.from(select.options).map((o) => o.textContent);
-    expect(opcoes).toEqual(["Board da sessão", "Sprint 4"]);
+    expect(opcoes).toEqual(["Board da sessão", "Board Alfa"]);
   });
 
   it("trocar pra um board busca /boards/{id}/board e mostra as tasks agrupadas", async () => {
     mockMultiBoard({
-      boards: [{ id: "b1", slug: "b1", name: "Sprint 4" }],
+      boards: [{ id: "b1", slug: "b1", name: "Board Alfa" }],
       boardView: {
         columns: [
           { status: "todo", tasks: [task({ id: "t1", name: "do board" })] },
@@ -1198,7 +1198,7 @@ describe("KanbanBoard — multi-board (Sprint 4 Fase 6)", () => {
     const chamadas: { url: string; method: string; body?: string }[] = [];
     mockMultiBoard(
       {
-        boards: [{ id: "b1", slug: "b1", name: "Sprint 4" }],
+        boards: [{ id: "b1", slug: "b1", name: "Board Alfa" }],
         boardView: { columns: [] },
       },
       chamadas,

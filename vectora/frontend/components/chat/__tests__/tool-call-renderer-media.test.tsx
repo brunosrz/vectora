@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Entrega de mídia gerada pelo assistente no chat (Sprint 3.1).
+ * Entrega de mídia gerada pelo assistente no chat.
  *
  * `generate_image` declarava `render_hint="image"` — string que não bate
  * com nenhuma chave de `RENDERERS` (só `"image_preview"`/

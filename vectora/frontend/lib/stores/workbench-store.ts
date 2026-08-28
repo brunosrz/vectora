@@ -25,8 +25,8 @@ const EMPTY_LIST: TerminalInstance[] = [];
 /** Janela default para considerar uma entrada do cache "stale" (ms). */
 export const WORKBENCH_STALE_MS = 30_000;
 
-/** Default legado de `splitSize` (v0/v1), substituído pelo padrão do VS
- * Code na Sprint 5 Bloco A. */
+/** Default legado de `splitSize` (v0/v1),
+ * substituído pelo padrão do VS Code. */
 export const LEGACY_SPLIT_SIZE_DEFAULT = 224;
 /** Default atual — casa com `sidebarWidth` do settings-store. */
 export const SPLIT_SIZE_DEFAULT = 280;
@@ -703,9 +703,9 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         // v0 guardava splitSize como % (default 40); v1 passa a usar px
         // (default = largura da sidebar). Valores antigos ficariam
         // minúsculos demais como largura — descarta e usa o novo default.
-        // v2 (Sprint 5 Bloco A): default 224→280 (casa com sidebarWidth do
-        // settings-store) — só bumpa quem está exatamente no default
-        // antigo, largura escolhida manualmente não é sobrescrita.
+        // v2: default 224→280 (casa com sidebarWidth do settings-store) —
+        // só bumpa quem está exatamente no default antigo, largura
+        // escolhida manualmente não é sobrescrita.
         migrate: (persisted, version) => {
           const state = persisted as Partial<WorkbenchState>;
           if (!state || typeof state.splitSize === "undefined") return state;

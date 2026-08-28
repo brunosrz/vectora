@@ -22,7 +22,7 @@ export interface ToolCall {
   category?: ToolCategory;
   destructive?: boolean;
   icon?: string;
-  /** Duração em ms — preenchido pelo tool_activity(end) SSE (FASE 3.3) */
+  /** Duração em ms — preenchido pelo tool_activity(end) SSE */
   elapsedMs?: number;
   isError?: boolean;
   /** Linhas de output ao vivo (evento `terminal_line`) — só pra `terminal`,

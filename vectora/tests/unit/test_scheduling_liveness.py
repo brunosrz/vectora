@@ -1,4 +1,4 @@
-"""Classificador de liveness semântica (Sprint 23) — sinaliza padrões de
+"""Classificador de liveness semântica — sinaliza padrões de
 texto que indicam estagnação numa run de subagente/task, sem nunca pausar
 ou bloquear nada sozinho (puramente informativo).
 """

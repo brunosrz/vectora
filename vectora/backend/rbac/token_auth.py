@@ -3,7 +3,7 @@ credencial que uma rota específica opta por aceitar além do JWT normal.
 
 Mesmo padrão de token opaco hasheado que `invites`/`refresh_tokens` já
 usam em `backend.rbac.auth` (SHA-256, nunca o token cru persistido).
-Primeiro consumidor real: automação de webhook (feature Pro, Sprint 10) —
+Primeiro consumidor real: automação de webhook (feature Pro) —
 hoje não existe credencial própria de máquina pra disparar essas rotas
 fora do fluxo de login humano.
 

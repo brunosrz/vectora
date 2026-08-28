@@ -137,7 +137,7 @@ describe("FileItem — abertura em modo IDE vs Assistente", () => {
   });
 });
 
-describe("FileItem — drag-and-drop (Sprint 27)", () => {
+describe("FileItem — drag-and-drop", () => {
   it("é arrastável e grava o próprio path no dataTransfer com o MIME da árvore", () => {
     renderItem("assistant");
     const node = document.querySelector("[role='treeitem']")!;

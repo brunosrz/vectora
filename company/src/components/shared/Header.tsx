@@ -64,12 +64,6 @@ export default function Header({ session }: { session: SessionUser | null }) {
             {m.nav_docs()}
           </a>
           <Link
-            to="/features"
-            className="text-muted-foreground transition-colors hover:text-foreground data-[status=active]:text-foreground"
-          >
-            {m.nav_features()}
-          </Link>
-          <Link
             to="/faq"
             className="text-muted-foreground transition-colors hover:text-foreground data-[status=active]:text-foreground"
           >
@@ -196,13 +190,6 @@ export default function Header({ session }: { session: SessionUser | null }) {
             >
               {m.nav_docs()}
             </a>
-            <Link
-              to="/features"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-xl px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground data-[status=active]:bg-muted data-[status=active]:text-foreground"
-            >
-              {m.nav_features()}
-            </Link>
             <Link
               to="/faq"
               onClick={() => setMobileOpen(false)}

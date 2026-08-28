@@ -979,7 +979,7 @@ describe("useStreamHandler.processStream", () => {
     expect(sub.isStreaming).toBe(false);
   });
 
-  // Achados da auditoria (Sprint 15-C): estes 5 tipos de evento nunca eram
+  // Achados da auditoria: estes 5 tipos de evento nunca eram
   // exercitados pela suíte — justamente os mais ligados à orquestração que
   // uma futura reescrita do motor de streaming (backend) pode fazer
   // divergir sem que nenhum teste aqui perceba.

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState } from "react";
 import { Bot, Code2, KanbanSquare } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSettingsStore } from "@/lib/stores/settings-store";
@@ -11,26 +12,47 @@ interface IdeModeProps {
   show?: boolean;
 }
 
-//: Largura da COLUNA DE CONTEÚDO inteira (sidebar + chat/editor/board),
-//: não mais do slot estreito dentro do Header — o switcher saiu de dentro
-//: do Header (que tem largura diferente em cada modo) pra ser posicionado
-//: de forma absoluta sobre essa coluna, que tem a mesma largura nos 3
-//: modos. Por isso os limiares são em escala de viewport, não de header.
+//: Largura da própria linha do switcher — que agora é `w-full`, uma linha
+//: de fluxo real acima da sidebar+conteúdo (não mais um slot estreito
+//: dentro do Header, nem um overlay absoluto por cima dele). Medir a
+//: própria linha funciona aqui porque ela é bloco (`w-full`), não
+//: shrink-to-fit — um grupo de botões medido diretamente sempre
+//: convergiria pro tamanho mínimo.
 const TRUNCATE_BELOW = 900;
 const ICON_ONLY_BELOW = 640;
 
-//: Cor de destaque só no estado ativo — inativo fica neutro pra não brigar
-//: com o resto do header (mesmo princípio de contenção visual do HITLPanel).
-const MODE_ACTIVE_CLASS: Record<UiMode, string> = {
-  assistant: "bg-blue-500/10 text-blue-400 border-blue-400",
-  ide: "bg-violet-500/10 text-violet-400 border-violet-400",
-  kanban: "bg-amber-500/10 text-amber-400 border-amber-400",
+type LabelSize = "full" | "truncated" | "icon";
+
+//: Cor do indicador deslizante e do texto/fundo ativo — só o modo ativo
+//: ganha destaque, pra não brigar visualmente com o resto do header.
+const MODE_ACCENT: Record<UiMode, { text: string; bg: string; bar: string }> = {
+  assistant: {
+    text: "text-blue-400",
+    bg: "bg-blue-500/10",
+    bar: "bg-blue-400",
+  },
+  ide: {
+    text: "text-violet-400",
+    bg: "bg-violet-500/10",
+    bar: "bg-violet-400",
+  },
+  kanban: {
+    text: "text-amber-400",
+    bg: "bg-amber-500/10",
+    bar: "bg-amber-400",
+  },
 };
 
-//: Aba plana no estilo VS Code — sem pílula/grupo arredondado: cada modo é
-//: seu próprio retângulo, ativo destacado por uma borda inferior colorida
-//: (mesma lógica de tab ativa de um editor de código), não por um contorno
-//: envolvendo os 3 botões.
+const MODES: { mode: UiMode; Icon: LucideIcon }[] = [
+  { mode: "assistant", Icon: Bot },
+  { mode: "ide", Icon: Code2 },
+  { mode: "kanban", Icon: KanbanSquare },
+];
+
+//: Aba plana no estilo VS Code/Claude Code — cada modo é seu próprio
+//: retângulo; o destaque de "ativo" vem do indicador deslizante do pai
+//: (`IdeModeSwitch`), não de uma borda própria — permite a barra animar
+//: de posição/largura ao trocar de modo em vez de saltar.
 function ModeButton({
   mode,
   active,
@@ -38,37 +60,56 @@ function ModeButton({
   Icon,
   label,
   labelSize,
+  buttonRef,
 }: {
   mode: UiMode;
   active: boolean;
   onClick: () => void;
   Icon: LucideIcon;
   label: string;
-  labelSize: "full" | "truncated" | "icon";
+  labelSize: LabelSize;
+  buttonRef: (el: HTMLButtonElement | null) => void;
 }) {
+  const accent = MODE_ACCENT[mode];
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
       aria-pressed={active}
       title={label}
-      className={`flex items-center gap-1.5 px-2.5 h-11 text-xs border-b-2 transition-colors min-w-0 ${
+      className={`flex items-center gap-1.5 px-2.5 h-11 text-xs transition-colors min-w-0 ${
         active
-          ? MODE_ACTIVE_CLASS[mode]
-          : "text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/40"
+          ? `${accent.bg} ${accent.text}`
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
       }`}
     >
       <Icon className="w-3.5 h-3.5 shrink-0" />
+      {/* `grid-template-columns` anima de "0fr" (colapsado) pra "1fr"
+          (largura natural do conteúdo) — jeito CSS-only de animar uma
+          largura que vai até "auto", que `width`/`max-width` não fazem
+          nativamente. O `overflow-hidden` do wrapper corta o texto sem
+          reflow abrupto enquanto a coluna encolhe/cresce. `sr-only` no
+          modo ícone garante nome acessível pra leitor de tela mesmo com
+          a coluna zerada visualmente — sem ele, texto num container
+          `overflow:hidden` de largura 0 ainda pode ficar sujeito a
+          heurísticas de "elemento invisível" de alguns leitores de tela. */}
       <span
-        className={
-          labelSize === "icon"
-            ? "sr-only"
-            : labelSize === "truncated"
-              ? "truncate max-w-[3.5rem]"
-              : ""
-        }
+        className="grid overflow-hidden transition-[grid-template-columns] duration-200 ease-out"
+        style={{ gridTemplateColumns: labelSize === "icon" ? "0fr" : "1fr" }}
       >
-        {label}
+        <span
+          data-slot="label"
+          className={`min-w-0 whitespace-nowrap ${
+            labelSize === "icon"
+              ? "sr-only"
+              : labelSize === "truncated"
+                ? "truncate max-w-[3.5rem]"
+                : ""
+          }`}
+        >
+          {label}
+        </span>
       </span>
     </button>
   );
@@ -78,73 +119,85 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
   const uiMode = useSettingsStore((s) => s.uiMode);
   const setUiMode = useSettingsStore((s) => s.setUiMode);
   const [ref, width] = useElementWidth<HTMLDivElement>();
+  const groupRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Partial<Record<UiMode, HTMLButtonElement>>>({});
+  const [indicator, setIndicator] = useState<{ left: number; width: number }>({
+    left: 0,
+    width: 0,
+  });
 
-  if (!show) return null;
-
-  const labelSize =
+  const labelSize: LabelSize =
     width >= TRUNCATE_BELOW
       ? "full"
       : width >= ICON_ONLY_BELOW
         ? "truncated"
         : "icon";
 
+  // Recalcula a posição/largura do indicador deslizante sempre que o modo
+  // ativo muda ou o layout dos botões muda (ex.: labelSize colapsa/expande
+  // o texto, mudando a largura de cada botão). `useLayoutEffect` mede DEPOIS
+  // do DOM aplicar o novo `labelSize`, mas ANTES do browser pintar — evita
+  // o indicador "piscar" na posição antiga por um frame.
+  useLayoutEffect(() => {
+    const btn = buttonRefs.current[uiMode];
+    const group = groupRef.current;
+    if (!btn || !group) return;
+    const groupRect = group.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    setIndicator({ left: btnRect.left - groupRect.left, width: btnRect.width });
+  }, [uiMode, labelSize]);
+
+  if (!show) return null;
+
   return (
-    <>
-      {/* Sensor invisível: mede a largura real da coluna de conteúdo (o
-          mesmo container `relative` que envolve os 3 modos em
-          $threadId.tsx) — não a largura do grupo de botões, que encolhe
-          ao próprio conteúdo (shrink-to-fit) e sempre convergiria pro
-          estado mínimo se medido diretamente. */}
+    // Linha de fluxo real (não overlay absoluto) — reserva sua própria
+    // altura acima da sidebar+conteúdo, a mesma em todos os 3 modos.
+    // Um overlay `position:absolute` aqui pintava por cima do Header (que
+    // ocupa a mesma faixa de 44px no topo em cada modo), causando o botão
+    // "IDE" a aparecer visualmente sobreposto ao título/ícones do Header
+    // por baixo — com espaço real reservado, o Header nunca fica embaixo
+    // do switcher, ele só é empurrado pra baixo, igual em todo modo.
+    <div
+      ref={ref}
+      className="flex h-11 shrink-0 items-end justify-center border-b border-border/60 bg-background"
+    >
       <div
-        ref={ref}
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-      />
-      {/* Posição ABSOLUTA (não relativa a nenhum irmão de largura
-          variável) sobre essa mesma coluna — o único ancestral
-          posicionado comum aos 3 modos, com a MESMA largura em todos
-          eles (a sidebar de sessões é filha dele, não reduz sua
-          largura). Por isso o switcher nunca muda de lugar na tela ao
-          trocar de modo, ainda que a coluna do Header em si tenha
-          largura diferente em cada um. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex h-11 items-end justify-center">
-        <div
-          role="group"
-          aria-label={m.ide_mode_switcher_label()}
-          className="pointer-events-auto flex items-end min-w-0"
-        >
+        ref={groupRef}
+        role="group"
+        aria-label={m.ide_mode_switcher_label()}
+        className="relative flex items-end min-w-0"
+      >
+        {MODES.map(({ mode, Icon }) => (
           <ModeButton
-            mode="assistant"
-            active={uiMode === "assistant"}
+            key={mode}
+            mode={mode}
+            active={uiMode === mode}
             onClick={() => {
-              if (uiMode !== "assistant") setUiMode("assistant");
+              if (uiMode !== mode) setUiMode(mode);
             }}
-            Icon={Bot}
-            label={m.ide_mode_assistente()}
+            Icon={Icon}
+            label={
+              mode === "assistant"
+                ? m.ide_mode_assistente()
+                : mode === "ide"
+                  ? m.ide_mode_ide()
+                  : m.ide_mode_kanban()
+            }
             labelSize={labelSize}
-          />
-          <ModeButton
-            mode="ide"
-            active={uiMode === "ide"}
-            onClick={() => {
-              if (uiMode !== "ide") setUiMode("ide");
+            buttonRef={(el) => {
+              if (el) buttonRefs.current[mode] = el;
             }}
-            Icon={Code2}
-            label={m.ide_mode_ide()}
-            labelSize={labelSize}
           />
-          <ModeButton
-            mode="kanban"
-            active={uiMode === "kanban"}
-            onClick={() => {
-              if (uiMode !== "kanban") setUiMode("kanban");
-            }}
-            Icon={KanbanSquare}
-            label={m.ide_mode_kanban()}
-            labelSize={labelSize}
-          />
-        </div>
+        ))}
+        {/* Indicador deslizante — uma única barra que anima posição/largura
+            entre os botões (`transition-all`) em vez de cada botão ter sua
+            própria borda estática, que só trocava de lugar sem transição. */}
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute bottom-0 h-0.5 rounded-full transition-all duration-200 ease-out ${MODE_ACCENT[uiMode].bar}`}
+          style={{ left: indicator.left, width: indicator.width }}
+        />
       </div>
-    </>
+    </div>
   );
 }

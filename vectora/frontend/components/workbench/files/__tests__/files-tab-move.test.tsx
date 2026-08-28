@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * FilesTab — drag-and-drop pra mover arquivo/pasta entre diretórios
- * (Sprint 27). Complementa dir-node.test.tsx (contrato do callback
+ * FilesTab — drag-and-drop pra mover arquivo/pasta entre diretórios.
+ * Complementa dir-node.test.tsx (contrato do callback
  * `onMoveInto`) testando o handler real (`handleMoveInto`): chama
  * apiFsMove com o destino certo, invalida a árvore em sucesso, mostra
  * toast em erro, e nunca chama a API pra soltar no mesmo lugar ou pra

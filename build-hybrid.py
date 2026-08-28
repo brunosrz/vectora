@@ -99,7 +99,7 @@ def main() -> None:
     # compilação Scons. --clang força o Nuitka a gerar as flags certas.
     clang_flag = ["--clang"] if sys.platform == "darwin" else []
 
-    # Fase 1 — Nuitka: pacote backend -> backend.pyd (só backend vira C)
+    # Etapa 1 — Nuitka: pacote backend -> backend.pyd (só backend vira C)
     run(
         [
             "uv",
@@ -157,7 +157,7 @@ def main() -> None:
             "vectora/resources/)."
         )
 
-    # Fase 2 — PyInstaller: launcher + backend.pyd + libs -> vectora.exe
+    # Etapa 2 — PyInstaller: launcher + backend.pyd + libs -> vectora.exe
     collect: list[str] = []
     for pkg in COLLECT_ALL:
         collect += ["--collect-all", pkg]

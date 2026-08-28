@@ -409,7 +409,7 @@ export interface PagedHistoryResponse {
   total_count: number;
 }
 
-/** Carrega mensagens antigas paginadas (FASE 4.1 — GC + scroll infinito). */
+/** Carrega mensagens antigas paginadas (GC + scroll infinito). */
 export const getHistoryPage = (
   thread_id: string,
   limit = 200,

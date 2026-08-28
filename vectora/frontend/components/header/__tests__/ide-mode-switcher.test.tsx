@@ -58,7 +58,7 @@ describe("IdeModeSwitch — colapso responsivo", () => {
   it("largura grande mostra o texto completo, visível (sem sr-only)", async () => {
     await montar(1000);
     const botao = screen.getByRole("button", { name: /assistente/i });
-    const label = botao.querySelector("span");
+    const label = botao.querySelector('span[data-slot="label"]');
     expect(label?.className).not.toContain("sr-only");
     expect(label?.className).not.toContain("truncate");
   });
@@ -66,7 +66,7 @@ describe("IdeModeSwitch — colapso responsivo", () => {
   it("largura média trunca o texto (classe truncate), mas mantém visível", async () => {
     await montar(700);
     const botao = screen.getByRole("button", { name: /assistente/i });
-    const label = botao.querySelector("span");
+    const label = botao.querySelector('span[data-slot="label"]');
     expect(label?.className).toContain("truncate");
     expect(label?.className).not.toContain("sr-only");
   });
@@ -74,7 +74,7 @@ describe("IdeModeSwitch — colapso responsivo", () => {
   it("largura pequena esconde o texto (sr-only) mas mantém o nome acessível", async () => {
     await montar(100);
     const botao = screen.getByRole("button", { name: /assistente/i });
-    const label = botao.querySelector("span");
+    const label = botao.querySelector('span[data-slot="label"]');
     expect(label?.className).toContain("sr-only");
     // O botão continua com nome acessível pra leitor de tela — não sumiu,
     // só ficou visualmente oculto.

@@ -54,9 +54,9 @@ describe("settings-store — chatSidebarWidth (IDE mode)", () => {
     expect(useSettingsStore.getState().chatSidebarWidth).toBe(240);
   });
 
-  it("setChatSidebarWidth respeita máximo (800)", () => {
+  it("setChatSidebarWidth respeita máximo (480)", () => {
     useSettingsStore.getState().setChatSidebarWidth(9999);
-    expect(useSettingsStore.getState().chatSidebarWidth).toBe(800);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(480);
   });
 
   it("setChatSidebarWidth arredonda valores fracionários", () => {
@@ -75,8 +75,8 @@ describe("settings-store — chatSidebarWidth (IDE mode)", () => {
     expect(useSettingsStore.getState().chatSidebarWidth).toBe(240);
   });
 
-  it("valor 800 (máximo exato) é aceito sem clamp", () => {
-    useSettingsStore.getState().setChatSidebarWidth(800);
-    expect(useSettingsStore.getState().chatSidebarWidth).toBe(800);
+  it("valor 480 (máximo exato) é aceito sem clamp", () => {
+    useSettingsStore.getState().setChatSidebarWidth(480);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(480);
   });
 });

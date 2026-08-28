@@ -2,7 +2,7 @@
 /**
  * `stream-interruption.ts` — usado em todo `processStream`/`processResume`
  * pra distinguir "aba fechou/crashou no meio da resposta" de "stream
- * terminou normalmente". Achado da auditoria (Sprint 15-E): módulo central
+ * terminou normalmente". Achado da auditoria: módulo central
  * pro fluxo de chat sem nenhum teste próprio.
  */
 

@@ -250,7 +250,7 @@ def test_resolve_creates_session_workspace_when_no_active(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _resolve_image_fallback_model — Sprint 22: modelo de fallback quando o
+# _resolve_image_fallback_model — modelo de fallback quando o
 # ativo não processa imagem, em vez de sempre bloquear o envio.
 # ---------------------------------------------------------------------------
 

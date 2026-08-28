@@ -94,11 +94,11 @@ class BackgroundTask:
     #: Sinal visual do card no Kanban — "low" | "normal" | "high" | "urgent".
     #: Não afeta ordem real de claim (`claim_task` é FIFO por status).
     priority: str = "normal"
-    #: Coluna já existe no SQL desde `claim_task` (Sprint 4 Fase 3) — só
-    #: nunca era lida de volta. `None` quando não há claim ativo (task não
-    #: `running`, ou já finalizada).
+    #: Coluna já existe no SQL desde `claim_task` — só nunca era lida de
+    #: volta. `None` quando não há claim ativo (task não `running`, ou já
+    #: finalizada).
     claim_expires_at: str | None = None
-    #: `None` = task pré-Fase-6 (multi-board), nunca associada a um board.
+    #: `None` = task sem board associado (multi-board opcional).
     #: `session_id` continua sendo o contexto de execução — board é só
     #: agrupamento nomeado por cima.
     board_id: str | None = None
@@ -386,7 +386,7 @@ async def list_tasks(session_id: str) -> list[BackgroundTask]:
 
 
 async def list_tasks_by_board(board_id: str) -> list[BackgroundTask]:
-    """Lista tarefas de um board — Sprint 4 Fase 6. Mesmo formato de
+    """Lista tarefas de um board. Mesmo formato de
     `list_tasks`, escopado por `board_id` em vez de `session_id`."""
     conn = await _get_db()
     try:

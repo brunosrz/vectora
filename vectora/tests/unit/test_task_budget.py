@@ -144,7 +144,7 @@ class TestRastreioDeCusto:
 
     @pytest.mark.asyncio
     async def test_liveness_e_persistido_junto_do_custo(self, db):
-        """Sprint 23: `record_run_cost` também grava o sinal de liveness
+        """`record_run_cost` também grava o sinal de liveness
         (backend/scheduling/liveness.py) — opcional, `None` por padrão."""
         from backend.scheduling.budget import record_run_cost
 
@@ -317,7 +317,7 @@ class TestCorteAutomatico:
 
 
 class TestWarnPercent:
-    """Sprint 23: aviso informativo ao cruzar `budget_warn_percent`, sem
+    """Aviso informativo ao cruzar `budget_warn_percent`, sem
     bloquear a task — só o hard-stop (`budget_cents` estourado) bloqueia."""
 
     @pytest.mark.asyncio

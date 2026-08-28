@@ -57,7 +57,7 @@ async function abrirDetalhes() {
   });
 }
 
-/** Stub de fetch cobrindo tudo que o drawer da Fase 7 toca — tasks,
+/** Stub de fetch cobrindo tudo que o drawer toca — tasks,
  * comentários/eventos vazios por padrão, /agent-profiles, /links,
  * /review/approve, e qualquer PATCH em /tasks/{id}. Registra cada
  * chamada em `chamadas` (se fornecido) pra os testes inspecionarem
@@ -253,8 +253,8 @@ describe("TaskDetailPanel", () => {
   });
 
   it("menu de status só oferece os alvos legais de DRAG_TRANSITIONS", async () => {
-    // Sprint 4 Fase 7 — task em "todo" só pode ir pra ready/triage
-    // manualmente (running/done são exclusivos do claim/run real).
+    // Task em "todo" só pode ir pra ready/triage manualmente
+    // (running/done são exclusivos do claim/run real).
     mockPanelFetches([task({ status: "todo" })]);
 
     render(<KanbanBoard threadId="s1" />);

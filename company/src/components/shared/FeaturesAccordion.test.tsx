@@ -33,14 +33,24 @@ describe("FeaturesAccordion", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("clicar no trigger expande e revela a descrição completa", () => {
+  it("clicar no trigger expande e revela a descrição completa; clicar de novo fecha", () => {
     render(<FeaturesAccordion items={ITEMS} />);
 
     fireEvent.click(screen.getByText("Feature A"));
-
     expect(
       screen.getByText("Descrição completa da feature A."),
     ).toBeInTheDocument();
+
+    // Par de erro/borda: reclicar no mesmo trigger tem que fechar de volta —
+    // sem `@keyframes slideDown/slideUp` reais, o Presence do Radix nunca via
+    // `animationend` e o conteúdo ficava preso montado mesmo com o accordion
+    // já fechado (bug real relatado pelo usuário, invisível em jsdom porque
+    // jsdom não anima CSS de verdade — este teste cobre o estado final do
+    // DOM, não a transição).
+    fireEvent.click(screen.getByText("Feature A"));
+    expect(
+      screen.queryByText("Descrição completa da feature A."),
+    ).not.toBeInTheDocument();
   });
 
   it("erro/borda: expandir um item não revela a descrição de outro (accordion single)", () => {

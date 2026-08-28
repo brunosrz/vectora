@@ -31,7 +31,7 @@ async def test_queue_full_lifecycle(tmp_path):
     queue = EmbeddingQueue(f"sqlite+aiosqlite:///{db_path}")
     await queue.init()
 
-    # ── Fase 1: enfileira N documentos em paralelo ──────────────────────────
+    # ── Etapa 1: enfileira N documentos em paralelo ─────────────────────────
     t_enqueue = time.perf_counter()
     queue_ids: list[str] = await asyncio.gather(
         *[queue.enqueue(f"documento {i}", "lifecycle_col") for i in range(N)]
@@ -41,7 +41,7 @@ async def test_queue_full_lifecycle(tmp_path):
     assert len(queue_ids) == N
     assert await queue.count_pending() == N
 
-    # ── Fase 2: busca todos os pendentes em lotes de 50 ────────────────────
+    # ── Etapa 2: busca todos os pendentes em lotes de 50 ────────────────────
     t_fetch = time.perf_counter()
     fetched_ids: list[str] = []
     while True:
@@ -57,7 +57,7 @@ async def test_queue_full_lifecycle(tmp_path):
 
     assert len(fetched_ids) == N, f"Fetch incompleto: {len(fetched_ids)}/{N}"
 
-    # ── Fase 3: metade sucesso, metade falha — em paralelo ──────────────────
+    # ── Etapa 3: metade sucesso, metade falha — em paralelo ─────────────────
     half = N // 2
     success_ids = queue_ids[:half]
     failed_ids = queue_ids[half:]
@@ -69,7 +69,7 @@ async def test_queue_full_lifecycle(tmp_path):
     )
     elapsed_mark = time.perf_counter() - t_mark
 
-    # ── Fase 4: verifica contagens finais ───────────────────────────────────
+    # ── Etapa 4: verifica contagens finais ──────────────────────────────────
     pending_final = await queue.count_pending()
     assert pending_final == 0, f"Ainda há {pending_final} pendentes após processamento"
 

@@ -1,5 +1,5 @@
 /**
- * workbench-store — migração de `splitSize` (Sprint 5 Bloco A): v0
+ * workbench-store — migração de `splitSize`: v0
  * guardava % (≤100), v1 já era px com default 224, v2 sobe o default pra
  * 280 (casa com sidebarWidth do settings-store, padrão do VS Code).
  */

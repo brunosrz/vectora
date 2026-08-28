@@ -418,7 +418,7 @@
   "features_cat_contexto": "Kontext & Code",
   "features_cat_navegador": "Browser & Sicherheit",
   "features_cat_modelos": "Modelle & Konnektivität",
-  "features_cat_midia": "Medien & Plattform",
+  "features_cat_plataforma": "Plattform",
   "features_context_graph_desc": "Kombiniert strukturelles Parsing via tree-sitter mit semantischer Extraktion durch ein LLM, um einen echten Graphen aus Symbolen, Imports und Aufrufen Ihres Repositorys zu erstellen — kein generischer Textindex. Ermöglicht GraphRAG-Suche (Relevanz nach Nähe im Graphen, nicht nur Vektorähnlichkeit) und Auswirkungsanalyse: Vor einer Änderung kann der Agent fragen \"was beeinflusst das noch?\" und eine Antwort erhalten, die auf der tatsächlichen Codestruktur beruht, nicht auf einer Vermutung.",
   "features_terminal_desc": "Ein echtes Terminal innerhalb der Workbench, keine Textbox, die eines simuliert — Befehle laufen wirklich, mit Ausgabe-Streaming, mehreren Tabs pro Workspace und persistentem Verlauf pro Sitzung. Agent und Nutzer teilen sich dasselbe Terminal: Was einer ausführt, sieht der andere.",
   "features_git_desc": "Ein vollständiges Git-Panel in der Workbench: visuelle Diffs, durchsuchbarer Commit-Verlauf, Stash, Worktrees und Branch-Vergleich — ohne den Chat zu verlassen, nur um `git log` in einem Terminal auszuführen. Der Agent sieht denselben Repository-Status, den Sie auf dem Bildschirm sehen.",

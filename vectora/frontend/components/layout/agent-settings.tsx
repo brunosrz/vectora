@@ -2,7 +2,7 @@
 
 /**
  * AgentConfig — tipo compartilhado de configuração do agente (modelo, repos
- * etc). O dialog "Configurações do Chat" foi removido (Fase 9): suas opções
+ * etc). O dialog "Configurações do Chat" foi removido: suas opções
  * (modelo, tema, idioma, tool calls, atalhos) agora vivem no Settings
  * completo (Settings → Preferências), acessível pelo ícone de engrenagem
  * no header.

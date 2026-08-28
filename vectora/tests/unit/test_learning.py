@@ -304,7 +304,7 @@ async def test_distill_transcript_transcript_so_com_um_caractere_ainda_chama_llm
 
 
 # ---------------------------------------------------------------------------
-# dedupe_fact_drafts — Sprint 16 WS3: mesma paridade de dedup que skills já
+# dedupe_fact_drafts — mesma paridade de dedup que skills já
 # tinham (dedupe_skill_drafts), agora também pra fatos propostos pelo
 # Remember, pra não propor de novo um fato já aprovado em sessão anterior.
 # ---------------------------------------------------------------------------

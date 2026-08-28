@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * Loaders de "/" e "/session/$threadId" — confirmam o fix da colisão de
- * cache (Sprint 15-D): os dois populavam `threadsQueryKey` com `limit`
+ * cache: os dois populavam `threadsQueryKey` com `limit`
  * divergentes (1, 50, e useThreadsQuery usa THREAD_FETCH_LIMIT=100), o que
  * fazia `ensureQueryData` do loader visitado por último servir uma lista
  * truncada e stale dentro do `staleTime` de 30s. Também cobre o isolamento

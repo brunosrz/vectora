@@ -41,24 +41,27 @@ describe("useClampPanelWidths", () => {
   });
 
   it("clampa chatSidebarWidth/splitSize quando a viewport é menor que a largura salva", () => {
-    setInnerWidth(500);
-    useSettingsStore.getState().setChatSidebarWidth(700);
+    // chatSidebarWidth tem teto próprio de 480 (setChatSidebarWidth) — usa
+    // esse teto como "largura salva bem maior que a viewport" em vez de 700,
+    // que o próprio setter já rejeitaria antes do hook entrar em jogo.
+    setInnerWidth(400);
+    useSettingsStore.getState().setChatSidebarWidth(480);
     useWorkbenchStore.getState().setSplitSize(700);
 
     renderHook(() => useClampPanelWidths());
 
-    expect(useSettingsStore.getState().chatSidebarWidth).toBeLessThan(500);
-    expect(useWorkbenchStore.getState().splitSize).toBeLessThan(500);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBeLessThan(400);
+    expect(useWorkbenchStore.getState().splitSize).toBeLessThan(400);
   });
 
   it("viewport extremamente estreita (menor que a reserva mínima) não lança nem zera", () => {
     setInnerWidth(200);
-    useSettingsStore.getState().setChatSidebarWidth(700);
+    useSettingsStore.getState().setChatSidebarWidth(480);
 
     expect(() => renderHook(() => useClampPanelWidths())).not.toThrow();
     // Sem espaço nem pro conteúdo principal — a largura salva não é
     // sobrescrita por um valor negativo/zero, fica como está.
-    expect(useSettingsStore.getState().chatSidebarWidth).toBe(700);
+    expect(useSettingsStore.getState().chatSidebarWidth).toBe(480);
   });
 
   it("re-clampa ao disparar o evento de resize", () => {

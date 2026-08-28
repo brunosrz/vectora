@@ -232,6 +232,31 @@ body {
   animation: fade-up 0.5s ease both;
 }
 
+/* ── Accordion (Radix) — abrir/fechar ───────────────────────────
+   Sem @keyframes definidas, `animate-[slideUp_0.2s_ease]` aplica um
+   `animation-name` que não resolve a nada real — o navegador ignora a
+   animação silenciosamente, mas o `Presence` do Radix lê o
+   `animation-name` computado pra decidir se espera um `animationend`
+   antes de desmontar o conteúdo. Como esse evento nunca dispara, o
+   painel fechado nunca sai do DOM: parece que o accordion "não fecha". */
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
 /* ── GIF placeholder skeleton ────────────────────────────────── */
 @keyframes shimmer {
   0% {

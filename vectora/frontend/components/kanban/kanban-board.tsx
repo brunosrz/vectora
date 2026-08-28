@@ -49,9 +49,9 @@ function NewTaskForm({
   onCreated,
 }: {
   threadId: string;
-  //: Board ativo (Fase 6) — task nova entra associada a ele quando um
-  //: board está selecionado. `null` na visão por session, comportamento
-  //: pré-Fase-6 inalterado.
+  //: Board ativo — task nova entra associada a ele quando um board está
+  //: selecionado. `null` na visão por session, comportamento sem board
+  //: inalterado.
   boardId: string | null;
   onCreated: () => void;
 }) {
@@ -231,9 +231,9 @@ function NewTaskForm({
   );
 }
 
-//: Switcher de board (Sprint 4 Fase 6) — "Board da sessão" (null) é a
-//: visão pré-Fase-6, sempre disponível mesmo sem nenhum board criado
-//: ainda. Criar um board novo seleciona ele na hora, sem passo extra.
+//: Switcher de board — "Board da sessão" (null) é a visão sem board
+//: selecionado, sempre disponível mesmo sem nenhum board criado ainda.
+//: Criar um board novo seleciona ele na hora, sem passo extra.
 function BoardSwitcher({
   boards,
   activeBoardId,
@@ -353,9 +353,9 @@ export interface KanbanTask {
   //: "low" | "normal" | "high" | "urgent" — sinal visual, não afeta ordem
   //: real de claim.
   priority?: string;
-  //: `None` sem claim ativo. Fonte real do arc animado (Fase 5) — deriva
-  //: se o heartbeat (backend/scheduling/background_tasks.py, watchdog de
-  //: 60s) está fresco ou parou.
+  //: `None` sem claim ativo. Fonte real do arc animado — deriva se o
+  //: heartbeat (backend/scheduling/background_tasks.py, watchdog de 60s)
+  //: está fresco ou parou.
   claim_expires_at?: string | null;
   //: Rollup de subtasks diretas (`kanban_decompose`). `undefined`/`null`
   //: — não `{done:0,total:0}` — quando a task não tem subtask nenhuma.
@@ -372,11 +372,11 @@ const ARC_STALE_AFTER_S = 120;
 
 export type KanbanArcState = "running" | "stale" | "queued" | "none";
 
-/** Estado do arc animado do card — Sprint 4 Fase 5. Só entra depois do
- * heartbeat real (Fase 3): sem `claim_expires_at`, uma task `running`
- * cai em "stale" (arco parado avisando que não há prova de vida), nunca
- * em "running" — decoração sem dado por trás é exatamente a classe de
- * problema que motivou reabrir esta sprint. */
+/** Estado do arc animado do card. Só entra depois do heartbeat real: sem
+ * `claim_expires_at`, uma task `running` cai em "stale" (arco parado
+ * avisando que não há prova de vida), nunca em "running" — decoração sem
+ * dado por trás é exatamente a classe de problema que este cálculo
+ * evita. */
 export function arcState(task: KanbanTask): KanbanArcState {
   if (task.status === "running") {
     if (!task.claim_expires_at) return "stale";
@@ -399,9 +399,9 @@ const PRIORITY_CLASS: Record<string, string> = {
 
 interface KanbanSseEventData {
   task_id: string;
-  //: `None` pra task sem board — Sprint 4 Fase 6. Presente mesmo na visão
-  //: por session (não só na visão por board), então a checagem de
-  //: relevância do evento é sempre a mesma código, os dois modos.
+  //: `None` pra task sem board. Presente mesmo na visão por session (não
+  //: só na visão por board), então a checagem de relevância do evento é
+  //: sempre a mesma código, os dois modos.
   board_id?: string | null;
   status: string;
   block_kind: string | null;
@@ -434,7 +434,7 @@ interface WebhookSseEvent {
 //:
 //: `tone` é o token `--kanban-tone-*` (definido em `src/styles.css`) que
 //: alimenta a borda esquerda do card e o dot do header da coluna — um mapa,
-//: dois consumidores (Sprint 4 Fase 5 soma um terceiro: a cor do arc).
+//: dois consumidores (a cor do arc soma um terceiro).
 const COLUNAS: { status: string; label: () => string; tone: string }[] = [
   { status: "triage", label: () => m.kanban_column_triage(), tone: "triage" },
   { status: "todo", label: () => m.kanban_column_todo(), tone: "todo" },
@@ -473,14 +473,14 @@ function kanbanToneVar(status: string): string {
 //: da run terminando de verdade, respectivamente. O backend recusa de novo
 //: se este mapa algum dia divergir — esta cópia é só pra recusar o drop
 //: antes de qualquer chamada de rede.
-//: Exportado pro menu de status do drawer (Fase 7) reusar exatamente os
-//: mesmos alvos legais que o drag-and-drop já valida — um mapa só, dois
+//: Exportado pro menu de status do drawer reusar exatamente os mesmos
+//: alvos legais que o drag-and-drop já valida — um mapa só, dois
 //: consumidores.
 export const DRAG_TRANSITIONS: Record<string, string[]> = {
   todo: ["ready", "triage"],
   ready: ["triage"],
   blocked: ["ready"],
-  //: Reprovar review — devolve pro fluxo ativo (Fase 4a). `review→done`
+  //: Reprovar review — devolve pro fluxo ativo. `review→done`
   //: nunca entra aqui de propósito: é o endpoint dedicado de aprovação
   //: (`/review/approve`), que registra quem aprovou — não um `PATCH`
   //: genérico de drag-and-drop.
@@ -881,9 +881,9 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     {},
   );
 
-  // Sprint 4 Fase 6 — multi-board. `null` = visão por session (padrão,
-  // comportamento pré-Fase-6 inalterado). Persistido por thread: o board
-  // escolhido não deveria "vazar" pra outra sessão.
+  // Multi-board. `null` = visão por session (padrão, comportamento sem
+  // board inalterado). Persistido por thread: o board escolhido não
+  // deveria "vazar" pra outra sessão.
   const [boards, setBoards] = useState<KanbanBoardOption[]>([]);
   const [activeBoardId, setActiveBoardId] = useState<string | null>(() => {
     try {
@@ -970,7 +970,7 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   // refazer o fetch do board inteiro. Task ainda desconhecida localmente
   // (ex.: criada por outra sessão/processo) cai no fallback de `carregar`.
   const aplicarEventoSse = (data: KanbanSseEventData) => {
-    // Visão por board (Fase 6): evento de uma task de OUTRO board não é
+    // Visão por board: evento de uma task de OUTRO board não é
     // relevante aqui — nem atualiza card nenhum, nem dispara refetch (que
     // recarregaria a lista certa, mas sem necessidade nenhuma).
     if (activeBoardId && data.board_id !== activeBoardId) return;

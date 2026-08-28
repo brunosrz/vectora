@@ -191,7 +191,7 @@ async def test_post_task_with_uuid_user_does_not_crash(db):
 async def test_post_task_aceita_agent_profile_id_do_formulario_de_criacao(db):
     """``create_task`` (backend/scheduling/background_tasks.py) já suporta
     ``agent_profile_id`` — só o schema HTTP não expõe o campo, então o
-    formulário de nova tarefa (Sprint 4 Fase 2, campo "assignee") não tinha
+    formulário de nova tarefa (campo "assignee") não tinha
     como setar isso na criação. Regressão: sem o campo no schema, o assignee
     sempre volta ``None`` mesmo pedindo um perfil real."""
     out = await post_task(
@@ -248,7 +248,7 @@ async def test_patch_and_delete_enforce_session_scope(db):
 
 
 async def test_patch_task_agent_profile_id_atribui_e_desatribui_via_http(db):
-    """Sprint 4 Fase 7 — o drawer edita assignee depois da criação, campo
+    """O drawer edita assignee depois da criação, campo
     novo em UpdateTaskRequest. Omitir o campo no PATCH não pode apagar um
     assignee já setado — só um PATCH que INCLUI o campo (mesmo como null)
     conta como intenção de mudar."""
@@ -280,7 +280,7 @@ async def test_patch_task_agent_profile_id_atribui_e_desatribui_via_http(db):
 
 
 async def test_approve_review_endpoint_move_para_done(db):
-    """Sprint 4 Fase 4a — endpoint dedicado de aprovação, não a transição
+    """Endpoint dedicado de aprovação, não a transição
     genérica de status (que recusa `review→done` de propósito)."""
     from backend.scheduling.kanban import set_status
 
@@ -311,7 +311,7 @@ async def test_approve_review_endpoint_move_para_done(db):
 
 
 async def test_links_endpoint_adiciona_e_remove_dependencia(db):
-    """Sprint 4 Fase 4d — `add_dependency` só era chamada internamente
+    """`add_dependency` só era chamada internamente
     pela tool `kanban_decompose` do agente, sem rota HTTP nenhuma."""
     pai = await post_task(
         _req(),
@@ -389,7 +389,7 @@ async def test_links_endpoint_recusa_task_de_outra_session(db):
 
 
 async def test_task_out_expoe_progress_de_subtasks(db):
-    """Sprint 4 Fase 4c — `TaskOut.progress` é `None` pra task folha e
+    """`TaskOut.progress` é `None` pra task folha e
     `{done, total}` real assim que ela ganha subtasks via links."""
     from backend.scheduling.kanban import set_status
 
@@ -423,7 +423,7 @@ async def test_task_out_expoe_progress_de_subtasks(db):
 
 
 async def test_get_board_agrupa_por_coluna_na_ordem_canonica(db):
-    """Sprint 4 Fase 4b — só existia `GET /tasks` (lista plana); agrupar
+    """Só existia `GET /tasks` (lista plana); agrupar
     por coluna e contar comentários/progress exigia N chamadas
     client-side. `GET /board` devolve tudo numa passada."""
     from backend.scheduling.kanban import KANBAN_STATUSES, set_status

@@ -117,9 +117,9 @@ async def _emit_kanban_event(
 
         # `board_id` não chega por parâmetro dos callers (set_status,
         # unblock_task, block_task) — uma query pequena aqui, não um
-        # replay de assinatura em cada call site. Sprint 4 Fase 6: sem
-        # isso, um board reconciliando por SSE não sabe se o evento é
-        # dele (cairia sempre no fallback de refetch completo).
+        # replay de assinatura em cada call site. Sem isso, um board
+        # reconciliando por SSE não sabe se o evento é dele (cairia
+        # sempre no fallback de refetch completo).
         board_id = None
         try:
             db = await _get_db()
