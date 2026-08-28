@@ -215,11 +215,36 @@ class AsyncConnectionPool:
 
     async def _new_conn(self) -> aiosqlite.Connection:
         """Abre uma nova conexão aiosqlite e aplica os PRAGMAs de hardening."""
+        import sys
+        import threading
+        import time
+
         import aiosqlite as _aiosqlite
 
+        # DIAGNÓSTICO TEMPORÁRIO — instrumentação pra localizar o passo exato
+        # de um hang confirmado e reproduzível só na CI (mesmas 4 threads
+        # presas em todo run, nunca reproduz local): remover assim que a
+        # causa for identificada via os logs de uma run travada.
+        t0 = time.monotonic()
+        print(
+            f"[diag pool] início _new_conn path={self._path} "
+            f"threads_vivas={threading.active_count()} pid={__import__('os').getpid()}",
+            file=sys.stderr,
+            flush=True,
+        )
         conn: aiosqlite.Connection = await _aiosqlite.connect(str(self._path))
+        print(
+            f"[diag pool] aiosqlite.connect() retornou em {time.monotonic() - t0:.2f}s",
+            file=sys.stderr,
+            flush=True,
+        )
         conn.row_factory = _aiosqlite.Row
         await conn.executescript(_PRAGMAS)
+        print(
+            f"[diag pool] executescript concluído em {time.monotonic() - t0:.2f}s",
+            file=sys.stderr,
+            flush=True,
+        )
         self._size += 1
         logger.debug(
             "storage/sqlite/pool: nova conexão #%d para %s", self._size, self._path
