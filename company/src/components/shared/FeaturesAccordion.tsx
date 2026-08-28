@@ -8,6 +8,7 @@
 import * as Accordion from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { m } from "#/paraglide/messages";
 
 export interface FeatureItem {
   id: string;
@@ -15,6 +16,8 @@ export interface FeatureItem {
   title: string;
   summary: string;
   description: string;
+  /** Exige o plano Vectora Pro — mostra o badge "PRO" ao lado do título. */
+  pro?: boolean;
 }
 
 interface FeaturesAccordionProps {
@@ -38,8 +41,15 @@ export default function FeaturesAccordion({ items }: FeaturesAccordionProps) {
                   <Icon className="h-4 w-4 text-primary" />
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-medium text-foreground group-data-[state=open]:text-primary">
-                    {item.title}
+                  <span className="flex items-center gap-2">
+                    <span className="block text-sm font-medium text-foreground group-data-[state=open]:text-primary">
+                      {item.title}
+                    </span>
+                    {item.pro && (
+                      <span className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-accent-amber">
+                        {m.feature_badge_pro()}
+                      </span>
+                    )}
                   </span>
                   <span className="mt-0.5 block text-sm text-muted-foreground">
                     {item.summary}
