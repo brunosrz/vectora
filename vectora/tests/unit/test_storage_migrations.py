@@ -303,41 +303,47 @@ class TestReadSchemaPermissionRetry:
     ):
         """Lock (simulado por abrir o arquivo em modo exclusivo) solta antes
         do teto de tentativas — `apply()` retenta e conclui normalmente."""
-        import msvcrt
+        # `if sys.platform == "win32":` (não só o skipif do decorator, que só
+        # afeta o runtime) — `msvcrt` não existe fora do Windows, e o type
+        # checker (`ty`, roda também no CI ubuntu-latest) analisa o corpo da
+        # função independente do marker do pytest. Sem esse guard estático,
+        # `msvcrt.locking`/`LK_NBLCK`/`LK_UNLCK` quebram o `ty check` no CI.
+        if sys.platform == "win32":
+            import msvcrt
 
-        from backend.storage.migrations import runner as runner_mod
-        from backend.storage.migrations.runner import MigrationRunner
+            from backend.storage.migrations import runner as runner_mod
+            from backend.storage.migrations.runner import MigrationRunner
 
-        schema_file = tmp_path / "schema.sql"
-        schema_file.write_text(
-            "CREATE TABLE IF NOT EXISTS _retry_marker (id INTEGER PRIMARY KEY);",
-            encoding="utf-8",
-        )
-        monkeypatch.setattr(runner_mod, "_READ_SCHEMA_RETRY_DELAY_S", 0.01)
+            schema_file = tmp_path / "schema.sql"
+            schema_file.write_text(
+                "CREATE TABLE IF NOT EXISTS _retry_marker (id INTEGER PRIMARY KEY);",
+                encoding="utf-8",
+            )
+            monkeypatch.setattr(runner_mod, "_READ_SCHEMA_RETRY_DELAY_S", 0.01)
 
-        # Abre em modo exclusivo (nega leitura de outros handles no Windows)
-        # e libera antes da última tentativa — reproduz o lock transitório
-        # de verdade, não um mock de exceção.
-        fh = schema_file.open("r+b")
-        msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+            # Abre em modo exclusivo (nega leitura de outros handles no
+            # Windows) e libera antes da última tentativa — reproduz o lock
+            # transitório de verdade, não um mock de exceção.
+            fh = schema_file.open("r+b")
+            msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
 
-        async def _release_soon():
-            await asyncio.sleep(0.02)
-            msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
-            fh.close()
+            async def _release_soon():
+                await asyncio.sleep(0.02)
+                msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+                fh.close()
 
-        release_task = asyncio.ensure_future(_release_soon())
-        try:
-            runner = MigrationRunner(runner_conn, schema_file=schema_file)
-            applied = await runner.apply()
-        finally:
-            await release_task
-        assert applied is True
+            release_task = asyncio.ensure_future(_release_soon())
+            try:
+                runner = MigrationRunner(runner_conn, schema_file=schema_file)
+                applied = await runner.apply()
+            finally:
+                await release_task
+            assert applied is True
 
-        cur = await runner_conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='_retry_marker'"
-        )
-        assert await cur.fetchone() is not None
+            cur = await runner_conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='_retry_marker'"
+            )
+            assert await cur.fetchone() is not None
 
     @pytest.mark.asyncio
     async def test_permission_error_persistente_propaga_apos_esgotar_tentativas(
