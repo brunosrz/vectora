@@ -329,7 +329,16 @@ addopts = "--color=yes --tb=short"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-timeout = 120  # LanceDB background threads demoram ~30s para fechar
+timeout = 300  # ver comentário abaixo — 120s comprovadamente insuficiente na CI
+# Dump de thread confirmado na CI (nunca reproduzido local, incl. com --cov
+# ligado, em 3 rodadas completas da suíte): abrir uma nova conexão aiosqlite
+# (thread OS nova) trava por >=120s no meio da suíte, sem nenhuma conexão
+# vazada identificável (auditoria completa dos 16 usos de
+# AsyncConnectionPool em tests/ — todos fecham corretamente). Pressão de
+# threads acumuladas (~4700 testes) em runner de CI com poucos núcleos é a
+# hipótese mais provável; 300s dá margem pra distinguir "lento" de
+# "travado de verdade" antes do processo ser morto (timeout_method=thread
+# não recupera via rerun, mata o processo inteiro — reruns não ajudam aqui).
 # "signal" (default) só despeja a stack da thread principal no timeout — não
 # mostra onde a thread de background do portal anyio/starlette (usada por
 # TestClient) está de fato presa, que é exatamente onde os hangs de CI

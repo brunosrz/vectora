@@ -121,18 +121,19 @@ def _token_contents(out: list[dict]) -> list[str]:
     return [e["content"] for e in out if e["type"] == "token"]
 
 
-# Sob carga de CI (2 hangs reais confirmados em runs distintos, cada um num
+# Sob carga de CI (hangs reais confirmados em runs distintos, cada um num
 # teste diferente desta mesma classe), a fixture `session_store` pode travar
 # na criação da conexão aiosqlite — `_new_conn` espera o worker thread da
-# conexão sinalizar pronto, e threads acumuladas de testes anteriores
-# (fecham de verdade, mas o SO leva tempo pra derrubá-las — mesmo motivo do
-# timeout global de 120s pro LanceDB, ver pyproject.toml) podem atrasar essa
-# criação além do timeout. Não reproduz localmente (2 rodadas completas da
-# suíte, ~4700 testes, zero hangs) — é pressão de recursos do runner, não
-# bug de lógica no pool nem no teste. `flaky` reruns compensa isso sem
-# mascarar um bug real: 2 tentativas extras, com um intervalo pra threads
-# antigas terminarem de fechar.
-@pytest.mark.flaky(reruns=2, reruns_delay=3)
+# conexão sinalizar pronto, e pressão de threads acumuladas de ~4700 testes
+# num runner de poucos núcleos pode atrasar essa criação além do timeout.
+# Nunca reproduz localmente (3 rodadas completas da suíte, incl. com --cov
+# ligado, zero hangs) — é pressão de recursos do runner, não bug de lógica
+# no pool nem no teste (auditoria completa: todo uso de AsyncConnectionPool
+# em tests/ fecha corretamente). `flaky`/reruns NÃO ajuda aqui — o projeto
+# usa `timeout_method="thread"` (ver pyproject.toml) justamente pra dumpar
+# todas as threads no hang, e isso mata o processo inteiro (`os._exit`)
+# antes de qualquer rerun poder acontecer. O mitigation real é o timeout
+# de 300s em pyproject.toml, que dá mais margem ao runner de CI.
 class TestNativeStreamDedupE2E:
     async def test_cada_token_aparece_exatamente_uma_vez(
         self, session_store: SessionStore
