@@ -149,15 +149,19 @@ jobs:
           ENABLE_WEB_SEARCH=false
           ENABLE_WEB_FETCH=false
           EOF
+      # Sem --cov: o sys.settrace do coverage.py roda em toda linha
+      # executada (incl. nas threads de fundo do aiosqlite/LanceDB) e, sob a
+      # cota de CPU compartilhada do runner ubuntu-latest padrão (não dá pra
+      # usar runner maior hospedado — recurso só de organização, indisponível
+      # pra conta pessoal), essa sobrecarga já causou hang real e reproduzível
+      # na criação de conexão aiosqlite em run de CI (nunca reproduziu local,
+      # incl. com --cov ligado, numa máquina com CPU dedicada — ver histórico
+      # do PR). Cobertura volta como job dedicado depois, sem competir por
+      # CPU com o gate de tempo dos testes.
       - name: Run unit tests
-        run: uv run pytest tests/unit/ -v -m "not live" --cov=backend --cov-report=xml
+        run: uv run pytest tests/unit/ -v -m "not live"
       - name: Run stress tests
         run: uv run pytest tests/stress/ -v --timeout=120 --tb=short
-      - name: Upload coverage
-        uses: codecov/codecov-action@v7
-        with:
-          files: vectora/coverage.xml
-        continue-on-error: true
 
   # ── 4b. Integration + E2E (gate do Docker; precisam de chaves reais) ────
   test-external:
