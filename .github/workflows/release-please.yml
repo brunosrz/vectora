@@ -1,0 +1,25 @@
+name: Release Please
+
+# Mantém um único PR "chore(master): release X.Y.Z" sempre atualizado com o
+# changelog acumulado desde a última release e a versão calculada a partir
+# dos títulos de PR (Conventional Commits) mesclados em master. Nada é
+# publicado sozinho — publicar é decisão do usuário: mesclar esse PR é o
+# que cria a tag vX.Y.Z, que dispara vectora.yml (release-native +
+# publish-update-channel). Sem esse merge, PRs normais só acumulam.
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

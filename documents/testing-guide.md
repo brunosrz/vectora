@@ -542,10 +542,14 @@ scons lint              # ruff+ty+bandit (vectora) + tsc+oxlint (frontend) + tsc
 
 ### Pipeline de CI (`.github/workflows/vectora.yml`)
 
+Roda sempre — em todo PR contra `master` e em todo push em `master` (merge
+de PR), sem gate manual. Só a etapa 7 continua condicionada, agora numa tag
+`v*` de verdade (criada pelo merge do PR de release acumulado que
+`release-please.yml` mantém) ou disparo manual — não mais `[up-release]`.
+
 1. **lint** — ruff + ty (Python).
 2. **security** — bandit + pip-audit (`|| true`, não bloqueia o merge).
-3. **frontend** — i18n compile, oxlint, `tsc --noEmit`, `pnpm test` (vitest),
-   só roda em `workflow_dispatch` ou commit com `[up-release]`.
+3. **frontend** — i18n compile, oxlint, `tsc --noEmit`, `pnpm test` (vitest).
 4. **build_verification** — compila o backend (`compileall`) e builda a SPA.
 5. **test-unit** — `pytest tests/unit -m "not live" --cov=backend` +
    `pytest tests/stress`.
@@ -553,4 +557,4 @@ scons lint              # ruff+ty+bandit (vectora) + tsc+oxlint (frontend) + tsc
 singularity"` + `pytest tests/e2e` (precisam de chaves de API reais via
    secrets do repositório).
 7. **release-native** — matriz Linux/macOS/Windows (Nuitka + Electron), só
-   com `[up-release]` ou disparo manual.
+   numa tag `v*` ou disparo manual.

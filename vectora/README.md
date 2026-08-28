@@ -124,7 +124,9 @@ scons release          Build completo + instalador nativo para o SO atual
 ```
 
 Bump de versão, build dos instaladores e publicação no canal de update rodam
-só via GitHub Actions, disparados por `[up-release]` na mensagem do commit.
+só via GitHub Actions, disparados por uma tag `v*` real (criada quando o
+usuário mescla o PR de release acumulado que `release-please.yml` mantém
+automaticamente) ou por `workflow_dispatch` manual.
 
 Pipeline executado em sequência (encadeado automaticamente por `release`):
 
@@ -150,7 +152,7 @@ scons help              Lista completa com descrições
 
 ### CI/CD
 
-- **GitHub Actions** (`.github/workflows/vectora.yml`) — pipeline única: lint → security scan (bandit + pip-audit) → frontend (oxlint/tsc/vitest) → build verification → testes unit/stress/integration+e2e → release nativo (matriz Linux/macOS/Windows, build híbrido Nuitka + electron-builder). Todo o pipeline (inclusive lint) só roda de verdade com `[up-release]` na mensagem do commit ou `workflow_dispatch` manual — qualquer outro push aparece como "skipped", sem custar minutos.
+- **GitHub Actions** (`.github/workflows/vectora.yml`) — pipeline única: lint → security scan (bandit + pip-audit) → frontend (oxlint/tsc/vitest) → build verification → testes unit/stress/integration+e2e — sempre, em todo PR contra `master` e em todo push em `master`, sem gate manual. Só o `release-native` (matriz Linux/macOS/Windows, build híbrido Nuitka + electron-builder) continua condicionado, agora numa tag `v*` real ou `workflow_dispatch` manual. `.github/workflows/pr-checks.yml` roda em paralelo em todo PR (labels automáticas + validação do título em Conventional Commits); `.github/workflows/release-please.yml` roda em todo push em `master` e mantém um PR de release acumulado (changelog + versão) — mesclá-lo é o que cria a tag.
 - **Jenkins** (`Jenkinsfile`, raiz do monorepo) — assume o CI contínuo em todo push/PR (`scons lint && scons tests`); o fluxo de release é um job parametrizado e manual que builda por SO (agentes dedicados Windows/macOS/Linux) e publica os instaladores no worker `services` (R2 + KV) via `services/scripts/release.ts`.
 
 ---

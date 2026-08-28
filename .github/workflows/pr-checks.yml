@@ -1,0 +1,85 @@
+name: PR Checks
+
+# Roda em todo PR contra master: aplica labels automáticas por conventional
+# commit/path (.github/labeler.yml) e valida que o TÍTULO do PR segue
+# Conventional Commits — o título vira o commit de squash-merge, que
+# release-please.yml lê pra decidir o bump de versão e a seção do
+# CHANGELOG.md. Um título malformado quebra essa automação em silêncio, daí
+# o gate aqui, não só cosmético. Mesmo padrão de
+# lancedb/.github/workflows/dev.yml.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [master]
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  labeler:
+    name: Label PR
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: srvaroa/labeler@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  commitlint:
+    name: Verify PR title (Conventional Commits)
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - run: npm install @commitlint/cli @commitlint/config-conventional
+      # body-max-line-length/footer-max-line-length/body-leading-blank
+      # desligadas: o GitHub sempre garante linha em branco entre título e
+      # corpo, e quebra o corpo em linhas curtas — essas regras dariam falso
+      # positivo em qualquer PR com descrição normal.
+      - run: >
+          echo 'module.exports = {
+            extends: ["@commitlint/config-conventional"],
+            rules: {
+              "body-max-line-length": [0, "always", Infinity],
+              "footer-max-line-length": [0, "always", Infinity],
+              "body-leading-blank": [0, "always"]
+            }
+          }' > .commitlintrc.js
+      - run: npx commitlint --edit --verbose <<< "$PR_TITLE"
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+      - if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `**Título do PR fora do padrão**
+
+              Este repositório segue [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) — o título do PR vira o commit de squash-merge e alimenta o versionamento e o changelog automáticos (release-please).
+
+              Exemplos válidos: \`feat: adiciona X\`, \`fix(frontend): corrige Y\`, \`docs: atualiza Z\`.
+
+              Ajuste o título do PR pra corrigir.`;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const already = comments.some((c) => c.body === message);
+            if (!already) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: message,
+              });
+            }
+            core.setFailed(message);

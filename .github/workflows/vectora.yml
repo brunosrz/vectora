@@ -2,19 +2,19 @@ name: Vectora (app)
 
 # Pipeline do app Vectora (backend Python + frontend Vite + casca Electron).
 #
-# Repo privado = plano billado (Free tem cota baixa de minutos) — rodar a
-# suíte inteira (lint+testes+build+matriz de release) em todo push não
-# compensa quando a intenção não é publicar. Por isso os jobs de entrada
-# (lint/security/frontend) só rodam de verdade com "[up-release]" na
-# mensagem do commit ou workflow_dispatch manual; qualquer outro push
-# aparece como "skipped" no Actions — skip acontece antes de alocar
-# runner, então custa 0 minutos. release-native (+ publish-update-channel)
-# repete o mesmo gate internamente, não tags.
+# Fluxo PR-based: lint/security/frontend/build/testes rodam sempre — em
+# todo PR contra master e em todo push em master (merge de PR) — sem gate
+# manual. O que continua caro e gated é só a matriz de release nativa
+# (Nuitka/Electron, macOS 10x + Windows 2x o custo de minutos): só dispara
+# numa tag "v*" real (criada por release-please.yml quando o usuário
+# mescla o PR de release acumulado) ou por workflow_dispatch manual —
+# nunca em PR nem em push comum de master.
 on:
   push:
-    branches: ["**"]
+    branches: [master]
+    tags: ["v*"]
   pull_request:
-    branches: ["**"]
+    branches: [master]
   workflow_dispatch:
 
 concurrency:
@@ -39,7 +39,6 @@ jobs:
   lint:
     name: Lint & Format Check
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-uv
@@ -56,7 +55,6 @@ jobs:
   security:
     name: Security Scanning
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-uv
@@ -75,7 +73,6 @@ jobs:
   frontend:
     name: Frontend (lint + types + tests)
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
     steps:
       - uses: actions/checkout@v7
       - name: Setup Node.js
@@ -190,17 +187,18 @@ jobs:
 
   # ── 5. Release Native Binaries (Nuitka onefile + Electron installers) ───
   # Matriz cara: macOS (multiplicador 10x de minutos) e Windows (2x). Por
-  # isso roda SÓ com "[up-release]" na mensagem do commit ou disparo manual
-  # (workflow_dispatch) — não em todo push, que estouraria a cota de Actions.
-  # Publicar é o propósito de rodar essa matriz de qualquer forma: sempre que
-  # ela roda (por qualquer um dos dois gatilhos), a GitHub Release
+  # isso roda SÓ numa tag "v*" real (criada por release-please.yml quando o
+  # usuário mescla o PR de release acumulado) ou disparo manual
+  # (workflow_dispatch) — nunca em PR nem em push comum de master. Publicar
+  # é o propósito de rodar essa matriz de qualquer forma: sempre que ela
+  # roda (por qualquer um dos dois gatilhos), a GitHub Release
   # (--publish always) e o canal de update (R2/KV, job publish-update-channel
   # abaixo) são publicados juntos — não há um terceiro estado de "buildar sem
   # publicar".
   release-native:
     name: Release native (${{ matrix.target }}/${{ matrix.arch }})
     needs: [test-unit, test-external]
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[up-release]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') }}
     env:
       # Nuitka escolhe clang/gcc + ccache no Linux/macOS, MSVC + clcache
       # (vendorizado dentro do próprio pacote nuitka) no Windows — cada um lê

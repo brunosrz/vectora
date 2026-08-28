@@ -71,12 +71,16 @@ externas.
 
 ### 1.3 Fluxo de release (CI real — GitHub Actions)
 
-O `Jenkinsfile` na raiz cobre **só** CI contínuo (`scons lint && scons tests`
-em todo push, infra própria com agente uv/pnpm/scons). O fluxo de release —
-build dos instaladores por SO e publicação no canal de update — roda
-inteiramente em `.github/workflows/vectora.yml`, disparado por `[up-release]`
-na mensagem do commit ou por `workflow_dispatch` manual (qualquer outro push
-aparece como "skipped", custando 0 minutos de Actions).
+O `Jenkinsfile` na raiz cobre CI contínuo (`scons lint && scons tests` em
+todo push, infra própria com agente uv/pnpm/scons). `.github/workflows/
+vectora.yml` roda em paralelo: lint/security/frontend/build/testes sempre
+— em todo PR contra `master` e em todo push em `master` — sem gate manual.
+Só o fluxo de release de verdade (build dos instaladores por SO +
+publicação no canal de update) continua condicionado, agora numa tag `v*`
+real ou `workflow_dispatch` manual, não mais `[up-release]`. A tag é criada
+por `release-please.yml` quando o usuário mescla o PR de release acumulado
+que ele mantém automaticamente (changelog + versão calculados a partir dos
+títulos de PR em Conventional Commits) — nunca a cada push comum.
 
 Jobs (em ordem de dependência):
 
