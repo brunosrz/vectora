@@ -30,6 +30,13 @@ from backend.vtypes.message import MessageRole, VMessageChunk, text_message
 
 @pytest.fixture
 async def session_store(tmp_path):
+    # DIAGNÓSTICO TEMPORÁRIO — ver comentário em backend/storage/sqlite/
+    # pool.py::_new_conn. Remover junto com o resto da instrumentação.
+    import sys
+
+    _stream = sys.__stderr__ or sys.stderr
+    _stream.write(f"[diag fixture] session_store início, tmp_path={tmp_path}\n")
+    _stream.flush()
     pool = AsyncConnectionPool(str(tmp_path / "dedup.db"), min_size=1, max_size=2)
     await pool.open()
     store = SessionStore(pool)
