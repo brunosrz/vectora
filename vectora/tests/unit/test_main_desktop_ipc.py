@@ -14,7 +14,6 @@ import asyncio
 import contextlib
 import os
 import sys
-from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -99,8 +98,13 @@ def test_desktop_uds_config_not_tcp() -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="UDS só em Linux/macOS")
 def test_desktop_uds_path_under_home_vectora() -> None:
-    """O socket UDS fica em ~/.vectora/vectora.sock."""
-    expected = str(Path.home() / ".vectora" / "vectora.sock")
+    """O socket UDS fica em <vectora_home>/vectora.sock — ``~/.vectora`` só
+    quando ``VECTORA_HOME`` não está setado; a suíte inteira roda com
+    ``VECTORA_HOME`` isolado num diretório temp (`tests/conftest.py`), então
+    o caminho esperado precisa refletir isso, não o home real do usuário."""
+    from backend.settings import _default_vectora_home
+
+    expected = str(_default_vectora_home() / "vectora.sock")
 
     import argparse
 
