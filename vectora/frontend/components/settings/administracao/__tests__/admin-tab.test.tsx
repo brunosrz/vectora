@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 /**
- * Testes para o filtro de abas Free/Pro do AdminTab — a fonte da verdade é
- * `useLicenseStatus()` (mesma que o license-banner usa), não um check
- * improvisado tipo `user.id === "local"`. Free (sem VECTORA_TOKEN
- * configurado) esconde "Usuários" (recurso multi-usuário puro) e nunca
- * pousa nela por padrão.
+ * Testes dos painéis de Administração — cada um exportado direto (não mais
+ * atrás de um wrapper `AdminTab` com tab bar própria; ver
+ * `settings-categories.test.tsx` pro filtro de tier de "Usuários", que
+ * migrou pra `buildSettingsCategoryGroups`).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -16,38 +15,17 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react";
-import type { LicenseStatus } from "@/lib/hooks/use-license-status";
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
-import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
-
-const { useLicenseStatusMock } = vi.hoisted(() => ({
-  useLicenseStatusMock: vi.fn(),
-}));
 
 vi.mock("@/lib/hooks/use-license-status", () => ({
-  useLicenseStatus: useLicenseStatusMock,
-}));
-
-const { AdminTab } = await import("../admin-tab");
-
-function licenseStatus(configured: boolean): {
-  status: LicenseStatus;
-  loading: boolean;
-  refetch: () => Promise<void>;
-} {
-  return {
-    status: {
-      configured,
-      tier: configured ? "pro" : null,
-      status: configured ? "active" : "unknown",
-      days_remaining: 0,
-      expires_at: "",
-      cached: false,
-    },
+  useLicenseStatus: () => ({
+    status: { configured: true, tier: "pro" },
     loading: false,
     refetch: vi.fn(),
-  };
-}
+  }),
+}));
+
+const { SystemPanel, SafeRootsPanel } = await import("../admin-tab");
 
 /** Formato mínimo válido pra cada endpoint que os painéis buscam no mount —
  * sem isso `SystemPanel`/`ConfigSection` quebram em campos undefined
@@ -90,67 +68,14 @@ afterEach(() => {
   overwriteGetLocale(() => baseLocale);
 });
 
-describe("AdminTab — filtro de abas por tier", () => {
-  it("Free (sem token configurado) esconde a aba Usuários", async () => {
-    useLicenseStatusMock.mockReturnValue(licenseStatus(false));
-    mockAdminFetch();
-
-    render(<AdminTab />);
-
-    expect(
-      screen.queryByRole("button", { name: "Usuários" }),
-    ).not.toBeInTheDocument();
-    expect(await screen.findByRole("button", { name: "Sistema" })).toHaveClass(
-      "border-foreground",
-    );
-    // Deixa os fetches internos das sub-abas (SystemPanel/ConfigSection)
-    // assentarem dentro de act() antes do teste terminar.
-    await act(async () => {});
-  });
-
-  it("Pro (token configurado) mostra a aba Usuários normalmente", async () => {
-    useLicenseStatusMock.mockReturnValue(licenseStatus(true));
-    mockAdminFetch();
-
-    render(<AdminTab />);
-
-    expect(
-      screen.getByRole("button", { name: "Usuários" }),
-    ).toBeInTheDocument();
-    await act(async () => {});
-  });
-
-  it("durante o loading inicial (status ainda null) não força a aba pra Sistema", async () => {
-    // `useLicenseStatus` retorna `status: null` + `loading: true` até o
-    // primeiro fetch assentar — `isFree` não pode tratar esse estado como
-    // free, senão toda conta (inclusive Pro) pousa em "Sistema" no primeiro
-    // render e nunca mais volta pra "Usuários".
-    useLicenseStatusMock.mockReturnValue({
-      status: null,
-      loading: true,
-      refetch: vi.fn(),
-    });
-    mockAdminFetch();
-
-    render(<AdminTab />);
-
-    expect(screen.getByRole("button", { name: "Usuários" })).toHaveClass(
-      "border-foreground",
-    );
-    await act(async () => {});
-  });
-});
-
-describe("AdminTab — Configuração", () => {
+describe("SystemPanel — Configuração", () => {
   it("não expõe mais modelo padrão nem limite de recursão", async () => {
     // Modelo se escolhe no seletor do chat; recursão é detalhe interno do
     // grafo. Ambos saíram da tela e do payload do PATCH — o teste trava as
     // duas pontas, porque tirar só da tela deixaria o campo sendo enviado.
-    useLicenseStatusMock.mockReturnValue(licenseStatus(true));
     mockAdminFetch();
-    useAdministracaoDialogStore.getState().setSubTab("system");
 
-    render(<AdminTab />);
+    render(<SystemPanel />);
     await act(async () => {});
 
     expect(screen.queryByText(/modelo padrão/i)).not.toBeInTheDocument();
@@ -169,12 +94,10 @@ describe("AdminTab — Configuração", () => {
   });
 });
 
-describe("AdminTab — Pastas Seguras: seletor nativo de pasta", () => {
+describe("SafeRootsPanel — seletor nativo de pasta", () => {
   function renderSafeRoots() {
-    useLicenseStatusMock.mockReturnValue(licenseStatus(true));
     mockAdminFetch();
-    useAdministracaoDialogStore.getState().setSubTab("safe-roots");
-    render(<AdminTab />);
+    render(<SafeRootsPanel />);
   }
 
   it("com bridge do desktop: o botão aparece e a pasta escolhida preenche o campo", async () => {

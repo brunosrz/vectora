@@ -9,6 +9,21 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+}));
+vi.mock("@/lib/paraglide/messages", () => ({
+  m: new Proxy(
+    {},
+    {
+      get:
+        (_t, prop) =>
+        (..._args: unknown[]) =>
+          String(prop),
+    },
+  ),
+}));
+
 async function renderContaTab(user: {
   id: string;
   username?: string;

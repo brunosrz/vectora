@@ -8,14 +8,16 @@
  * senha continua placeholder.
  */
 
-import { Check, Loader2, Pencil, X } from "lucide-react";
+import { Check, Loader2, LogOut, Pencil, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { m } from "@/lib/paraglide/messages";
 import type { AuthUser } from "@/lib/types/auth";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -36,8 +38,11 @@ const ROLE_VARIANTS: Record<
 };
 
 export function ContaTab() {
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const clearUser = useAuthStore((s) => s.clearUser);
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(user?.name ?? "");
@@ -80,6 +85,26 @@ export function ContaTab() {
       setSaving(false);
     }
   }
+
+  async function handleLogout() {
+    try {
+      await fetch("/auth/signout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    } catch {
+      // Ignora erro de rede — limpa localmente de qualquer jeito
+    }
+    clearUser();
+    router.replace("/auth/signin");
+  }
+
+  // O backend sempre injeta um usuário em /auth/me (real no Pro, virtual
+  // "local" no Free — ver _get_virtual_local_user em
+  // backend/api/middleware/auth.py) — só "Sair" distingue conta real de
+  // usuário local virtual (sair de uma sessão local não faz sentido).
+  const isRealAccount = isAuthenticated && user.id !== "local";
 
   const displayName = user.name?.trim() || "—";
 
@@ -181,6 +206,17 @@ export function ContaTab() {
         >
           Alterar senha
         </Button>
+        {isRealAccount && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start text-destructive hover:text-destructive"
+            onClick={() => void handleLogout()}
+          >
+            <LogOut className="w-3.5 h-3.5 mr-1.5" />
+            {m.user_logout()}
+          </Button>
+        )}
       </div>
     </div>
   );

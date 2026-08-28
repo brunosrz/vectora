@@ -1,20 +1,21 @@
 "use client";
 
 /**
- * AdminTab — painel de administração (root/admin only).
+ * Painéis de administração (root/admin only), um componente exportado por
+ * categoria do SettingsOverlay — ver o topo do arquivo, seção "As 5
+ * sub-abas de Administração", pra por que não há mais um wrapper único.
  *
- * Sub-abas:
- * - Usuários: lista, muda role, deleta
- * - Ferramentas: habilita/desabilita tools globalmente
- * - Sistema: versão, serviços, métricas
- * - Configuração: allow_public_signup, token da licença
+ * - UsersPanel: lista usuários, muda role, deleta, convida
+ * - ToolsPanel: habilita/desabilita tools globalmente
+ * - SafeRootsPanel: pastas seguras (SafeRoot)
+ * - SystemPanel: versão, serviços, métricas + configuração do servidor
+ * - StoragePanel: modo lite/completo, status/config dos backends
  */
 
 import {
   Check,
   CheckCircle2,
   Copy,
-  Cpu,
   Database,
   FolderLock,
   FolderOpen,
@@ -24,16 +25,12 @@ import {
   RefreshCw,
   Trash2,
   UserPlus,
-  Users,
   Wrench,
   XCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
-import {
-  useAdministracaoDialogStore,
-  type AdminSubTab,
-} from "@/lib/stores/administracao-dialog-store";
 import { useLicenseStatus } from "@/lib/hooks/use-license-status";
 
 import { Badge } from "@/components/ui/badge";
@@ -436,7 +433,7 @@ function UserToolsRow({ userId }: { userId: string }) {
   );
 }
 
-function UsersPanel() {
+export function UsersPanel() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -547,9 +544,16 @@ function UsersPanel() {
 // Sub-aba: Ferramentas
 // ---------------------------------------------------------------------------
 
-function ToolsPanel() {
+//: Altura de linha estimada (nome+badge + descrição truncada + padding) —
+//: o virtualizer corrige com `measureElement` real depois do 1º paint;
+//: só precisa ser próximo o bastante pra `getTotalSize()` inicial não
+//: pular visivelmente.
+const TOOL_ROW_ESTIMATE_PX = 58;
+
+export function ToolsPanel() {
   const [tools, setTools] = useState<AdminTool[]>([]);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -558,6 +562,23 @@ function ToolsPanel() {
       .then((d) => setTools(d.tools ?? []))
       .finally(() => setLoading(false));
   }, []);
+
+  // Lista real: 166 tools nativas registradas — sem virtualização, isso é
+  // 166 nós DOM montados de uma vez toda vez que a categoria abre.
+  //
+  // `getVirtualItems`/`getTotalSize`/`measureElement` do react-virtual não
+  // podem ser memoizados com segurança (mesmo diagnóstico já investigado e
+  // suprimido em message-list.tsx) — projeto não usa React Compiler, e os
+  // valores só são lidos dentro deste componente, nunca passados adiante
+  // como prop memoizada. Não é bug vivo, é diagnóstico de ferramenta sobre
+  // um padrão já seguro aqui.
+  // oxlint-disable-next-line react/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: tools.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => TOOL_ROW_ESTIMATE_PX,
+    overscan: 6,
+  });
 
   const handleToggle = async (name: string, enabled: boolean) => {
     await api.tools.toggle(name, enabled);
@@ -575,31 +596,57 @@ function ToolsPanel() {
   }
 
   return (
-    <div className="space-y-1.5">
-      {tools.map((t) => (
-        <div
-          key={t.name}
-          className="flex items-center gap-3 p-2.5 rounded-lg border bg-card"
-        >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-mono font-medium">{t.name}</span>
-              {t.destructive && (
-                <Badge variant="destructive" className="text-[9px] h-3.5 px-1">
-                  {m.admin_tools_destructive()}
-                </Badge>
-              )}
+    <div ref={scrollRef} className="h-[65vh] overflow-y-auto custom-scrollbar">
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          position: "relative",
+        }}
+      >
+        {virtualizer.getVirtualItems().map((vItem) => {
+          const t = tools[vItem.index]!;
+          return (
+            <div
+              key={t.name}
+              data-index={vItem.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${vItem.start}px)`,
+              }}
+              className="pb-1.5"
+            >
+              <div className="flex items-center gap-3 p-2.5 rounded-lg border bg-card">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-mono font-medium">
+                      {t.name}
+                    </span>
+                    {t.destructive && (
+                      <Badge
+                        variant="destructive"
+                        className="text-[9px] h-3.5 px-1"
+                      >
+                        {m.admin_tools_destructive()}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {t.description}
+                  </p>
+                </div>
+                <Switch
+                  checked={t.enabled}
+                  onCheckedChange={(v) => void handleToggle(t.name, v)}
+                />
+              </div>
             </div>
-            <p className="text-[10px] text-muted-foreground truncate">
-              {t.description}
-            </p>
-          </div>
-          <Switch
-            checked={t.enabled}
-            onCheckedChange={(v) => void handleToggle(t.name, v)}
-          />
-        </div>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -608,7 +655,7 @@ function ToolsPanel() {
 // Sub-aba: Sistema
 // ---------------------------------------------------------------------------
 
-function SystemPanel() {
+export function SystemPanel() {
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -802,7 +849,7 @@ interface SafeRootRow {
   created_by: string;
 }
 
-function SafeRootsPanel() {
+export function SafeRootsPanel() {
   const [roots, setRoots] = useState<SafeRootRow[]>([]);
   // Só existe no desktop — no web a bridge inteira é undefined.
   const pickDirectory = window.vectora?.pickDirectory;
@@ -1271,7 +1318,7 @@ function BackendConfigCard({
   );
 }
 
-function StoragePanel() {
+export function StoragePanel() {
   const [health, setHealth] = useState<StorageHealth | null>(null);
   const [loading, setLoading] = useState(false);
   const [savingMode, setSavingMode] = useState(false);
@@ -1460,104 +1507,12 @@ function StoragePanel() {
 }
 
 // ---------------------------------------------------------------------------
-// Componente principal
+// As 5 sub-abas de Administração agora são categorias de primeiro nível no
+// rail do SettingsOverlay (achatadas, mesmo tratamento já dado a
+// Preferências e Ambiente) — não ficam mais escondidas atrás de um wrapper
+// `AdminTab` com tab bar própria. `UsersPanel`/`ToolsPanel`/
+// `SafeRootsPanel`/`SystemPanel`/`StoragePanel` são exportados diretamente;
+// o gate de "Usuários" por tier (free não vê, ver `useLicenseStatus`
+// abaixo) e o deep-link por sub-aba (`administracao-dialog-store`) vivem em
+// `settings-categories.tsx`, não aqui.
 // ---------------------------------------------------------------------------
-
-function getSubTabs(): {
-  id: AdminSubTab;
-  label: string;
-  icon: React.ReactNode;
-}[] {
-  return [
-    {
-      id: "users",
-      label: m.admin_tab_users(),
-      icon: <Users className="w-3.5 h-3.5" />,
-    },
-    {
-      id: "tools",
-      label: m.admin_tab_tools(),
-      icon: <Wrench className="w-3.5 h-3.5" />,
-    },
-    {
-      id: "safe-roots",
-      label: m.admin_tab_saferoots(),
-      icon: <FolderLock className="w-3.5 h-3.5" />,
-    },
-    {
-      id: "system",
-      label: m.admin_tab_system(),
-      icon: <Cpu className="w-3.5 h-3.5" />,
-    },
-    {
-      id: "storage",
-      label: m.admin_tab_storage(),
-      icon: <Database className="w-3.5 h-3.5" />,
-    },
-  ];
-}
-
-export function AdminTab() {
-  const [active, setActive] = useState<AdminSubTab>("users");
-
-  // `configured=false` (sem VECTORA_TOKEN) é o estado Free — ver
-  // license-banner.tsx, mesma fonte (GET /license/status). "Usuários"
-  // é recurso multi-usuário puro (convites, roles de outras contas): sem
-  // conta Pro ele só mostraria uma lista vazia, sem caminho pra ativar.
-  // Enquanto `loading`, `license` é `null` — tratar como free aqui forçaria
-  // toda conta (inclusive Pro) pra "Sistema" no primeiro render, sem volta.
-  const { status: license, loading: licenseLoading } = useLicenseStatus();
-  const isFree = !licenseLoading && !license?.configured;
-  const subTabs = getSubTabs();
-  const visibleTabs = isFree
-    ? subTabs.filter((tab) => tab.id !== "users")
-    : subTabs;
-
-  useEffect(() => {
-    if (isFree) setActive((prev) => (prev === "users" ? "system" : prev));
-  }, [isFree]);
-  // Deriva a aba efetiva a partir de `isFree`, em vez de depender só do
-  // efeito acima — sem isso o primeiro render (antes do efeito rodar)
-  // ainda mostrava UsersPanel com a aba "Usuários" já escondida.
-  const effectiveActive = isFree && active === "users" ? "system" : active;
-
-  // Deep-link: outros lugares (license-banner, etc.) usam
-  // `useAdministracaoDialogStore.openAt("system")`. Quando o store recebe `subTab`,
-  // sincronizamos com o `active` local e limpamos o slot para que
-  // re-aberturas do dialog não voltem para a mesma sub-aba.
-  const subTab = useAdministracaoDialogStore((s) => s.subTab);
-  const setSubTab = useAdministracaoDialogStore((s) => s.setSubTab);
-  useEffect(() => {
-    if (subTab) {
-      setActive(subTab);
-      setSubTab(undefined);
-    }
-  }, [subTab, setSubTab]);
-
-  return (
-    <div className="space-y-4">
-      {/* Sub-tabs */}
-      <div className="flex gap-1 border-b pb-0">
-        {visibleTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActive(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-t-md border-b-2 transition-colors ${effectiveActive === tab.id ? "border-foreground text-foreground font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Conteúdo */}
-      <div className="min-h-[200px]">
-        {effectiveActive === "users" && <UsersPanel />}
-        {effectiveActive === "tools" && <ToolsPanel />}
-        {effectiveActive === "safe-roots" && <SafeRootsPanel />}
-        {effectiveActive === "system" && <SystemPanel />}
-        {effectiveActive === "storage" && <StoragePanel />}
-      </div>
-    </div>
-  );
-}

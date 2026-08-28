@@ -1,36 +1,24 @@
 // @vitest-environment jsdom
 /**
- * Testes para SettingsMenu — cobre o fix da regressão que escondia o botão
- * inteiro sem `isAuthenticated`/`user` (o backend sempre injeta alguém em
- * /auth/me: real no Pro, virtual "local" no Free — ver
- * backend/api/middleware/auth.py::_get_virtual_local_user).
+ * Testes para SettingsMenu — botão único que abre o `SettingsOverlay`
+ * direto na categoria "geral", sem dropdown intermediário (removido a
+ * pedido do usuário: clicar em settings deve abrir o painel, não um menu
+ * com Preferências/Ambiente/Administração).
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn() }),
+const { openCategoryMock } = vi.hoisted(() => ({
+  openCategoryMock: vi.fn(),
 }));
-vi.mock("@/lib/stores/preferencias-dialog-store", () => ({
-  usePreferenciasDialogStore: () => vi.fn(),
-}));
-vi.mock("@/lib/stores/environment-dialog-store", () => ({
-  useEnvironmentDialogStore: () => vi.fn(),
-}));
-vi.mock("@/lib/stores/administracao-dialog-store", () => ({
-  useAdministracaoDialogStore: () => vi.fn(),
+
+vi.mock("@/lib/stores/settings-overlay-store", () => ({
+  useSettingsOverlayStore: (selector: (s: unknown) => unknown) =>
+    selector({ openCategory: openCategoryMock }),
 }));
 vi.mock("@/components/settings/settings-overlay", () => ({
   SettingsOverlay: () => null,
-}));
-vi.mock("@/lib/paraglide/messages", () => ({
-  m: {
-    settings_group_preferencias: () => "Preferências",
-    settings_group_environment: () => "Ambiente",
-    settings_group_admin: () => "Administração",
-    user_logout: () => "Sair",
-  },
 }));
 
 const LOCAL_USER = {
@@ -40,71 +28,39 @@ const LOCAL_USER = {
   name: "Bruno",
 };
 
-const PRO_USER = {
-  id: "u1",
-  email: "bruno@example.com",
-  role: "member",
-  name: "Bruno",
-};
-
 async function renderMenu(authState: {
-  user: typeof LOCAL_USER | typeof PRO_USER | null;
+  user: typeof LOCAL_USER | null;
   isAuthenticated: boolean;
 }) {
   vi.doMock("@/lib/stores/auth-store", () => ({
-    useAuthStore: () => ({
-      ...authState,
-      clearUser: vi.fn(),
-    }),
+    useAuthStore: (selector: (s: unknown) => unknown) => selector(authState),
   }));
   const { SettingsMenu } = await import("../settings-menu");
   render(<SettingsMenu />);
-  fireEvent.click(screen.getByLabelText("Configurações"));
 }
 
 afterEach(() => {
   cleanup();
   vi.resetModules();
   vi.restoreAllMocks();
+  openCategoryMock.mockClear();
 });
 
-describe("SettingsMenu — usuário local virtual (Free, role root)", () => {
-  it("botão sempre visível, mostra o nome digitado, Administração visível, Sair ausente", async () => {
+describe("SettingsMenu — botão abre o overlay direto", () => {
+  it("mostra o nome do usuário como título e abre a categoria 'geral' ao clicar", async () => {
     await renderMenu({ user: LOCAL_USER, isAuthenticated: true });
 
-    expect(screen.getByLabelText("Configurações")).toBeInTheDocument();
-    expect(screen.getAllByText("Bruno").length).toBeGreaterThan(0);
-    expect(screen.getByText("Administração")).toBeInTheDocument();
-    expect(screen.queryByText("Sair")).not.toBeInTheDocument();
-  });
-});
+    const botao = screen.getByLabelText("Configurações");
+    expect(botao).toHaveAttribute("title", "Bruno");
 
-describe("SettingsMenu — conta Pro real", () => {
-  it("mostra Administração se role root/admin e Sair sempre visível", async () => {
-    await renderMenu({ user: PRO_USER, isAuthenticated: true });
-
-    expect(screen.queryByText("Administração")).not.toBeInTheDocument();
-    expect(screen.getByText("Sair")).toBeInTheDocument();
+    fireEvent.click(botao);
+    expect(openCategoryMock).toHaveBeenCalledWith("geral");
   });
 
-  it("role root também mostra Administração numa conta real", async () => {
-    await renderMenu({
-      user: { ...PRO_USER, role: "root" },
-      isAuthenticated: true,
-    });
-
-    expect(screen.getByText("Administração")).toBeInTheDocument();
-    expect(screen.getByText("Sair")).toBeInTheDocument();
-  });
-});
-
-describe("SettingsMenu — sem usuário ainda (guard não resolveu)", () => {
-  it("botão continua visível com fallback 'Vectora', sem Administração nem Sair", async () => {
+  it("sem usuário ainda, botão continua visível com fallback 'Vectora'", async () => {
     await renderMenu({ user: null, isAuthenticated: false });
 
-    expect(screen.getByLabelText("Configurações")).toBeInTheDocument();
-    expect(screen.getAllByText("Vectora").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Administração")).not.toBeInTheDocument();
-    expect(screen.queryByText("Sair")).not.toBeInTheDocument();
+    const botao = screen.getByLabelText("Configurações");
+    expect(botao).toHaveAttribute("title", "Vectora");
   });
 });

@@ -40,6 +40,9 @@ vi.mock("@/components/kanban/kanban-board", () => ({
 vi.mock("@/components/header/header", () => ({
   Header: () => <div data-testid="header" />,
 }));
+vi.mock("@/components/header/ide-mode-switcher", () => ({
+  IdeModeSwitch: () => <div data-testid="ide-mode-switch" />,
+}));
 vi.mock("@/components/sidebar/sidebar", () => ({
   Sidebar: () => <div data-testid="sidebar" />,
 }));

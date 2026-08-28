@@ -56,7 +56,7 @@ describe("IdeModeSwitch — 3ª posição (Kanban, feature pública)", () => {
 
 describe("IdeModeSwitch — colapso responsivo", () => {
   it("largura grande mostra o texto completo, visível (sem sr-only)", async () => {
-    await montar(300);
+    await montar(1000);
     const botao = screen.getByRole("button", { name: /assistente/i });
     const label = botao.querySelector("span");
     expect(label?.className).not.toContain("sr-only");
@@ -64,7 +64,7 @@ describe("IdeModeSwitch — colapso responsivo", () => {
   });
 
   it("largura média trunca o texto (classe truncate), mas mantém visível", async () => {
-    await montar(200);
+    await montar(700);
     const botao = screen.getByRole("button", { name: /assistente/i });
     const label = botao.querySelector("span");
     expect(label?.className).toContain("truncate");

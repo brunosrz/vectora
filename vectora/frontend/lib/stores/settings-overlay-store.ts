@@ -29,7 +29,11 @@ export type SettingsCategoryId =
   | "plugins"
   | "skills"
   | "tool_policy"
-  | "administracao"
+  | "admin_users"
+  | "admin_tools"
+  | "admin_saferoots"
+  | "admin_system"
+  | "admin_storage"
   | "billing"
   | "about";
 

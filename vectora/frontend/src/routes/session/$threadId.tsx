@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Header } from "@/components/header/header";
+import { IdeModeSwitch } from "@/components/header/ide-mode-switcher";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import {
@@ -641,10 +642,9 @@ function SessionPage() {
         onToggleToolCalls={() => setShowToolCalls((v) => !v)}
         onShowShortcuts={() => setShowShortcutsDialog(true)}
         onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-        showModeSwitch={!chatMode}
       />
     ),
-    [showToolCalls, chatMode],
+    [showToolCalls],
   );
 
   // A sidebar de sessões fica visualmente parada entre Kanban e Assistente
@@ -719,6 +719,11 @@ function SessionPage() {
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
       <div className="relative flex flex-1 min-h-0 overflow-hidden">
+        {/* Posicionado sobre esta linha (comum aos 3 modos, mesma largura
+            em todos — a sidebar é filha dela, não reduz sua largura) em
+            vez de dentro do Header (que tem largura/coluna diferente por
+            modo) — nunca muda de lugar na tela ao trocar de modo. */}
+        <IdeModeSwitch show={!chatMode} />
         {showSidebarPanel && sidebarPanel}
         {showSidebarPanel && (
           <Sheet

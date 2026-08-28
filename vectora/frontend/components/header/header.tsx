@@ -5,7 +5,6 @@ import { Menu } from "lucide-react";
 
 import { ContextualHelp } from "./contextual-help";
 import { SettingsMenu } from "./settings-menu";
-import { IdeModeSwitch } from "./ide-mode-switcher";
 import { m } from "@/lib/paraglide/messages";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 interface HeaderProps {
@@ -13,14 +12,9 @@ interface HeaderProps {
   onToggleToolCalls?: () => void;
   onShowShortcuts?: () => void;
   onOpenSidebar?: () => void;
-  showModeSwitch?: boolean;
 }
 
-export function Header({
-  onShowShortcuts,
-  onOpenSidebar,
-  showModeSwitch = false,
-}: HeaderProps) {
+export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
   // No desktop, ícone+título já aparecem na TitleBar (canto superior
   // esquerdo, ao lado de voltar/recarregar) — repeti-los aqui só ocupa
   // altura à toa. Na web (sem TitleBar), continuam aqui como identidade
@@ -64,8 +58,6 @@ export function Header({
             </>
           )}
         </div>
-
-        <IdeModeSwitch show={showModeSwitch} />
 
         <div className="flex items-center gap-3 shrink-0">
           <ContextualHelp onShowShortcuts={onShowShortcuts} />

@@ -93,12 +93,40 @@ const ToolPolicyPanel = lazyWithRetry(
     })),
   "settings-tool-policy-tab",
 );
-const AdminTab = lazyWithRetry(
+const UsersPanel = lazyWithRetry(
   () =>
     import("./administracao/admin-tab").then((mod) => ({
-      default: mod.AdminTab,
+      default: mod.UsersPanel,
     })),
-  "settings-admin-tab",
+  "settings-admin-users",
+);
+const ToolsPanel = lazyWithRetry(
+  () =>
+    import("./administracao/admin-tab").then((mod) => ({
+      default: mod.ToolsPanel,
+    })),
+  "settings-admin-tools",
+);
+const SafeRootsPanel = lazyWithRetry(
+  () =>
+    import("./administracao/admin-tab").then((mod) => ({
+      default: mod.SafeRootsPanel,
+    })),
+  "settings-admin-saferoots",
+);
+const SystemPanel = lazyWithRetry(
+  () =>
+    import("./administracao/admin-tab").then((mod) => ({
+      default: mod.SystemPanel,
+    })),
+  "settings-admin-system",
+);
+const StoragePanel = lazyWithRetry(
+  () =>
+    import("./administracao/admin-tab").then((mod) => ({
+      default: mod.StoragePanel,
+    })),
+  "settings-admin-storage",
 );
 const BillingPanelLazy = lazyWithRetry(
   () =>
@@ -129,14 +157,19 @@ export interface SettingsCategoryGroup {
 interface BuildCategoriesArgs {
   connectEnabled: boolean;
   isAdmin: boolean;
+  /** `true` quando não há licença configurada (plano Free) — "Usuários" é
+   * recurso multi-usuário puro (convites, roles de outras contas): sem
+   * conta Pro só mostraria uma lista vazia, sem caminho pra ativar. */
+  isFree: boolean;
 }
 
 /** Monta a lista de grupos/categorias visíveis pro usuário atual — gating
- * de feature flag (Connect) e role (Administração) decidido aqui, num só
- * lugar, em vez de espalhado pelos componentes individuais. */
+ * de feature flag (Connect), role (Administração) e tier (Usuários) decidido
+ * aqui, num só lugar, em vez de espalhado pelos componentes individuais. */
 export function buildSettingsCategoryGroups({
   connectEnabled,
   isAdmin,
+  isFree,
 }: BuildCategoriesArgs): SettingsCategoryGroup[] {
   const preferencias: SettingsCategory[] = [
     {
@@ -210,11 +243,39 @@ export function buildSettingsCategoryGroups({
 
   const administracao: SettingsCategory[] = isAdmin
     ? [
+        ...(isFree
+          ? []
+          : ([
+              {
+                id: "admin_users",
+                group: "administracao",
+                label: m.admin_tab_users(),
+                Component: UsersPanel,
+              },
+            ] as SettingsCategory[])),
         {
-          id: "administracao",
+          id: "admin_tools",
           group: "administracao",
-          label: m.settings_category_administracao(),
-          Component: AdminTab,
+          label: m.admin_tab_tools(),
+          Component: ToolsPanel,
+        },
+        {
+          id: "admin_saferoots",
+          group: "administracao",
+          label: m.admin_tab_saferoots(),
+          Component: SafeRootsPanel,
+        },
+        {
+          id: "admin_system",
+          group: "administracao",
+          label: m.admin_tab_system(),
+          Component: SystemPanel,
+        },
+        {
+          id: "admin_storage",
+          group: "administracao",
+          label: m.admin_tab_storage(),
+          Component: StoragePanel,
         },
       ]
     : [];

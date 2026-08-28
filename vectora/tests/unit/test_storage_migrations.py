@@ -7,6 +7,7 @@ DataMigration: dry-run em memória.
 from __future__ import annotations
 
 import asyncio
+import sys
 from pathlib import Path
 
 import pytest
@@ -292,6 +293,11 @@ class TestReadSchemaPermissionRetry:
         await conn.close()
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        sys.platform != "win32",
+        reason="msvcrt.locking só existe no Windows — o lock transitório do "
+        "S0-4 (AV/indexador escaneando schema.sql) é um cenário Windows-only",
+    )
     async def test_retry_ate_sucesso_quando_lock_solta_antes_do_teto(
         self, runner_conn, tmp_path, monkeypatch
     ):

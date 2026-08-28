@@ -31,6 +31,13 @@ vi.mock("@/lib/hooks/use-feature-flags", () => ({
   useFeatureFlags: () => ({ enableFeaturesBeta: false }),
 }));
 
+vi.mock("@/lib/hooks/use-license-status", () => ({
+  useLicenseStatus: () => ({
+    status: { configured: true },
+    loading: false,
+  }),
+}));
+
 function stubTab(testId: string) {
   return () => <div data-testid={testId}>{testId}</div>;
 }
@@ -66,7 +73,11 @@ vi.mock("../environment/tabs/tool-policy-panel", () => ({
   ToolPolicyPanel: stubTab("tab-tool-policy"),
 }));
 vi.mock("../administracao/admin-tab", () => ({
-  AdminTab: stubTab("tab-admin"),
+  UsersPanel: stubTab("tab-admin-users"),
+  ToolsPanel: stubTab("tab-admin-tools"),
+  SafeRootsPanel: stubTab("tab-admin-saferoots"),
+  SystemPanel: stubTab("tab-admin-system"),
+  StoragePanel: stubTab("tab-admin-storage"),
 }));
 vi.mock("../billing-panel", () => ({
   BillingPanel: stubTab("tab-billing"),
@@ -145,11 +156,11 @@ describe("SettingsOverlay — gate de role (Administração)", () => {
     expect(screen.queryByText("Administração")).not.toBeInTheDocument();
   });
 
-  it("usuário admin vê e consegue abrir Administração", async () => {
+  it("usuário admin vê e consegue abrir as categorias de Administração", async () => {
     resetStores("admin");
     await montar();
-    fireEvent.click(screen.getByRole("button", { name: "Administração" }));
-    expect(await screen.findByTestId("tab-admin")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ferramentas" }));
+    expect(await screen.findByTestId("tab-admin-tools")).toBeInTheDocument();
   });
 });
 

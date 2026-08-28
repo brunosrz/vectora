@@ -1,29 +1,36 @@
 /**
- * administracao-dialog-store — controla a abertura do painel de
- * Administração e a sub-aba ativa (Usuários/Ferramentas/Pastas
- * Seguras/Sistema/Storage).
- *
- * Administração é um dos 3 painéis de configurações (Preferências,
- * Ambiente, Administração), com dialog e store próprios já que o
- * `AdminTab` tem múltiplos sub-painéis e merece navegação independente.
- * Permite deep-link a partir de qualquer lugar (ex.: banner de licença →
- * Administração → Sistema) sem prop drilling.
+ * administracao-dialog-store — mantido por compatibilidade com quem ainda
+ * chama `openAt(subTab)` de fora (ex.: `license-banner.tsx` →
+ * `openAt("system")`) e por `open`/`setOpen` que outros pontos ainda
+ * checam. As 5 sub-abas de Administração (Usuários/Ferramentas/Pastas
+ * Seguras/Sistema/Storage) NÃO ficam mais atrás de um painel único — cada
+ * uma é sua própria categoria de primeiro nível no rail do
+ * `SettingsOverlay` (mesmo achatamento já aplicado a Preferências e
+ * Ambiente). `openAt` mapeia a sub-aba direto pra essa categoria.
  */
 
 import { create } from "zustand";
-import { useSettingsOverlayStore } from "./settings-overlay-store";
+import {
+  useSettingsOverlayStore,
+  type SettingsCategoryId,
+} from "./settings-overlay-store";
 
-/** Sub-abas internas do painel de Administração. */
+/** Sub-abas históricas de Administração — hoje cada uma é sua própria
+ * categoria (`admin_*`) no SettingsOverlay; este tipo só sobrevive pra
+ * quem ainda deep-linka por aqui. */
 export type AdminSubTab =
   "users" | "tools" | "system" | "safe-roots" | "storage";
 
+const CATEGORY_BY_SUBTAB: Record<AdminSubTab, SettingsCategoryId> = {
+  users: "admin_users",
+  tools: "admin_tools",
+  "safe-roots": "admin_saferoots",
+  system: "admin_system",
+  storage: "admin_storage",
+};
+
 interface AdminDialogState {
   open: boolean;
-  /**
-   * Sub-aba alvo na próxima abertura. `AdminTab` sincroniza o `active`
-   * local com este valor via `useEffect` e limpa o slot em seguida, para
-   * que reaberturas do dialog não fiquem presas na mesma sub-aba.
-   */
   subTab?: AdminSubTab;
   openAt: (subTab?: AdminSubTab) => void;
   setOpen: (v: boolean) => void;
@@ -35,7 +42,9 @@ export const useAdministracaoDialogStore = create<AdminDialogState>((set) => ({
   subTab: undefined,
   openAt: (subTab) => {
     set({ open: true, subTab });
-    useSettingsOverlayStore.getState().openCategory("administracao");
+    useSettingsOverlayStore
+      .getState()
+      .openCategory(CATEGORY_BY_SUBTAB[subTab ?? "users"]);
   },
   setOpen: (v) => set({ open: v }),
   setSubTab: (subTab) => set({ subTab }),
