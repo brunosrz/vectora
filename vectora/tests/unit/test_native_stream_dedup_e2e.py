@@ -121,6 +121,18 @@ def _token_contents(out: list[dict]) -> list[str]:
     return [e["content"] for e in out if e["type"] == "token"]
 
 
+# Sob carga de CI (2 hangs reais confirmados em runs distintos, cada um num
+# teste diferente desta mesma classe), a fixture `session_store` pode travar
+# na criação da conexão aiosqlite — `_new_conn` espera o worker thread da
+# conexão sinalizar pronto, e threads acumuladas de testes anteriores
+# (fecham de verdade, mas o SO leva tempo pra derrubá-las — mesmo motivo do
+# timeout global de 120s pro LanceDB, ver pyproject.toml) podem atrasar essa
+# criação além do timeout. Não reproduz localmente (2 rodadas completas da
+# suíte, ~4700 testes, zero hangs) — é pressão de recursos do runner, não
+# bug de lógica no pool nem no teste. `flaky` reruns compensa isso sem
+# mascarar um bug real: 2 tentativas extras, com um intervalo pra threads
+# antigas terminarem de fechar.
+@pytest.mark.flaky(reruns=2, reruns_delay=3)
 class TestNativeStreamDedupE2E:
     async def test_cada_token_aparece_exatamente_uma_vez(
         self, session_store: SessionStore

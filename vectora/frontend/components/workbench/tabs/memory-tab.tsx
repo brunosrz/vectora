@@ -63,6 +63,9 @@ function useWorkspaceRagBuckets(workspaceId: string | undefined) {
       .catch(() => setBuckets([]));
   }, [workspaceId]);
 
+  // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+  // uso correto de efeito, ver justificativa em use-context-graph.ts.
+  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
     refetch();
   }, [refetch]);

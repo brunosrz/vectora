@@ -239,6 +239,9 @@ function OllamaSection() {
     }
   }, []);
 
+  // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+  // uso correto de efeito, ver justificativa em use-context-graph.ts.
+  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
     void loadRegistered();
   }, [loadRegistered]);
@@ -411,6 +414,9 @@ function OpenRouterSection() {
     }
   }, []);
 
+  // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+  // uso correto de efeito, ver justificativa em use-context-graph.ts.
+  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
     void loadStatus();
     void loadRegistered();
@@ -666,6 +672,9 @@ function NineRouterSection() {
     }
   }, []);
 
+  // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+  // uso correto de efeito, ver justificativa em use-context-graph.ts.
+  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
     void loadStatus();
     void loadRegistered();
@@ -675,6 +684,7 @@ function NineRouterSection() {
   // OpenRouter, que busca no catálogo sem exigir clique em botão. Só roda
   // uma vez por configuração (discovered !== null trava o re-disparo); o
   // botão "Detectar modelos" continua disponível pra atualizar manualmente.
+  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
     if (!status?.configured || discovered !== null) return;
     setDiscovering(true);

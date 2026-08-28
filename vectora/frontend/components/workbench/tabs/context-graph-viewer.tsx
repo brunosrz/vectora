@@ -102,7 +102,7 @@ export function ContextGraphViewer({
         });
     }
     return [...counts.entries()]
-      .sort((a, b) => a[0] - b[0])
+      .toSorted((a, b) => a[0] - b[0])
       .map(([id, v]) => ({
         id,
         name: v.name,
