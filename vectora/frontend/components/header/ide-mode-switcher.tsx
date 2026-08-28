@@ -4,20 +4,19 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { Bot, Code2, KanbanSquare } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSettingsStore } from "@/lib/stores/settings-store";
-import { useElementWidth } from "@/lib/hooks/use-element-width";
 import { m } from "@/lib/paraglide/messages";
 import type { UiMode } from "@/lib/stores/settings-store";
 
 interface IdeModeProps {
   show?: boolean;
+  //: Largura do Header inteiro (medida por ele, não por este componente) —
+  //: o switcher vive dentro da mesma linha que o título e os ícones de
+  //: ajuda/configurações, então mede a linha TODA, não o espaço que sobra
+  //: pra ele entre os outros dois grupos (que sempre convergiria pro
+  //: tamanho mínimo, colapsando o texto cedo demais).
+  width: number;
 }
 
-//: Largura da própria linha do switcher — que agora é `w-full`, uma linha
-//: de fluxo real acima da sidebar+conteúdo (não mais um slot estreito
-//: dentro do Header, nem um overlay absoluto por cima dele). Medir a
-//: própria linha funciona aqui porque ela é bloco (`w-full`), não
-//: shrink-to-fit — um grupo de botões medido diretamente sempre
-//: convergiria pro tamanho mínimo.
 const TRUNCATE_BELOW = 900;
 const ICON_ONLY_BELOW = 640;
 
@@ -115,10 +114,9 @@ function ModeButton({
   );
 }
 
-export function IdeModeSwitch({ show = false }: IdeModeProps) {
+export function IdeModeSwitch({ show = false, width }: IdeModeProps) {
   const uiMode = useSettingsStore((s) => s.uiMode);
   const setUiMode = useSettingsStore((s) => s.setUiMode);
-  const [ref, width] = useElementWidth<HTMLDivElement>();
   const groupRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Partial<Record<UiMode, HTMLButtonElement>>>({});
   const [indicator, setIndicator] = useState<{ left: number; width: number }>({
@@ -150,54 +148,42 @@ export function IdeModeSwitch({ show = false }: IdeModeProps) {
   if (!show) return null;
 
   return (
-    // Linha de fluxo real (não overlay absoluto) — reserva sua própria
-    // altura acima da sidebar+conteúdo, a mesma em todos os 3 modos.
-    // Um overlay `position:absolute` aqui pintava por cima do Header (que
-    // ocupa a mesma faixa de 44px no topo em cada modo), causando o botão
-    // "IDE" a aparecer visualmente sobreposto ao título/ícones do Header
-    // por baixo — com espaço real reservado, o Header nunca fica embaixo
-    // do switcher, ele só é empurrado pra baixo, igual em todo modo.
     <div
-      ref={ref}
-      className="flex h-11 shrink-0 items-end justify-center border-b border-border/60 bg-background"
+      ref={groupRef}
+      role="group"
+      aria-label={m.ide_mode_switcher_label()}
+      className="relative flex items-end h-11 min-w-0"
     >
-      <div
-        ref={groupRef}
-        role="group"
-        aria-label={m.ide_mode_switcher_label()}
-        className="relative flex items-end min-w-0"
-      >
-        {MODES.map(({ mode, Icon }) => (
-          <ModeButton
-            key={mode}
-            mode={mode}
-            active={uiMode === mode}
-            onClick={() => {
-              if (uiMode !== mode) setUiMode(mode);
-            }}
-            Icon={Icon}
-            label={
-              mode === "assistant"
-                ? m.ide_mode_assistente()
-                : mode === "ide"
-                  ? m.ide_mode_ide()
-                  : m.ide_mode_kanban()
-            }
-            labelSize={labelSize}
-            buttonRef={(el) => {
-              if (el) buttonRefs.current[mode] = el;
-            }}
-          />
-        ))}
-        {/* Indicador deslizante — uma única barra que anima posição/largura
-            entre os botões (`transition-all`) em vez de cada botão ter sua
-            própria borda estática, que só trocava de lugar sem transição. */}
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute bottom-0 h-0.5 rounded-full transition-all duration-200 ease-out ${MODE_ACCENT[uiMode].bar}`}
-          style={{ left: indicator.left, width: indicator.width }}
+      {MODES.map(({ mode, Icon }) => (
+        <ModeButton
+          key={mode}
+          mode={mode}
+          active={uiMode === mode}
+          onClick={() => {
+            if (uiMode !== mode) setUiMode(mode);
+          }}
+          Icon={Icon}
+          label={
+            mode === "assistant"
+              ? m.ide_mode_assistente()
+              : mode === "ide"
+                ? m.ide_mode_ide()
+                : m.ide_mode_kanban()
+          }
+          labelSize={labelSize}
+          buttonRef={(el) => {
+            if (el) buttonRefs.current[mode] = el;
+          }}
         />
-      </div>
+      ))}
+      {/* Indicador deslizante — uma única barra que anima posição/largura
+          entre os botões (`transition-all`) em vez de cada botão ter sua
+          própria borda estática, que só trocava de lugar sem transição. */}
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute bottom-0 h-0.5 rounded-full transition-all duration-200 ease-out ${MODE_ACCENT[uiMode].bar}`}
+        style={{ left: indicator.left, width: indicator.width }}
+      />
     </div>
   );
 }

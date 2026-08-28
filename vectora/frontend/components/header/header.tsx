@@ -5,28 +5,44 @@ import { Menu } from "lucide-react";
 
 import { ContextualHelp } from "./contextual-help";
 import { SettingsMenu } from "./settings-menu";
+import { IdeModeSwitch } from "./ide-mode-switcher";
 import { m } from "@/lib/paraglide/messages";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
+import { useElementWidth } from "@/lib/hooks/use-element-width";
+
 interface HeaderProps {
   showToolCalls?: boolean;
   onToggleToolCalls?: () => void;
   onShowShortcuts?: () => void;
   onOpenSidebar?: () => void;
+  //: Mostra o seletor Assistente/IDE/Kanban centralizado nesta mesma barra
+  //: (ausente em chatMode, que não tem os 3 modos). Antes vivia numa linha
+  //: separada acima do Header — o usuário via duas barras empilhadas
+  //: (abas de modo + ajuda/config) em vez de uma só. Unificar exige que o
+  //: Header seja renderizado UMA vez, com largura cheia, nos 3 modos —
+  //: nunca aninhado dentro da coluna do editor/chat/board, que tem largura
+  //: diferente por modo (a mesma causa raiz do bug de posição original).
+  showModeSwitch?: boolean;
 }
 
-export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
+export function Header({
+  onShowShortcuts,
+  onOpenSidebar,
+  showModeSwitch,
+}: HeaderProps) {
   // No desktop, ícone+título já aparecem na TitleBar (canto superior
   // esquerdo, ao lado de voltar/recarregar) — repeti-los aqui só ocupa
   // altura à toa. Na web (sem TitleBar), continuam aqui como identidade
   // da página.
   const desktop = useIsDesktop();
+  const [rowRef, rowWidth] = useElementWidth<HTMLDivElement>();
 
   return (
-    <header className="border-b border-border/60 bg-background h-11 flex items-center">
-      {/* max-w-4xl mx-auto: mesma largura/centralização de message-list.tsx —
-          sem isso, o ícone de dicas (à direita) não alinha com a borda das
-          bolhas de mensagem em telas largas. */}
-      <div className="flex items-center justify-between w-full min-w-0 max-w-4xl mx-auto px-4 sm:px-6">
+    <header
+      ref={rowRef}
+      className="border-b border-border/60 bg-background h-11 flex items-center"
+    >
+      <div className="flex items-center justify-between w-full min-w-0 px-4 sm:px-6">
         <div className="flex items-center gap-2 shrink-0">
           {/* Hamburger só em mobile — reabre o sidebar como overlay. */}
           {onOpenSidebar && (
@@ -58,6 +74,12 @@ export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
             </>
           )}
         </div>
+
+        {showModeSwitch && (
+          <div className="flex-1 flex justify-center min-w-0">
+            <IdeModeSwitch show width={rowWidth} />
+          </div>
+        )}
 
         <div className="flex items-center gap-3 shrink-0">
           <ContextualHelp onShowShortcuts={onShowShortcuts} />

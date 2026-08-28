@@ -1,37 +1,27 @@
 // @vitest-environment jsdom
 /**
  * Kanban é o 3º modo de interface, feature pública — sem gate de flag.
+ * `width` chega como prop (medida pelo Header, que agora é a única barra
+ * de topo) — não há mais medição própria neste componente.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 import { useSettingsStore } from "@/lib/stores/settings-store";
-
-const { useElementWidthMock } = vi.hoisted(() => ({
-  useElementWidthMock: vi.fn(),
-}));
-
-vi.mock("@/lib/hooks/use-element-width", () => ({
-  useElementWidth: useElementWidthMock,
-}));
-
-const { IdeModeSwitch } = await import("../ide-mode-switcher");
+import { IdeModeSwitch } from "../ide-mode-switcher";
 
 beforeEach(() => {
   overwriteGetLocale(() => "pt");
-  useElementWidthMock.mockReturnValue([{ current: null }, 300]);
 });
 afterEach(() => {
   cleanup();
-  vi.restoreAllMocks();
   overwriteGetLocale(() => baseLocale);
 });
 
 async function montar(width = 300) {
-  useElementWidthMock.mockReturnValue([{ current: null }, width]);
-  render(<IdeModeSwitch show />);
+  render(<IdeModeSwitch show width={width} />);
   await act(async () => {});
 }
 
@@ -47,7 +37,7 @@ describe("IdeModeSwitch — 3ª posição (Kanban, feature pública)", () => {
   });
 
   it("show=false esconde o seletor inteiro", async () => {
-    render(<IdeModeSwitch show={false} />);
+    render(<IdeModeSwitch show={false} width={300} />);
     await act(async () => {});
 
     expect(screen.queryByRole("group")).not.toBeInTheDocument();

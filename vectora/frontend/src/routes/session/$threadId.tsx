@@ -4,7 +4,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Header } from "@/components/header/header";
-import { IdeModeSwitch } from "@/components/header/ide-mode-switcher";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import {
@@ -642,9 +641,10 @@ function SessionPage() {
         onToggleToolCalls={() => setShowToolCalls((v) => !v)}
         onShowShortcuts={() => setShowShortcutsDialog(true)}
         onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+        showModeSwitch={!chatMode}
       />
     ),
-    [showToolCalls],
+    [showToolCalls, chatMode],
   );
 
   // A sidebar de sessões fica visualmente parada entre Kanban e Assistente
@@ -718,12 +718,13 @@ function SessionPage() {
     <div className="flex flex-col h-full overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
-      {/* Linha própria, irmã da linha de sidebar+conteúdo (não filha) —
-          largura cheia e altura reservada em todos os 3 modos, então
-          nunca muda de lugar na tela ao trocar de modo nem sobrepõe o
-          Header (que vive dentro da linha abaixo, com largura/coluna
-          diferente por modo). */}
-      <IdeModeSwitch show={!chatMode} />
+      {/* Renderizado UMA vez aqui, largura cheia, irmão da linha de
+          sidebar+conteúdo (não filho) — nunca muda de lugar na tela ao
+          trocar de modo, e o seletor Assistente/IDE/Kanban (centralizado
+          dentro dele) some numa única barra com título e ajuda/config, em
+          vez de duas barras empilhadas. Cada modo abaixo NÃO renderiza seu
+          próprio Header — só este. */}
+      {headerEl}
 
       <div className="relative flex flex-1 min-h-0 overflow-hidden">
         {showSidebarPanel && sidebarPanel}
@@ -746,21 +747,13 @@ function SessionPage() {
               requestAnimationFrame). Mesmo motivo e mesma solução já
               aplicados em workbench-panel.tsx. */}
           {uiMode === "kanban" && !chatMode ? (
-            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              {headerEl}
-              {/* min-w-[360px]: piso mínimo pro conteúdo continuar legível
-                  quando a janela encolhe. */}
-              <div className="flex flex-col flex-1 min-w-[360px] min-h-0 overflow-hidden">
-                <KanbanBoard threadId={threadId} />
-              </div>
+            // min-w-[360px]: piso mínimo pro conteúdo continuar legível
+            // quando a janela encolhe.
+            <div className="flex flex-col flex-1 min-w-[360px] min-h-0 overflow-hidden">
+              <KanbanBoard threadId={threadId} />
             </div>
           ) : uiMode === "ide" && !chatMode ? (
             // ── Layout IDE ──────────────────────────────────────────────
-            // O Header NÃO fica acima da linha de painéis: ele vive dentro
-            // da coluna do editor (ver slot `editor` abaixo). Acima de tudo
-            // ele roubaria a faixa de topo da navBar, do workbench e do
-            // chat, que precisam ir do topo ao rodapé como a sidebar no
-            // modo Assistente.
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <IdeModeLayout
                 isNarrow={isNarrowViewport}
@@ -803,10 +796,7 @@ function SessionPage() {
                   // min-w-[360px]: piso mínimo pro editor continuar usável
                   // ao encolher a janela ou puxar o painel do workbench largo.
                   <div className="flex flex-col flex-1 min-w-[360px] h-full overflow-hidden">
-                    {headerEl}
-                    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                      <DockedEditor activeWorkspaceId={activeWorkspaceId} />
-                    </div>
+                    <DockedEditor activeWorkspaceId={activeWorkspaceId} />
                   </div>
                 }
                 chat={
@@ -874,14 +864,8 @@ function SessionPage() {
                   rightSize={splitSize}
                   onResize={setSplitSize}
                   left={
-                    // O Header vive dentro desta coluna (não no topo geral)
-                    // para não cobrir o painel de workbench à direita, que
-                    // precisa ir do topo ao rodapé como a sidebar.
-                    <div className="flex flex-col h-full min-w-0 overflow-visible">
-                      {headerEl}
-                      <div className="flex-1 min-h-0 min-w-0 overflow-visible">
-                        {renderChatPanel(false)}
-                      </div>
+                    <div className="flex-1 min-h-0 min-w-0 h-full overflow-visible">
+                      {renderChatPanel(false)}
                     </div>
                   }
                   right={

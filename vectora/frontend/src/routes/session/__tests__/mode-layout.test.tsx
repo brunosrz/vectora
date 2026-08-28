@@ -218,26 +218,31 @@ describe("SessionPage — um modo por vez, nunca dois", () => {
 });
 
 describe("SessionPage — posição do Header por modo", () => {
-  it("IDE: Header vive DENTRO da coluna do editor, não acima dos painéis", () => {
-    // Regressão: acima da linha de painéis ele roubava a faixa de topo da
-    // navBar, do workbench e do chat, que devem ir do topo ao rodapé.
+  it("IDE: Header vive FORA da linha de painéis, não dentro de nenhum slot", () => {
+    // Header é renderizado uma única vez, largura cheia, acima da linha de
+    // sidebar+conteúdo — nunca aninhado dentro de um slot específico do
+    // modo (que tem largura/coluna diferente por modo, a mesma causa raiz
+    // do bug de posição do seletor de modo antes de ser unificado aqui).
     setMode("ide");
     render(<SessionPage />);
 
     const header = screen.getByTestId("header");
-    expect(screen.getByTestId("slot-editor")).toContainElement(header);
-
-    for (const slot of ["slot-navbar", "slot-workbench", "slot-chat"]) {
+    for (const slot of [
+      "slot-navbar",
+      "slot-workbench",
+      "slot-editor",
+      "slot-chat",
+    ]) {
       expect(screen.getByTestId(slot)).not.toContainElement(header);
     }
   });
 
-  it("Assistente: Header fica na coluna do chat, liberando o painel de workbench", () => {
+  it("Assistente: Header fica fora do split, não dentro da coluna de chat nem workbench", () => {
     setMode("assistant");
     render(<SessionPage />);
 
     const header = screen.getByTestId("header");
-    expect(screen.getByTestId("split-left")).toContainElement(header);
+    expect(screen.getByTestId("split-left")).not.toContainElement(header);
     expect(screen.getByTestId("split-right")).not.toContainElement(header);
   });
 
