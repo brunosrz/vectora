@@ -326,7 +326,7 @@ function FontScaleSection({
 
   return (
     <div className="space-y-3">
-      <Label>{m.prefs_appearance_section()}</Label>
+      <Label>{m.prefs_typography_section()}</Label>
       {rows.map((row) => (
         <div key={row.id} className="flex items-center gap-3">
           <Label htmlFor={row.id} className="flex-1 text-xs font-normal">
@@ -436,46 +436,64 @@ export function PreferenciasTab() {
 
   return (
     <div className="space-y-6">
-      {/* Tema — seletor unificado (sistema, presets claros/escuros, custom) */}
-      <div className="space-y-2">
-        <Label htmlFor="theme">{m.prefs_theme()}</Label>
-        <ThemePicker
-          value={selectedTheme}
-          onChange={handleThemeChange}
-          presets={THEME_PRESETS}
-          systemLabel={m.prefs_theme_system()}
-          customLabel={m.prefs_theme_palette_custom()}
-          customColors={activeCustomColors}
-        />
-        <p className="text-xs text-muted-foreground">
-          {m.prefs_theme_palette_help()}
-        </p>
+      {/* Aparência — tema (com preview) + escalas de fonte, agrupados numa
+          seção só, em vez de espalhados sem relação visual entre si. */}
+      <div className="space-y-6">
+        <h3 className="text-sm font-medium text-foreground">
+          {m.prefs_appearance_section()}
+        </h3>
 
-        {themePreset === "custom" && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-            {CUSTOM_COLOR_FIELDS.map(({ key, labelKey }) => (
-              <div key={key} className="space-y-1">
-                <Label htmlFor={`custom-color-${key}`} className="text-xs">
-                  {mDyn(labelKey)}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    id={`custom-color-${key}`}
-                    type="color"
-                    value={activeCustomColors[key]}
-                    onChange={(e) =>
-                      handleCustomColorChange(key, e.target.value)
-                    }
-                    className="h-8 w-8 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0.5"
-                  />
-                  <span className="text-[11px] font-mono text-muted-foreground truncate">
-                    {activeCustomColors[key]}
-                  </span>
+        <div className="space-y-2">
+          <Label htmlFor="theme">{m.prefs_theme()}</Label>
+          <ThemePicker
+            value={selectedTheme}
+            onChange={handleThemeChange}
+            presets={THEME_PRESETS}
+            systemLabel={m.prefs_theme_system()}
+            customLabel={m.prefs_theme_palette_custom()}
+            customColors={activeCustomColors}
+          />
+          <p className="text-xs text-muted-foreground">
+            {m.prefs_theme_palette_help()}
+          </p>
+
+          {themePreset === "custom" && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              {CUSTOM_COLOR_FIELDS.map(({ key, labelKey }) => (
+                <div key={key} className="space-y-1">
+                  <Label htmlFor={`custom-color-${key}`} className="text-xs">
+                    {mDyn(labelKey)}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id={`custom-color-${key}`}
+                      type="color"
+                      value={activeCustomColors[key]}
+                      onChange={(e) =>
+                        handleCustomColorChange(key, e.target.value)
+                      }
+                      className="h-8 w-8 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0.5"
+                    />
+                    <span className="text-[11px] font-mono text-muted-foreground truncate">
+                      {activeCustomColors[key]}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+
+        <FontScaleSection
+          fontScaleUi={fontScaleUi}
+          fontScaleChat={fontScaleChat}
+          fontScaleMarkdown={fontScaleMarkdown}
+          monacoFontSize={monacoFontSize}
+          setFontScaleUi={setFontScaleUi}
+          setFontScaleChat={setFontScaleChat}
+          setFontScaleMarkdown={setFontScaleMarkdown}
+          setMonacoFontSize={setMonacoFontSize}
+        />
       </div>
 
       {/* Idioma */}
@@ -586,18 +604,6 @@ export function PreferenciasTab() {
           </div>
         ))}
       </div>
-
-      {/* Aparência — escalas de fonte independentes */}
-      <FontScaleSection
-        fontScaleUi={fontScaleUi}
-        fontScaleChat={fontScaleChat}
-        fontScaleMarkdown={fontScaleMarkdown}
-        monacoFontSize={monacoFontSize}
-        setFontScaleUi={setFontScaleUi}
-        setFontScaleChat={setFontScaleChat}
-        setFontScaleMarkdown={setFontScaleMarkdown}
-        setMonacoFontSize={setMonacoFontSize}
-      />
 
       {/* Auto-update (só desktop) */}
       <AutoUpdateSection

@@ -114,6 +114,7 @@
   "settings_chat_show_tool_calls": "Show tool calls in chat",
   "settings_chat_show_tool_calls_hint": "Shows tool calls during the response.",
   "prefs_appearance_section": "Appearance",
+  "prefs_typography_section": "Font sizes",
   "prefs_font_scale_ui": "Interface",
   "prefs_font_scale_chat": "Conversation",
   "prefs_font_scale_markdown": "Markdown (Plan/Memory/Files)",
