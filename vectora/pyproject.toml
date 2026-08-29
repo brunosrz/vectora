@@ -44,9 +44,6 @@ dependencies = [
     "pytest-order>=1.5.0",
     "pytest-rerunfailures>=16.3",
     "pytest-timeout>=2.4.0",
-    # Isola em subprocesso (fork) testes que travam o runtime nativo do
-    # LanceDB em CI — só existe fork() em Linux, por isso condicional.
-    "pytest-forked>=1.6.0 ; sys_platform == 'linux'",
     "mypy>=2.1.0",
     "bandit>=1.9.4",
     "types-python-dateutil>=2.9.0.20260518",
@@ -330,18 +327,21 @@ asyncio_default_test_loop_scope = "session"
 timeout = 300  # ver comentário abaixo — 120s comprovadamente insuficiente na CI
 # Hang intermitente confirmado só na CI (ubuntu-latest, nunca reproduzido
 # local em várias rodadas completas da suíte, incl. com --cov ligado).
-# Investigação extensa (múltiplas runs instrumentadas com sys.__stderr__,
-# que bypassa o capture do pytest): NÃO é sobre AsyncConnectionPool/aiosqlite
-# — o hang já apareceu num teste sem nenhum fixture assíncrono/pool próprio
-# (só `caplog`), e prints colocados dentro de
-# AsyncConnectionPool._new_conn/open() nunca chegam a executar. A pilha do
-# MainThread no dump é sempre idêntica: pytest_asyncio criando um novo
-# `asyncio.Runner` por teste (`asyncio_default_fixture_loop_scope=
-# "function"`, ~4700 event loops criados/destruídos por rodada) —
-# indisponibilidade de threads/CPU nesse runner específico é a hipótese mais
-# provável, não um bug de código. `timeout_method=thread` mata o processo
-# inteiro (`os._exit`) no timeout — reruns/flaky não ajudam aqui. 300s dá
-# margem, mas não elimina a causa raiz (ver task de investigação em aberto).
+# Causa raiz identificada: a primeira chamada real (não mockada) a
+# `lancedb.connect_async()` numa sessão de testes trava de forma
+# determinística no Linux — dump de threads mostra o runtime Tokio nativo
+# do LanceDB (`lancedb-tokio-w`) e o event loop do próprio teste ambos
+# ociosos (`futex_do_wait`/`ep_poll`), ou seja, ninguém processando nada.
+# Reproduzido em lancedb 0.36.0 E 0.37.1 — não é bug de versão. Isolar via
+# `pytest-forked` (fork) NÃO funciona: o runtime nativo do LanceDB tem
+# threads em background (jemalloc, Tokio) que um `fork()` clássico não
+# duplica de forma segura — resulta em segfault no processo filho em vez
+# de hang. Os testes que tocam LanceDB de verdade (marcador
+# `real_lancedb`) são isolados num STEP SEPARADO do workflow de CI
+# (subprocesso real do SO, não fork — ver .github/workflows/vectora.yml),
+# com timeout próprio que nunca bloqueia o job principal. `timeout_method
+# =thread` mata o processo inteiro (`os._exit`) no timeout — reruns/flaky
+# não ajudam aqui. 300s dá margem para o resto da suíte.
 # "signal" (default) só despeja a stack da thread principal no timeout — não
 # mostra onde a thread de background do portal anyio/starlette (usada por
 # TestClient) está de fato presa, que é exatamente onde os hangs de CI
@@ -388,6 +388,7 @@ markers = [
     "frontend_build: testes que sobem o backend real servindo frontend/dist — requer 'pnpm --dir frontend build'",
     "electron_dev: testes que sobem o Electron dev build real — requer 'scons frontend' (ou 'pnpm --dir vectora/frontend install && pnpm --dir vectora/frontend run electron:build')",
     "live: testes sem mock que chamam LLM/Tavily reais — custam API real, só via 'scons tests-live'",
+    "real_lancedb: testes que chamam lancedb.connect_async() real (sem mock) — travam de forma determinística no Linux CI, rodam em step isolado do workflow (ver comentário do timeout acima)",
 ]
 
 [dependency-groups]

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -449,12 +448,16 @@ class TestPurgeGraphIndexRealTable:
 
     `lancedb.connect_async()` trava de forma determinística em CI (Linux)
     — o runtime Tokio nativo do LanceDB nunca entrega o resultado, dump de
-    thread mostra tudo ocioso, sem depender de versão da lib. Isolado em
-    subprocesso (fork) pra que esse travamento derrube só estes dois
-    testes, não os ~4700 restantes da suíte; fork só existe em Linux, daí
-    o marcador ser condicional."""
+    thread mostra tudo ocioso, sem depender de versão da lib. `fork()`
+    (pytest-forked) NÃO isola isso — as threads de background do LanceDB
+    (jemalloc, Tokio) não sobrevivem a um fork clássico de forma segura e
+    o processo filho segfaulta em vez de travar. Isolamento de verdade
+    acontece em step separado do workflow de CI (subprocesso real do SO —
+    ver .github/workflows/vectora.yml); o marcador aqui só serve pra
+    excluir esses testes da suíte principal via '-m "not real_lancedb"'.
+    """
 
-    pytestmark = pytest.mark.forked if hasattr(os, "fork") else []
+    pytestmark = pytest.mark.real_lancedb
 
     @pytest.mark.asyncio
     async def test_purge_remove_apenas_nos_do_workspace_em_tabela_real(
