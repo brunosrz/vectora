@@ -718,14 +718,6 @@ function SessionPage() {
     <div className="flex flex-col h-full overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
-      {/* Renderizado UMA vez aqui, largura cheia, irmão da linha de
-          sidebar+conteúdo (não filho) — nunca muda de lugar na tela ao
-          trocar de modo, e o seletor Assistente/IDE/Kanban (centralizado
-          dentro dele) some numa única barra com título e ajuda/config, em
-          vez de duas barras empilhadas. Cada modo abaixo NÃO renderiza seu
-          próprio Header — só este. */}
-      {headerEl}
-
       <div className="relative flex flex-1 min-h-0 overflow-hidden">
         {showSidebarPanel && sidebarPanel}
         {showSidebarPanel && (
@@ -740,6 +732,14 @@ function SessionPage() {
         )}
 
         <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
+          {/* Renderizado UMA vez aqui, dentro da coluna de conteúdo (ao
+              lado da sidebar, não acima dela) — nunca muda de lugar na
+              tela ao trocar de modo, e o seletor Assistente/IDE/Kanban
+              (centralizado dentro dele) some numa única barra com título
+              e ajuda/config, em vez de duas barras empilhadas. Cada modo
+              abaixo NÃO renderiza seu próprio Header — só este. */}
+          {headerEl}
+
           {/* Troca de modo é unmount/mount instantâneo — sem
               AnimatePresence mode="wait". Depender da animação de saída
               completar deixava o modo anterior desenhado por cima do novo
