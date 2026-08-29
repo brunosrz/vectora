@@ -447,6 +447,42 @@ class TestPurgeGraphIndexRealTable:
     contra uma tabela LanceDB real."""
 
     @pytest.mark.asyncio
+    async def test_purge_remove_apenas_nos_do_workspace_em_tabela_real(
+        self, tmp_path
+    ) -> None:
+        import lancedb
+
+        db = await lancedb.connect_async(str(tmp_path))
+        rows = [
+            {
+                "id": "n1",
+                "vector": [0.1, 0.2],
+                "text": "a",
+                "metadata": json.dumps({"node_id": "n1", "workspace_id": "ws-1"}),
+            },
+            {
+                "id": "n2",
+                "vector": [0.3, 0.4],
+                "text": "b",
+                "metadata": json.dumps({"node_id": "n2", "workspace_id": "ws-1"}),
+            },
+            {
+                "id": "n3",
+                "vector": [0.5, 0.6],
+                "text": "c",
+                "metadata": json.dumps({"node_id": "n3", "workspace_id": "ws-2"}),
+            },
+        ]
+        await db.create_table("context_graph_nodes", data=rows)
+
+        with patch(_GETDB, new_callable=AsyncMock, return_value=db):
+            await purge_graph_index("ws-1")
+
+        table = await db.open_table("context_graph_nodes")
+        remaining_ids = {row["id"] for row in await table.query().to_list()}
+        assert remaining_ids == {"n3"}
+
+    @pytest.mark.asyncio
     async def test_purge_nao_casa_workspace_que_e_prefixo_de_outro(
         self, tmp_path
     ) -> None:
