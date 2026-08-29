@@ -54,7 +54,9 @@ export function XtermView({
   // fora das dependências do efeito evita reconectar (e derrubar) o WebSocket a
   // cada re-render. Refs entregam sempre a versão atual sem re-executar o efeito.
   const onClosedRef = useRef(onClosed);
-  onClosedRef.current = onClosed;
+  useEffect(() => {
+    onClosedRef.current = onClosed;
+  }, [onClosed]);
 
   useEffect(() => {
     if (!containerRef.current) return;

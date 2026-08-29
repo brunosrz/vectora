@@ -64,7 +64,7 @@ function FileRow({
   useWorkbenchSWR({
     key: `diff:${workspaceId}:${file.path}`,
     hasCache: Array.isArray(hunks),
-    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    isStale: () => Date.now() - fetchedAt > WORKBENCH_STALE_MS,
     revalidate,
     skip: !open,
   });
@@ -278,7 +278,7 @@ export function ChangesView({
     [workspaceId, handleRefresh, menu],
   );
 
-  const handleCommit = useCallback(async () => {
+  const handleCommit = async () => {
     if (!commitMsg.trim()) return;
     setCommitting(true);
     try {
@@ -295,7 +295,7 @@ export function ChangesView({
     } finally {
       setCommitting(false);
     }
-  }, [workspaceId, commitMsg, commitBody, amend, handleRefresh]);
+  };
 
   const { staged, unstaged, untracked } = useMemo(() => {
     const stagedFiles: DiffFile[] = [];

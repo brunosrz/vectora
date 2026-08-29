@@ -132,6 +132,8 @@ export function MemoriaTab() {
   }, []);
 
   useEffect(() => {
+    // Carrega memórias do backend ao montar, não estado derivado.
+    // oxlint-disable-next-line react/set-state-in-effect
     void load();
   }, [load]);
 

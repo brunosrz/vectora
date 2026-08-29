@@ -53,10 +53,14 @@ export function useNewSessionId(routeParam: string): string {
       didMountRef.current = true;
       return;
     }
-    if (isNewRoute) {
+    if (routeParam === "new") {
+      // generateLocalNewId consome sinais one-shot de workspace pré-escolhido
+      // (registries externos) — não é derivação pura de estado, por isso
+      // fica num efeito em vez de comparação durante o render.
+      // oxlint-disable-next-line react/set-state-in-effect
       setLocalNewId(generateLocalNewId());
     }
-  }, [routeParam, isNewRoute]);
+  }, [routeParam]);
 
   return isNewRoute ? localNewId : "";
 }

@@ -144,7 +144,7 @@ export function DirNode({
   useWorkbenchSWR({
     key: `files:${workspaceId}:${path}`,
     hasCache: Array.isArray(entries),
-    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    isStale: () => Date.now() - fetchedAt > WORKBENCH_STALE_MS,
     revalidate,
     skip: !expanded,
   });

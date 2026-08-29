@@ -73,6 +73,8 @@ export function PluginsTab() {
   }, []);
 
   useEffect(() => {
+    // Busca a lista de servidores MCP configurados no backend ao montar.
+    // oxlint-disable-next-line react/set-state-in-effect
     void load();
   }, [load]);
 

@@ -29,11 +29,13 @@ interface SWROptions {
   /** True se já existe cache renderizável. */
   hasCache: boolean;
   /**
-   * True se a entrada cacheada está obsoleta.
+   * True (ou função que devolve true) se a entrada cacheada está obsoleta.
    * Quando `ttl` é fornecido, este campo pode omitir a verificação de tempo
-   * (o hook calcula internamente).
+   * (o hook calcula internamente). Aceita função para quem compara contra
+   * `Date.now()` — mantém a leitura do relógio fora do corpo de render,
+   * avaliada só quando o efeito de revalidação roda.
    */
-  isStale: boolean;
+  isStale: boolean | (() => boolean);
   /** Função que faz o fetch e atualiza o store. */
   revalidate: () => Promise<void> | void;
   /** Pular o hook (ex.: workspace ausente). */
@@ -63,7 +65,7 @@ export function useWorkbenchSWR({
     (force = false) => {
       if (skip) return;
       const stale =
-        isStale ||
+        (typeof isStale === "function" ? isStale() : isStale) ||
         (ttl > 0 ? Date.now() - (lastFetch.current[key] ?? 0) > ttl : false);
       if (!force && hasCache && !stale) return;
       if (inFlight.current[key]) return;

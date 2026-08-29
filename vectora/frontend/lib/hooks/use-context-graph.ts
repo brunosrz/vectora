@@ -92,11 +92,18 @@ export function useContextGraph(workspaceId: string | null | undefined) {
     if (data.report) setReport(data.report);
   }, [workspaceId]);
 
+  // Busca de dados (I/O de rede), não estado derivado de prop/state — o
+  // caso que `set-state-in-effect` existe pra pegar é o oposto (copiar uma
+  // prop pra um state local sem necessidade). Buscar ao montar/quando o
+  // status muda é o uso correto de efeito segundo o próprio React:
+  // https://react.dev/learn/you-might-not-need-an-effect#fetching-data
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     fetchStatus();
   }, [fetchStatus]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     if (status.status === "done") fetchReport();
   }, [status.status, fetchReport]);
 

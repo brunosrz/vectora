@@ -693,6 +693,8 @@ export function IntegracoesTab() {
   }, []);
 
   useEffect(() => {
+    // Busca integrações/env vars no backend ao montar.
+    // oxlint-disable-next-line react/set-state-in-effect
     void load();
   }, [load]);
 
@@ -704,6 +706,9 @@ export function IntegracoesTab() {
       url.searchParams.delete("oauth_success");
       url.searchParams.delete("oauth_error");
       window.history.replaceState({}, "", url.toString());
+      // Recarrega o status das integrações após o redirect do OAuth —
+      // sincroniza com o resultado do callback (sistema externo).
+      // oxlint-disable-next-line react/set-state-in-effect
       void load();
     }
   }, [load]);

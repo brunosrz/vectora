@@ -581,6 +581,11 @@ export function useStreamHandler({
 
       return { assistantContent, runId: resolvedRunId };
     },
+    // shouldInterruptRef (.current) e onModelSwitched (?.()) só são acessados
+    // via optional chaining — o linter de deps de memoização do oxlint não
+    // enxerga esse uso e os marca como "extra", mas ambos são genuinamente
+    // lidos no corpo do callback (ver linhas acima).
+    // oxlint-disable-next-line react/memo-dependencies
     [threadId, setMessages, agentConfig, shouldInterruptRef, onModelSwitched],
   );
 
@@ -732,6 +737,10 @@ export function useStreamHandler({
 
       return { assistantContent };
     },
+    // shouldInterruptRef (.current) só é acessado via optional chaining — o
+    // linter de deps de memoização do oxlint não enxerga esse uso e o marca
+    // como "extra", mas ele é genuinamente lido no corpo do callback.
+    // oxlint-disable-next-line react/memo-dependencies
     [threadId, setMessages, shouldInterruptRef],
   );
 

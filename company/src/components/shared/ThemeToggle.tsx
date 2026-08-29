@@ -15,7 +15,10 @@ export default function ThemeToggle() {
   const [mode, setMode] = useState<"light" | "dark" | null>(null);
 
   useEffect(() => {
+    // localStorage/matchMedia não existem no SSR — sincroniza com o tema
+    // real do sistema só depois de montar no cliente.
     applyTheme(getStoredTheme());
+    // oxlint-disable-next-line react/set-state-in-effect
     setMode(resolveTheme(getStoredTheme()));
     return watchSystemTheme();
   }, []);

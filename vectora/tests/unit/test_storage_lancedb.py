@@ -2,11 +2,18 @@
 
 Modo "lite" usa diretório temporário; modo "complete" (Qdrant) é skippado
 sem qdrant_url configurado.
+
+Todo o arquivo usa lancedb.connect_async() real (direto ou via
+get_lancedb()/get_vector_store()) — trava de forma determinística em CI
+(Linux), ver comentário completo em pyproject.toml (seção `timeout`).
+Isolado em step separado do workflow via marcador `real_lancedb`.
 """
 
 from __future__ import annotations
 
 import pytest
+
+pytestmark = pytest.mark.real_lancedb
 
 
 @pytest.fixture(autouse=True)

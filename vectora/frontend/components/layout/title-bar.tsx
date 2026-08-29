@@ -35,10 +35,16 @@ export function TitleBar() {
   const [desktop, setDesktop] = useState(false);
 
   useEffect(() => {
+    // `window` só existe no cliente — detecção do Electron não pode
+    // acontecer durante o render (SSR/hidratação).
+    // oxlint-disable-next-line react/set-state-in-effect
     setDesktop(isDesktop());
   }, []);
 
   useEffect(() => {
+    // Checa `window.vectora?.windowControls` diretamente — independe do
+    // state `desktop` (que só controla o early-return abaixo), por isso
+    // roda uma única vez ao montar.
     const controls = window.vectora?.windowControls;
     if (!controls) return;
     controls
@@ -49,7 +55,7 @@ export function TitleBar() {
       setMaximized(state.maximized),
     );
     return unsubscribe;
-  }, [desktop]);
+  }, []);
 
   if (!desktop) return null;
 

@@ -32,6 +32,8 @@ export function MarkdownPreviewDialog({
   useEffect(() => {
     if (!open || !filePath || initialContent) return;
 
+    // Busca o conteúdo do arquivo via rede (sistema externo), não estado derivado.
+    // oxlint-disable-next-line react/set-state-in-effect
     setIsLoading(true);
     fetch(filePath)
       .then((res) => res.text())

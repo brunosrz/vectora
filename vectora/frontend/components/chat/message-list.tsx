@@ -279,6 +279,10 @@ export const MessageList = memo(function MessageList({
     return () => {
       mutationObserverRef.current?.disconnect();
       resizeObserverRef.current?.disconnect();
+      // Timer ID, não nó de DOM — precisa do valor mais recente no
+      // desmonte (pode ter sido reagendado depois que este efeito montou),
+      // então captura antecipada quebraria o cleanup.
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       if (settleCapTimeoutRef.current)
         clearTimeout(settleCapTimeoutRef.current);

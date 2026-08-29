@@ -108,6 +108,8 @@ export function useRagSettings() {
         /* mantém defaults */
       }
     })();
+    // Busca coleções RAG no backend (rede) ao abrir o painel, não estado derivado.
+    // oxlint-disable-next-line react/set-state-in-effect
     void loadCollections();
     return () => {
       alive = false;
@@ -472,6 +474,8 @@ function EmbedModelPicker({
   }, []);
 
   useEffect(() => {
+    // Reinicia a lista antes de rebuscar modelos no backend (rede) ao trocar de provider.
+    // oxlint-disable-next-line react/set-state-in-effect
     setModels([]);
     if (provider === "ollama") void loadOllama();
     else void searchOpenRouter("");

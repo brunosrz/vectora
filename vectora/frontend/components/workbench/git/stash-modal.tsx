@@ -37,6 +37,8 @@ export function StashModal({
   }, [workspaceId]);
 
   useEffect(() => {
+    // Sincroniza com o backend git (rede) ao abrir o modal, não estado derivado.
+    // oxlint-disable-next-line react/set-state-in-effect
     if (open) void load();
   }, [open, load]);
 

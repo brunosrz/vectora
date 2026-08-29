@@ -9,7 +9,7 @@
  */
 
 import { Check, Loader2, LogOut, Pencil, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -49,9 +49,16 @@ export function ContaTab() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // `draft` sincroniza com `user?.name` quando ele muda por fora (ex.: outra
+  // aba salvou o nome) mas continua editável localmente enquanto o usuário
+  // digita — comparação durante o render (não num effect) é o padrão que o
+  // próprio React recomenda pra "ajustar estado quando uma prop muda":
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevUserName, setPrevUserName] = useState(user?.name ?? "");
+  if ((user?.name ?? "") !== prevUserName) {
+    setPrevUserName(user?.name ?? "");
     setDraft(user?.name ?? "");
-  }, [user?.name]);
+  }
 
   if (!user) {
     return (

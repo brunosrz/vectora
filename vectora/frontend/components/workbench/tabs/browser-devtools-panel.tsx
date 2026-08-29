@@ -158,6 +158,8 @@ export function BrowserDevtoolsPanel({
   }, [wsId, script, selectedTabId]);
 
   useEffect(() => {
+    // Busca as abas do navegador remoto (rede) ao montar, não estado derivado.
+    // oxlint-disable-next-line react/set-state-in-effect
     fetchTabs();
   }, [fetchTabs]);
 
@@ -177,6 +179,7 @@ export function BrowserDevtoolsPanel({
   }, [subTab, fetchConsole, fetchNetwork]);
 
   useEffect(() => {
+    if (consoleMessages.length === 0) return;
     const el = logRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [consoleMessages]);

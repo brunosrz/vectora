@@ -240,6 +240,9 @@ function OllamaSection() {
   }, []);
 
   useEffect(() => {
+    // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+    // uso correto de efeito, ver justificativa em use-context-graph.ts.
+    // oxlint-disable-next-line react/set-state-in-effect
     void loadRegistered();
   }, [loadRegistered]);
 
@@ -412,6 +415,9 @@ function OpenRouterSection() {
   }, []);
 
   useEffect(() => {
+    // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+    // uso correto de efeito, ver justificativa em use-context-graph.ts.
+    // oxlint-disable-next-line react/set-state-in-effect
     void loadStatus();
     void loadRegistered();
   }, [loadStatus, loadRegistered]);
@@ -667,6 +673,9 @@ function NineRouterSection() {
   }, []);
 
   useEffect(() => {
+    // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+    // uso correto de efeito, ver justificativa em use-context-graph.ts.
+    // oxlint-disable-next-line react/set-state-in-effect
     void loadStatus();
     void loadRegistered();
   }, [loadStatus, loadRegistered]);
@@ -677,6 +686,7 @@ function NineRouterSection() {
   // botão "Detectar modelos" continua disponível pra atualizar manualmente.
   useEffect(() => {
     if (!status?.configured || discovered !== null) return;
+    // oxlint-disable-next-line react/set-state-in-effect
     setDiscovering(true);
     setError(null);
     discoverNineRouterModels()

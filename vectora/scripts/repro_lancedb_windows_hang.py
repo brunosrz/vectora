@@ -1,27 +1,22 @@
-"""Reprodução isolada e hermética do hang de `lancedb` no Windows.
+"""Reprodução isolada e hermética de um suposto hang de `lancedb` no Windows.
 
-NÃO é um teste pytest — de propósito. O hang original só aparecia depois
-de volume suficiente de testes rodando no mesmo processo pytest (thread de
-background da lib presa em `GetQueuedCompletionStatus`/IOCP), o que o
-tornava inútil como regression gate (não roda em CI de forma confiável,
-não dá pra anexar a um issue upstream). Este script isola a condição real
-fora de qualquer fixture: abre/fecha N conexões `connect_async` em
-sequência, num processo Python nu.
+NÃO é um teste pytest — de propósito. Escrito para investigar um hang
+observado em `GetQueuedCompletionStatus`/IOCP com `lancedb==0.37.1`, que na
+época parecia desaparecer voltando pra `0.36.0`. Diagnóstico upstream
+posterior (lancedb/lancedb#3983, #4001) mostrou que a causa real era um
+vazamento de threads no NOSSO próprio código (conexões SQLite nunca
+fechadas entre testes) — não um bug do LanceDB. `pyproject.toml` já não
+tem mais teto de versão por causa disso. Mantido como ferramenta de
+diagnóstico caso um hang parecido reapareça (abre/fecha N conexões
+`connect_async` em sequência, num processo Python nu, fora de qualquer
+fixture pytest).
 
 Uso:
     uv run python scripts/repro_lancedb_windows_hang.py [--n N] [--timeout-s S]
 
-Saída esperada:
-    - `lancedb==0.36.0` (pin atual em pyproject.toml): termina limpo.
-    - `lancedb==0.37.1`: trava — o script detecta isso via watchdog próprio
-      (thread separada com timeout) e despeja a stack de todas as threads
-      (`faulthandler.dump_traceback`) antes de sair com código 1, já que o
-      processo trancado não retornaria ao shell sozinho.
-
-Não abre nenhuma conexão de rede nem posta nada externamente — é só
-diagnóstico local. Testar contra 0.37.1 exige trocar a versão instalada
-manualmente (`uv pip install "lancedb==0.37.1"` num venv descartável) e
-restaurar o pin depois; este script não faz isso sozinho, de propósito.
+Se travar, o watchdog (thread separada com timeout) despeja a stack de
+todas as threads (`faulthandler.dump_traceback`) antes de sair com código
+1, já que o processo trancado não retornaria ao shell sozinho.
 """
 
 from __future__ import annotations

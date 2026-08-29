@@ -85,6 +85,9 @@ function useSandboxStatus(workspaceId: string | undefined): {
   }, [workspaceId]);
 
   useEffect(() => {
+    // Sincroniza com o fetch de status da sandbox (sistema externo) — zera
+    // antes de revalidar pra não mostrar o status da workspace anterior.
+    // oxlint-disable-next-line react/set-state-in-effect
     setStatus(null);
     refetch();
   }, [refetch]);
@@ -122,6 +125,9 @@ function SandboxConfigDialog({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    // Sincroniza com o fetch do vectora.toml (sistema externo) ao abrir o
+    // dialog — não deriva de estado puro.
+    // oxlint-disable-next-line react/set-state-in-effect
     setLoadingFile(true);
     setSaveError(null);
     setSaveHint(null);

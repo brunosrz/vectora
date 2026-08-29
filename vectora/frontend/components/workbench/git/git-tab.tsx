@@ -73,7 +73,7 @@ function PrDialog({
     });
   }, [open, workspaceId]);
 
-  const handleCreate = useCallback(async () => {
+  const handleCreate = async () => {
     if (!title.trim()) return;
     setSubmitting(true);
     setMsg("");
@@ -93,7 +93,7 @@ function PrDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [workspaceId, title, body, baseBranch]);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -189,13 +189,14 @@ export function GitTab(_props: { threadId: string }) {
 
   // Diff summary via SWR (mesmo padrão do antigo DiffTab).
   useEffect(() => {
-    if (wsId) clearPending(wsId, "diff");
+    // fetchedAt dispara a limpeza do pending sempre que um novo fetch chega.
+    if (wsId && fetchedAt) clearPending(wsId, "diff");
   }, [wsId, fetchedAt, clearPending]);
 
   useWorkbenchSWR({
     key: `diff-summary:${wsId}`,
     hasCache: summary !== null,
-    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    isStale: () => Date.now() - fetchedAt > WORKBENCH_STALE_MS,
     revalidate: async () => {
       if (!wsId) return;
       const data = await fetchDiff(wsId);
@@ -204,11 +205,14 @@ export function GitTab(_props: { threadId: string }) {
     skip: !wsId,
   });
 
-  // Status + branches (alimentam a toolbar).
+  // Status + branches (alimentam a toolbar); refreshKey força nova busca
+  // após ações git (checkout, commit, etc.) via handleChanged.
   useEffect(() => {
     if (!wsId) return;
-    void fetchGitStatus(wsId).then(setStatus);
-    void fetchBranches(wsId).then(setBranches);
+    if (refreshKey >= 0) {
+      void fetchGitStatus(wsId).then(setStatus);
+      void fetchBranches(wsId).then(setBranches);
+    }
   }, [wsId, refreshKey]);
 
   const handleChanged = useCallback(() => {

@@ -10,6 +10,9 @@ export function useIsDesktop(): boolean {
   const [desktop, setDesktop] = useState(false);
 
   useEffect(() => {
+    // Sincroniza com o sistema externo window.vectora (só existe no client,
+    // após o preload do Electron) — não é derivável durante o render.
+    // oxlint-disable-next-line react/set-state-in-effect
     setDesktop(
       typeof window !== "undefined" && Boolean(window.vectora?.windowControls),
     );

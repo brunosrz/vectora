@@ -208,10 +208,16 @@ export function FontScaleNumberInput({
   onChange: (v: number) => void;
 }) {
   const [text, setText] = useState(String(value));
-
-  useEffect(() => {
+  // `text` sincroniza com `value` quando ele muda por fora (ex.: reset de
+  // configurações) mas continua editável localmente enquanto o usuário
+  // digita — comparação durante o render (não num effect) é o padrão que o
+  // próprio React recomenda pra "ajustar estado quando uma prop muda":
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setText(String(value));
-  }, [value]);
+  }
 
   const commit = useCallback(() => {
     const n = Number(text);

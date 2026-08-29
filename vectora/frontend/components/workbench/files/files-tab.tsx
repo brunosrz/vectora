@@ -125,9 +125,10 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const setDiffSummary = useWorkbenchStore((s) => s.setDiffSummary);
   const clearPending = useWorkbenchStore((s) => s.clearPending);
 
-  // Abrir/revalidar a aba consome a pendência de atualização.
+  // Abrir/revalidar a aba consome a pendência de atualização; diffFetchedAt
+  // dispara a limpeza sempre que um novo diff chega.
   useEffect(() => {
-    if (wsId) clearPending(wsId, "files");
+    if (wsId && diffFetchedAt) clearPending(wsId, "files");
   }, [wsId, diffFetchedAt, clearPending]);
 
   const statusByPath = useMemo(() => {
@@ -140,7 +141,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   useWorkbenchSWR({
     key: `files-diff-badges:${wsId}`,
     hasCache: diffSummary !== null,
-    isStale: Date.now() - diffFetchedAt > WORKBENCH_STALE_MS,
+    isStale: () => Date.now() - diffFetchedAt > WORKBENCH_STALE_MS,
     revalidate: async () => {
       if (!wsId) return;
       const data = await fetchDiffSummary(wsId);
@@ -174,37 +175,38 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     setEditContent("");
   }, []);
 
-  const handleSaveEdit = useCallback(
-    async (force = false) => {
-      if (!wsId || !openPath) return;
-      setSaving(true);
-      const sha = force ? null : (openContent?.sha256 ?? null);
-      const result = await apiUpdateFile(wsId, openPath, editContent, sha);
-      setSaving(false);
-      if (result.ok) {
-        setIsEditing(false);
-        const refreshed = await fetchFile(wsId, openPath);
-        if (refreshed) setFileContent(wsId, openPath, refreshed);
-        useToastStore.getState().success(m.workbench_files_save());
-      } else if (result.conflict) {
-        useToastStore.getState().error(m.workbench_files_conflict_title(), {
-          action: {
-            label: m.workbench_files_force_save(),
-            onClick: () => void handleSaveEdit(true),
-          },
-        });
-      } else {
-        useToastStore.getState().error(m.workbench_files_save_error());
-      }
-    },
-    [wsId, openPath, openContent, editContent, setFileContent],
-  );
+  async function handleSaveEdit(force = false) {
+    if (!wsId || !openPath) return;
+    setSaving(true);
+    const sha = force ? null : (openContent?.sha256 ?? null);
+    const result = await apiUpdateFile(wsId, openPath, editContent, sha);
+    setSaving(false);
+    if (result.ok) {
+      setIsEditing(false);
+      const refreshed = await fetchFile(wsId, openPath);
+      if (refreshed) setFileContent(wsId, openPath, refreshed);
+      useToastStore.getState().success(m.workbench_files_save());
+    } else if (result.conflict) {
+      useToastStore.getState().error(m.workbench_files_conflict_title(), {
+        action: {
+          label: m.workbench_files_force_save(),
+          onClick: () => void handleSaveEdit(true),
+        },
+      });
+    } else {
+      useToastStore.getState().error(m.workbench_files_save_error());
+    }
+  }
 
-  // Reset estado de edição ao trocar de arquivo.
-  useEffect(() => {
+  // Reset estado de edição ao trocar de arquivo — comparação durante o
+  // render (não num effect), como recomendado em
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevOpenPathForEdit, setPrevOpenPathForEdit] = useState(openPath);
+  if (openPath !== prevOpenPathForEdit) {
+    setPrevOpenPathForEdit(openPath);
     setIsEditing(false);
     setEditContent("");
-  }, [openPath]);
+  }
 
   // ── Busca em conteúdo (A.5) ─────────────────────────────────────────────
   const [searchMode, setSearchMode] = useState(false);
@@ -219,6 +221,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
 
   // Scroll automático para a linha destacada quando o arquivo abre.
   useEffect(() => {
+    if (!openPath || highlightLine === null) return;
     highlightRef.current?.scrollIntoView({ block: "center" });
   }, [openPath, highlightLine]);
 
@@ -226,6 +229,9 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   useEffect(() => {
     if (!searchMode || !wsId) return;
     if (searchQuery.trim().length < 2) {
+      // Sem termo suficiente pra buscar no backend — limpa o resultado
+      // anterior em vez de disparar rede.
+      // oxlint-disable-next-line react/set-state-in-effect
       setSearchResults(null);
       return;
     }
@@ -296,15 +302,20 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     useState<ShowFileAtRevResponse | null>(null);
   const [historicLoading, setHistoricLoading] = useState(false);
 
-  // Fecha o histórico quando o arquivo aberto muda (navegação na árvore).
-  useEffect(() => {
+  // Fecha o histórico quando o arquivo aberto muda (navegação na árvore) —
+  // comparação durante o render (não num effect), como recomendado em
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevOpenPathForHistory, setPrevOpenPathForHistory] =
+    useState(openPath);
+  if (openPath !== prevOpenPathForHistory) {
+    setPrevOpenPathForHistory(openPath);
     if (historyMode && openPath !== historyPath) {
       setHistoryMode(false);
       setHistoryEntries(null);
       setHistoricSha(null);
       setHistoricContent(null);
     }
-  }, [openPath, historyMode, historyPath]);
+  }
 
   const handleOpenFile = useCallback(
     (path: string) => {
@@ -475,6 +486,9 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
 
   useEffect(() => {
     if (!previewPattern.trim() || !wsId || !gitignoreOpen) {
+      // Sem padrão pra prever no backend — limpa o resultado anterior em
+      // vez de disparar rede.
+      // oxlint-disable-next-line react/set-state-in-effect
       setGitignorePreview([]);
       return;
     }

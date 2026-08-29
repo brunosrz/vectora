@@ -954,17 +954,22 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
   // Ref sempre com a versão mais recente de `carregar` — o interval abaixo
   // só precisa ser recriado quando `threadId` muda, não a cada render.
   const carregarRef = useRef(carregar);
-  carregarRef.current = carregar;
+  useEffect(() => {
+    carregarRef.current = carregar;
+  });
 
   // Pausa o polling com a aba oculta — evita chamada de fundo desnecessária
   // quando o usuário está em outra aba/app. Agora é só reconciliação de
-  // baixa frequência: a atualização principal chega via SSE abaixo.
+  // baixa frequência: a atualização principal chega via SSE abaixo. O
+  // interval não precisa ser recriado quando `threadId` muda — chama sempre
+  // `carregarRef.current()`, que o efeito acima mantém na versão mais
+  // recente (já fechada sobre o thread atual).
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") carregarRef.current();
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [threadId]);
+  }, []);
 
   // Aplica um evento de mudança de status a um card específico, sem
   // refazer o fetch do board inteiro. Task ainda desconhecida localmente
@@ -996,11 +1001,16 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
     );
   };
   const aplicarEventoSseRef = useRef(aplicarEventoSse);
-  aplicarEventoSseRef.current = aplicarEventoSse;
+  useEffect(() => {
+    aplicarEventoSseRef.current = aplicarEventoSse;
+  });
 
   // Push via SSE reaproveitando o canal genérico de webhooks. Reconecta
   // manualmente em vez de confiar só no auto-retry do EventSource — dá
-  // controle do delay e faz a reconexão ser determinística em teste.
+  // controle do delay e faz a reconexão ser determinística em teste. A
+  // conexão não é por thread (SSE_URL é fixo) e o handler despacha sempre
+  // via `aplicarEventoSseRef.current`, mantido atualizado acima — não
+  // precisa recriar ao trocar de thread.
   useEffect(() => {
     let cancelado = false;
     let es: EventSource | null = null;
@@ -1032,7 +1042,7 @@ export function KanbanBoard({ threadId }: { threadId: string }) {
       es?.close();
       if (reconnectTimer) clearTimeout(reconnectTimer);
     };
-  }, [threadId]);
+  }, []);
 
   // `archived` só entra quando o filtro "mostrar arquivadas" está ativo.
   const colunasAtivas = showArchived

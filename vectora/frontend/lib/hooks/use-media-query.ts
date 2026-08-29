@@ -12,6 +12,9 @@ export function useMediaQuery(query: string): boolean {
 
   useEffect(() => {
     const mql = window.matchMedia(query);
+    // Sincroniza com o sistema externo matchMedia — o valor pode ter mudado
+    // entre o cálculo síncrono do useState e o efeito rodar.
+    // oxlint-disable-next-line react/set-state-in-effect
     setMatches(mql.matches);
     const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
     mql.addEventListener("change", handler);

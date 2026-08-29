@@ -134,16 +134,30 @@ export function IdeModeSwitch({ show = false, width }: IdeModeProps) {
   // Recalcula a posição/largura do indicador deslizante sempre que o modo
   // ativo muda ou o layout dos botões muda (ex.: labelSize colapsa/expande
   // o texto, mudando a largura de cada botão). `useLayoutEffect` mede DEPOIS
-  // do DOM aplicar o novo `labelSize`, mas ANTES do browser pintar — evita
-  // o indicador "piscar" na posição antiga por um frame.
+  // do DOM aplicar o layout novo, mas ANTES do browser pintar — evita o
+  // indicador "piscar" na posição antiga por um frame. Um ResizeObserver no
+  // grupo cobre mudanças de largura dos botões (ex.: labelSize) sem precisar
+  // desse valor no array de dependências, já que ele nunca é lido no corpo.
   useLayoutEffect(() => {
-    const btn = buttonRefs.current[uiMode];
     const group = groupRef.current;
-    if (!btn || !group) return;
-    const groupRect = group.getBoundingClientRect();
-    const btnRect = btn.getBoundingClientRect();
-    setIndicator({ left: btnRect.left - groupRect.left, width: btnRect.width });
-  }, [uiMode, labelSize]);
+    if (!group) return;
+
+    const measure = () => {
+      const btn = buttonRefs.current[uiMode];
+      if (!btn) return;
+      const groupRect = group.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+      setIndicator({
+        left: btnRect.left - groupRect.left,
+        width: btnRect.width,
+      });
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(group);
+    return () => observer.disconnect();
+  }, [uiMode]);
 
   if (!show) return null;
 

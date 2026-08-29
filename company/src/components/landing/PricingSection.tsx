@@ -49,6 +49,9 @@ export default function PricingSection() {
   const [currency, setCurrency] = useState<Currency>("USD");
 
   useEffect(() => {
+    // navigator não existe no SSR — leitura de sistema externo, só pode
+    // rodar no cliente.
+    // oxlint-disable-next-line react/set-state-in-effect
     if (navigator.language.toLowerCase().startsWith("pt")) setCurrency("BRL");
   }, []);
 

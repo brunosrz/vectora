@@ -123,10 +123,12 @@ export function CompareView({
   }, [workspaceId, baseRef, head]);
 
   useEffect(() => {
+    // Recompara ao trocar base/head (rede), não estado derivado.
+    // oxlint-disable-next-line react/set-state-in-effect
     void runCompare();
   }, [runCompare]);
 
-  const handleMerge = useCallback(async () => {
+  const handleMerge = async () => {
     setMerging(true);
     setMergeMsg("");
     setConflicts([]);
@@ -145,7 +147,7 @@ export function CompareView({
     } finally {
       setMerging(false);
     }
-  }, [workspaceId, head, onChanged, runCompare]);
+  };
 
   const resolve = useCallback(
     async (path: string, resolution: "ours" | "theirs") => {

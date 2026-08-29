@@ -189,7 +189,6 @@ export function ChatInterface({
     setInput,
   } = useChatState(threadId);
   const [inputError, setInputError] = useState<string | null>(null);
-  const inputLengthRef = useRef(uiState.input.length);
 
   // Consome drafts pré-populados por outras áreas (ex.: empty
   // state do PlanTab que faz "Pedir um plano ao Vectora"). O draft é
@@ -209,7 +208,9 @@ export function ChatInterface({
   const consumeMention = useChatInputStore((s) => s.consumeMention);
   // Ref estável para o input atual sem torná-lo dep do efeito.
   const currentInputRef = useRef(uiState.input);
-  currentInputRef.current = uiState.input;
+  useEffect(() => {
+    currentInputRef.current = uiState.input;
+  });
   useEffect(() => {
     if (!pendingMention) return;
     const cur = currentInputRef.current.trimEnd();
@@ -250,8 +251,12 @@ export function ChatInterface({
     { content: string; id: string }[]
   >([]);
 
-  // Track the "base" input text (before voice input started + finalized transcripts)
+  // Track the "base" input text (before voice input started + finalized
+  // transcripts). Ref evita closure obsoleta no callback `onTranscript` do
+  // hook de voz; `baseInputDisplay` espelha o mesmo valor só pra leitura
+  // durante o render (refs não podem ser lidos no corpo do componente).
   const baseInputRef = useRef(uiState.input);
+  const [baseInputDisplay, setBaseInputDisplay] = useState(uiState.input);
 
   // Sem limite de tamanho de input — paste grande vira anexo via
   // handleInputPaste. Mantemos o nome `setLimitedInput` por
@@ -278,6 +283,7 @@ export function ChatInterface({
         ? `${baseInputRef.current} ${text}`
         : text;
       baseInputRef.current = newBase;
+      setBaseInputDisplay(newBase);
       setInput(newBase);
     },
   });
@@ -285,23 +291,27 @@ export function ChatInterface({
   useEffect(() => {
     if (!isVoiceListening && !interimTranscript) {
       baseInputRef.current = uiState.input;
+      // Sincroniza com o fim do ditado por voz (sistema externo) — não
+      // deriva de outro state deste componente.
+      // oxlint-disable-next-line react/set-state-in-effect
+      setBaseInputDisplay(uiState.input);
     }
   }, [uiState.input, isVoiceListening, interimTranscript]);
 
   const displayInput =
     isVoiceListening && interimTranscript
-      ? baseInputRef.current
-        ? `${baseInputRef.current} ${interimTranscript}`
+      ? baseInputDisplay
+        ? `${baseInputDisplay} ${interimTranscript}`
         : interimTranscript
       : uiState.input;
   const cappedDisplayInput = displayInput;
-  inputLengthRef.current = cappedDisplayInput.length;
 
   // Custom toggle that captures current input as base when starting
   const toggleVoiceListening = useCallback(() => {
     if (!isVoiceListening) {
       // Starting - capture current input as base
       baseInputRef.current = uiState.input;
+      setBaseInputDisplay(uiState.input);
     }
     handleVoiceToggle();
   }, [isVoiceListening, uiState.input, handleVoiceToggle]);
@@ -367,6 +377,13 @@ export function ChatInterface({
   // render, então sem o guard duas chamadas no mesmo tick duplicariam a
   // mensagem do usuário.
   const sendGuard = useSendGuard();
+  // Ref com a versão mais recente do guard: os callbacks abaixo chamam
+  // `sendGuardRef.current.*` em vez de fechar sobre `sendGuard` — evita
+  // precisar do objeto (recriado a cada render) no array de dependências.
+  const sendGuardRef = useRef(sendGuard);
+  useEffect(() => {
+    sendGuardRef.current = sendGuard;
+  });
 
   // HITL: retoma execução pausada após decisão do usuário
   const handleHitlDecision = useCallback(
@@ -428,6 +445,9 @@ export function ChatInterface({
 
     const draft = localStorage.getItem(`draft-${threadId}`);
     if (draft) {
+      // localStorage é sistema externo — leitura só pode acontecer no
+      // efeito (não existe durante SSR/render).
+      // oxlint-disable-next-line react/set-state-in-effect
       setLimitedInput(draft);
     } else {
       // Clear input when switching to thread with no draft
@@ -767,7 +787,7 @@ export function ChatInterface({
         useStreamingStore.getState().setStreaming(threadId, false);
         // Libera a reserva do guard para permitir o próximo envio — sempre,
         // inclusive em erro/abort.
-        sendGuard.release();
+        sendGuardRef.current.release();
       }
     },
     [
@@ -779,11 +799,13 @@ export function ChatInterface({
       customTitle,
       uiDispatch,
       setMessages,
-      sendGuard,
     ],
   );
 
-  // Process queued messages one by one
+  // Process queued messages one by one. `processQueueRef` guarda a versão
+  // mais recente pra recursão — referenciar `processQueue` diretamente no
+  // próprio corpo é acesso à variável durante a inicialização (TDZ).
+  const processQueueRef = useRef<() => void>(() => {});
   const processQueue = useCallback(async () => {
     if (isProcessingQueueRef.current || messageQueueRef.current.length === 0)
       return;
@@ -807,9 +829,12 @@ export function ChatInterface({
 
     // Process next in queue if any
     if (messageQueueRef.current.length > 0) {
-      processQueue();
+      processQueueRef.current();
     }
   }, [processMessage, setMessages]);
+  useEffect(() => {
+    processQueueRef.current = processQueue;
+  });
 
   // Process queue when AI finishes responding
   useEffect(() => {
@@ -855,6 +880,9 @@ export function ChatInterface({
         });
     } else {
       // Just populate input (existing behavior for ticket page, etc.)
+      // Sincroniza com o parâmetro `?q=` da URL (sistema externo) ao
+      // montar — não deriva de outro state deste componente.
+      // oxlint-disable-next-line react/set-state-in-effect
       setLimitedInput(trimmedMessage);
     }
   }, [
@@ -988,7 +1016,7 @@ export function ChatInterface({
     // + clique) ambas teriam passado no check acima e duplicariam a
     // mensagem. O guard barra a 2ª chamada no mesmo tick; a fila legítima
     // (isLoading já true de um envio em andamento) jamais chega aqui.
-    if (!sendGuard.tryAcquire()) {
+    if (!sendGuardRef.current.tryAcquire()) {
       return;
     }
 
@@ -1031,7 +1059,6 @@ export function ChatInterface({
     setMessages,
     inputLocked,
     contextFull,
-    sendGuard,
   ]);
 
   const handleStop = useCallback(async () => {

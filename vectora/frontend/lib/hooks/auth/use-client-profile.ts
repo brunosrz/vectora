@@ -13,7 +13,7 @@
  * - SSR-safe implementation
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { ClientProfile } from "../threads";
 import {
   createClientProfile,
@@ -66,15 +66,15 @@ interface UseClientProfileReturn {
  * ```
  */
 export function useClientProfile(): UseClientProfileReturn {
-  const initialRef = useRef<ClientProfile | null>(null);
-  const [clientProfile, setClientProfile] = useState<ClientProfile>(() => {
-    const created = createClientProfile();
-    initialRef.current = created;
-    return created;
-  });
+  const [clientProfile, setClientProfile] = useState<ClientProfile>(() =>
+    createClientProfile(),
+  );
   const [hasLoaded, setHasLoaded] = useState(false);
 
-  // Load profile from localStorage on mount
+  // Load profile from localStorage on mount. `clientProfile` aqui é lido do
+  // closure do primeiro render (efeito roda uma única vez, deps []) — é o
+  // valor recém-criado pelo useState acima, usado como fallback a persistir
+  // quando não há nada salvo ainda.
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -84,6 +84,9 @@ export function useClientProfile(): UseClientProfileReturn {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        // Sincroniza com o sistema externo (localStorage) — leitura só
+        // possível no client, por isso fica num efeito.
+        // oxlint-disable-next-line react/set-state-in-effect
         setClientProfile(resolveClientProfile(parsed));
         setHasLoaded(true);
         return;
@@ -93,18 +96,14 @@ export function useClientProfile(): UseClientProfileReturn {
     }
 
     // No stored profile found, persist the initial one
-    if (initialRef.current) {
-      try {
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(initialRef.current),
-        );
-      } catch (error) {
-        console.error("Failed to persist client identity", error);
-      }
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(clientProfile));
+    } catch (error) {
+      console.error("Failed to persist client identity", error);
     }
 
     setHasLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- roda só no mount; clientProfile aqui é sempre o valor inicial do useState
   }, []);
 
   /**

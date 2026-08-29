@@ -142,15 +142,13 @@ function SignUpPage() {
     };
   }, [navigate, inviteFromUrl]);
 
-  // Auto-preenche o username a partir do nome enquanto não houver edição manual.
-  useEffect(() => {
-    if (!usernameEdited) setUsername(slugifyUsername(name));
-  }, [name, usernameEdited]);
-
   // Checagem de disponibilidade com debounce — reflete o backend ao vivo.
   useEffect(() => {
     const u = username.trim();
     if (!u) {
+      // Sincroniza com a checagem debounçada abaixo — username vazio não
+      // tem request pendente a esperar.
+      // oxlint-disable-next-line react/set-state-in-effect
       setUsernameStatus(null);
       setCheckingUsername(false);
       return;
@@ -309,7 +307,13 @@ function SignUpPage() {
               type="text"
               autoComplete="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                setName(next);
+                // Auto-preenche o username a partir do nome enquanto não
+                // houver edição manual (ver handler do campo username).
+                if (!usernameEdited) setUsername(slugifyUsername(next));
+              }}
               required
               maxLength={NAME_MAX}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"

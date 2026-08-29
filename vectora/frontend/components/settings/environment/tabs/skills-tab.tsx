@@ -64,6 +64,8 @@ export function SkillsTab({ onSkillsChange }: SkillsTabProps = {}) {
   }, [onSkillsChange]);
 
   useEffect(() => {
+    // Busca a lista de skills instaladas no backend ao montar.
+    // oxlint-disable-next-line react/set-state-in-effect
     void refresh();
   }, [refresh]);
 

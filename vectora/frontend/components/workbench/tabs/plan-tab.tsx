@@ -175,10 +175,15 @@ export function PlanTab({ threadId }: PlanTabProps) {
   const togglePlanOpenSlug = useWorkbenchStore((s) => s.togglePlanOpenSlug);
   const setPlanContent = useWorkbenchStore((s) => s.setPlanContent);
 
+  const isPlanStale = useCallback(
+    () => Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    [fetchedAt],
+  );
+
   useWorkbenchSWR({
     key: `plan:${threadId}`,
     hasCache: fetchedAt > 0,
-    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    isStale: isPlanStale,
     revalidate: async () => {
       const list = await fetchArtifacts(threadId);
       setPlanItems(threadId, list);
@@ -195,9 +200,17 @@ export function PlanTab({ threadId }: PlanTabProps) {
       timestamp: new Date(item.created_at).getTime() || 0,
       item,
     }));
+    // O checklist ao vivo é sempre o progresso do turno atual — ordena
+    // primeiro sem depender do relógio (Infinity vence qualquer created_at).
     const todosEntry =
       todos.length > 0
-        ? [{ slug: TODOS_SLUG, timestamp: Date.now(), item: null }]
+        ? [
+            {
+              slug: TODOS_SLUG,
+              timestamp: Number.POSITIVE_INFINITY,
+              item: null,
+            },
+          ]
         : [];
     return [...todosEntry, ...artifactEntries].toSorted(
       (a, b) => b.timestamp - a.timestamp,

@@ -382,7 +382,15 @@ class TestRagCollectionsRealLanceDB:
     mockam `get_vector_store_backend`) — esta é a 2ª passada, sem mock nenhum
     de storage, só a instância Cohere/embedding continua fora do escopo (RAG
     handler nunca chama embedding pra listar/gerenciar coleções).
+
+    `lancedb.connect_async()` trava de forma determinística em CI (Linux) —
+    ver comentário completo em `pyproject.toml` (seção `timeout`). Isolado
+    em step separado do workflow (subprocesso real do SO); o marcador aqui
+    só serve pra excluir esses testes da suíte principal via
+    '-m "not real_lancedb"'.
     """
+
+    pytestmark = pytest.mark.real_lancedb
 
     @pytest.fixture(autouse=True)
     def _reset_vector_store_singleton(self, monkeypatch):

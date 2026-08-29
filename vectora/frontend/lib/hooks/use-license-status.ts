@@ -58,6 +58,9 @@ export function useLicenseStatus(): {
   }, []);
 
   useEffect(() => {
+    // Sincroniza com o sistema externo (fetch de rede) — busca inicial do
+    // status de licença, não deriva de estado puro.
+    // oxlint-disable-next-line react/set-state-in-effect
     void refetch();
     const interval = window.setInterval(() => void refetch(), REVALIDATE_MS);
     const onFocus = () => void refetch();

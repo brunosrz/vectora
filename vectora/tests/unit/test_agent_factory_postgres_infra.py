@@ -18,18 +18,19 @@ from backend.services import agent_factory
 
 
 @pytest.fixture(autouse=True)
-def _reset_infra_singletons():
+async def _reset_infra_singletons():
     agent_factory._store = None
     agent_factory._store_ctx = None
     agent_factory._session_store_pool = None
     agent_factory._session_store = None
     agent_factory._approval_gate = None
     yield
-    agent_factory._store = None
-    agent_factory._store_ctx = None
-    agent_factory._session_store_pool = None
-    agent_factory._session_store = None
-    agent_factory._approval_gate = None
+    # aclose() fecha de verdade o AsyncConnectionPool que _ensure_infra abre
+    # contra tmp_path/sessions.db — zerar as globais direto (sem fechar)
+    # vazava a conexão aiosqlite e a thread do worker a cada teste deste
+    # arquivo, acumulando threads presas até travar a criação de conexão em
+    # outro teste da suíte sob pressão de CI.
+    await agent_factory.aclose()
 
 
 @pytest.mark.asyncio

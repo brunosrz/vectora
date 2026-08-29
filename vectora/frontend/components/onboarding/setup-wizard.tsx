@@ -325,6 +325,10 @@ function ServiceConnectionCard({
   // usuário só clica em Testar/Salvar; nada de digitar credencial conhecida.
   useEffect(() => {
     if (!defaults) return;
+    // `defaults` chega assíncrono (fetch no componente pai) — sincroniza o
+    // preenchimento inicial assim que os valores reais ficam disponíveis,
+    // não é cópia de prop sem necessidade.
+    // oxlint-disable-next-line react/set-state-in-effect
     if (defaults.url) setValue(defaults.url);
     if (defaults.api_key) setApiKey(defaults.api_key);
     if (defaults.start_command) {
@@ -716,6 +720,9 @@ export function StepWorkspaceSelect({ onWorkspaceSelect }: StepProps) {
 
   useEffect(() => {
     void hydrate();
+    // Sincroniza com o workspace ativo do store (sistema externo,
+    // persistido) — não deriva de outro state local.
+    // oxlint-disable-next-line react/set-state-in-effect
     setSelected(activeId ?? null);
   }, [hydrate, activeId]);
 

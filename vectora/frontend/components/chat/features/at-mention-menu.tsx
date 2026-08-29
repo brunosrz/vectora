@@ -62,6 +62,9 @@ export function AtMentionMenu({ input, onSelect }: AtMentionMenuProps) {
 
   useEffect(() => {
     if (dirQuery === null || !wsId) {
+      // Sincroniza com o filesystem remoto do workspace — busca de dados,
+      // não estado derivado de prop.
+      // oxlint-disable-next-line react/set-state-in-effect
       setEntries(null);
       lastFetchedDir.current = null;
       return;

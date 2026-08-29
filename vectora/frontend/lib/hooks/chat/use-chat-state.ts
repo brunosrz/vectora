@@ -6,7 +6,11 @@
  */
 
 import { useReducer, useCallback } from "react";
-import { useChatInputStore } from "@/lib/stores/chat-input-store";
+// Alias sem prefixo "use": neste arquivo só se acessa o snapshot estático
+// (getState) fora de contexto reativo, nunca como hook — o linter de regras
+// de Hooks trata qualquer identificador useXxx referenciado fora de uma
+// chamada de hook direta como uso indevido.
+import { useChatInputStore as chatInputStore } from "@/lib/stores/chat-input-store";
 
 // ============================================================================
 // Types
@@ -137,19 +141,22 @@ function chatUIReducer(state: ChatUIState, action: ChatUIAction): ChatUIState {
  * ```
  */
 export function useChatState(threadId: string) {
-  // Rascunho inicial da thread, persistido no chat-input-store.
-  const initialInput = useChatInputStore.getState().getDraft(threadId);
-
-  const [state, dispatch] = useReducer(chatUIReducer, {
-    input: initialInput,
-    copiedId: null,
-    isLoading: false,
-    isLoadingThread: false,
-    isRegenerating: false,
-    isStopping: false,
-    hasAutoSent: false,
-    errorMessage: null,
-  });
+  // Inicializador preguiçoso: lê o rascunho persistido da thread só na
+  // primeira montagem, sem reexecutar a leitura do store a cada render.
+  const [state, dispatch] = useReducer(
+    chatUIReducer,
+    threadId,
+    (id): ChatUIState => ({
+      input: chatInputStore.getState().getDraft(id),
+      copiedId: null,
+      isLoading: false,
+      isLoadingThread: false,
+      isRegenerating: false,
+      isStopping: false,
+      hasAutoSent: false,
+      errorMessage: null,
+    }),
+  );
 
   /**
    * Atualiza o input e persiste o rascunho da thread no store.
@@ -157,7 +164,7 @@ export function useChatState(threadId: string) {
   const setInput = useCallback(
     (value: string) => {
       dispatch({ type: "SET_INPUT", payload: value });
-      useChatInputStore.getState().setDraft(threadId, value);
+      chatInputStore.getState().setDraft(threadId, value);
     },
     [threadId],
   );
@@ -167,7 +174,7 @@ export function useChatState(threadId: string) {
    */
   const clearInput = useCallback(() => {
     dispatch({ type: "RESET_INPUT" });
-    useChatInputStore.getState().clearDraft(threadId);
+    chatInputStore.getState().clearDraft(threadId);
   }, [threadId]);
 
   return {

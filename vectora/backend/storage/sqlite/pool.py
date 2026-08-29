@@ -215,11 +215,35 @@ class AsyncConnectionPool:
 
     async def _new_conn(self) -> aiosqlite.Connection:
         """Abre uma nova conexão aiosqlite e aplica os PRAGMAs de hardening."""
+        # DIAGNÓSTICO TEMPORÁRIO — arquivo, não sys.__stderr__: a tentativa
+        # anterior via __stderr__ nunca apareceu em NENHUM log de CI, nem em
+        # testes que claramente passaram — o bypass de capture do pytest
+        # pode simplesmente não funcionar neste ambiente (py-spy também
+        # bloqueado por ptrace, mesmo com sudo — runner restringe). Um
+        # arquivo é lido depois pelo workflow (cat), sem depender de
+        # nenhuma captura de stream. Remover assim que a causa for achada.
+        import tempfile
+        import time
+        from pathlib import Path as _Path
+
         import aiosqlite as _aiosqlite
 
+        # tempfile.gettempdir() é /tmp no runner Linux da CI (onde o
+        # workflow lê este arquivo via `cat /tmp/vectora_pool_diag.log`) —
+        # caminho fixo funcionaria lá, mas quebra rodando local no Windows.
+        _diag_path = _Path(tempfile.gettempdir()) / "vectora_pool_diag.log"
+
+        def _diag(msg: str) -> None:
+            with _diag_path.open("a", encoding="utf-8") as f:
+                f.write(f"{time.time():.3f} {msg}\n")
+
+        t0 = time.monotonic()
+        _diag(f"início connect() path={self._path}")
         conn: aiosqlite.Connection = await _aiosqlite.connect(str(self._path))
+        _diag(f"connect() retornou em {time.monotonic() - t0:.2f}s")
         conn.row_factory = _aiosqlite.Row
         await conn.executescript(_PRAGMAS)
+        _diag(f"executescript concluído em {time.monotonic() - t0:.2f}s")
         self._size += 1
         logger.debug(
             "storage/sqlite/pool: nova conexão #%d para %s", self._size, self._path

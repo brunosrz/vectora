@@ -30,6 +30,8 @@ export function useDelayedLoading(
     } else {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = null;
+      // Sincroniza com o timer (sistema externo), não deriva de props puras.
+      // oxlint-disable-next-line react/set-state-in-effect
       setShouldShow(false);
     }
     return () => {
