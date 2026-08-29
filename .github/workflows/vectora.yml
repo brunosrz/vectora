@@ -180,8 +180,19 @@ jobs:
       # juntos) ANTES do timeout_method=thread matar o processo — o
       # faulthandler do próprio pytest só mostra o frame Python, não a
       # razão real do bloqueio no kernel.
+      # LANCE_IO_THREADS/LANCE_CPU_THREADS: testando a hipótese de que o
+      # runtime tokio interno do Lance entra numa configuração degenerada
+      # de threadpool em runners com poucos vCPUs (achado real — ver
+      # github.com/lancedb/lancedb/issues/2326 — "Number of CPUs is less
+      # than or equal to the number of IO core reservations"). Sem
+      # confirmação de que isso causa o hang em si, só um warning
+      # documentado, mas é testável e barato.
       - name: Run unit tests
+        env:
+          LANCE_IO_THREADS: "1"
+          LANCE_CPU_THREADS: "1"
         run: |
+          echo "nproc: $(nproc)"
           uv run pytest tests/unit/ -v -m "not live" &
           UV_PID=$!
           (
