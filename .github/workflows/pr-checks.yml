@@ -54,7 +54,11 @@ jobs:
               "body-leading-blank": [0, "always"]
             }
           }' > .commitlintrc.js
-      - run: npx commitlint --edit --verbose <<< "$PR_TITLE"
+      # Sem `--edit`: essa flag espera um COMMIT_EDITMSG de verdade dentro
+      # de um repo git ("Could not find git root" sem checkout) — pra
+      # validar uma string solta (o título do PR, não um commit real),
+      # o jeito certo é ler de stdin sem flag nenhuma.
+      - run: npx commitlint --verbose <<< "$PR_TITLE"
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
       - if: failure()
