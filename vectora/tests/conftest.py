@@ -88,39 +88,6 @@ def pytest_configure(config: Any) -> None:
     home_dir = tempfile.mkdtemp(prefix="vectora-test-home-")
     os.environ["VECTORA_HOME"] = home_dir
     _isolated_vectora_home = home_dir
-    _warm_up_lancedb_runtime()
-
-
-def _warm_up_lancedb_runtime() -> None:
-    """Abre e fecha uma conexão LanceDB descartável antes de qualquer teste
-    rodar.
-
-    A primeira chamada real (não mockada) a `lancedb.connect_async()` da
-    sessão trava de forma determinística só em CI (Linux) — dump de thread
-    mostra o runtime Tokio do LanceDB e o event loop do teste ambos
-    ociosos, sem ninguém entregando o resultado (ver comentário sobre o
-    hang em `pyproject.toml`). Isolar essa primeira chamada aqui, cedo e
-    com timeout, evita que ela apareça em qualquer teste real que
-    aconteça de ser o primeiro a tocar LanceDB — se travar mesmo assim, o
-    `wait_for` expira sozinho (seu timer roda no loop, não depende do
-    Future preso) e os testes seguem sem essa proteção."""
-    try:
-        import lancedb
-
-        async def _connect_and_close() -> None:
-            with tempfile.TemporaryDirectory(prefix="vectora-lancedb-warmup-") as tmp:
-                db = await lancedb.connect_async(tmp)
-                db.close()
-
-        asyncio.run(asyncio.wait_for(_connect_and_close(), timeout=20))
-    except Exception:
-        stream = sys.__stderr__ or sys.stderr
-        stream.write(
-            "[diag lancedb warmup] falhou/expirou — hang de primeira conexão "
-            "real não isolado no warm-up; pode reaparecer no primeiro teste "
-            "real que usar LanceDB.\n"
-        )
-        stream.flush()
 
 
 # DIAGNÓSTICO — hang intermitente e reproduzível só em CI (ubuntu-latest),

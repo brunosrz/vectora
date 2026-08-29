@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -444,7 +445,16 @@ class TestPurgeGraphIndexRealTable:
     não LargeBinary) — o erro sempre acontecia e era engolido pelo
     `except Exception`, então a purga nunca removia nada de verdade. Os
     testes mockados existentes acima não pegam isso porque nunca rodam
-    contra uma tabela LanceDB real."""
+    contra uma tabela LanceDB real.
+
+    `lancedb.connect_async()` trava de forma determinística em CI (Linux)
+    — o runtime Tokio nativo do LanceDB nunca entrega o resultado, dump de
+    thread mostra tudo ocioso, sem depender de versão da lib. Isolado em
+    subprocesso (fork) pra que esse travamento derrube só estes dois
+    testes, não os ~4700 restantes da suíte; fork só existe em Linux, daí
+    o marcador ser condicional."""
+
+    pytestmark = pytest.mark.forked if hasattr(os, "fork") else []
 
     @pytest.mark.asyncio
     async def test_purge_remove_apenas_nos_do_workspace_em_tabela_real(
