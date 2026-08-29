@@ -30,13 +30,6 @@ from backend.vtypes.message import MessageRole, VMessageChunk, text_message
 
 @pytest.fixture
 async def session_store(tmp_path):
-    # DIAGNÓSTICO TEMPORÁRIO — ver comentário em backend/storage/sqlite/
-    # pool.py::_new_conn. Remover junto com o resto da instrumentação.
-    import sys
-
-    _stream = sys.__stderr__ or sys.stderr
-    _stream.write(f"[diag fixture] session_store início, tmp_path={tmp_path}\n")
-    _stream.flush()
     pool = AsyncConnectionPool(str(tmp_path / "dedup.db"), min_size=1, max_size=2)
     await pool.open()
     store = SessionStore(pool)
@@ -128,19 +121,6 @@ def _token_contents(out: list[dict]) -> list[str]:
     return [e["content"] for e in out if e["type"] == "token"]
 
 
-# Sob carga de CI (hangs reais confirmados em runs distintos, cada um num
-# teste diferente desta mesma classe), a fixture `session_store` pode travar
-# na criação da conexão aiosqlite — `_new_conn` espera o worker thread da
-# conexão sinalizar pronto, e pressão de threads acumuladas de ~4700 testes
-# num runner de poucos núcleos pode atrasar essa criação além do timeout.
-# Nunca reproduz localmente (3 rodadas completas da suíte, incl. com --cov
-# ligado, zero hangs) — é pressão de recursos do runner, não bug de lógica
-# no pool nem no teste (auditoria completa: todo uso de AsyncConnectionPool
-# em tests/ fecha corretamente). `flaky`/reruns NÃO ajuda aqui — o projeto
-# usa `timeout_method="thread"` (ver pyproject.toml) justamente pra dumpar
-# todas as threads no hang, e isso mata o processo inteiro (`os._exit`)
-# antes de qualquer rerun poder acontecer. O mitigation real é o timeout
-# de 300s em pyproject.toml, que dá mais margem ao runner de CI.
 class TestNativeStreamDedupE2E:
     async def test_cada_token_aparece_exatamente_uma_vez(
         self, session_store: SessionStore

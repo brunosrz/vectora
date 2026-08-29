@@ -104,22 +104,9 @@ class AsyncConnectionPool:
 
         Idempotente: chamadas repetidas são ignoradas.
         """
-        import sys
-
-        # DIAGNÓSTICO TEMPORÁRIO — ver comentário em `_new_conn`. Remover
-        # junto com o resto da instrumentação assim que a causa do hang for
-        # identificada.
-        stream = sys.__stderr__ or sys.stderr
-        stream.write(f"[diag pool] open() chamado path={self._path}\n")
-        stream.flush()
-
         if self._opened:
             return
-        stream.write("[diag pool] antes de adquirir _lock\n")
-        stream.flush()
         async with self._lock:
-            stream.write("[diag pool] _lock adquirido\n")
-            stream.flush()
             if self._opened:
                 return
             self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -228,35 +215,11 @@ class AsyncConnectionPool:
 
     async def _new_conn(self) -> aiosqlite.Connection:
         """Abre uma nova conexão aiosqlite e aplica os PRAGMAs de hardening."""
-        import sys
-        import threading
-        import time
-
         import aiosqlite as _aiosqlite
 
-        # DIAGNÓSTICO TEMPORÁRIO — sys.__stderr__ (não sys.stderr/print comum)
-        # de propósito: o capture fd-level do pytest bufferiza stdout/stderr
-        # por teste e só libera no fim do reporting normal — o os._exit() do
-        # timeout_method="thread" mata o processo ANTES disso, perdendo o
-        # buffer inteiro (confirmado: 1ª tentativa com print() comum não
-        # apareceu em nenhum log, nem nos testes que passaram). __stderr__ é
-        # a referência original, nunca redirecionada pelo capture do pytest.
-        # Remover assim que a causa do hang for identificada.
-        def _diag(msg: str) -> None:
-            stream = sys.__stderr__ or sys.stderr
-            stream.write(f"[diag pool] {msg}\n")
-            stream.flush()
-
-        t0 = time.monotonic()
-        _diag(
-            f"início _new_conn path={self._path} "
-            f"threads_vivas={threading.active_count()} pid={__import__('os').getpid()}"
-        )
         conn: aiosqlite.Connection = await _aiosqlite.connect(str(self._path))
-        _diag(f"aiosqlite.connect() retornou em {time.monotonic() - t0:.2f}s")
         conn.row_factory = _aiosqlite.Row
         await conn.executescript(_PRAGMAS)
-        _diag(f"executescript concluído em {time.monotonic() - t0:.2f}s")
         self._size += 1
         logger.debug(
             "storage/sqlite/pool: nova conexão #%d para %s", self._size, self._path

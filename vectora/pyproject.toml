@@ -330,15 +330,20 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 300  # ver comentário abaixo — 120s comprovadamente insuficiente na CI
-# Dump de thread confirmado na CI (nunca reproduzido local, incl. com --cov
-# ligado, em 3 rodadas completas da suíte): abrir uma nova conexão aiosqlite
-# (thread OS nova) trava por >=120s no meio da suíte, sem nenhuma conexão
-# vazada identificável (auditoria completa dos 16 usos de
-# AsyncConnectionPool em tests/ — todos fecham corretamente). Pressão de
-# threads acumuladas (~4700 testes) em runner de CI com poucos núcleos é a
-# hipótese mais provável; 300s dá margem pra distinguir "lento" de
-# "travado de verdade" antes do processo ser morto (timeout_method=thread
-# não recupera via rerun, mata o processo inteiro — reruns não ajudam aqui).
+# Hang intermitente confirmado só na CI (ubuntu-latest, nunca reproduzido
+# local em várias rodadas completas da suíte, incl. com --cov ligado).
+# Investigação extensa (múltiplas runs instrumentadas com sys.__stderr__,
+# que bypassa o capture do pytest): NÃO é sobre AsyncConnectionPool/aiosqlite
+# — o hang já apareceu num teste sem nenhum fixture assíncrono/pool próprio
+# (só `caplog`), e prints colocados dentro de
+# AsyncConnectionPool._new_conn/open() nunca chegam a executar. A pilha do
+# MainThread no dump é sempre idêntica: pytest_asyncio criando um novo
+# `asyncio.Runner` por teste (`asyncio_default_fixture_loop_scope=
+# "function"`, ~4700 event loops criados/destruídos por rodada) —
+# indisponibilidade de threads/CPU nesse runner específico é a hipótese mais
+# provável, não um bug de código. `timeout_method=thread` mata o processo
+# inteiro (`os._exit`) no timeout — reruns/flaky não ajudam aqui. 300s dá
+# margem, mas não elimina a causa raiz (ver task de investigação em aberto).
 # "signal" (default) só despeja a stack da thread principal no timeout — não
 # mostra onde a thread de background do portal anyio/starlette (usada por
 # TestClient) está de fato presa, que é exatamente onde os hangs de CI
