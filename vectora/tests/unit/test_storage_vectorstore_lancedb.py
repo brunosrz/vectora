@@ -112,7 +112,14 @@ class TestLanceDBBackendSearchTextRealTable:
     """Regressão ao vivo: faltava `await` antes de `.limit()` em
     `table.search(...)` — `AsyncTable.search()` é async, diferente de
     `vector_search()`/`query()`. Os mocks acima já pegam isso, mas só uma
-    tabela real confirma que a busca FTS retorna resultados de verdade."""
+    tabela real confirma que a busca FTS retorna resultados de verdade.
+
+    Cria índice FTS real via `create_fts_index()`/`table.create_index()`
+    — trava de forma determinística em CI (Linux), ver comentário
+    completo em pyproject.toml (seção `timeout`). Isolado em step
+    separado do workflow via marcador `real_lancedb`."""
+
+    pytestmark = pytest.mark.real_lancedb
 
     async def test_busca_fts_retorna_hits_reais_por_termo_textual(
         self, tmp_path

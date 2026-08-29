@@ -566,7 +566,15 @@ async def storage_health() -> dict[str, Any]:
 
 
 def _reset_singletons() -> None:
-    """Limpa os singletons. Para uso exclusivo em testes."""
+    """Limpa os singletons. Para uso exclusivo em testes.
+
+    Inclui o cache de conexão LanceDB (`backend.storage.lancedb.connection.
+    _default_cache`) — mesmo padrão dos outros singletons de processo
+    (`_worker_lock`/`_queue_lock`, ver `tests/conftest.py::
+    _reset_async_singleton_locks`): se a conexão travar de verdade dentro
+    de `async with self._lock:` (`LanceDBConnectionCache.connect()`), esse
+    `asyncio.Lock()` nunca é liberado e todo teste seguinte que reusar o
+    mesmo cache trava esperando o lock, silenciosamente."""
     global _store, _pg_pool, _vector_store_backend
     _store = None
     _pg_pool = None
@@ -575,3 +583,7 @@ def _reset_singletons() -> None:
     for task in _optimize_tasks.values():
         task.cancel()
     _optimize_tasks.clear()
+
+    from backend.storage.lancedb import connection as _lancedb_connection
+
+    _lancedb_connection._default_cache = None
