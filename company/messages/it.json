@@ -463,5 +463,22 @@
   "features_web_multiuser_desc": "Oltre al desktop, Vectora funziona come server web multiutente (piano Pro) — più persone, ciascuna con la propria autenticazione, che accedono alla stessa istanza con controllo dei permessi per ruolo (root/admin/member/viewer). Cartelle sicure e policy degli strumenti configurabili da un amministratore.",
   "features_i18n_title": "Supporto per 7 lingue",
   "features_i18n_summary": "Interfaccia completa in portoghese, inglese, spagnolo e altre 4 lingue.",
-  "features_i18n_desc": "L'intera interfaccia — chat, impostazioni, onboarding — è tradotta in 7 lingue: portoghese, inglese, spagnolo, francese, italiano, tedesco e russo. Nessuna stringa hardcoded: ogni testo visibile passa attraverso un sistema di messaggi centrale, quindi aggiungere una nuova lingua non richiede di cacciare stringhe sparse nel codice."
+  "features_i18n_desc": "L'intera interfaccia — chat, impostazioni, onboarding — è tradotta in 7 lingue: portoghese, inglese, spagnolo, francese, italiano, tedesco e russo. Nessuna stringa hardcoded: ogni testo visibile passa attraverso un sistema di messaggi centrale, quindi aggiungere una nuova lingua non richiede di cacciare stringhe sparse nel codice.",
+  "features_services_title": "Vectora Services",
+  "features_services_summary": "Il Worker su Cloudflare che sostiene l'infrastruttura dietro Vectora.",
+  "features_services_desc": "Un Worker su Cloudflare responsabile di gran parte di ciò che collega Vectora al mondo fuori dal tuo computer: ospita i binari di installazione di ogni versione, notifica le app non aggiornate e consegna l'aggiornamento stesso, funge da relay per Vectora Connect (l'URL fisso richiesto dalle piattaforme di bot), serve la pagina issues del sito — dove chiunque può pubblicare richieste, come una bacheca GitHub — e sostiene gli account utente del piano Pro (non serve creare un account per usare Vectora in locale e gratis) e il relativo pannello amministrativo.",
+  "features_cat_pro": "Vectora Pro",
+  "feature_badge_pro": "PRO",
+  "features_vps_title": "Hosting su VPS",
+  "features_vps_summary": "Esegui Vectora sul tuo server, sempre online — non solo sul tuo computer.",
+  "features_vps_desc": "Oltre all'app desktop e alla modalità web multiutente locale, il piano Pro consente di ospitare Vectora su un VPS proprio: l'istanza resta sempre disponibile, senza dipendere dal computer acceso, con lo stesso motore agente e le stesse funzionalità del desktop.",
+  "features_connect_title": "Vectora Connect",
+  "features_connect_summary": "Parla con Vectora tramite Telegram e altre piattaforme di chat.",
+  "features_connect_desc": "Bot Vectora disponibili su diverse piattaforme di messaggistica — Telegram è la prima, altre arriveranno — per parlare con il tuo agente senza aprire l'app. Ogni bot si attiva dal pannello Vectora Pro; Vectora Services funge da relay, fornendo l'URL fisso richiesto da ogni piattaforma.",
+  "features_storage_avancado_title": "Storage avanzato (PostgreSQL, Qdrant e Redis)",
+  "features_storage_avancado_summary": "PostgreSQL, Qdrant e Redis al posto dello storage integrato di default.",
+  "features_storage_avancado_desc": "Di default, Vectora funziona già con storage integrato — SQLite, LanceDB e NATS — senza alcuna dipendenza esterna da installare. Lo Storage Avanzato sostituisce questa base con PostgreSQL, Qdrant e Redis, pensato per scenari di carico maggiore e più utenti simultanei; per questo è una funzionalità del piano Pro.",
+  "features_bot_gha_title": "Vectora Bot per GitHub Actions",
+  "features_bot_gha_summary": "Revisione automatica delle Pull Request, direttamente nella tua CI.",
+  "features_bot_gha_desc": "Vectora stesso in esecuzione dentro il GitHub Actions del tuo repository: all'apertura di una Pull Request, il bot rivede le modifiche e commenta automaticamente, usando il provider di modello che configuri (9Router, OpenRouter, Gemini, OpenAI, Anthropic e altri). Configurazione tramite un pannello dedicato, senza modificare YAML a mano."
 }
