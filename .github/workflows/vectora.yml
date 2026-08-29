@@ -183,30 +183,35 @@ jobs:
       - name: Run unit tests
         run: |
           uv run pytest tests/unit/ -v -m "not live" &
-          PYTEST_PID=$!
+          UV_PID=$!
           (
             sleep 250
-            if kill -0 "$PYTEST_PID" 2>/dev/null; then
-              echo "::group::DIAGNÓSTICO — pytest ainda vivo aos 250s (pid=$PYTEST_PID)"
-              echo "--- /proc/$PYTEST_PID/status ---"
-              cat "/proc/$PYTEST_PID/status" 2>/dev/null || true
-              echo "--- threads: tid | wchan (função do kernel bloqueando) ---"
-              for t in /proc/"$PYTEST_PID"/task/*/; do
+            if kill -0 "$UV_PID" 2>/dev/null; then
+              echo "::group::DIAGNÓSTICO — pytest ainda vivo aos 250s"
+              # $UV_PID é o processo `uv` (wrapper) — o Python/pytest real é
+              # um FILHO dele. 1ª tentativa deste diagnóstico mirou o PID
+              # errado (mostrou só as 2 threads triviais do uv em si:
+              # futex_do_wait esperando o filho + ep_poll do runtime do uv).
+              PY_PID=$(pgrep -P "$UV_PID" | head -1)
+              if [ -z "$PY_PID" ]; then PY_PID="$UV_PID"; fi
+              echo "uv_pid=$UV_PID python_pid=$PY_PID"
+              echo "--- threads do processo Python: tid | comm | wchan (função do kernel bloqueando) ---"
+              for t in /proc/"$PY_PID"/task/*/; do
                 tid=$(basename "$t")
                 wchan=$(cat "$t/wchan" 2>/dev/null || echo "?")
                 comm=$(cat "$t/comm" 2>/dev/null || echo "?")
                 echo "tid=$tid comm=$comm wchan=$wchan"
               done
-              echo "--- fds abertos: $(ls "/proc/$PYTEST_PID/fd" 2>/dev/null | wc -l) ---"
-              echo "--- py-spy dump (nativo + Python, todas as threads) ---"
-              uvx py-spy dump --pid "$PYTEST_PID" --full 2>&1 || \
-                sudo uvx py-spy dump --pid "$PYTEST_PID" --full 2>&1 || \
+              echo "--- fds abertos: $(ls "/proc/$PY_PID/fd" 2>/dev/null | wc -l) ---"
+              echo "--- py-spy dump (nativo + Python, todas as threads, --subprocesses cobre o filho do uv de qualquer forma) ---"
+              uvx py-spy dump --pid "$UV_PID" --native --subprocesses 2>&1 || \
+                sudo uvx py-spy dump --pid "$UV_PID" --native --subprocesses 2>&1 || \
                 echo "py-spy falhou (sem permissão de ptrace mesmo com sudo?)"
               echo "::endgroup::"
             fi
           ) &
           WATCHDOG_PID=$!
-          wait "$PYTEST_PID"
+          wait "$UV_PID"
           PYTEST_EXIT=$?
           kill "$WATCHDOG_PID" 2>/dev/null || true
           exit $PYTEST_EXIT
