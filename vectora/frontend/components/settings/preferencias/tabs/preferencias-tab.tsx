@@ -38,6 +38,7 @@ import {
   DEFAULT_CUSTOM_COLORS,
   type BaseThemeColors,
 } from "@/lib/theme/presets";
+import { ThemePicker } from "@/components/settings/preferencias/theme-picker";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 /** Deriva o `Theme` (claro/escuro) a partir do id de um preset. */
@@ -438,22 +439,14 @@ export function PreferenciasTab() {
       {/* Tema — seletor unificado (sistema, presets claros/escuros, custom) */}
       <div className="space-y-2">
         <Label htmlFor="theme">{m.prefs_theme()}</Label>
-        <Select value={selectedTheme} onValueChange={handleThemeChange}>
-          <SelectTrigger id="theme">
-            <SelectValue>{themeLabel(selectedTheme)}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="system">{m.prefs_theme_system()}</SelectItem>
-            {THEME_PRESETS.map((preset) => (
-              <SelectItem key={preset.id} value={preset.id}>
-                {preset.label}
-              </SelectItem>
-            ))}
-            <SelectItem value="custom">
-              {m.prefs_theme_palette_custom()}
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <ThemePicker
+          value={selectedTheme}
+          onChange={handleThemeChange}
+          presets={THEME_PRESETS}
+          systemLabel={m.prefs_theme_system()}
+          customLabel={m.prefs_theme_palette_custom()}
+          customColors={activeCustomColors}
+        />
         <p className="text-xs text-muted-foreground">
           {m.prefs_theme_palette_help()}
         </p>
