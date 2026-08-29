@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
+import pytest
 from lancedb.index import IvfPq
 
 from backend.storage.lancedb.index import create_fts_index, create_ivf_index
@@ -116,7 +117,13 @@ class TestCreateIvfIndexRealTable:
     num_sub_vectors=...)` não existe na API real — precisa de
     `config=IvfPq(...)`. O autospec acima já pega a divergência de
     assinatura, mas só uma tabela real confirma que o índice é
-    efetivamente criado (sem erro do lado do datafusion/lance)."""
+    efetivamente criado (sem erro do lado do datafusion/lance).
+
+    `lancedb.connect_async()` real trava de forma determinística em CI
+    (Linux) — ver comentário completo em pyproject.toml (seção `timeout`).
+    Isolado em step separado do workflow via marcador `real_lancedb`."""
+
+    pytestmark = pytest.mark.real_lancedb
 
     async def test_cria_indice_ivf_pq_de_verdade_em_tabela_real(self, tmp_path) -> None:
         import lancedb

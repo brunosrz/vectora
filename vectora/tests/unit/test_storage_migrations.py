@@ -467,7 +467,13 @@ class TestDataMigrationLanceDBSource:
     """`migrate_to_qdrant`/`migrate_to_pgvector` — cobertura era zero antes
     destes testes (nem mock, nem tabela real). Origem sempre uma tabela
     LanceDB real (`tmp_path`); destino (Qdrant/Postgres) mockado, já que
-    não há serviço externo disponível neste ambiente de teste."""
+    não há serviço externo disponível neste ambiente de teste.
+
+    `lancedb.connect_async()` real trava de forma determinística em CI
+    (Linux) — ver comentário completo em pyproject.toml (seção `timeout`).
+    Isolado em step separado do workflow via marcador `real_lancedb`."""
+
+    pytestmark = pytest.mark.real_lancedb
 
     @pytest.fixture
     async def source_table(self, tmp_path):
