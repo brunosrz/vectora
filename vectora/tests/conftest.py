@@ -90,6 +90,40 @@ def pytest_configure(config: Any) -> None:
     _isolated_vectora_home = home_dir
 
 
+# DIAGNÓSTICO — hang intermitente e reproduzível só em CI (ubuntu-latest),
+# sempre no meio da suíte, sempre dentro do próprio select()/epoll_wait()
+# de um `asyncio.Runner` novo (pytest-asyncio cria um por fixture função-
+# escopada). Hipótese em teste: esgotamento de file descriptors — cada
+# Runner novo monta seu próprio self-pipe, e a thread de fundo do LanceDB
+# não expõe shutdown limpo (github.com/lancedb/lancedb/issues/2133),
+# candidata a vazar fd/thread ao longo de ~4700 testes. sys.__stderr__ (não
+# print comum) de propósito: bypassa o capture do pytest, que bufferiza
+# por teste e nunca libera se o processo for morto por os._exit() no
+# timeout. Mantido — custo desprezível (1 syscall a cada 20 testes), e a
+# curva de fds/threads é o único jeito de confirmar ou descartar a
+# hipótese numa run que trava de verdade.
+_diag_test_count = 0
+
+
+def pytest_runtest_teardown(item: Any) -> None:
+    global _diag_test_count
+    _diag_test_count += 1
+    if _diag_test_count % 20 != 0:
+        return
+    stream = sys.__stderr__ or sys.stderr
+    import threading
+
+    try:
+        fd_count = sum(1 for _ in Path("/proc/self/fd").iterdir())
+    except OSError:
+        fd_count = -1  # não-Linux (Windows local) — sem /proc
+    stream.write(
+        f"[diag fds] teste #{_diag_test_count} ({item.nodeid}): "
+        f"fds_abertos={fd_count} threads_vivas={threading.active_count()}\n"
+    )
+    stream.flush()
+
+
 def pytest_sessionfinish(exitstatus: int) -> None:
     """Memoriza o código de saída final para o pytest_unconfigure.
 

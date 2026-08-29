@@ -163,17 +163,25 @@ jobs:
           ENABLE_WEB_SEARCH=false
           ENABLE_WEB_FETCH=false
           EOF
-      # Sem --cov: o sys.settrace do coverage.py roda em toda linha
-      # executada (incl. nas threads de fundo do aiosqlite/LanceDB) e, sob a
-      # cota de CPU compartilhada do runner ubuntu-latest padrão (não dá pra
-      # usar runner maior hospedado — recurso só de organização, indisponível
-      # pra conta pessoal), essa sobrecarga já causou hang real e reproduzível
-      # na criação de conexão aiosqlite em run de CI (nunca reproduziu local,
-      # incl. com --cov ligado, numa máquina com CPU dedicada — ver histórico
-      # do PR). Cobertura volta como job dedicado depois, sem competir por
-      # CPU com o gate de tempo dos testes.
+      # Sem --cov de propósito: já foi removido daqui como tentativa de
+      # mitigar o hang abaixo — não resolveu (hang idêntico sem --cov),
+      # mantido fora só porque cobertura deve ser um job dedicado de
+      # qualquer forma, sem competir por CPU com o gate de tempo dos testes.
+      #
+      # `ulimit -n`: testando a hipótese de esgotamento de file descriptors
+      # como causa do hang intermitente descrito abaixo — o soft limit
+      # padrão do runner ubuntu-latest é 1024, e cada `asyncio.Runner` novo
+      # que o pytest-asyncio cria por fixture (asyncio_default_fixture_
+      # loop_scope="function", ~4700 vezes na suíte) monta seu próprio
+      # self-pipe; um vazamento residual de fd (do pytest-asyncio, do
+      # aiosqlite ou da thread de fundo do LanceDB, que não expõe shutdown
+      # limpo — github.com/lancedb/lancedb/issues/2133) pode empurrar o
+      # processo pro teto. Se isso for a causa real, subir o limite deve
+      # fazer o hang sumir ou empurrar bem mais pra frente.
       - name: Run unit tests
-        run: uv run pytest tests/unit/ -v -m "not live"
+        run: |
+          ulimit -n 65536
+          uv run pytest tests/unit/ -v -m "not live"
       - name: Run stress tests
         run: uv run pytest tests/stress/ -v --timeout=120 --tb=short
 
