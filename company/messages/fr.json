@@ -463,5 +463,22 @@
   "features_web_multiuser_desc": "Au-delà du bureau, Vectora fonctionne comme un serveur web multi-utilisateur (plan Pro) — plusieurs personnes, chacune avec sa propre authentification, accédant à la même instance avec un contrôle des permissions par rôle (root/admin/member/viewer). Dossiers sécurisés et politiques d'outils configurables par un administrateur.",
   "features_i18n_title": "Support de 7 langues",
   "features_i18n_summary": "Interface complète en portugais, anglais, espagnol et 4 autres langues.",
-  "features_i18n_desc": "L'interface entière — chat, paramètres, onboarding — est traduite en 7 langues : portugais, anglais, espagnol, français, italien, allemand et russe. Aucune chaîne codée en dur : chaque texte visible passe par un système de messages central, donc ajouter une nouvelle langue ne nécessite pas de chasser des chaînes éparpillées dans le code."
+  "features_i18n_desc": "L'interface entière — chat, paramètres, onboarding — est traduite en 7 langues : portugais, anglais, espagnol, français, italien, allemand et russe. Aucune chaîne codée en dur : chaque texte visible passe par un système de messages central, donc ajouter une nouvelle langue ne nécessite pas de chasser des chaînes éparpillées dans le code.",
+  "features_services_title": "Vectora Services",
+  "features_services_summary": "Le Worker Cloudflare qui fait tourner l'infrastructure derrière Vectora.",
+  "features_services_desc": "Un Worker Cloudflare responsable d'une grande partie de ce qui relie Vectora au monde en dehors de votre ordinateur : il héberge les binaires d'installation de chaque version, notifie les applications obsolètes et livre la mise à jour elle-même, sert de relais pour Vectora Connect (l'URL fixe exigée par les plateformes de bots), sert la page d'issues du site — où chacun peut publier des demandes, comme un tableau GitHub — et fait fonctionner les comptes utilisateurs du plan Pro (aucun compte n'est nécessaire pour utiliser Vectora localement et gratuitement) ainsi que leur panneau d'administration.",
+  "features_cat_pro": "Vectora Pro",
+  "feature_badge_pro": "PRO",
+  "features_vps_title": "Hébergement VPS",
+  "features_vps_summary": "Exécutez Vectora sur votre propre serveur, toujours en ligne — pas seulement sur votre ordinateur.",
+  "features_vps_desc": "Au-delà de l'application de bureau et du mode web multi-utilisateur local, le plan Pro permet d'héberger Vectora sur votre propre VPS : l'instance reste toujours disponible, sans dépendre de votre ordinateur allumé, avec le même moteur d'agent et les mêmes fonctionnalités que la version bureau.",
+  "features_connect_title": "Vectora Connect",
+  "features_connect_summary": "Discutez avec Vectora via Telegram et d'autres plateformes de chat.",
+  "features_connect_desc": "Des bots Vectora disponibles sur plusieurs plateformes de messagerie — Telegram est la première, d'autres suivront — pour discuter avec votre agent sans ouvrir l'application. Chaque bot s'active depuis le panneau Vectora Pro ; Vectora Services sert de relais, fournissant l'URL fixe que chaque plateforme exige.",
+  "features_storage_avancado_title": "Stockage avancé (PostgreSQL, Qdrant et Redis)",
+  "features_storage_avancado_summary": "PostgreSQL, Qdrant et Redis à la place du stockage embarqué par défaut.",
+  "features_storage_avancado_desc": "Par défaut, Vectora fonctionne déjà avec un stockage embarqué — SQLite, LanceDB et NATS — sans aucune dépendance externe à installer. Le Stockage Avancé remplace cette base par PostgreSQL, Qdrant et Redis, pensé pour les scénarios de charge plus lourde et d'utilisateurs simultanés multiples ; c'est pourquoi c'est une fonctionnalité du plan Pro.",
+  "features_bot_gha_title": "Vectora Bot pour GitHub Actions",
+  "features_bot_gha_summary": "Revue automatique de Pull Request, directement dans votre CI.",
+  "features_bot_gha_desc": "Vectora lui-même s'exécutant dans le GitHub Actions de votre dépôt : à l'ouverture d'une Pull Request, le bot examine les changements et commente automatiquement, avec le fournisseur de modèle que vous configurez (9Router, OpenRouter, Gemini, OpenAI, Anthropic et d'autres). Configuration via un panneau dédié, sans éditer de YAML à la main."
 }

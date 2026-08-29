@@ -460,5 +460,22 @@
   "features_web_multiuser_desc": "Über den Desktop hinaus läuft Vectora als Multi-User-Webserver (Pro-Plan) — mehrere Personen, jede mit eigener Authentifizierung, greifen auf dieselbe Instanz mit rollenbasierter Berechtigungskontrolle zu (root/admin/member/viewer). Sichere Ordner und Tool-Richtlinien, konfigurierbar durch einen Administrator.",
   "features_i18n_title": "Unterstützung für 7 Sprachen",
   "features_i18n_summary": "Vollständige Oberfläche auf Portugiesisch, Englisch, Spanisch und 4 weiteren Sprachen.",
-  "features_i18n_desc": "Die gesamte Oberfläche — Chat, Einstellungen, Onboarding — ist in 7 Sprachen übersetzt: Portugiesisch, Englisch, Spanisch, Französisch, Italienisch, Deutsch und Russisch. Keine hartcodierten Strings: Jeder sichtbare Text läuft über ein zentrales Nachrichtensystem, sodass eine neue Sprache hinzuzufügen keine Jagd nach im Code verstreuten Strings erfordert."
+  "features_i18n_desc": "Die gesamte Oberfläche — Chat, Einstellungen, Onboarding — ist in 7 Sprachen übersetzt: Portugiesisch, Englisch, Spanisch, Französisch, Italienisch, Deutsch und Russisch. Keine hartcodierten Strings: Jeder sichtbare Text läuft über ein zentrales Nachrichtensystem, sodass eine neue Sprache hinzuzufügen keine Jagd nach im Code verstreuten Strings erfordert.",
+  "features_services_title": "Vectora Services",
+  "features_services_summary": "Der Cloudflare Worker, der die Infrastruktur hinter Vectora trägt.",
+  "features_services_desc": "Ein Cloudflare Worker, der für einen Großteil dessen verantwortlich ist, was Vectora mit der Welt außerhalb des eigenen Rechners verbindet: er hostet die Installationsbinaries jeder Version, benachrichtigt veraltete Apps und liefert das Update selbst, dient als Relay für Vectora Connect (die feste URL, die Bot-Plattformen benötigen), stellt die Issues-Seite der Website bereit — wo jeder Anfragen posten kann, wie auf einem GitHub-Board — und trägt die Nutzerkonten des Pro-Plans (kein Konto nötig, um Vectora lokal und kostenlos zu nutzen) samt Admin-Panel.",
+  "features_cat_pro": "Vectora Pro",
+  "feature_badge_pro": "PRO",
+  "features_vps_title": "VPS-Hosting",
+  "features_vps_summary": "Vectora auf einem eigenen Server betreiben, immer online — nicht nur auf dem eigenen Rechner.",
+  "features_vps_desc": "Neben der Desktop-App und dem lokalen Multi-User-Webmodus erlaubt der Pro-Plan, Vectora auf einem eigenen VPS zu hosten: die Instanz ist immer verfügbar, unabhängig davon, ob der eigene Rechner läuft, mit derselben Agenten-Engine und denselben Funktionen wie der Desktop.",
+  "features_connect_title": "Vectora Connect",
+  "features_connect_summary": "Mit Vectora über Telegram und andere Chat-Plattformen sprechen.",
+  "features_connect_desc": "Vectora-Bots auf mehreren Messaging-Plattformen verfügbar — Telegram ist die erste, weitere folgen — um mit dem Agenten zu sprechen, ohne die App zu öffnen. Jeder Bot wird über das Vectora-Pro-Panel aktiviert; Vectora Services fungiert als Relay und liefert die feste URL, die jede Plattform benötigt.",
+  "features_storage_avancado_title": "Erweiterter Storage (PostgreSQL, Qdrant und Redis)",
+  "features_storage_avancado_summary": "PostgreSQL, Qdrant und Redis anstelle des eingebetteten Standard-Storage.",
+  "features_storage_avancado_desc": "Standardmäßig läuft Vectora bereits mit eingebettetem Storage — SQLite, LanceDB und NATS — ganz ohne externe Abhängigkeit zur Installation. Der Erweiterte Storage ersetzt diese Basis durch PostgreSQL, Qdrant und Redis, ausgelegt für höhere Last und mehrere gleichzeitige Nutzer; daher ist es eine Funktion des Pro-Plans.",
+  "features_bot_gha_title": "Vectora Bot für GitHub Actions",
+  "features_bot_gha_summary": "Automatische Pull-Request-Reviews, direkt in der CI.",
+  "features_bot_gha_desc": "Vectora selbst läuft innerhalb der GitHub Actions des eigenen Repositories: Beim Öffnen eines Pull Requests prüft der Bot die Änderungen und kommentiert automatisch, mit dem konfigurierten Modell-Provider (9Router, OpenRouter, Gemini, OpenAI, Anthropic und weitere). Einrichtung über ein eigenes Panel, ohne manuelles YAML-Editieren."
 }
