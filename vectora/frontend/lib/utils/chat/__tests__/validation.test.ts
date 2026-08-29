@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 import {
   fileToBase64,
   createImageAttachment,
@@ -10,6 +10,32 @@ function makeFile(name: string, type: string, sizeBytes: number = 10): File {
   const content = new Uint8Array(sizeBytes);
   return new File([content], name, { type });
 }
+
+// jsdom 30.0.1 tem uma incompatibilidade interna real com @exodus/bytes na
+// conversão de FileReader pra base64 (assertU8: "Expected an Uint8Array"),
+// que dispara de forma assíncrona (fora do ciclo de vida do teste que a
+// originou) e vaza como "Unhandled Error" pro Vitest — falha o job de CI
+// inteiro mesmo com todos os testes passando (mesmo bug já documentado em
+// use-voice-input.test.ts). fileToBase64() só precisa do contrato load/error
+// do FileReader — um fake evita depender da implementação binária real do
+// jsdom, que não é o que estes testes pretendem exercitar.
+class FakeFileReader extends EventTarget {
+  result: string | ArrayBuffer | null = null;
+  error: DOMException | null = null;
+  readAsDataURL(blob: Blob): void {
+    queueMicrotask(() => {
+      this.result = `data:${blob.type};base64,ZmFrZQ==`;
+      this.dispatchEvent(new Event("load"));
+    });
+  }
+}
+
+beforeEach(() => {
+  vi.stubGlobal("FileReader", FakeFileReader);
+});
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("fileToBase64", () => {
   it("converte um File pra base64 sem o prefixo de data URL", async () => {
