@@ -203,10 +203,11 @@ jobs:
                 echo "tid=$tid comm=$comm wchan=$wchan"
               done
               echo "--- fds abertos: $(ls "/proc/$PY_PID/fd" 2>/dev/null | wc -l) ---"
-              echo "--- py-spy dump (nativo + Python, todas as threads, --subprocesses cobre o filho do uv de qualquer forma) ---"
-              uvx py-spy dump --pid "$UV_PID" --native --subprocesses 2>&1 || \
-                sudo env "PATH=$PATH" uvx py-spy dump --pid "$UV_PID" --native --subprocesses 2>&1 || \
-                echo "py-spy falhou (sudo sem PATH não achava uvx antes deste fix)"
+              # py-spy: bloqueado por ptrace neste runner mesmo com sudo
+              # ("Permission Denied" mesmo com PATH preservado) — desistido,
+              # não é contornável sem privilégio que o runner não concede.
+              echo "--- backend/storage/sqlite/pool.py::_new_conn diag (arquivo, não stream) ---"
+              cat /tmp/vectora_pool_diag.log 2>/dev/null || echo "(arquivo não existe — _new_conn nunca chamado neste hang)"
               echo "::endgroup::"
             fi
           ) &
