@@ -167,21 +167,49 @@ jobs:
       # mitigar o hang abaixo — não resolveu (hang idêntico sem --cov),
       # mantido fora só porque cobertura deve ser um job dedicado de
       # qualquer forma, sem competir por CPU com o gate de tempo dos testes.
+      # Hipótese de esgotamento de fd (ulimit -n) testada e descartada —
+      # hang idêntico com o limite bem mais alto.
       #
-      # `ulimit -n`: testando a hipótese de esgotamento de file descriptors
-      # como causa do hang intermitente descrito abaixo — o soft limit
-      # padrão do runner ubuntu-latest é 1024, e cada `asyncio.Runner` novo
-      # que o pytest-asyncio cria por fixture (asyncio_default_fixture_
-      # loop_scope="function", ~4700 vezes na suíte) monta seu próprio
-      # self-pipe; um vazamento residual de fd (do pytest-asyncio, do
-      # aiosqlite ou da thread de fundo do LanceDB, que não expõe shutdown
-      # limpo — github.com/lancedb/lancedb/issues/2133) pode empurrar o
-      # processo pro teto. Se isso for a causa real, subir o limite deve
-      # fazer o hang sumir ou empurrar bem mais pra frente.
+      # DIAGNÓSTICO — hang intermitente (mas frequente) sempre no mesmo
+      # padrão (ver pyproject.toml [tool.pytest.ini_options] pro histórico
+      # completo da investigação): roda o pytest em background e, se ainda
+      # estiver vivo aos 250s (o hang real trava os 300s inteiros do
+      # timeout do pytest — nunca "quase termina"), captura o estado NATIVO
+      # de cada thread via /proc (wchan = função do kernel em que a thread
+      # está bloqueada de verdade) e via py-spy (stack nativo C + Python
+      # juntos) ANTES do timeout_method=thread matar o processo — o
+      # faulthandler do próprio pytest só mostra o frame Python, não a
+      # razão real do bloqueio no kernel.
       - name: Run unit tests
         run: |
-          ulimit -n 65536
-          uv run pytest tests/unit/ -v -m "not live"
+          uv run pytest tests/unit/ -v -m "not live" &
+          PYTEST_PID=$!
+          (
+            sleep 250
+            if kill -0 "$PYTEST_PID" 2>/dev/null; then
+              echo "::group::DIAGNÓSTICO — pytest ainda vivo aos 250s (pid=$PYTEST_PID)"
+              echo "--- /proc/$PYTEST_PID/status ---"
+              cat "/proc/$PYTEST_PID/status" 2>/dev/null || true
+              echo "--- threads: tid | wchan (função do kernel bloqueando) ---"
+              for t in /proc/"$PYTEST_PID"/task/*/; do
+                tid=$(basename "$t")
+                wchan=$(cat "$t/wchan" 2>/dev/null || echo "?")
+                comm=$(cat "$t/comm" 2>/dev/null || echo "?")
+                echo "tid=$tid comm=$comm wchan=$wchan"
+              done
+              echo "--- fds abertos: $(ls "/proc/$PYTEST_PID/fd" 2>/dev/null | wc -l) ---"
+              echo "--- py-spy dump (nativo + Python, todas as threads) ---"
+              uvx py-spy dump --pid "$PYTEST_PID" --full 2>&1 || \
+                sudo uvx py-spy dump --pid "$PYTEST_PID" --full 2>&1 || \
+                echo "py-spy falhou (sem permissão de ptrace mesmo com sudo?)"
+              echo "::endgroup::"
+            fi
+          ) &
+          WATCHDOG_PID=$!
+          wait "$PYTEST_PID"
+          PYTEST_EXIT=$?
+          kill "$WATCHDOG_PID" 2>/dev/null || true
+          exit $PYTEST_EXIT
       - name: Run stress tests
         run: uv run pytest tests/stress/ -v --timeout=120 --tb=short
 
