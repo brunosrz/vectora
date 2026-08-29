@@ -9,12 +9,26 @@ name: Vectora (app)
 # numa tag "v*" real (criada por release-please.yml quando o usuário
 # mescla o PR de release acumulado) ou por workflow_dispatch manual —
 # nunca em PR nem em push comum de master.
+# `paths` restringe esse pipeline (caro: lint+security+frontend+build+testes)
+# a mudanças que realmente afetam o app Vectora — company/services/docs têm
+# ciclo próprio (.github/workflows/edge.yml), rodar os dois juntos em todo PR
+# era desperdício de minutos de CI e ruído de check irrelevante. Tag "v*" cai
+# no mesmo filtro sem risco: o commit que a tag aponta é sempre o bump de
+# versão do release-please em vectora/pyproject.toml, que já bate no path.
 on:
   push:
     branches: [master]
     tags: ["v*"]
+    paths:
+      - "vectora/**"
+      - ".github/workflows/vectora.yml"
+      - ".github/actions/**"
   pull_request:
     branches: [master]
+    paths:
+      - "vectora/**"
+      - ".github/workflows/vectora.yml"
+      - ".github/actions/**"
   workflow_dispatch:
 
 concurrency:
