@@ -63,9 +63,17 @@ export function CommandPalette({
     );
   }, [commands, query]);
 
+  // Índice ativo saneado para os limites da lista filtrada atual — evita
+  // depender de um efeito só pra clampar `activeIndex` quando o filtro muda.
+  const safeActiveIndex =
+    filtered.length === 0 ? 0 : Math.min(activeIndex, filtered.length - 1);
+
   // Reset ao abrir.
   useEffect(() => {
     if (open) {
+      // Sincroniza com a abertura do Dialog (sistema externo) — não deriva
+      // de outra prop/state deste componente.
+      // oxlint-disable-next-line react/set-state-in-effect
       setQuery("");
       setActiveIndex(0);
       // Foco adiado para o próximo frame (Dialog precisa montar primeiro).
@@ -73,19 +81,12 @@ export function CommandPalette({
     }
   }, [open]);
 
-  // Mantém activeIndex dentro dos limites quando o filtro muda.
-  useEffect(() => {
-    setActiveIndex((i) =>
-      filtered.length === 0 ? 0 : Math.min(i, filtered.length - 1),
-    );
-  }, [filtered.length]);
-
   // Scroll do item ativo para a viewport.
   useEffect(() => {
-    const li = listRef.current?.children[activeIndex] as
+    const li = listRef.current?.children[safeActiveIndex] as
       HTMLElement | undefined;
     li?.scrollIntoView({ block: "nearest" });
-  }, [activeIndex]);
+  }, [safeActiveIndex]);
 
   const execute = useCallback(
     (cmd: PaletteCommand) => {
@@ -108,7 +109,7 @@ export function CommandPalette({
       );
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const cmd = filtered[activeIndex];
+      const cmd = filtered[safeActiveIndex];
       if (cmd) execute(cmd);
     }
     // Esc fecha via Dialog (onOpenChange)
@@ -165,8 +166,8 @@ export function CommandPalette({
             role="combobox"
             aria-expanded={filtered.length > 0}
             aria-activedescendant={
-              filtered[activeIndex]
-                ? `palette-cmd-${filtered[activeIndex].id}`
+              filtered[safeActiveIndex]
+                ? `palette-cmd-${filtered[safeActiveIndex].id}`
                 : undefined
             }
           />
@@ -205,7 +206,7 @@ export function CommandPalette({
                   <ul role="presentation">
                     {cmds.map((cmd, i) => {
                       const globalIdx = firstIdx + i;
-                      const isActive = globalIdx === activeIndex;
+                      const isActive = globalIdx === safeActiveIndex;
                       return (
                         <li
                           key={cmd.id}

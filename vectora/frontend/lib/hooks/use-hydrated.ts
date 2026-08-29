@@ -22,6 +22,10 @@ import { useEffect, useState } from "react";
 export function useHydrated(): boolean {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
+    // Sincroniza com o sistema externo "hidratação do client" — não é
+    // derivável durante o render, pois o primeiro render do client precisa
+    // ser idêntico ao do servidor.
+    // oxlint-disable-next-line react/set-state-in-effect
     setHydrated(true);
   }, []);
   return hydrated;

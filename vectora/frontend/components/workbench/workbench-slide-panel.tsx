@@ -40,6 +40,9 @@ export function WorkbenchSlidePanel({
 
   useEffect(() => {
     if (open) {
+      // Sincroniza com a animação CSS (sistema externo baseado em timer),
+      // não deriva de estado puro — por isso fica num efeito.
+      // oxlint-disable-next-line react/set-state-in-effect
       setRendered(true);
       setClosing(false);
       return;

@@ -110,6 +110,9 @@ function PublishDialog({
 
   useEffect(() => {
     let cancelled = false;
+    // Sincroniza com o fetch dos buckets (sistema externo) ao trocar de
+    // workspace — não deriva de estado puro.
+    // oxlint-disable-next-line react/set-state-in-effect
     setBucketsLoading(true);
     void fetchWorkspaceBuckets(workspaceId).then((list) => {
       if (cancelled) return;

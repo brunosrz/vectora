@@ -196,6 +196,9 @@ export function ChatInput({
   const [openRouterSupportsImage, setOpenRouterSupportsImage] = useState(true);
   useEffect(() => {
     if (provider !== "openrouter" || !hasImage || !agentConfig?.model) {
+      // Consulta o catálogo de modelos OpenRouter (I/O de rede, cacheado no
+      // backend) — não é estado derivado de prop.
+      // oxlint-disable-next-line react/set-state-in-effect
       setOpenRouterSupportsImage(true);
       return;
     }
@@ -222,13 +225,22 @@ export function ChatInput({
   // Auto-grow do textarea: ajusta a altura ao conteúdo até o teto de 240px;
   // depois disso o próprio textarea passa a scrollar internamente. Resolve
   // a queixa "ele não expande pra cima e com scroll visível".
+  // Sem array de dependências: precisa recalcular a cada render em que o
+  // texto exibido no textarea mudou (digitação, @mention, limpeza após
+  // envio, etc.) — `input` não é lido diretamente no corpo (o cálculo usa
+  // o `scrollHeight` real do DOM, já refletindo o valor atual), então
+  // rastrear isso via array de deps não captura a intenção real do efeito.
   useEffect(() => {
     const el = textareaRef?.current;
     if (!el) return;
+    // Mutação imperativa do DOM via ref encaminhado (padrão do próprio
+    // React para refs) — não é o objeto prop sendo reatribuído, só o nó
+    // DOM que ele aponta.
+    // oxlint-disable-next-line react/immutability
     el.style.height = "auto";
     const next = Math.min(240, el.scrollHeight);
     el.style.height = `${next}px`;
-  }, [input, textareaRef]);
+  });
   return (
     <div className="relative">
       {/* Enhanced visibility layer */}

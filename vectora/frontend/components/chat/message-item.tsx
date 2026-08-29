@@ -504,7 +504,13 @@ export const MessageItem = memo(
     // Track code block index to generate stable IDs during streaming
     const codeBlockIndexRef = useRef(0);
 
-    // Reset counter before each render so code blocks get consistent indices
+    // Reset counter before each render so code blocks get consistent
+    // indices. O `code:` renderer em markdownComponents (memoizado, chamado
+    // de forma síncrona pelo ReactMarkdown durante ESTE render) incrementa
+    // o ref logo abaixo — um useEffect rodaria tarde demais pra zerar antes
+    // da própria renderização usá-lo. Não afeta o que é renderizado (é só
+    // geração de id estável), só bookkeeping interno do render em curso.
+    // oxlint-disable-next-line react/refs
     codeBlockIndexRef.current = 0;
 
     // Memoize markdown components to prevent button remounting during streaming

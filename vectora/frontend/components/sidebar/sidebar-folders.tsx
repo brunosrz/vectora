@@ -46,6 +46,9 @@ export function SidebarFolders() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(STATE_KEY);
+      // localStorage não existe no SSR — leitura de sistema externo, só
+      // pode rodar no cliente.
+      // oxlint-disable-next-line react/set-state-in-effect
       if (saved === "0") setOpen(false);
     }
     void loadSafeRoots();

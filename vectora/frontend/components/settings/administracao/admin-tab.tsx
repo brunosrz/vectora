@@ -28,7 +28,7 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { useLicenseStatus } from "@/lib/hooks/use-license-status";
@@ -153,18 +153,20 @@ function InvitesSection() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const data = await api.invites.list();
       setInvites(data.invites ?? []);
     } catch {
       // silencioso
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // Busca a lista de convites no backend ao montar.
+    // oxlint-disable-next-line react/set-state-in-effect
     void load();
-  }, []);
+  }, [load]);
 
   const handleCreate = async () => {
     setCreating(true);
@@ -439,7 +441,7 @@ export function UsersPanel() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [openTools, setOpenTools] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.users.list();
@@ -447,11 +449,13 @@ export function UsersPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // Busca a lista de usuários no backend ao montar.
+    // oxlint-disable-next-line react/set-state-in-effect
     void load();
-  }, []);
+  }, [load]);
 
   const handleRoleChange = async (userId: string, role: string) => {
     setUpdating(userId);
@@ -862,7 +866,7 @@ export function SafeRootsPanel() {
   const [creating, setCreating] = useState(false);
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null);
 
-  const reload = async () => {
+  const reload = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/admin/safe-roots");
@@ -873,11 +877,13 @@ export function SafeRootsPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // Busca a lista de safe roots no backend ao montar.
+    // oxlint-disable-next-line react/set-state-in-effect
     void reload();
-  }, []);
+  }, [reload]);
 
   const handleAdd = async () => {
     if (!newPath.trim()) return;
@@ -1327,7 +1333,7 @@ export function StoragePanel() {
   const isPro =
     !licenseLoading && license?.configured && license?.tier === "pro";
 
-  const fetchHealth = async () => {
+  const fetchHealth = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/admin/storage", { credentials: "include" });
@@ -1335,11 +1341,13 @@ export function StoragePanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchHealth();
-  }, []);
+    // Busca o status de armazenamento no backend ao montar.
+    // oxlint-disable-next-line react/set-state-in-effect
+    void fetchHealth();
+  }, [fetchHealth]);
 
   const patchStorage = async (body: Record<string, string>) => {
     await fetch("/admin/storage", {

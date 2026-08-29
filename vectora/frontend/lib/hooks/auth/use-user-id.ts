@@ -50,6 +50,9 @@ export function useUserId(): string | null {
       console.info("Loaded existing browser user ID:", id);
     }
 
+    // Sincroniza com o sistema externo localStorage — leitura só possível no
+    // client, por isso fica num efeito.
+    // oxlint-disable-next-line react/set-state-in-effect
     setUserId(id);
   }, []);
 

@@ -36,6 +36,9 @@ export function useIngestPreview(
   useEffect(() => {
     const trimmedPath = path.trim();
     if (!workspaceId || !trimmedPath) {
+      // Sincroniza com o efeito de debounce/fetch abaixo — sem workspace ou
+      // path não há requisição a esperar.
+      // oxlint-disable-next-line react/set-state-in-effect
       setLoading(false);
       return;
     }

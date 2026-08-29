@@ -197,7 +197,12 @@ export function WorkspaceTrustDialog({
     }
   }, []);
 
-  useEffect(() => {
+  // Reseta o formulário sempre que o diálogo reabre — comparação durante o
+  // render (não num effect), como recomendado em
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setListing(null);
       setGitInit(true);
@@ -206,13 +211,20 @@ export function WorkspaceTrustDialog({
       setIncludeExts("");
       setExcludeExts("");
       setPathInput(initialPath ?? "");
-      lastLoadedPathRef.current = null;
       setTab("local");
       setSshHost("");
       setSshPath("");
       setSshKeyId("");
       setSshTestResult(null);
       setCodespaces([]);
+    }
+  }
+
+  useEffect(() => {
+    if (open) {
+      lastLoadedPathRef.current = null;
+      // Busca a listagem do path (rede) ao abrir o diálogo.
+      // oxlint-disable-next-line react/set-state-in-effect
       void load(initialPath || undefined);
     }
   }, [open, load, initialPath]);
@@ -226,6 +238,8 @@ export function WorkspaceTrustDialog({
         setSshKeys(keys);
       })();
     } else if (tab === "codespace") {
+      // Kicka a busca de codespaces (rede); loading precisa ligar antes do await.
+      // oxlint-disable-next-line react/set-state-in-effect
       setCodespaceLoading(true);
       void (async () => {
         const data = await listCodespaces();

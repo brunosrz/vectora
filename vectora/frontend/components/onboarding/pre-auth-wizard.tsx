@@ -141,16 +141,24 @@ export function PreAuthWizard({
   const [settingUpLocal, setSettingUpLocal] = useState(false);
 
   // Auto-preenche o username a partir do nome enquanto não houver edição
-  // manual — mesmo padrão do /auth/signup real.
-  useEffect(() => {
+  // manual — mesmo padrão do /auth/signup real. Comparação durante o render
+  // (não num effect) é o padrão que o React recomenda pra "ajustar estado
+  // quando uma prop muda":
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevName, setPrevName] = useState<string | null>(null);
+  if (name !== prevName) {
+    setPrevName(name);
     if (!usernameEdited) setUsername(slugifyUsername(name));
-  }, [name, usernameEdited, setUsername]);
+  }
 
   // Checagem de disponibilidade com debounce — mesmo padrão do /auth/signup
   // real (lib/api/username.ts::checkUsername), reaproveitado aqui.
   useEffect(() => {
     const u = username.trim();
     if (!u) {
+      // Busca de disponibilidade (I/O de rede) com debounce — não é estado
+      // derivado de prop.
+      // oxlint-disable-next-line react/set-state-in-effect
       setUsernameStatus(null);
       setCheckingUsername(false);
       return;
@@ -170,9 +178,15 @@ export function PreAuthWizard({
     };
   }, [username]);
 
-  useEffect(() => {
+  // Reseta a validade do passo de continuação sempre que o índice muda —
+  // comparação durante o render (não num effect), mesmo padrão do
+  // auto-preenchimento de username acima.
+  const [prevContinuationIndex, setPrevContinuationIndex] =
+    useState(continuationIndex);
+  if (continuationIndex !== prevContinuationIndex) {
+    setPrevContinuationIndex(continuationIndex);
     setContinuationValid(true);
-  }, [continuationIndex]);
+  }
 
   function handleIdentityNext() {
     let hasError = false;

@@ -105,7 +105,7 @@ export function GitToolbar({
     setCreating(false);
   }, [newBranch, handleCheckout]);
 
-  const handleSync = useCallback(async () => {
+  const handleSync = async () => {
     setSyncing(true);
     try {
       await apiSync(workspaceId, sync.action);
@@ -113,7 +113,7 @@ export function GitToolbar({
     } finally {
       setSyncing(false);
     }
-  }, [workspaceId, sync.action, onChanged]);
+  };
 
   return (
     <div className="shrink-0 border-b border-border/60">

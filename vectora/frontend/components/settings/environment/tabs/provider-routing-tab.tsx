@@ -239,10 +239,10 @@ function OllamaSection() {
     }
   }, []);
 
-  // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
-  // uso correto de efeito, ver justificativa em use-context-graph.ts.
-  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
+    // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+    // uso correto de efeito, ver justificativa em use-context-graph.ts.
+    // oxlint-disable-next-line react/set-state-in-effect
     void loadRegistered();
   }, [loadRegistered]);
 
@@ -414,10 +414,10 @@ function OpenRouterSection() {
     }
   }, []);
 
-  // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
-  // uso correto de efeito, ver justificativa em use-context-graph.ts.
-  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
+    // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+    // uso correto de efeito, ver justificativa em use-context-graph.ts.
+    // oxlint-disable-next-line react/set-state-in-effect
     void loadStatus();
     void loadRegistered();
   }, [loadStatus, loadRegistered]);
@@ -672,10 +672,10 @@ function NineRouterSection() {
     }
   }, []);
 
-  // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
-  // uso correto de efeito, ver justificativa em use-context-graph.ts.
-  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
+    // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
+    // uso correto de efeito, ver justificativa em use-context-graph.ts.
+    // oxlint-disable-next-line react/set-state-in-effect
     void loadStatus();
     void loadRegistered();
   }, [loadStatus, loadRegistered]);
@@ -684,9 +684,9 @@ function NineRouterSection() {
   // OpenRouter, que busca no catálogo sem exigir clique em botão. Só roda
   // uma vez por configuração (discovered !== null trava o re-disparo); o
   // botão "Detectar modelos" continua disponível pra atualizar manualmente.
-  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
     if (!status?.configured || discovered !== null) return;
+    // oxlint-disable-next-line react/set-state-in-effect
     setDiscovering(true);
     setError(null);
     discoverNineRouterModels()

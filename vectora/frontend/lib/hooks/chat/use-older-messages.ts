@@ -37,19 +37,22 @@ export function useOlderMessages(
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [olderMessages, setOlderMessages] = useState<HistoryMessage[]>([]);
   const isLoadingRef = useRef(false);
-  const offsetRef = useRef(0);
 
-  // Sincroniza hasMore quando initialHasMore muda (ex.: após carregamento inicial)
-  useEffect(() => {
-    setHasMore(initialHasMore);
-  }, [initialHasMore, threadId]);
-
-  // Reset ao mudar de thread
-  useEffect(() => {
+  // Ajusta o estado de paginação a partir das props durante o render (não
+  // num efeito): ao trocar de thread, zera olderMessages e adota o hasMore
+  // inicial da nova thread; ao só mudar initialHasMore (ex.: após o
+  // GetHistory inicial resolver) sincroniza hasMore sem mexer no restante.
+  const [prevThreadId, setPrevThreadId] = useState(threadId);
+  const [prevInitialHasMore, setPrevInitialHasMore] = useState(initialHasMore);
+  if (threadId !== prevThreadId) {
+    setPrevThreadId(threadId);
+    setPrevInitialHasMore(initialHasMore);
     setHasMore(initialHasMore);
     setOlderMessages([]);
-    offsetRef.current = 0;
-  }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
+  } else if (initialHasMore !== prevInitialHasMore) {
+    setPrevInitialHasMore(initialHasMore);
+    setHasMore(initialHasMore);
+  }
 
   const loadOlder = useCallback(async () => {
     if (!hasMore || isLoadingRef.current) return;
@@ -58,13 +61,14 @@ export function useOlderMessages(
     setIsLoadingOlder(true);
 
     try {
-      const offset = offsetRef.current + currentCount;
+      // olderMessages.length já é quantas mensagens antigas foram
+      // acumuladas até aqui — soma direto ao offset, sem contador à parte.
+      const offset = olderMessages.length + currentCount;
       const page: PagedHistoryResponse = await getHistoryPage(
         threadId,
         PAGE_SIZE,
         offset,
       );
-      offsetRef.current += page.messages.length;
       setHasMore(page.has_more);
       setOlderMessages((prev) => [...page.messages, ...prev]);
     } catch {
@@ -73,7 +77,7 @@ export function useOlderMessages(
       isLoadingRef.current = false;
       setIsLoadingOlder(false);
     }
-  }, [threadId, hasMore, currentCount]);
+  }, [threadId, hasMore, currentCount, olderMessages.length]);
 
   useEffect(() => {
     const el = sentinelRef.current;

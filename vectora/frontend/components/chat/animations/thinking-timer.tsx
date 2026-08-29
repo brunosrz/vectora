@@ -27,7 +27,9 @@ export function ThinkingTimer({
 
   useEffect(() => {
     if (isThinking && startTime) {
-      // Initialize immediately to show 0s
+      // Sincroniza com o relógio do sistema (Date.now) via intervalo — não
+      // é estado derivado de props, precisa do efeito pra manter o timer.
+      // oxlint-disable-next-line react/set-state-in-effect
       setElapsed(0);
       const interval = setInterval(() => {
         setElapsed(Date.now() - startTime);

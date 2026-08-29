@@ -67,6 +67,9 @@ export function GitStatusBadge() {
     };
 
     document.addEventListener("visibilitychange", onVisibility);
+    // Busca inicial do status git ao montar — sincroniza com o backend,
+    // não deriva de prop.
+    // oxlint-disable-next-line react/set-state-in-effect
     fetchStatus();
     schedule();
 

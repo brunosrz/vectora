@@ -133,6 +133,8 @@ export function HistoryView({
 
   useEffect(() => {
     if (!workspaceId) return;
+    // Busca o log git no backend (rede) ao trocar de workspace, não estado derivado.
+    // oxlint-disable-next-line react/set-state-in-effect
     setLoading(true);
     void fetchGitLog(workspaceId, 0).then((d) => {
       setLoading(false);

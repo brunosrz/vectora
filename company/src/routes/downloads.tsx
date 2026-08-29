@@ -93,6 +93,8 @@ export const Route = createFileRoute("/downloads")({
 
 function DownloadsPage() {
   const [userOS, setUserOS] = useState<OS | null>(null);
+  // detectOS() lê navigator.userAgent — não existe no SSR, só no cliente.
+  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => setUserOS(detectOS()), []);
   const { data: latestVersion } = useLatestVersion();
 

@@ -210,6 +210,8 @@ export function FileViewer({
   useEffect(() => {
     if (media) return; // mídia não busca conteúdo de texto
     let cancelled = false;
+    // Busca o conteúdo do arquivo no backend (rede) ao trocar de path.
+    // oxlint-disable-next-line react/set-state-in-effect
     setLoading(true);
     const qs = new URLSearchParams({ path });
     fetch(`/workspaces/${encodeURIComponent(workspaceId)}/file?${qs}`, {

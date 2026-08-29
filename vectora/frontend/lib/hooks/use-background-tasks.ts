@@ -73,10 +73,16 @@ export function useBackgroundTasks(threadId: string): {
     setTasksData(threadId, t, r);
   }, [threadId, setTasksData]);
 
+  const fetchedAt = cache.fetchedAt;
+  const isStale = useCallback(
+    () => Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    [fetchedAt],
+  );
+
   useWorkbenchSWR({
     key: `tasks:${threadId}`,
     hasCache: cache.fetchedAt > 0,
-    isStale: Date.now() - cache.fetchedAt > WORKBENCH_STALE_MS,
+    isStale,
     revalidate: fetchAndStore,
   });
 

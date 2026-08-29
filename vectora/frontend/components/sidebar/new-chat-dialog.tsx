@@ -48,12 +48,20 @@ export function NewChatDialog({
   const [selected, setSelected] = useState<string | null>(null);
   const [trustOpen, setTrustOpen] = useState(false);
 
+  // Reseta a seleção pro workspace ativo sempre que o diálogo reabre —
+  // comparação durante o render (não num effect), como recomendado em
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setSelected(activeId ?? null);
+  }
+
   useEffect(() => {
-    if (open) {
-      void hydrate();
-      setSelected(activeId ?? null);
-    }
-  }, [open, hydrate, activeId]);
+    // Rehidrata a lista de workspaces do backend (rede) ao abrir o diálogo.
+    // oxlint-disable-next-line react/set-state-in-effect
+    if (open) void hydrate();
+  }, [open, hydrate]);
 
   function handleConfirm() {
     onConfirm(selected);

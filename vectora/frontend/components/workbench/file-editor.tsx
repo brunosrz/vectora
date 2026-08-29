@@ -46,6 +46,8 @@ export function FileEditor({
   useEffect(() => {
     if (media) return;
     let cancelled = false;
+    // Busca o conteúdo do arquivo no backend (rede) ao trocar de path.
+    // oxlint-disable-next-line react/set-state-in-effect
     setLoading(true);
     fetchFile(workspaceId, path)
       .then((data) => {

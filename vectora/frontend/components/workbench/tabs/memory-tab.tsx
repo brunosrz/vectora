@@ -65,8 +65,8 @@ function useWorkspaceRagBuckets(workspaceId: string | undefined) {
 
   // Busca de dados ao montar (I/O de rede), não estado derivado de prop —
   // uso correto de efeito, ver justificativa em use-context-graph.ts.
-  // oxlint-disable-next-line set-state-in-effect
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     refetch();
   }, [refetch]);
 
@@ -181,6 +181,9 @@ function useWorkspaceRagSummary(workspaceId: string | undefined) {
 
   useEffect(() => {
     if (!workspaceId) {
+      // Sincroniza com o fetch abaixo — sem workspace não há resumo a
+      // buscar.
+      // oxlint-disable-next-line react/set-state-in-effect
       setCollections([]);
       return;
     }
@@ -390,6 +393,9 @@ function useRagSearch(workspaceId: string | undefined) {
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed) {
+      // Sincroniza com a busca debounçada abaixo — query vazia não tem
+      // request pendente a esperar.
+      // oxlint-disable-next-line react/set-state-in-effect
       setResults(null);
       return;
     }

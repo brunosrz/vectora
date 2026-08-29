@@ -14,6 +14,9 @@ export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // localStorage não existe no SSR — leitura de sistema externo, só
+    // pode rodar no cliente.
+    // oxlint-disable-next-line react/set-state-in-effect
     if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
   }, []);
 
