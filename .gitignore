@@ -368,7 +368,6 @@ env.gha
 /docs/.docusaurus
 *.zip
 /vectora/frontend/project.inlang
-/docs/_vendor
 /vectora/resources
 /ai-jail-master
 /chrome-devtools-mcp-main
