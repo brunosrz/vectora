@@ -4,6 +4,7 @@ vectora                 imprime o help (descobre a CLI de configuração)
 vectora start           sobe backend + SPA (fullstack)
 vectora start --headless  sobe sem janela (bandeja + backend)
 vectora web             sobe só como webapp — sem Electron, sem bandeja
+vectora run --task "..."  roda uma tarefa uma vez e sai — sem servidor (CI)
 
 Configuração (operacional, para VPS via SSH):
   vectora config                 mostra ~/.vectora/settings.json
@@ -232,6 +233,36 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="PEM",
         default=None,
         help="Chave privada TLS correspondente. Também via env SSL_KEYFILE.",
+    )
+
+    # ── run — one-shot, sem servidor (CI, Vectora Bot for GHA) ────────────────
+    run_p = sub.add_parser(
+        "run",
+        help="Roda uma tarefa uma única vez e sai — sem servidor (CI)",
+        description=(
+            "Sobe o motor nativo, roda run_conversation uma vez com a tarefa\n"
+            "dada e imprime a resposta final em stdout. Sem servidor FastAPI,\n"
+            "sem HITL interativo (permission_mode=auto — não há UI de\n"
+            "aprovação num runner de CI), sem estado persistente entre\n"
+            "execuções a menos que VECTORA_HOME já esteja setado.\n\n"
+            'Exemplo: vectora run --task "revise este PR" < diff.txt'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    run_p.add_argument(
+        "--task",
+        default=None,
+        help="Tarefa a executar. Se omitido, lê de stdin.",
+    )
+    run_p.add_argument(
+        "--model",
+        default=None,
+        metavar="PROVIDER:MODEL_ID",
+        help=(
+            "Modelo a usar (ex.: google_genai:gemini-3-flash). Não existe "
+            "resolução de 'modelo padrão' no servidor — obrigatório aqui ou "
+            "via env var VECTORA_MODEL."
+        ),
     )
 
     # ── config — settings + keys/docker/qdrant/redis ──────────────────────────
@@ -616,6 +647,12 @@ def _run_doctor_command(args: argparse.Namespace) -> None:
     run_doctor(args)
 
 
+def _run_run_task_command(args: argparse.Namespace) -> None:
+    from backend.cli.run_task import run_run_task
+
+    run_run_task(args)
+
+
 def _run_auth_command(args: argparse.Namespace) -> None:
     from backend.auth import (
         cmd_login,
@@ -654,6 +691,7 @@ _COMMAND_HANDLERS: dict[str, Any] = {
     "storage": _run_storage_command,
     "doctor": _run_doctor_command,
     "auth": _run_auth_command,
+    "run": _run_run_task_command,
 }
 
 

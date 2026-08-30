@@ -408,6 +408,29 @@ jobs:
         working-directory: .
         run: uv run --project vectora scons smoke
         shell: bash
+      - name: Build headless CLI binary (vectora-cli, linux/x64 only)
+        # Base pro binário que a Vectora Bot Action roda em runners de CI —
+        # reusa o MESMO backend.pyd já compilado pelo Nuitka acima (build
+        # hybrid), só um passo extra de PyInstaller sem Electron/chat_static.
+        # Só linux/x64 porque é o único alvo que um runner comum do GHA usa.
+        if: matrix.target == 'linux'
+        working-directory: .
+        env:
+          VECTORA_BUILD_CLI: "1"
+        run: python build-hybrid.py --jobs 4
+        shell: bash
+      - name: Upload vectora-cli artifact
+        if: matrix.target == 'linux'
+        uses: actions/upload-artifact@v7
+        with:
+          # Nome fora do padrão "vectora-*" DE PROPÓSITO -- publish-update-channel
+          # (abaixo) baixa artifacts com `pattern: vectora-*` esperando só
+          # instaladores desktop; "vectora-cli-..." cairia nesse glob e
+          # contaminaria dist-electron-all/services/release.ts.
+          name: gha-bot-cli-linux-x64
+          path: dist/vectora-cli/
+          if-no-files-found: error
+          retention-days: 30
       - name: Export Windows signing cert
         # electron-builder só pula a assinatura quando CSC_LINK está
         # ausente (undefined) — setado como string vazia ainda conta
@@ -503,3 +526,47 @@ jobs:
         working-directory: services
         run: |
           pnpm run release -- --version=${{ steps.version.outputs.value }} --dist="$GITHUB_WORKSPACE/dist-electron-all"
+
+  # ── 7. Publish gha-bot CLI binary (R2) ────────────────────────────────────
+  # Prefixo R2 separado (gha-bot/) do canal de update do desktop — não passa
+  # por services/scripts/release.ts (schema por os/arch/canal, feito só pros
+  # instaladores) nem pelo KV de rollout, é só um tarball versionado servido
+  # via GET /gha-bot/download/:version (services/src/gha-bot/routes.ts).
+  publish-gha-bot-cli:
+    name: Publish gha-bot CLI binary (R2)
+    needs: release-native
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.5.0
+      - name: Read version from pyproject.toml
+        id: version
+        working-directory: .
+        run: |
+          VERSION=$(grep -m1 '^version' vectora/pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Download vectora-cli artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: gha-bot-cli-linux-x64
+          path: dist/vectora-cli
+      - name: Install services deps
+        working-directory: services
+        run: pnpm install --frozen-lockfile
+      - name: Tar + publish to R2
+        working-directory: .
+        run: |
+          tar -czf vectora-cli-linux-x64.tar.gz -C dist/vectora-cli .
+          pnpm --dir services exec wrangler r2 object put \
+            "vectora-r2/gha-bot/${{ steps.version.outputs.value }}/vectora-cli-linux-x64.tar.gz" \
+            --file=vectora-cli-linux-x64.tar.gz --remote

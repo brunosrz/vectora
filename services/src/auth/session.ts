@@ -98,3 +98,16 @@ export function bearerToken(req: Request): string | null {
   const match = /^Bearer (.+)$/.exec(auth);
   return match?.[1] ?? null;
 }
+
+/** Extrai o token do cookie `vsession` — mesmo cookie HttpOnly que a
+ * company usa (client.ts::SESSION_COOKIE), agora com `Domain=.vectora.
+ * company` (compartilhado entre subdomínios). Antes deste fallback,
+ * services/ só aceitava Bearer — o browser nunca fala com este Worker
+ * direto, só via company (server-to-server). Painéis servidos por este
+ * mesmo Worker (bot.vectora.company) precisam de um jeito de autenticar
+ * o browser diretamente, sem reinventar login. */
+export function cookieToken(req: Request): string | null {
+  const cookie = req.headers.get("Cookie") ?? "";
+  const match = /(?:^|;\s*)vsession=([^;]+)/.exec(cookie);
+  return match?.[1] ?? null;
+}

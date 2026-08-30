@@ -48,6 +48,20 @@ def run_run_task(args: argparse.Namespace) -> None:
         print("Nenhuma tarefa fornecida.", file=sys.stderr)
         sys.exit(1)
 
+    # Não existe "modelo padrão" resolvível no lado do servidor — o valor
+    # mostrado na UI do chat vem do estado do FRONTEND (localStorage),
+    # enviado explicitamente em toda requisição; `settings.default_model`
+    # é escrito pelo admin mas nunca lido por nenhum caminho de execução.
+    # Sem frontend nenhum aqui, o modelo tem que vir explícito.
+    model_id = args.model or os.environ.get("VECTORA_MODEL", "")
+    if not model_id:
+        print(
+            "Nenhum modelo especificado. Use --model provider:model-id ou "
+            "defina a env var VECTORA_MODEL (ex.: google_genai:gemini-3-flash).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     # Precisa rodar ANTES do primeiro import de `backend.settings` (aqui,
     # transitivo via `_run_task` abaixo) — os paths de storage são
     # computados a partir de `VECTORA_HOME` no momento do import, mesmo
@@ -55,11 +69,11 @@ def run_run_task(args: argparse.Namespace) -> None:
     if not os.environ.get("VECTORA_HOME"):
         os.environ["VECTORA_HOME"] = tempfile.mkdtemp(prefix="vectora-run-")
 
-    exit_code = asyncio.run(_run_task(task))
+    exit_code = asyncio.run(_run_task(task, model_id=model_id))
     sys.exit(exit_code)
 
 
-async def _run_task(task: str) -> int:
+async def _run_task(task: str, *, model_id: str) -> int:
     from backend.engine.conversation_loop import LoopConfig, run_conversation
     from backend.engine.hitl import should_require_approval
     from backend.llm.fallback_chat_client import FallbackChatClient
@@ -99,7 +113,7 @@ async def _run_task(task: str) -> int:
         }
         run_ctx = ctx_from_config({"configurable": configurable})
         run_ctx.store = await agent_factory.get_store()
-        chat_client = FallbackChatClient(primary_model_id="")
+        chat_client = FallbackChatClient(primary_model_id=model_id)
         loop_config = LoopConfig(max_iterations=50)
 
         if native_agent.subagent_catalog:

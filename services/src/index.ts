@@ -6,9 +6,14 @@
  *   bidirecional de OAuth/webhooks pro app desktop — ex-relay, renomeado
  *   sem alias de transição por decisão do produto).
  * - Qualquer outro host → um único Hono app com auth/profile/billing/
- *   license/gdpr/api-keys/issues/rag-library/registry/telemetry e updates
+ *   license/gdpr/api-keys/gha-bot/issues/rag-library/registry/telemetry e updates
  *   (electron-updater + download público, `src/updates/worker.ts`, mesclado
  *   na raiz via `.route("/", ...)`) — sem domínio dedicado.
+ * - `bot.vectora.company` na raiz (`/`) → painel HTML do Vectora Bot
+ *   (`src/gha-bot/panel.ts`), autenticado via cookie `vsession`
+ *   compartilhado com a company; qualquer outro path nesse host cai no
+ *   mesmo Hono app acima (o painel chama /gha-bot/*, /auth/me,
+ *   /billing/subscription same-origin).
  *
  * `queue()` processa as duas filas do Worker (`vectora-email`, `vectora-jobs`
  * — ver src/queue-consumer.ts e wrangler.toml). `scheduled()` também roda
@@ -32,6 +37,8 @@ import { oauth } from "./oauth/routes";
 import { gdpr, enqueueExpiredUserDeletions } from "./gdpr/routes";
 import { expireGiftSubscriptions } from "./billing/routes";
 import { apiKeys } from "./api-keys/routes";
+import { ghaBot } from "./gha-bot/routes";
+import { ghaBotPanel } from "./gha-bot/panel";
 import { issues } from "./issues/routes";
 import { ragLibrary } from "./rag-library/routes";
 import { registry } from "./registry/routes";
@@ -48,6 +55,12 @@ function isGatewayHost(hostname: string): boolean {
   );
 }
 
+const GHA_BOT_PANEL_HOST = "bot.vectora.company";
+
+function isGhaBotPanelHost(hostname: string): boolean {
+  return hostname === GHA_BOT_PANEL_HOST;
+}
+
 const servicesApp = new Hono<{ Bindings: Env }>();
 servicesApp.route("/auth", auth);
 servicesApp.route("/admin", admin);
@@ -57,6 +70,7 @@ servicesApp.route("/license", license);
 servicesApp.route("/oauth", oauth);
 servicesApp.route("/gdpr", gdpr);
 servicesApp.route("/api-keys", apiKeys);
+servicesApp.route("/gha-bot", ghaBot);
 servicesApp.route("/issues", issues);
 servicesApp.route("/rag-library", ragLibrary);
 servicesApp.route("/registry", registry);
@@ -74,9 +88,15 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Response | Promise<Response> {
-    const { hostname } = new URL(request.url);
-    if (isGatewayHost(hostname)) {
+    const url = new URL(request.url);
+    if (isGatewayHost(url.hostname)) {
       return gatewayHandler.fetch(request, env);
+    }
+    // bot.vectora.company só troca a raiz pelo HTML do painel — as chamadas
+    // que o painel faz (/gha-bot/*, /auth/me, /billing/subscription) seguem
+    // pro mesmo servicesApp de sempre, same-origin.
+    if (isGhaBotPanelHost(url.hostname) && url.pathname === "/") {
+      return ghaBotPanel.fetch(request, env, ctx);
     }
     return servicesApp.fetch(request, env, ctx);
   },
