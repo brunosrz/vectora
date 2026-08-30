@@ -172,7 +172,14 @@ jobs:
           VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID_COMPANY }}
         run: npx --yes vercel@latest --prod --yes --token="$VERCEL_TOKEN"
 
+      # id em cada passo de services/: terceiro achado do CodeRabbit (PR #22)
+      # — needs.services.result só garante que a VALIDAÇÃO (job `services`,
+      # outro runner) passou; não impede que "Install deps" FALHE aqui
+      # dentro do próprio job `deploy` (ex. flake de rede) e ainda assim
+      # `always()` deixe migrations/deploy rodarem sem node_modules.
+      # steps.<id>.outcome encadeia a dependência real dentro do job.
       - name: Install deps (services)
+        id: services_install
         if: >-
           always() && needs.services.result == 'success' &&
           env.CLOUDFLARE_API_TOKEN != ''
@@ -182,15 +189,16 @@ jobs:
       # Migrations ANTES do deploy do worker: o código deployado assume o
       # schema mais novo — publicar sem aplicar quebra rotas em produção.
       - name: Aplica migrations D1 (services)
+        id: services_migrations
         if: >-
-          always() && needs.services.result == 'success' &&
+          always() && steps.services_install.outcome == 'success' &&
           env.CLOUDFLARE_API_TOKEN != ''
         working-directory: services
         run: pnpm exec wrangler d1 migrations apply vectora-db --remote
 
       - name: Deploy services (Worker Cloudflare)
         if: >-
-          always() && needs.services.result == 'success' &&
+          always() && steps.services_migrations.outcome == 'success' &&
           env.CLOUDFLARE_API_TOKEN != ''
         working-directory: services
         run: pnpm exec wrangler deploy
