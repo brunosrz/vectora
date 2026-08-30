@@ -118,8 +118,18 @@ jobs:
     # job INTEIRO se qualquer um dos `needs` falhar — os always() dos passos
     # abaixo nunca chegariam a rodar (achado do CodeRabbit, PR #22). Só
     # cancelamento explícito do workflow deve impedir o deploy de tentar.
+    #
+    # event_name aceita 'push' (automático, todo merge em master) E
+    # 'workflow_dispatch' (retry manual pela aba Actions — ex.: publicação
+    # anterior falhou por causa externa ao código, tipo bloqueio de
+    # verificação de autor de commit da Vercel, e o usuário quer re-tentar
+    # sem precisar de um push novo). github.ref continua travado em master
+    # nos dois casos — workflow_dispatch permite escolher a branch na UI,
+    # e sem essa checagem um disparo manual de outra branch publicaria em
+    # produção por engano.
     if: >-
-      !cancelled() && github.event_name == 'push' &&
+      !cancelled() &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/master'
     # Secrets de produção vivem só no Environment "Production" (não em
     # repo-level Secrets) — sem declarar `environment:` aqui, o job não
