@@ -710,10 +710,17 @@ export function IntegracoesTab() {
     const maxAttempts = 5;
     const interval = setInterval(() => {
       attempts += 1;
+      // Limite aplicado ANTES de disparar a requisição: se a resposta
+      // anterior ainda estiver pendente (mais lenta que os 3s do
+      // intervalo), o clearInterval só rodava DEPOIS do .then() — a próxima
+      // tentativa já teria disparado, ultrapassando maxAttempts.
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+      }
       void fetchGatewayStatus().then((status) => {
         if (cancelled) return;
         setGateway(status);
-        if (status.state !== "error" || attempts >= maxAttempts) {
+        if (status.state !== "error") {
           clearInterval(interval);
         }
       });

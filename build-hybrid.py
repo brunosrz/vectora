@@ -166,6 +166,13 @@ def main() -> None:
     collect: list[str] = []
     for pkg in COLLECT_ALL:
         collect += ["--collect-all", pkg]
+    # --collect-all NÃO copia o dist-info do próprio pacote "vectora" (só
+    # código/dados/binários) — sem os metadados, importlib.metadata.version
+    # ("vectora") levanta PackageNotFoundError dentro do binário congelado e
+    # backend.version.get_vectora_version() cai silenciosamente no fallback
+    # "0.1.0" (achado real do CodeRabbit no PR que adicionou a versão ao log
+    # de startup: o binário sempre relataria a versão errada).
+    collect += ["--copy-metadata", "vectora"]
     hidden: list[str] = []
     for mod in HIDDEN_IMPORTS:
         hidden += ["--hidden-import", mod]
