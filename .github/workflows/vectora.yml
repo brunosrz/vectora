@@ -368,6 +368,20 @@ jobs:
         working-directory: .
         run: uv run --project vectora scons nats
         shell: bash
+      - name: Cache ffmpeg/ffprobe binaries
+        uses: actions/cache@v6
+        with:
+          path: |
+            vectora/resources/ffmpeg*
+            vectora/resources/ffprobe*
+          key: ffmpeg-${{ matrix.target }}-${{ matrix.arch }}
+      - name: Fetch ffmpeg/ffprobe binaries
+        # Mesmo motivo/padrão do nats acima — build-hybrid.py também falha
+        # rápido sem vectora/resources/ffmpeg(.exe)/ffprobe(.exe)
+        # (transcrição/análise de mídia local precisa deles embutidos).
+        working-directory: .
+        run: uv run --project vectora scons ffmpeg
+        shell: bash
       - name: Build hybrid (Nuitka backend.pyd + PyInstaller onedir)
         # Mesmo pipeline que `scons release` roda localmente
         # (build-hybrid.py, na raiz do monorepo — não em vectora/): Nuitka
