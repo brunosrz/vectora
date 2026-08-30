@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.12](https://github.com/vectora-ltda/vectora/compare/vectora-v0.1.11...vectora-v0.1.12) (2026-08-30)
+
+
+### Features
+
+* **gh-bot:** add one-shot cli command for vectora run ([#21](https://github.com/vectora-ltda/vectora/issues/21)) ([f81a6cd](https://github.com/vectora-ltda/vectora/commit/f81a6cdf7fc16f5fdb58cb2b0282832ff4680be7))
+
+
+### Bug Fixes
+
+* **ci:** busca ffmpeg/ffprobe antes do build nativo, igual já faz pro nats ([#20](https://github.com/vectora-ltda/vectora/issues/20)) ([85c1f81](https://github.com/vectora-ltda/vectora/commit/85c1f818f35c713746d28fa8630c3c1f9b34a8d9))
+* **company,backend:** update SOUL catalog docs/marketing + full subagent test review ([#28](https://github.com/vectora-ltda/vectora/issues/28)) ([aea14a3](https://github.com/vectora-ltda/vectora/commit/aea14a3e5ee59343a2db9e5b1dd409403c974b16))
+* **frontend:** completa os ajustes mobile-first pendentes do header/sidebar ([#25](https://github.com/vectora-ltda/vectora/issues/25)) ([08ba9b2](https://github.com/vectora-ltda/vectora/commit/08ba9b2bf1f3bf7717f8f9f78c8024149191145e))
+* **frontend:** header/sidebar layout + seletor de tema com preview ([#17](https://github.com/vectora-ltda/vectora/issues/17)) ([0a2bdfb](https://github.com/vectora-ltda/vectora/commit/0a2bdfbbbd5207d19ac542ebd0c9e43a42af6c2d))
+
 ## [0.1.11](https://github.com/brunosrz/vectora/compare/vectora-v0.1.10...vectora-v0.1.11) (2026-08-29)
 
 
