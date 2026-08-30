@@ -114,7 +114,13 @@ jobs:
     name: Deploy produção (Vercel + Cloudflare)
     runs-on: ubuntu-latest
     needs: [company, services, docs]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    # !cancelled(): sem uma função de status aqui, o GitHub Actions pula o
+    # job INTEIRO se qualquer um dos `needs` falhar — os always() dos passos
+    # abaixo nunca chegariam a rodar (achado do CodeRabbit, PR #22). Só
+    # cancelamento explícito do workflow deve impedir o deploy de tentar.
+    if: >-
+      !cancelled() && github.event_name == 'push' &&
+      github.ref == 'refs/heads/master'
     # Secrets de produção vivem só no Environment "Production" (não em
     # repo-level Secrets) — sem declarar `environment:` aqui, o job não
     # enxerga nenhum deles (ficam vazios em silêncio, sem erro). Um único
