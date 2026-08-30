@@ -698,6 +698,39 @@ export function IntegracoesTab() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    // Corrida conhecida (commit d732f197): o registro do gateway confirma
+    // só o handshake HTTP -- o WebSocket pode levar alguns segundos a mais
+    // pra ser marcado "conectado" no Durable Object. Sem retry, um load()
+    // disparado nessa janela prendia o card em "Gateway indisponível" pra
+    // sempre, mesmo o backend conectando logo em seguida.
+    if (gateway.state !== "error") return;
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 5;
+    const interval = setInterval(() => {
+      attempts += 1;
+      // Limite aplicado ANTES de disparar a requisição: se a resposta
+      // anterior ainda estiver pendente (mais lenta que os 3s do
+      // intervalo), o clearInterval só rodava DEPOIS do .then() — a próxima
+      // tentativa já teria disparado, ultrapassando maxAttempts.
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+      }
+      void fetchGatewayStatus().then((status) => {
+        if (cancelled) return;
+        setGateway(status);
+        if (status.state !== "error") {
+          clearInterval(interval);
+        }
+      });
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [gateway.state]);
+
   // Detecta oauth_success/oauth_error na URL após callback OAuth
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

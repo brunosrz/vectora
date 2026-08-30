@@ -442,6 +442,24 @@ jobs:
         run: |
           echo "CSC_LINK=${{ secrets.WIN_CERTIFICATE_BASE64 }}" >> "$GITHUB_ENV"
           echo "CSC_KEY_PASSWORD=${{ secrets.WIN_CERTIFICATE_PASSWORD }}" >> "$GITHUB_ENV"
+      - name: Verifica sincronia de versão (pyproject.toml vs frontend/package.json)
+        # release-please só bumpa vectora/pyproject.toml por padrão --
+        # frontend/package.json precisa ser sincronizado via extra-files em
+        # release-please-config.json. Sem essa sincronia, electron-builder
+        # nomeia o instalador e grava o latest.yml com a versão ERRADA
+        # (herdada do package.json desatualizado) -- o R2/KV publicam sob o
+        # path de versão certo, mas o CONTEÚDO fica mentindo a versão, e o
+        # electron-updater recusa a atualização como "downgrade". Falhar
+        # aqui, cedo, é mais barato que descobrir isso em produção.
+        working-directory: .
+        shell: bash
+        run: |
+          pyproject_version=$(grep -m1 '^version = ' vectora/pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          frontend_version=$(node -p "require('./vectora/frontend/package.json').version")
+          if [ "$pyproject_version" != "$frontend_version" ]; then
+            echo "::error::Versão divergente: pyproject.toml=$pyproject_version frontend/package.json=$frontend_version -- corrija release-please-config.json (extra-files) antes de publicar."
+            exit 1
+          fi
       - name: Build desktop shell + installer
         # Sem working-directory explícito: herda o default do job/workflow
         # (working-directory: vectora, linha 27-29) — por isso --dir aqui é

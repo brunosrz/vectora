@@ -32,6 +32,7 @@ import {
   waitFor,
   fireEvent,
   within,
+  act,
 } from "@testing-library/react";
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 
@@ -465,6 +466,75 @@ describe("IntegracoesTab", () => {
       expect(screen.getByText("Gateway respondeu 503")).toBeTruthy();
       expect(screen.queryByText(/nenhuma integração oauth/i)).toBeNull();
     });
+  });
+
+  it("gateway com erro se recupera sozinho quando a conexão termina alguns segundos depois (corrida de startup)", async () => {
+    // Reprodução do bug real (2026-08-30): o backend loga "gateway:
+    // conectado" alguns segundos após o boot, mas o card ficava preso em
+    // "Gateway indisponível" pra sempre porque fetchGatewayStatus só era
+    // chamado uma vez no mount. Sem retry, esse teste falharia (o texto
+    // de erro nunca some).
+    // try/finally: se alguma asserção falhar antes do fim, os timers falsos
+    // ainda precisam voltar ao normal — senão vazam pros testes seguintes.
+    vi.useFakeTimers();
+    try {
+      let call = 0;
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === "/gateway/status") {
+          call += 1;
+          const status: GatewayStatus =
+            call === 1
+              ? {
+                  connected: false,
+                  state: "error",
+                  token: "abc123",
+                  subdomain: "abc123.vectora.chat",
+                  webhook_base: "https://abc123.vectora.chat",
+                  detail: "Gateway respondeu 503",
+                }
+              : {
+                  connected: true,
+                  state: "connected",
+                  token: "abc123",
+                  subdomain: "abc123.vectora.chat",
+                  webhook_base: "https://abc123.vectora.chat",
+                  detail: null,
+                };
+          return Promise.resolve({
+            ok: true,
+            json: async () => status,
+          } as Response);
+        }
+        if (url === "/auth/envs") {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ envs: {}, keys: [] }),
+          } as Response);
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ integrations: BASE_INTEGRATIONS }),
+        } as Response);
+      });
+
+      const { IntegracoesTab } = await import("../integracoes-tab");
+      render(<IntegracoesTab />);
+
+      await vi.waitFor(() => {
+        expect(screen.getByText(/gateway indisponível/i)).toBeTruthy();
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+
+      await vi.waitFor(() => {
+        expect(screen.getByText(/gateway conectado/i)).toBeTruthy();
+        expect(screen.queryByText(/gateway indisponível/i)).toBeNull();
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("lista variáveis customizadas (órfãs) numa seção separada", async () => {

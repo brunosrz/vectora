@@ -7,7 +7,14 @@
     "vectora": {
       "release-type": "python",
       "package-name": "vectora",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "frontend/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   }
 }
