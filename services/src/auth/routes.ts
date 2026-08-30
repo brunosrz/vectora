@@ -228,6 +228,13 @@ auth.post("/verify", async (c) => {
 });
 
 auth.post("/login", async (c) => {
+  // Sem rate limit aqui, brute force de senha era viável sem nenhuma defesa
+  // (achado da auditoria de segurança de 2026-08-30) — mesmo binding usado
+  // por license/agent-login, mesmo risco (email+senha).
+  const ip = c.req.header("cf-connecting-ip") ?? "unknown";
+  const { success } = await c.env.AUTH_LOGIN_LIMITER.limit({ key: ip });
+  if (!success) return c.json({ error: "rate_limited" }, 429);
+
   const body = await c.req.json<{ email?: string; password?: string }>();
   if (!body.email || !body.password) {
     return c.json({ error: "email_and_password_required" }, 400);

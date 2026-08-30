@@ -9,6 +9,7 @@ interface __BaseEnv_Env {
   EMAIL_QUEUE: Queue;
   JOBS_QUEUE: Queue;
   LICENSE_VALIDATE_LIMITER: RateLimit;
+  AUTH_LOGIN_LIMITER: RateLimit;
   MAX_PAYLOAD_BYTES: "5242880";
   QUEUE_TTL_MS: "600000";
   APP_URL: "https://vectora.company";

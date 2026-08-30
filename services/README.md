@@ -17,6 +17,12 @@ auth/billing/license/GDPR/api-keys/issues/rag-library/registry. Domínios:
 Dispatch por hostname em `src/index.ts`: só gateway tem host dedicado;
 qualquer outro host cai no app único de `services.vectora.company`.
 
+**Decisão de arquitetura**: `src/gateway/index.ts` é um `ExportedHandler`
+cru (roteamento manual por `startsWith`/`slice` de path), não um sub-app
+Hono como todo o resto do repo — upgrade de WebSocket + Durable Object não
+combina bem com o roteador padrão do Hono. Intencional, não um desvio de
+padrão a corrigir.
+
 ## Rotas
 
 **gateway** (`gateway.vectora.chat`):
@@ -86,7 +92,7 @@ handler):
 
 - Durable Object `GATEWAY_SESSION` (classe `GatewaySession`).
 - KV `GATEWAY_METRICS` — estado de OAuth device flow do gateway.
-- R2 `R2` (bucket `vectora-releases`) — instaladores + manifestos.
+- R2 `R2` (bucket `vectora-r2`) — instaladores + manifestos.
 - KV `KV` — config de canais/rollout/quarentena do updates.
 - D1 `DB` (`vectora-db`) — users/sessions/tokens/subscriptions/license_checks/
   payment_events/email_verifications/rag_packages/telemetry_events
@@ -105,7 +111,9 @@ handler):
   `VECTORA_OAUTH_SECRET` (gateway); `RESEND_API_KEY` (email transacional);
   `TURNSTILE_SECRET_KEY` (anti-bot); `STRIPE_SECRET_KEY`,
   `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_USD` (billing INTL);
-  `ASAAS_API_KEY`, `ASAAS_API_URL` (billing BR).
+  `ASAAS_API_KEY`, `ASAAS_API_URL`, `ASAAS_WEBHOOK_SECRET` (billing BR);
+  `GHA_BOT_ENCRYPTION_KEY` (gha-bot, chave mestra AES-256-GCM);
+  `GITHUB_TOKEN` (registry discovery, opcional).
 
 ## Publicar um release
 

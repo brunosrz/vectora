@@ -375,6 +375,41 @@ describe("POST /agent-login", () => {
   });
 });
 
+describe("POST /agent-login rate limiting", () => {
+  it("blocks with 429 after exceeding the per-IP limit — brute force sem defesa antes desse fix", async () => {
+    const ip = `203.0.113.${Math.floor(Math.random() * 254) + 1}`;
+    const attempt = () =>
+      license.request(
+        "/agent-login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "cf-connecting-ip": ip,
+          },
+          body: JSON.stringify({
+            email: "nobody@example.com",
+            password: "wrong",
+          }),
+        },
+        env,
+      );
+
+    // Limite configurado é 10/60s (mesmo binding de /auth/login) — 11
+    // tentativas do mesmo IP garantem estourar.
+    const results: number[] = [];
+    for (let i = 0; i < 11; i++) {
+      results.push((await attempt()).status);
+    }
+    expect(results.filter((s) => s === 401).length).toBeGreaterThan(0);
+    expect(results.filter((s) => s === 429).length).toBeGreaterThan(0);
+
+    const limited = await attempt();
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({ error: "rate_limited" });
+  });
+});
+
 describe("POST /portal", () => {
   it("returns the Stripe portal URL for a USD subscriber with a customer_id", async () => {
     const { userId, rawToken } = await makeUserWithToken();

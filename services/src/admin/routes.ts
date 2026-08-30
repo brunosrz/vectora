@@ -6,6 +6,7 @@
  * por obscuridade).
  */
 import { Hono } from "hono";
+import { z } from "zod";
 import type { Env } from "../gateway/types";
 import { requireAdmin } from "../auth/roles";
 import { grantSubscription } from "../billing/routes";
@@ -13,6 +14,24 @@ import { giftReceivedHtml, issueResponseHtml } from "../lib/email";
 import { enqueueEmail } from "../lib/queue";
 
 export const admin = new Hono<{ Bindings: Env }>();
+
+// max_redemptions/duration_months chegavam como `unknown` de
+// c.req.json<{...}>() com só um cast de tipo TypeScript, sem checagem em
+// runtime (achado da auditoria de segurança de 2026-08-30) — um valor não
+// numérico bindava direto no D1 sem erro visível.
+const CreateCouponSchema = z.object({
+  code: z.string().trim().min(3),
+  kind: z.enum(["discount", "free_lifetime"]),
+  grant_plan_id: z.string().optional(),
+  charge_plan_id: z.string().optional(),
+  max_redemptions: z.number().int().positive().optional(),
+  expires_at: z.string().optional(),
+});
+
+const CreateGiftSchema = z.object({
+  email: z.string().email(),
+  duration_months: z.number().int().positive().optional(),
+});
 
 admin.get("/users", async (c) => {
   const adminId = await requireAdmin(c);
@@ -63,21 +82,13 @@ admin.post("/coupons", async (c) => {
   const adminId = await requireAdmin(c);
   if (!adminId) return c.json({ error: "forbidden" }, 403);
 
-  const body = await c.req.json<{
-    code?: string;
-    kind?: "discount" | "free_lifetime";
-    grant_plan_id?: string;
-    charge_plan_id?: string;
-    max_redemptions?: number;
-    expires_at?: string;
-  }>();
+  const parsed = CreateCouponSchema.safeParse(await c.req.json());
+  if (!parsed.success) {
+    const field = parsed.error.issues[0]?.path[0];
+    return c.json({ error: `invalid_${field ? String(field) : "body"}` }, 400);
+  }
+  const body = parsed.data;
 
-  if (!body.code || body.code.trim().length < 3) {
-    return c.json({ error: "invalid_code" }, 400);
-  }
-  if (body.kind !== "discount" && body.kind !== "free_lifetime") {
-    return c.json({ error: "invalid_kind" }, 400);
-  }
   if (
     body.kind === "discount" &&
     (!body.grant_plan_id || !body.charge_plan_id)
@@ -145,12 +156,10 @@ admin.post("/gifts", async (c) => {
   const adminId = await requireAdmin(c);
   if (!adminId) return c.json({ error: "forbidden" }, 403);
 
-  const body = await c.req.json<{ email?: string; duration_months?: number }>();
-  if (!body.email || !body.email.includes("@")) {
-    return c.json({ error: "invalid_email" }, 400);
-  }
-  const email = body.email.toLowerCase();
-  const durationMonths = body.duration_months ?? null;
+  const parsed = CreateGiftSchema.safeParse(await c.req.json());
+  if (!parsed.success) return c.json({ error: "invalid_email" }, 400);
+  const email = parsed.data.email.toLowerCase();
+  const durationMonths = parsed.data.duration_months ?? null;
 
   const granter = await c.env.DB.prepare(
     "SELECT full_name FROM users WHERE id = ?",

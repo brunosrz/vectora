@@ -128,6 +128,11 @@ license.post("/validate", async (c) => {
 });
 
 license.post("/agent-login", async (c) => {
+  // Mesmo risco de /auth/login (email+senha) — mesmo binding, mesma defesa.
+  const ip = c.req.header("cf-connecting-ip") ?? "unknown";
+  const { success } = await c.env.AUTH_LOGIN_LIMITER.limit({ key: ip });
+  if (!success) return c.json({ error: "rate_limited" }, 429);
+
   const body = await c.req.json<{ email?: string; password?: string }>();
   if (!body.email || !body.password) {
     return c.json({ error: "email_and_password_required" }, 400);

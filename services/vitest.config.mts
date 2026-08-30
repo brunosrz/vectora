@@ -17,6 +17,7 @@ const workerOptions = {
       STRIPE_PRICE_PRO_USD: "price_test_fake",
       ASAAS_API_KEY: "test-asaas-key",
       ASAAS_API_URL: "https://api.asaas.com/v3",
+      ASAAS_WEBHOOK_SECRET: "test-asaas-webhook-secret",
       // Turnstile desligado nos testes: verifyTurnstile só dispensa a checagem
       // com secret vazio/ausente. Fixar aqui mantém os testes herméticos — sem
       // este pin, o TURNSTILE_SECRET_KEY real do `.env` do dev vaza pro worker

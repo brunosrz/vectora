@@ -472,10 +472,23 @@ async function handleStripeWebhook(c: {
 }
 
 async function handleAsaasWebhook(c: {
-  req: { raw: Request };
+  req: { raw: Request; header: (n: string) => string | undefined };
   env: Env;
   json: (b: unknown, s?: number) => Response;
 }): Promise<Response> {
+  // asaas-access-token: token fixo configurado no painel Asaas
+  // (Menu do usuário > Integrações > Mecanismos de segurança), enviado em
+  // TODA notificação — sem essa checagem, qualquer request forjado com um
+  // user_id válido em externalReference concede/cancela Pro à vontade.
+  // Falha fechado: secret ausente/vazio nunca deve "casar" com header
+  // ausente (os dois undefined comparariam iguais e liberariam geral).
+  if (
+    !c.env.ASAAS_WEBHOOK_SECRET ||
+    c.req.header("asaas-access-token") !== c.env.ASAAS_WEBHOOK_SECRET
+  ) {
+    return c.json({ error: "invalid_webhook_token" }, 401);
+  }
+
   const body = await c.req.raw.json<{
     event?: string;
     payment?: {
