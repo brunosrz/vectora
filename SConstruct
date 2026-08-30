@@ -6,8 +6,10 @@ Uso (PowerShell / cmd, a partir da raiz do monorepo):
     scons release       → build completo + instalador para o SO atual
     scons smoke         → builda o binário híbrido e confirma que /health sobe de verdade
     scons prod          → deploy de produção: docs + company (Vercel) + services (Worker)
-    scons tests         → suíte completa: todos os subprojetos (sem cobertura)
-    scons coverage      → mesma suíte com relatório de cobertura
+    scons tests         → só o app Vectora (frontend + backend, sem cobertura)
+    scons tests-edge    → docs (build) + company + services (sem cobertura)
+    scons coverage      → scons tests com relatório de cobertura
+    scons coverage-edge → scons tests-edge com relatório de cobertura
     scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint
     scons update        → atualiza deps: uv (backend) + pnpm (frontend/company/
                           services) + hugo mod (docs), respeitando ranges/lockfiles
@@ -578,11 +580,11 @@ def _action_tests_live(target, source, env):
     print("\n>> log completo em .scons-logs/tests-live.txt")
 
 
-def _run_full_suite(log, *, coverage: bool):
-    """Suíte completa: vectora (vitest + pytest, inclui electron fundido no
-    frontend) + company + services (vitest — gateway + updates unificados).
-
-    docs não tem testes — coberto só pelo lint (typecheck).
+def _run_vectora_suite(log, *, coverage: bool):
+    """Suíte do app Vectora: frontend (vitest, inclui electron fundido) +
+    backend (pytest). Ciclo próprio, mais rápido — só o que `.github/
+    workflows/vectora.yml` cobre. Ver `_run_edge_suite` para docs/company/
+    services (ciclo `edge.yml`).
 
     Com ``coverage=True``, ativa --coverage no vitest e --cov no pytest
     (relatórios em vectora/frontend/coverage/ e vectora/htmlcov/).
@@ -622,9 +624,32 @@ def _run_full_suite(log, *, coverage: bool):
         ]
     _run(pytest_cmd, log=log, cwd=VECTORA)
 
+
+def _run_edge_suite(log, *, coverage: bool):
+    """Suíte da borda web/edge: docs (Hugo, build-check — sem testes de
+    verdade) + company (vitest) + services (vitest — gateway + updates
+    unificados). Mesmo agrupamento de `.github/workflows/edge.yml`, num
+    ciclo separado do app Vectora (`_run_vectora_suite`) — mais rápido pra
+    quem só mexe no app, e vice-versa.
+
+    Com ``coverage=True``, ativa --coverage no vitest de company/services
+    (relatórios em company/coverage/ e services/coverage/).
+    """
+    # ── docs (Hugo + Hextra) ──────────────────────────────────────────────────
+    # Sem testes de verdade — o gate é o próprio build do site (mesmo comando
+    # de _action_lint). Incluído aqui porque faz parte do mesmo ciclo "edge".
+    _run([HUGO, "--gc", "--minify", "--destination", "public"], log=log, cwd=DOCS)
+
     # ── company ───────────────────────────────────────────────────────────────
+    # `exec vitest run` (não `run test --`): `pnpm run test -- --coverage`
+    # repassa o "--" literal pro vitest em vez de servir só de separador —
+    # confirmado ao vivo, a cobertura nunca ativava (mesmo padrão já usado
+    # abaixo pro services).
     _pnpm_install_if_needed("company", log)
-    _run([PNPM, "--dir", "company", "run", "test"], log=log)
+    company_test_cmd = [PNPM, "--dir", "company", "exec", "vitest", "run"]
+    if coverage:
+        company_test_cmd.append("--coverage")
+    _run(company_test_cmd, log=log)
 
     # ── services (gateway + updates unificados; worker.ts + scripts/release.ts) ─
     _pnpm_install_if_needed("services", log)
@@ -636,18 +661,28 @@ def _run_full_suite(log, *, coverage: bool):
 
 def _action_tests(target, source, env):
     with _open_log("tests") as log:
-        _run_full_suite(log, coverage=False)
+        _run_vectora_suite(log, coverage=False)
     print("\n>> log completo (limpo) em .scons-logs/tests.txt")
+
+
+def _action_tests_edge(target, source, env):
+    with _open_log("tests-edge") as log:
+        _run_edge_suite(log, coverage=False)
+    print("\n>> log completo (limpo) em .scons-logs/tests-edge.txt")
 
 
 def _action_coverage(target, source, env):
     with _open_log("coverage") as log:
-        _run_full_suite(log, coverage=True)
+        _run_vectora_suite(log, coverage=True)
     print("\n>> log completo (limpo) em .scons-logs/coverage.txt")
-    print(
-        ">> cobertura HTML: vectora/frontend/coverage/index.html, "
-        "vectora/htmlcov/index.html e services/coverage/index.html"
-    )
+    print(">> cobertura HTML: vectora/frontend/coverage/index.html, vectora/htmlcov/index.html")
+
+
+def _action_coverage_edge(target, source, env):
+    with _open_log("coverage-edge") as log:
+        _run_edge_suite(log, coverage=True)
+    print("\n>> log completo (limpo) em .scons-logs/coverage-edge.txt")
+    print(">> cobertura HTML: company/coverage/index.html, services/coverage/index.html")
 
 
 # ── Update (deps) ─────────────────────────────────────────────────────────────
@@ -911,11 +946,13 @@ def _action_help(target, source, env):
     scons frontend         só o build do frontend (vectora/frontend/dist/)
     scons docker           sobe infraestrutura (PostgreSQL, Redis, Qdrant)
 
-  Qualidade — cobrem todos os subprojetos
-    scons tests            suíte completa: vectora + services + company (sem cobertura)
-    scons coverage         a mesma suíte COM relatório de cobertura
-    scons tests-storage    só testes de storage (Postgres, Redis, Qdrant, SQLite, LanceDB)
-    scons tests-live       só testes sem mock (LLM + Tavily reais) — custa API real
+  Qualidade
+    scons tests             só o app Vectora: frontend (vitest) + backend (pytest)
+    scons tests-edge        docs (build Hugo) + company (vitest) + services (vitest)
+    scons coverage          scons tests COM relatório de cobertura
+    scons coverage-edge     scons tests-edge COM relatório de cobertura
+    scons tests-storage     só testes de storage (Postgres, Redis, Qdrant, SQLite, LanceDB)
+    scons tests-live        só testes sem mock (LLM + Tavily reais) — custa API real
     scons lint             vectora (ruff+ty+bandit+tsc+oxlint) + company (eslint+tsc)
                            + docs (tsc) + services (tsc)
     scons clean            remove todos os outputs de build
@@ -1136,7 +1173,9 @@ _cmd("smoke", _action_smoke)
 _cmd("prod",           _action_prod)
 
 _cmd("tests",         _action_tests)
+_cmd("tests-edge",    _action_tests_edge)
 _cmd("coverage",      _action_coverage)
+_cmd("coverage-edge", _action_coverage_edge)
 _cmd("tests-storage", _action_tests_storage)
 _cmd("tests-live", _action_tests_live)
 _cmd("lint",          _action_lint)

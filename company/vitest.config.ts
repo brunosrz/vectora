@@ -12,5 +12,21 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html"],
+      reportsDirectory: "coverage",
+      include: ["src/**"],
+      skipFull: true,
+      exclude: [
+        "**/*.gen.ts",
+        "**/*.d.ts",
+        "**/__tests__/**",
+        "src/paraglide/**", // saída gerada do Paraglide, não é código nosso
+        "src/router.tsx", // instancia o router (wiring)
+        "src/routeTree.gen.ts",
+        "**/*.css",
+      ],
+    },
   },
 });
