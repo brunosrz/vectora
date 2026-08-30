@@ -199,6 +199,26 @@ describe("gha-bot settings", () => {
   });
 });
 
+describe("gha-bot download (Action pública, sem auth — só o binário)", () => {
+  it("devolve 404 quando nenhuma versão foi publicada ainda", async () => {
+    const res = await ghaBot.request("/download/latest", {}, env);
+    expect(res.status).toBe(404);
+  });
+
+  it("devolve a versão mais recente por comparação numérica, não lexicográfica", async () => {
+    // "0.1.9" > "0.1.10" lexicograficamente, mas 0.1.10 é a mais recente —
+    // se a rota comparasse como string, devolveria a errada.
+    await env.R2.put("gha-bot/0.1.9/vectora-cli-linux-x64.tar.gz", "v9");
+    await env.R2.put("gha-bot/0.1.10/vectora-cli-linux-x64.tar.gz", "v10");
+
+    const res = await ghaBot.request("/download/latest", {}, env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("X-Vectora-Version")).toBe("0.1.10");
+    expect(res.headers.get("Content-Type")).toBe("application/gzip");
+    expect(await res.text()).toBe("v10");
+  });
+});
+
 describe("gha-bot config (Action pública, autenticada por VECTORA_BOT_TOKEN)", () => {
   async function makeProUserWithBotToken() {
     const { userId, token: sessionToken } = await makeUserWithSession();

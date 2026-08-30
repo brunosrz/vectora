@@ -3,6 +3,10 @@
 empacota launcher + backend.pyd + libs Python -> vectora.exe.
 
 Uso:  python build-hybrid.py [--jobs N]   (NUITKA_JOBS=N também funciona)
+
+Com VECTORA_BUILD_CLI=1, roda também uma segunda etapa de PyInstaller que
+empacota o mesmo backend.pyd sem Electron/GUI -> dist/vectora-cli/ (binário
+headless usado pela Vectora Bot Action em runners de CI).
 """
 
 import os
@@ -157,7 +161,8 @@ def main() -> None:
             "vectora/resources/)."
         )
 
-    # Etapa 2 — PyInstaller: launcher + backend.pyd + libs -> vectora.exe
+    # Flags de PyInstaller comuns às duas etapas (desktop e vectora-cli
+    # headless abaixo) — construídas uma vez só, reusadas nas duas.
     collect: list[str] = []
     for pkg in COLLECT_ALL:
         collect += ["--collect-all", pkg]
@@ -177,6 +182,7 @@ def main() -> None:
     for mod in exclude_modules:
         excludes += ["--exclude-module", mod]
 
+    # Etapa 2 — PyInstaller: launcher + backend.pyd + libs -> vectora.exe
     run(
         [
             "uv",
@@ -255,6 +261,51 @@ def main() -> None:
         sum(f.stat().st_size for f in dist_dir.rglob("*") if f.is_file()) / 1048576
     )
     print(f"\nBUILD OK — {dist_dir}  ({total_mb:.1f} MB na pasta)")
+
+    # Etapa 2b (opcional) — vectora-cli: mesmo backend.pyd, sem Electron/GUI.
+    # Reusa o pyd já compilado na Etapa 1, roda só quando pedido explicitamente
+    # (workflow de release liga isso só na combinação linux/x64, pra virar o
+    # binário headless que a Vectora Bot Action roda em runners de CI).
+    if os.environ.get("VECTORA_BUILD_CLI") == "1":
+        run(
+            [
+                "uv",
+                "run",
+                "python",
+                "-m",
+                "PyInstaller",
+                "--onedir",
+                "--noconfirm",
+                "--name=vectora-cli",
+                f"--distpath={ROOT / 'dist'}",
+                f"--workpath={ROOT / 'build' / 'pyinstaller-cli'}",
+                f"--specpath={ROOT / 'build'}",
+                "--add-binary",
+                f"{pyd}{SEP}.",
+                "--add-binary",
+                f"{nats_binary}{SEP}nats",
+                "--add-binary",
+                f"{ffmpeg_binary}{SEP}ffmpeg",
+                "--add-binary",
+                f"{ffprobe_binary}{SEP}ffmpeg",
+                "--add-data",
+                f"{VECTORA / 'backend' / 'assets'}{SEP}backend/assets",
+                "--add-data",
+                f"{VECTORA / 'backend' / 'storage' / 'migrations' / 'sqlite' / 'schema.sql'}{SEP}backend/storage/migrations/sqlite",
+                *collect,
+                *hidden,
+                *excludes,
+                str(VECTORA / "launcher.py"),
+            ],
+            cwd=VECTORA,
+            desc="PyInstaller -> vectora-cli (headless)",
+            env={"PYTHONWARNINGS": "ignore::SyntaxWarning"},
+        )
+        cli_exe_name = "vectora-cli.exe" if sys.platform == "win32" else "vectora-cli"
+        cli_exe = ROOT / "dist" / "vectora-cli" / cli_exe_name
+        if not cli_exe.exists():
+            sys.exit(f"{cli_exe} não gerado")
+        print(f"BUILD OK — {cli_exe.parent}")
 
 
 if __name__ == "__main__":

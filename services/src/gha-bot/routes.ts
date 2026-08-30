@@ -154,6 +154,44 @@ ghaBot.put("/settings", async (c) => {
   return c.json({ ok: true });
 });
 
+// Sem auth — mesma justificativa de updates/worker.ts::/download/:channel/
+// :target: é só um binário público, não dado sensível. A Action busca a
+// versão mais recente publicada (não recebe número de versão do usuário).
+ghaBot.get("/download/latest", async (c) => {
+  const list = await c.env.R2.list({ prefix: "gha-bot/" });
+  const versions = new Set<string>();
+  for (const obj of list.objects) {
+    const match = /^gha-bot\/([^/]+)\//.exec(obj.key);
+    if (match?.[1]) versions.add(match[1]);
+  }
+  if (versions.size === 0) return c.json({ error: "not_found" }, 404);
+  // Versões seguem semver (x.y.z) — ordenação lexicográfica não basta
+  // (ex. "0.1.9" > "0.1.10" lexicograficamente), comparar por partes numéricas.
+  const latest = [...versions].sort((a, b) => {
+    const pa = a.split(".").map(Number);
+    const pb = b.split(".").map(Number);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+      if (diff !== 0) return diff;
+    }
+    return 0;
+  })[versions.size - 1] as string;
+
+  const obj = await c.env.R2.get(
+    `gha-bot/${latest}/vectora-cli-linux-x64.tar.gz`,
+  );
+  if (!obj) return c.json({ error: "not_found" }, 404);
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type": "application/gzip",
+      "Content-Disposition":
+        'attachment; filename="vectora-cli-linux-x64.tar.gz"',
+      "Cache-Control": "public, max-age=300",
+      "X-Vectora-Version": latest,
+    },
+  });
+});
+
 ghaBot.get("/config", async (c) => {
   const userId = await resolveGhaBotToken(c.env.DB, bearerToken(c.req.raw));
   if (!userId) return c.json({ error: "unauthorized" }, 401);
