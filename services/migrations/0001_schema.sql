@@ -347,6 +347,33 @@ CREATE TABLE IF NOT EXISTS gifts (
 
 CREATE INDEX IF NOT EXISTS gifts_email_idx ON gifts(email);
 
+-- Vectora Bot for GHA — token que a Action pública usa pra buscar
+-- provider/modelo/chave em GET /gha-bot/config, sem carregar credencial
+-- de provider direto nos Secrets do repositório do usuário.
+CREATE TABLE IF NOT EXISTS gha_bot_tokens (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL,
+  repo_scope TEXT,               -- NULL = qualquer repositório do usuário
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  revoked_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS gha_bot_tokens_user_id_idx ON gha_bot_tokens(user_id);
+CREATE INDEX IF NOT EXISTS gha_bot_tokens_hash_idx ON gha_bot_tokens(token_hash);
+
+-- Config do bot por usuário — 1 linha, editada pelo painel. Chave de
+-- provider fica na Cloudflare Secrets Store; esta tabela guarda só a
+-- referência (nome do secret), nunca a chave em texto puro.
+CREATE TABLE IF NOT EXISTS gha_bot_config (
+  user_id                    TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  provider                   TEXT NOT NULL,
+  model                      TEXT NOT NULL,
+  provider_api_key_secret_ref TEXT NOT NULL,
+  review_style               TEXT NOT NULL DEFAULT 'balanced' CHECK (review_style IN ('strict', 'balanced', 'lenient')),
+  updated_at                 TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Seed idempotente do catálogo de planos.
 INSERT OR IGNORE INTO plans (id, months, price_usd_cents, price_brl_cents) VALUES
   ('1m',  1,   900,  2400),

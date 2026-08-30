@@ -6,7 +6,7 @@
  *   bidirecional de OAuth/webhooks pro app desktop — ex-relay, renomeado
  *   sem alias de transição por decisão do produto).
  * - Qualquer outro host → um único Hono app com auth/profile/billing/
- *   license/gdpr/api-keys/issues/rag-library/registry/telemetry e updates
+ *   license/gdpr/api-keys/gha-bot/issues/rag-library/registry/telemetry e updates
  *   (electron-updater + download público, `src/updates/worker.ts`, mesclado
  *   na raiz via `.route("/", ...)`) — sem domínio dedicado.
  *
@@ -32,6 +32,7 @@ import { oauth } from "./oauth/routes";
 import { gdpr, enqueueExpiredUserDeletions } from "./gdpr/routes";
 import { expireGiftSubscriptions } from "./billing/routes";
 import { apiKeys } from "./api-keys/routes";
+import { ghaBot } from "./gha-bot/routes";
 import { issues } from "./issues/routes";
 import { ragLibrary } from "./rag-library/routes";
 import { registry } from "./registry/routes";
@@ -57,6 +58,7 @@ servicesApp.route("/license", license);
 servicesApp.route("/oauth", oauth);
 servicesApp.route("/gdpr", gdpr);
 servicesApp.route("/api-keys", apiKeys);
+servicesApp.route("/gha-bot", ghaBot);
 servicesApp.route("/issues", issues);
 servicesApp.route("/rag-library", ragLibrary);
 servicesApp.route("/registry", registry);
