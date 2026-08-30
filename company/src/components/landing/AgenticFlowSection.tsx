@@ -46,6 +46,20 @@ const ICONS = {
       <line x1="-7.5" y1="0" x2="7.5" y2="0" />
     </g>
   ),
+  shield: (color: string) => (
+    <g fill="none" stroke={color} strokeWidth="1.4" strokeLinejoin="round">
+      <path d="M0,-9 L7,-6 L7,2 C7,7 3,10.5 0,11.5 C-3,10.5 -7,7 -7,2 L-7,-6 Z" />
+      <path d="M-3,0.5 L-1,3 L3.5,-3" strokeLinecap="round" />
+    </g>
+  ),
+  doc: (color: string) => (
+    <g fill="none" stroke={color} strokeWidth="1.4" strokeLinecap="round">
+      <path d="M-6,-9 L2,-9 L6,-5 L6,9 L-6,9 Z" strokeLinejoin="round" />
+      <path d="M2,-9 L2,-5 L6,-5" strokeLinejoin="round" />
+      <line x1="-3" y1="0" x2="3" y2="0" />
+      <line x1="-3" y1="4" x2="3" y2="4" />
+    </g>
+  ),
 } as const;
 
 /** Retângulo opaco atrás de um texto solto (não preso a um nó) — mesma
@@ -86,8 +100,8 @@ function FloatingLabel({
 function AgenticDiagram() {
   const usuario: DiagramNode = {
     cx: 230,
-    cy: 34,
-    r: 16,
+    cy: 28,
+    r: 14,
     icon: ICONS.user,
     color: "muted",
     title: m.agentic_diagram_user(),
@@ -95,31 +109,55 @@ function AgenticDiagram() {
   };
   const orchestrator: DiagramNode = {
     cx: 230,
-    cy: 122,
-    r: 24,
+    cy: 100,
+    r: 22,
     icon: ICONS.hub,
     color: "primary",
     title: m.agentic_diagram_orchestrator_title(),
     sub: m.agentic_diagram_orchestrator_sub(),
   };
-  const coder: DiagramNode = {
-    cx: 130,
-    cy: 236,
-    r: 19,
+  // Cada nó abaixo é um GRUPO de SOULs do catálogo (backend/agents/souls.py),
+  // não uma SOUL individual — 10 nós soltos ficariam poluídos demais num
+  // diagrama deste tamanho. O orquestrador delega pra uma SOUL específica
+  // dentro do grupo via `task(subagent_type=<nome>, ...)`, nunca pro grupo
+  // como um todo.
+  const codigo: DiagramNode = {
+    cx: 62,
+    cy: 216,
+    r: 17,
     icon: ICONS.code,
     color: "cyan",
-    title: m.agentic_diagram_coder_title(),
-    sub: m.agentic_diagram_coder_sub(),
+    title: m.agentic_diagram_code_title(),
+    sub: m.agentic_diagram_code_sub(),
   };
-  const search: DiagramNode = {
-    cx: 330,
-    cy: 236,
-    r: 19,
+  const pesquisa: DiagramNode = {
+    cx: 174,
+    cy: 216,
+    r: 17,
     icon: ICONS.globe,
     color: "purple",
-    title: m.agentic_diagram_search_title(),
-    sub: m.agentic_diagram_search_sub(),
+    title: m.agentic_diagram_research_title(),
+    sub: m.agentic_diagram_research_sub(),
   };
+  const operacao: DiagramNode = {
+    cx: 286,
+    cy: 216,
+    r: 17,
+    icon: ICONS.shield,
+    color: "amber",
+    title: m.agentic_diagram_ops_title(),
+    sub: m.agentic_diagram_ops_sub(),
+  };
+  const conteudo: DiagramNode = {
+    cx: 398,
+    cy: 216,
+    r: 17,
+    icon: ICONS.doc,
+    color: "pink",
+    title: m.agentic_diagram_content_title(),
+    sub: m.agentic_diagram_content_sub(),
+  };
+  const groups = [codigo, pesquisa, operacao, conteudo];
 
   return (
     <div
@@ -127,12 +165,12 @@ function AgenticDiagram() {
       aria-hidden
     >
       <svg
-        viewBox="0 0 460 300"
+        viewBox="0 0 460 290"
         className="w-full"
         style={{ fontFamily: "inherit" }}
       >
         <DiagramArrowDefs />
-        <DiagramPanelBg width={460} height={300} />
+        <DiagramPanelBg width={460} height={290} />
 
         {/* Usuário ⇄ Orchestrator — UMA linha só, seta nos dois lados (mão
          * dupla: pedido desce, resposta sobe). Duas curvas separadas aqui
@@ -144,12 +182,18 @@ function AgenticDiagram() {
           bow={0}
           bidirectional
         />
-        <FloatingLabel cx={300} cy={78} text={m.agentic_diagram_response()} />
+        <FloatingLabel cx={300} cy={68} text={m.agentic_diagram_response()} />
 
-        <DiagramArc from={orchestrator} to={coder} colorKey="cyan" />
-        <DiagramArc from={orchestrator} to={search} colorKey="purple" />
+        {groups.map((node) => (
+          <DiagramArc
+            key={node.title}
+            from={orchestrator}
+            to={node}
+            colorKey={node.color}
+          />
+        ))}
 
-        {[usuario, orchestrator, coder, search].map((node) => (
+        {[usuario, orchestrator, ...groups].map((node) => (
           <DiagramNodeView key={node.title} node={node} />
         ))}
       </svg>
@@ -159,8 +203,8 @@ function AgenticDiagram() {
 
 const BULLETS = [
   m.agentic_bullet_orchestrator,
-  m.agentic_bullet_coder,
-  m.agentic_bullet_search,
+  m.agentic_bullet_souls,
+  m.agentic_bullet_enforcement,
   m.agentic_bullet_rag,
   m.agentic_bullet_parallel,
 ];

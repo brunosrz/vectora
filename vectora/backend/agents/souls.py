@@ -14,7 +14,8 @@ filesystem/git roda numa git worktree isolada quando a task tem workspace.
 
 ``SOUL_CATALOG`` é o ponto único de verdade consumido por
 ``agent_factory._native_subagent_catalog()`` (catálogo nativo de delegação) e
-``subagent_runner.py`` (execuções agendadas via ``schedule_subagent_task``).
+``backend/scheduling/subagent_runner.py`` (execuções agendadas via
+``schedule_subagent_task``).
 """
 
 from __future__ import annotations

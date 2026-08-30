@@ -829,66 +829,6 @@ def _invalidate_llm_cache(user_id: str) -> None:
         pass
 
 
-async def coder_compensate(workspace_id: str | None = None) -> str | None:
-    """Rollback de emergência via ``git stash`` após falha catastrófica do coder.
-
-    Chamado pelo handler de exceção quando o subagent coder falha após já ter
-    começado a modificar arquivos. Executa ``git stash`` no workspace ativo
-    para reverter mudanças não commitadas e deixar o repositório limpo.
-
-    Args:
-        workspace_id: ID do workspace para resolver o path. Se None, usa home.
-
-    Returns:
-        Stdout do ``git stash`` se bem-sucedido; None se não aplicável ou falhou.
-
-    Nota:
-        Execução silenciosa — falhas aqui não relançam exceção para não ofuscar
-        o erro original que ativou a compensação.
-    """
-    import shutil
-    import subprocess  # nosec B404 — git controlado, sem shell=True
-
-    try:
-        from backend.llm.backends import _resolve_workspace_root
-
-        workspace_root = _resolve_workspace_root(workspace_id)
-        if not (workspace_root / ".git").is_dir():
-            logger.debug("coder_compensate: sem repositório git em %s", workspace_root)
-            return None
-
-        git_exe = shutil.which("git")
-        if git_exe is None:
-            return None
-
-        result = subprocess.run(  # noqa: S603, ASYNC221  # nosec B603
-            [
-                git_exe,
-                "-C",
-                str(workspace_root),
-                "stash",
-                "--include-untracked",
-                "--",
-                ".",
-            ],
-            capture_output=True,
-            timeout=30,
-            check=False,
-        )
-        output = result.stdout.decode("utf-8", errors="replace").strip()
-        if result.returncode == 0:
-            logger.warning("coder_compensate: git stash aplicado — %s", output or "ok")
-        else:
-            err = result.stderr.decode("utf-8", errors="replace").strip()
-            logger.warning(
-                "coder_compensate: git stash falhou (%d) — %s", result.returncode, err
-            )
-        return output or None
-    except Exception as exc:
-        logger.debug("coder_compensate: erro ignorado: %s", exc)
-        return None
-
-
 async def aclose() -> None:
     """Fecha o store nativo (SQLite ou Postgres) + o ``SessionStore``/
     ``ApprovalGate``. Idempotente.
