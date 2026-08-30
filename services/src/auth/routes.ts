@@ -291,7 +291,7 @@ auth.post("/magic-link", async (c) => {
 });
 
 auth.get("/me", async (c) => {
-  const userId = await resolveSession(c.env.DB, bearerToken(c.req.raw));
+  const userId = await requireUserId(c);
   if (!userId) return c.json({ error: "unauthorized" }, 401);
 
   const user = await c.env.DB.prepare(

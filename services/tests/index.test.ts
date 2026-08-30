@@ -73,6 +73,26 @@ describe("fetch dispatch by hostname", () => {
     const body = await res.json<{ server: string }>();
     expect(body.server).toBe("vectora-services");
   });
+
+  it("routes bot.vectora.company's root to the gha-bot panel HTML", async () => {
+    const ctx = createExecutionContext();
+    const req = new Request("https://bot.vectora.company/");
+    const res = await worker.fetch(req, env, ctx);
+    await waitOnExecutionContext(ctx);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toContain("text/html");
+    expect(await res.text()).toContain("Vectora Bot");
+  });
+
+  it("routes bot.vectora.company's other paths to the services app, same-origin with the panel", async () => {
+    const ctx = createExecutionContext();
+    const req = new Request("https://bot.vectora.company/health");
+    const res = await worker.fetch(req, env, ctx);
+    await waitOnExecutionContext(ctx);
+    expect(res.status).toBe(200);
+    const body = await res.json<{ server: string }>();
+    expect(body.server).toBe("vectora-services");
+  });
 });
 
 describe("scheduled()", () => {
