@@ -347,6 +347,7 @@
   "session_delete_confirm_rag_warning": "This session has RAG indexing in progress — deleting it now will interrupt the process.",
   "session_delete_cancel": "Cancel",
   "session_delete_confirm": "Delete",
+  "sidebar_delete_thread": "Delete conversation",
   "workspace_select_here": "Use this folder",
   "auth_setup_title": "Welcome to Vectora",
   "auth_setup_subtitle": "Create the first account — it becomes the administrator (root).",

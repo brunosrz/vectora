@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Sidebar } from "@/components/sidebar/sidebar";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { LicenseBanner } from "@/components/layout/license-banner";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
@@ -50,6 +51,7 @@ function HomeScreen() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   /** Anima a sidebar encolhendo e navega após a animação terminar. */
   const go = (fn: () => void) => {
@@ -125,8 +127,34 @@ function HomeScreen() {
             isNewSession={false}
           />
         </div>
+        {/* Mobile: a sidebar de verdade some (hidden md:flex acima) — sem
+            isso, não haveria como abrir a lista de sessões em tela estreita
+            nesta rota (diferente de /session/$threadId, que já tinha esse
+            fallback). */}
+        <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-72 border-r">
+            <Sidebar
+              isCollapsed={false}
+              onToggle={() => setIsMobileSidebarOpen(false)}
+              threads={threads}
+              currentThreadId=""
+              onSelectThread={(id) => {
+                setIsMobileSidebarOpen(false);
+                handleSelectThread(id);
+              }}
+              onDeleteThread={handleDeleteThread}
+              onNewChat={() => {
+                setIsMobileSidebarOpen(false);
+                handleNewChat();
+              }}
+              isLoading={isLoading}
+              isNewSession={false}
+            />
+          </SheetContent>
+        </Sheet>
+
         <main className="flex-1 min-h-0 overflow-auto flex flex-col">
-          <Header />
+          <Header onOpenSidebar={() => setIsMobileSidebarOpen(true)} />
           <EmptyStateHeader
             onStartChat={handleStartChat}
             onStartCode={handleStartCode}
