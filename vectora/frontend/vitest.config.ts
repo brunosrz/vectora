@@ -14,6 +14,25 @@ export default defineConfig({
     // Cap conservador reduz a contenção sem alongar o tempo total de forma
     // perceptível (a suíte já é I/O-bound em boa parte via jsdom/imports).
     maxForks: 4,
+    // Bug real do jsdom 30.0.1 (confirmado: incompatibilidade cross-realm
+    // de instanceof Uint8Array entre o realm do jsdom e o do Node, que
+    // @exodus/bytes::assertU8 rejeita) — FileReaderImpl._setResult dispara
+    // via setImmediate, fora do ciclo de vida do teste que originou o
+    // FileReader real, e vaza como "Uncaught Exception" pro processo
+    // inteiro mesmo com todo teste passando (ver comentário em
+    // lib/hooks/files/__tests__/use-voice-input.test.ts, que já contorna
+    // isso localmente com um FakeFileReader). Filtra só essa assinatura
+    // exata — qualquer outro erro não tratado continua falhando a suíte
+    // normalmente.
+    onUnhandledError(error: unknown): boolean | void {
+      const err = error as { message?: string; stack?: string };
+      if (
+        err.message === "Expected an Uint8Array" &&
+        err.stack?.includes("FileReader-impl.js")
+      ) {
+        return false;
+      }
+    },
     onConsoleLog(log: string): false | void {
       if (
         log.includes("[Logger] Initialized") ||
