@@ -520,10 +520,16 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
         with contextlib.suppress(FileNotFoundError):
             Path(uds_path).unlink()
 
+    from backend.version import __version__
+
     app = create_app()
     scheme = "https" if use_tls else "http"
     if uds_path:
-        logger.info("Iniciando Vectora via unix socket %s (desktop IPC)", uds_path)
+        logger.info(
+            "Iniciando Vectora v%s via unix socket %s (desktop IPC)",
+            __version__,
+            uds_path,
+        )
         config = uvicorn.Config(
             app,
             uds=uds_path,
@@ -534,7 +540,8 @@ def _run_start(args: argparse.Namespace, *, force_web: bool = False) -> None:
         )
     else:
         logger.info(
-            "Iniciando Vectora em %s://%s:%d (%s)",
+            "Iniciando Vectora v%s em %s://%s:%d (%s)",
+            __version__,
             scheme,
             args.host,
             port,
