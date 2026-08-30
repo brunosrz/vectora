@@ -110,7 +110,7 @@ describe("gha-bot settings", () => {
         body: JSON.stringify({
           provider: "anthropic",
           model: "claude-sonnet-5",
-          provider_api_key_secret_ref: "gha-bot-anthropic-key-abc",
+          provider_api_key: "gha-bot-anthropic-key-abc",
           review_style: "strict",
         }),
       },
@@ -128,7 +128,7 @@ describe("gha-bot settings", () => {
     expect(settings.model).toBe("claude-sonnet-5");
     expect(settings.review_style).toBe("strict");
     // A chave/referência nunca volta na resposta do painel.
-    expect(settings).not.toHaveProperty("provider_api_key_secret_ref");
+    expect(settings).not.toHaveProperty("provider_api_key");
   });
 
   it("rejects missing fields and an invalid review_style — erro/borda", async () => {
@@ -157,7 +157,7 @@ describe("gha-bot settings", () => {
         body: JSON.stringify({
           provider: "anthropic",
           model: "claude-sonnet-5",
-          provider_api_key_secret_ref: "ref",
+          provider_api_key: "ref",
           review_style: "chaotic",
         }),
       },
@@ -182,7 +182,7 @@ describe("gha-bot settings", () => {
           body: JSON.stringify({
             provider: "anthropic",
             model,
-            provider_api_key_secret_ref: "ref",
+            provider_api_key: "ref",
           }),
         },
         env,
@@ -196,5 +196,149 @@ describe("gha-bot settings", () => {
       .all<{ model: string }>();
     expect(results).toHaveLength(1);
     expect(results[0]!.model).toBe("claude-opus-5");
+  });
+});
+
+describe("gha-bot config (Action pública, autenticada por VECTORA_BOT_TOKEN)", () => {
+  async function makeProUserWithBotToken() {
+    const { userId, token: sessionToken } = await makeUserWithSession();
+    await env.DB.prepare(
+      "INSERT INTO subscriptions (id, user_id, tier, status) VALUES (?, ?, 'pro', 'active')",
+    )
+      .bind(crypto.randomUUID(), userId)
+      .run();
+
+    const created = await ghaBot.request(
+      "/tokens",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      },
+      env,
+    );
+    const { secret: botToken } = await created.json<{ secret: string }>();
+    return { userId, sessionToken, botToken };
+  }
+
+  it("devolve a chave real (decifrada) pra um usuário Pro configurado", async () => {
+    const { sessionToken, botToken } = await makeProUserWithBotToken();
+
+    await ghaBot.request(
+      "/settings",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          provider: "anthropic",
+          model: "claude-sonnet-5",
+          provider_api_key: "sk-ant-super-secreta-de-verdade",
+          review_style: "lenient",
+        }),
+      },
+      env,
+    );
+
+    const res = await ghaBot.request(
+      "/config",
+      { headers: { Authorization: `Bearer ${botToken}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const config = await res.json<{
+      provider: string;
+      model: string;
+      api_key: string;
+      review_style: string;
+    }>();
+    expect(config).toEqual({
+      provider: "anthropic",
+      model: "claude-sonnet-5",
+      api_key: "sk-ant-super-secreta-de-verdade",
+      review_style: "lenient",
+    });
+  });
+
+  it("rejeita token inválido/revogado — erro/borda", async () => {
+    const unknown = await ghaBot.request(
+      "/config",
+      { headers: { Authorization: "Bearer token-que-nao-existe" } },
+      env,
+    );
+    expect(unknown.status).toBe(401);
+
+    const { sessionToken, botToken } = await makeProUserWithBotToken();
+    const listed = await ghaBot.request(
+      "/tokens",
+      { headers: { Authorization: `Bearer ${sessionToken}` } },
+      env,
+    );
+    const listedTokens = await listed.json<Array<{ id: string }>>();
+    const id = listedTokens[0]!.id;
+    await ghaBot.request(
+      `/tokens/${id}/revoke`,
+      { method: "POST", headers: { Authorization: `Bearer ${sessionToken}` } },
+      env,
+    );
+
+    const revoked = await ghaBot.request(
+      "/config",
+      { headers: { Authorization: `Bearer ${botToken}` } },
+      env,
+    );
+    expect(revoked.status).toBe(401);
+  });
+
+  it("rejeita usuário sem Pro, mesmo com token válido e config salva — erro/borda", async () => {
+    const { userId, token: sessionToken } = await makeUserWithSession();
+    const auth = {
+      Authorization: `Bearer ${sessionToken}`,
+      "Content-Type": "application/json",
+    };
+    await ghaBot.request(
+      "/settings",
+      {
+        method: "PUT",
+        headers: auth,
+        body: JSON.stringify({
+          provider: "anthropic",
+          model: "claude-sonnet-5",
+          provider_api_key: "sk-ant-x",
+        }),
+      },
+      env,
+    );
+    const created = await ghaBot.request(
+      "/tokens",
+      { method: "POST", headers: auth, body: "{}" },
+      env,
+    );
+    const { secret: botToken } = await created.json<{ secret: string }>();
+    void userId;
+
+    const res = await ghaBot.request(
+      "/config",
+      { headers: { Authorization: `Bearer ${botToken}` } },
+      env,
+    );
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: "pro_required" });
+  });
+
+  it("devolve not_configured pra usuário Pro sem settings salvas ainda — erro/borda", async () => {
+    const { botToken } = await makeProUserWithBotToken();
+
+    const res = await ghaBot.request(
+      "/config",
+      { headers: { Authorization: `Bearer ${botToken}` } },
+      env,
+    );
+    expect(res.status).toBe(404);
   });
 });

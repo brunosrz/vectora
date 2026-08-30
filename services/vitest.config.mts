@@ -23,6 +23,9 @@ const workerOptions = {
       // de teste e a verificação do token fake ("test-token") bate no
       // siteverify e falha (signup/login/issues/waitlist viram 400).
       TURNSTILE_SECRET_KEY: "",
+      // 32 bytes fixos (não usado em produção) — só pros testes de
+      // gha-bot/crypto.ts terem uma chave AES-256-GCM válida e estável.
+      GHA_BOT_ENCRYPTION_KEY: "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
       // workerd SQLite permanece bloqueado no Windows após o fetch ao DO,
       // impedindo o cleanup do isolated storage. Marca para skip seletivo.
       TEST_IS_WINDOWS: process.platform === "win32" ? "1" : "0",

@@ -31,6 +31,10 @@ export interface Env {
   // registry/discovery.ts — sem token, discovery de skills via GitHub code
   // search fica desligada (não é erro, ver discoverSkills).
   GITHUB_TOKEN?: string;
+  // gha-bot/ — chave mestra AES-256-GCM (base64) pra cifrar/decifrar a
+  // chave de provider de cada usuário (gha-bot/crypto.ts). Cloudflare
+  // Secrets Store não serve aqui — ver comentário em crypto.ts.
+  GHA_BOT_ENCRYPTION_KEY: string;
 }
 
 export interface RegisterRequest {

@@ -363,15 +363,18 @@ CREATE INDEX IF NOT EXISTS gha_bot_tokens_user_id_idx ON gha_bot_tokens(user_id)
 CREATE INDEX IF NOT EXISTS gha_bot_tokens_hash_idx ON gha_bot_tokens(token_hash);
 
 -- Config do bot por usuário — 1 linha, editada pelo painel. Chave de
--- provider fica na Cloudflare Secrets Store; esta tabela guarda só a
--- referência (nome do secret), nunca a chave em texto puro.
+-- provider cifrada com AES-GCM (services/src/gha-bot/crypto.ts, chave
+-- mestra única via binding GHA_BOT_ENCRYPTION_KEY) — nunca em texto
+-- puro. Cloudflare Secrets Store não serve aqui: exige 1 binding
+-- estático por secret, declarado no deploy — não dá pra ler um valor
+-- dinâmico por usuário em runtime.
 CREATE TABLE IF NOT EXISTS gha_bot_config (
-  user_id                    TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  provider                   TEXT NOT NULL,
-  model                      TEXT NOT NULL,
-  provider_api_key_secret_ref TEXT NOT NULL,
-  review_style               TEXT NOT NULL DEFAULT 'balanced' CHECK (review_style IN ('strict', 'balanced', 'lenient')),
-  updated_at                 TEXT NOT NULL DEFAULT (datetime('now'))
+  user_id                     TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  provider                    TEXT NOT NULL,
+  model                       TEXT NOT NULL,
+  provider_api_key_encrypted  TEXT NOT NULL,
+  review_style                TEXT NOT NULL DEFAULT 'balanced' CHECK (review_style IN ('strict', 'balanced', 'lenient')),
+  updated_at                  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Seed idempotente do catálogo de planos.
