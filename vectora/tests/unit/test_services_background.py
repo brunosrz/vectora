@@ -884,6 +884,59 @@ async def test_run_task_subagent_type_usa_soul_tool_registry_com_o_usuario_da_ta
     assert "subagent_type inválido" in erro["summary"]
 
 
+async def test_run_task_isola_worktree_so_quando_a_soul_precisa_e_ha_workspace(
+    db, native_session_store, monkeypatch
+):
+    """Gap real (revisão de 2026-08-30): nenhum teste exercitava o branch
+    `soul.needs_worktree_isolation` (background_tasks.py:933) — a task de
+    uma SOUL que edita filesystem/git (ex. `coder`, `needs_worktree_isolation
+    =True`) precisa isolar num worktree quando a task tem `workspace_id`;
+    uma SOUL read-only/sem filesystem (ex. `planner`, `False`) nunca deve
+    chamar isso, mesmo com workspace_id setado."""
+    client = _ScriptedChatClient([[_texto_chunk("feito")], [_texto_chunk("feito")]])
+    _patch_native_engine(
+        monkeypatch, session_store=native_session_store, chat_client=client
+    )
+
+    chamadas: list[tuple[str, str]] = []
+
+    async def _fake_worktree_workspace_id(workspace_id: str, task_id: str) -> str:
+        chamadas.append((workspace_id, task_id))
+        return "ws-isolado-fake"
+
+    monkeypatch.setattr(bg, "_worktree_workspace_id", _fake_worktree_workspace_id)
+
+    task_coder = await bg.create_task(
+        session_id="sess-worktree",
+        user_id="uuid-owner",
+        kind="routine",
+        name="Subagente coder isolado",
+        instruction="corrigir bug",
+        trigger_type="once",
+        trigger_config={"subagent_type": "coder"},
+        workspace_id="ws-principal",
+        next_run_at="2026-01-01T00:00:00+00:00",
+    )
+    await bg.run_task(task_coder, "manual")
+    assert chamadas == [("ws-principal", task_coder.id)]
+
+    # Erro/borda: SOUL sem needs_worktree_isolation (planner) não isola,
+    # mesmo com workspace_id presente — não deve chamar de novo.
+    task_planner = await bg.create_task(
+        session_id="sess-worktree",
+        user_id="uuid-owner",
+        kind="routine",
+        name="Subagente planner sem isolamento",
+        instruction="planejar",
+        trigger_type="once",
+        trigger_config={"subagent_type": "planner"},
+        workspace_id="ws-principal",
+        next_run_at="2026-01-01T00:00:00+00:00",
+    )
+    await bg.run_task(task_planner, "manual")
+    assert chamadas == [("ws-principal", task_coder.id)]  # não cresceu
+
+
 async def test_run_task_error_path_records_error_and_skips_session(
     db, native_session_store, monkeypatch
 ):

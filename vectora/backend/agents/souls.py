@@ -326,7 +326,11 @@ SOUL_CATALOG: dict[str, Soul] = {
             "one clear example before edge cases, keep structure scannable "
             "(headings, short paragraphs). Never invent a claim about behavior "
             "you haven't verified in the actual source — read the file with "
-            "`file_read` first.",
+            "`file_read` first.\n\n"
+            "After `create_artifact`, always state the artifact's file path in "
+            "your final text — the orchestrator relays your final text as the "
+            "user's confirmation, and a document created without this detail "
+            "leaves the user unable to tell it worked.",
         ),
         tool_groups=["fs_write", "rag", "memory", "aitl"],
         needs_worktree_isolation=False,
@@ -419,7 +423,11 @@ SOUL_CATALOG: dict[str, Soul] = {
             "A plan names concrete steps, the files/areas each step touches, "
             "and the order dependencies between them — not a restatement of "
             "the goal. Flag genuine open questions instead of guessing an "
-            "answer to sound complete.",
+            "answer to sound complete.\n\n"
+            "After `create_artifact`, always state the artifact's file path in "
+            "your final text — the orchestrator relays your final text as the "
+            "user's confirmation, and a plan saved without this detail leaves "
+            "the user unable to tell it worked.",
         ),
         tool_groups=["rag", "memory", "planner", "aitl"],
         needs_worktree_isolation=False,

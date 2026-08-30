@@ -617,7 +617,18 @@ def _native_subagent_catalog(user_id: str | None) -> dict[str, SubagentSpec]:
     """Catálogo de ``SubagentSpec`` nativas a partir de ``SOUL_CATALOG``,
     filtrando cada ``ToolSpec`` já nativo por ``TOOL_REGISTRY.get(tool.name)``
     (todo tool de ``SOUL_CATALOG`` nasce do registry nativo — ver
-    ``backend/nodes/tools.py::_bridge``)."""
+    ``backend/nodes/tools.py::_bridge``).
+
+    Achado real (revisão de 2026-08-30): esta função dependia implicitamente
+    de ``_native_tool_registry`` já ter rodado antes (via ``get_native_agent``,
+    que chama as duas nessa ordem) pra `backend.nodes.tools` já estar
+    importado — chamada isolada (ex. direto num teste, ou um refactor futuro
+    que troque a ordem) quebra em ``resolve_tool_group`` com
+    ``ToolNameNotFoundError`` pra qualquer tool só registrada fora da
+    coleção do pytest (ex. ``list_terminals``, grupo ``fs``). Mesma
+    salvaguarda de ``_native_tool_registry`` acima, agora também aqui —
+    função não pode depender da ordem de chamada de quem a invoca."""
+    import backend.nodes.tools  # import registra todo @vtool no TOOL_REGISTRY
     from backend.agents.souls import SOUL_CATALOG
     from backend.engine.subagents import SubagentSpec
     from backend.tools.registry import TOOL_REGISTRY

@@ -102,6 +102,27 @@ class TestNativeSubagentCatalogAbac:
         # ask_parent_agent continua presente (via grupo `aitl`).
         assert "ask_parent_agent" in coder_tools
 
+    def test_soul_readonly_nunca_ganha_tool_de_escrita_mesmo_sem_kill_switch(
+        self, monkeypatch
+    ):
+        """Gap real (revisão de 2026-08-30): o teste acima só provava ABAC
+        pra `coder` — não prova que uma SOUL genuinamente read-only
+        (`reviewer`: só `git_readonly`/`fs_readonly`/`rag`/`aitl` nos
+        `tool_groups`) permanece sem tool de escrita mesmo com
+        `effective_disabled` vazio, ou seja, que a resolução de tool_groups
+        em si (não o kill-switch) é quem garante o enforcement."""
+        from backend.rbac import tool_policy
+
+        monkeypatch.setattr(tool_policy, "effective_disabled", lambda user_id: set())
+
+        catalog = af._native_subagent_catalog(user_id="u1")
+        reviewer_tools = {t.name for t in catalog["reviewer"].tools}
+        assert "file_write" not in reviewer_tools
+        assert "file_edit" not in reviewer_tools
+        assert "terminal" not in reviewer_tools
+        assert "git_status" in reviewer_tools
+        assert "ask_parent_agent" in reviewer_tools
+
 
 class TestAgetThreadMessagesNativePrimeiro:
     async def test_thread_com_historico_nativo_usa_sessionstore(
