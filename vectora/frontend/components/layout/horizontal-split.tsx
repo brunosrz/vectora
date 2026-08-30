@@ -126,6 +126,11 @@ export function HorizontalSplit({
       ? collapsedWidth
       : rightWidth
     : 0;
+  // Handle de resize (w-1 = 4px) só existe quando o painel direito está
+  // aberto e não-colapsado — soma ao espaço reservado pro cálculo de
+  // minWidth do flexPanel abaixo, senão sobra 4px de estouro mesmo com o
+  // min() aplicado.
+  const handleWidth = showRight && !rightCollapsed ? 4 : 0;
   const springTransition = isDragging
     ? { duration: 0 }
     : { type: "spring" as const, damping: 26, stiffness: 260 };
@@ -144,8 +149,25 @@ export function HorizontalSplit({
 
   // overflow-visible: dropdowns do appbar (Header) não podem ser recortados
   // por este container — o conteúdo rolável já tem overflow-hidden interno.
+  //
+  // minWidth via min(): `minLeft` sozinho (número fixo em px) nunca
+  // considerava o espaço que o painel direito (`targetWidth`) já ocupa —
+  // num viewport mais estreito que `minLeft + targetWidth` (todo celular,
+  // já que a faixa colapsada de 48px soma a esse mínimo de 360px = 408px),
+  // o flexPanel estourava por cima do painel direito em vez de encolher
+  // (achado real: bug de layout recorrente — reproduzido ao vivo em
+  // 375px, painel de chat com min-width 360px sobrepondo os ícones do
+  // workbench colapsado). `min(minLeft, 100% - targetWidth)` preserva o
+  // piso de proteção original (Header não desaparece com o workbench
+  // arrastado bem largo em telas largas) sem nunca exceder o espaço real
+  // disponível.
   const flexPanel = (
-    <div className="flex-1 overflow-visible" style={{ minWidth: minLeft }}>
+    <div
+      className="flex-1 overflow-visible"
+      style={{
+        minWidth: `min(${minLeft}px, calc(100% - ${targetWidth + handleWidth}px))`,
+      }}
+    >
       {left}
     </div>
   );
