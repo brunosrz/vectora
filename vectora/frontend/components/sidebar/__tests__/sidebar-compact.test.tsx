@@ -32,6 +32,7 @@ vi.mock("@/lib/paraglide/messages", () => ({
     sidebar_workspace_collapse: () => "Recolher",
     sidebar_workspace_expand: () => "Expandir",
     sidebar_workspace_thread_count: ({ n }: { n: number }) => `${n}`,
+    sidebar_delete_thread: () => "Excluir conversa",
   },
 }));
 

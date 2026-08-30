@@ -30,7 +30,8 @@ vi.mock("@/components/sidebar/sidebar", () => ({ Sidebar: () => null }));
 vi.mock("@/components/layout/license-banner", () => ({
   LicenseBanner: () => null,
 }));
-vi.mock("@/components/header/header", () => ({ Header: () => null }));
+const { headerMock } = vi.hoisted(() => ({ headerMock: vi.fn(() => null) }));
+vi.mock("@/components/header/header", () => ({ Header: headerMock }));
 vi.mock("@/components/chat/features/empty-state-header", () => ({
   EmptyStateHeader: ({
     onStartCode,
@@ -78,6 +79,7 @@ const HomeScreen = (Route as unknown as { component: () => ReactElement })
 
 beforeEach(() => {
   navigateSpy.mockClear();
+  headerMock.mockClear();
   signalWorkspacePreChosenMock.mockClear();
   signalWorkspaceChoiceForNewSessionMock.mockClear();
   // NewChatDialog chama hydrate() no mount — mocka fetch pra não bater na
@@ -96,6 +98,16 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+describe("HomeScreen — abrir a sidebar em mobile", () => {
+  it("passa onOpenSidebar pro Header — regressão: em mobile não havia como abrir a lista de sessões nesta rota", () => {
+    render(<HomeScreen />);
+
+    const call = headerMock.mock.calls[0] as unknown as
+      [{ onOpenSidebar?: unknown }] | undefined;
+    expect(typeof call?.[0]?.onOpenSidebar).toBe("function");
+  });
 });
 
 describe("HomeScreen — dialog de nova sessão code", () => {

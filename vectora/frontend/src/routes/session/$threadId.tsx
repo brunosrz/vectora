@@ -725,7 +725,10 @@ function SessionPage() {
             open={isMobileSidebarOpen}
             onOpenChange={setIsMobileSidebarOpen}
           >
-            <SheetContent side="left" className="p-0 w-72 border-r">
+            <SheetContent
+              side={sidebarOnRight ? "right" : "left"}
+              className={`p-0 w-72 ${sidebarOnRight ? "border-l" : "border-r"}`}
+            >
               {sidebar}
             </SheetContent>
           </Sheet>
@@ -857,25 +860,42 @@ function SessionPage() {
                 (faixa de 48px, sempre visível) fica fora do split, à direita —
                 não é redimensionável; só o painel de conteúdo é. */}
               <div className="flex-1 min-w-0 flex h-full">
-                <HorizontalSplit
-                  className="flex-1 min-w-0"
-                  side={sidebarOnRight ? "left" : "right"}
-                  showRight={hydrated && workbenchOpen && !chatMode}
-                  rightSize={splitSize}
-                  onResize={setSplitSize}
-                  left={
-                    <div className="flex-1 min-h-0 min-w-0 h-full overflow-visible">
-                      {renderChatPanel(false)}
-                    </div>
-                  }
-                  right={
+                {/* Viewport estreita + workbench aberto: chat some por
+                    completo e o workbench ocupa o espaço inteiro — dois
+                    painéis lado a lado (split redimensionável) não cabem
+                    numa tela pequena. Mesmo padrão de "um painel por vez"
+                    que IdeModeLayout já usa pro modo IDE; a nav-bar (fora
+                    deste bloco, sempre visível) continua o jeito de
+                    trocar/fechar o painel. */}
+                {isNarrowViewport && hydrated && workbenchOpen && !chatMode ? (
+                  <div className="flex-1 min-h-0 min-w-0 h-full overflow-visible">
                     <WorkbenchContent
                       threadId={threadId}
                       onAddToContext={pushMention}
                       onSendPrompt={pushDraft}
                     />
-                  }
-                />
+                  </div>
+                ) : (
+                  <HorizontalSplit
+                    className="flex-1 min-w-0"
+                    side={sidebarOnRight ? "left" : "right"}
+                    showRight={hydrated && workbenchOpen && !chatMode}
+                    rightSize={splitSize}
+                    onResize={setSplitSize}
+                    left={
+                      <div className="flex-1 min-h-0 min-w-0 h-full overflow-visible">
+                        {renderChatPanel(false)}
+                      </div>
+                    }
+                    right={
+                      <WorkbenchContent
+                        threadId={threadId}
+                        onAddToContext={pushMention}
+                        onSendPrompt={pushDraft}
+                      />
+                    }
+                  />
+                )}
                 {!chatMode && (
                   <div
                     className={`shrink-0 ${sidebarOnRight ? "order-first" : ""}`}

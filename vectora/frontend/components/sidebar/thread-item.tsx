@@ -135,7 +135,11 @@ export const ThreadItem = memo(function ThreadItem({
       </div>
       <button
         onClick={(e) => onDelete(thread.thread_id, e)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded hover:bg-destructive/10 shrink-0"
+        aria-label={m.sidebar_delete_thread()}
+        // opacity-100 abaixo de md: sem :hover em touch, o botão precisa
+        // ficar sempre visível pra ser alcançável; acima de md: continua
+        // reveal-on-hover, mas com focus-visible pra navegação via teclado.
+        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity duration-150 p-1 rounded hover:bg-destructive/10 shrink-0"
       >
         <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
       </button>

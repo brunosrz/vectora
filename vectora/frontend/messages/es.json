@@ -347,6 +347,7 @@
   "session_delete_confirm_rag_warning": "Esta sesión tiene una indexación RAG en curso — eliminarla ahora interrumpirá el proceso.",
   "session_delete_cancel": "Cancelar",
   "session_delete_confirm": "Eliminar",
+  "sidebar_delete_thread": "Eliminar conversación",
   "workspace_select_here": "Usar esta carpeta",
   "auth_setup_title": "Bienvenido a Vectora",
   "auth_setup_subtitle": "Crea la primera cuenta — se convierte en administrador (root).",
