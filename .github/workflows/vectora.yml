@@ -566,7 +566,12 @@ jobs:
       - name: Tar + publish to R2
         working-directory: .
         run: |
-          tar -czf vectora-cli-linux-x64.tar.gz -C dist/vectora-cli .
+          # `pnpm --dir services exec` roda o processo filho (wrangler) com o
+          # cwd trocado pra services/ — um --file= relativo à raiz do repo
+          # (onde o tar era criado antes) nunca resolvia, sempre "does not
+          # exist". Cria o tarball já dentro de services/ pra bater com o
+          # cwd real do wrangler nesse comando.
+          tar -czf services/vectora-cli-linux-x64.tar.gz -C dist/vectora-cli .
           pnpm --dir services exec wrangler r2 object put \
             "vectora-r2/gha-bot/${{ steps.version.outputs.value }}/vectora-cli-linux-x64.tar.gz" \
             --file=vectora-cli-linux-x64.tar.gz --remote
