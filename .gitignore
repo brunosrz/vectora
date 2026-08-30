@@ -313,6 +313,11 @@ dist
 # ~/.vectora/ is the roaming folder for user state (databases, logs, keys)
 # It should NEVER be committed to the repository
 data/
+# ...exceto o data/ vendorizado do tema Hugo (docs/_vendor/.../data/icons.yaml)
+# — sem exclusão nenhum ícone do Hextra renderiza, "data/" (sem barra
+# inicial) casa em qualquer profundidade, não só na raiz do roaming folder.
+!docs/_vendor/**/data/
+!docs/_vendor/**/data/**
 .src/
 .vectora/
 
@@ -367,8 +372,10 @@ env.gha
 *.xml
 /docs/.docusaurus
 *.zip
+# mesmo motivo do !docs/_vendor/**/data/** acima — "*.xml" também casava
+# com o layout de RSS vendorizado do Hextra, e RSS está habilitado (hugo.toml).
+!docs/_vendor/**/*.xml
 /vectora/frontend/project.inlang
-/docs/_vendor
 /vectora/resources
 /ai-jail-master
 /chrome-devtools-mcp-main
