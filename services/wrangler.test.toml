@@ -55,6 +55,11 @@ name = "LICENSE_VALIDATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 30, period = 60 }
 
+[[ratelimits]]
+name = "AUTH_LOGIN_LIMITER"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
 [[queues.producers]]
 binding = "EMAIL_QUEUE"
 queue = "vectora-email"

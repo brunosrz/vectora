@@ -83,6 +83,16 @@ name = "LICENSE_VALIDATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 30, period = 60 }
 
+# /auth/login e /license/agent-login (email+senha) não tinham NENHUMA defesa
+# contra brute force — achado da auditoria de segurança de 2026-08-30.
+# Limite mais apertado que o de /license/validate (token de 256 bits já é
+# defesa em profundidade suficiente ali); aqui é senha, força bruta é viável
+# sem rate limit.
+[[ratelimits]]
+name = "AUTH_LOGIN_LIMITER"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
 # vectora-email: desacopla o envio de verdade (Resend) do request/response —
 # 9 pontos no código faziam `await sendEmail(...)` síncrono antes disso.
 [[queues.producers]]
@@ -134,3 +144,9 @@ GATEWAY_URL = "https://gateway.vectora.chat"
 #   STRIPE_PRICE_PRO_USD   — billing: price id do plano Pro em USD
 #   ASAAS_API_KEY          — billing: API Asaas (clientes BR)
 #   ASAAS_API_URL          — billing: default https://api.asaas.com/v3
+#   ASAAS_WEBHOOK_SECRET   — billing: valida o header asaas-access-token
+#                            (mesmo valor configurado no painel Asaas em
+#                            Integrações > Mecanismos de segurança)
+#   GHA_BOT_ENCRYPTION_KEY — gha-bot: chave mestra AES-256-GCM (chave de API
+#                            do provider, criptografada em repouso no D1)
+#   GITHUB_TOKEN           — registry: discovery de skills/MCP (opcional)

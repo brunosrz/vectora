@@ -56,8 +56,12 @@ gdpr.post("/export", async (c) => {
   // R2 binding não gera URL assinada nativamente como o Supabase Storage —
   // servida via /gdpr/export/* (rota abaixo, wildcard porque `key` já tem
   // uma barra em "exports/"), efêmera o bastante (link pessoal, não
-  // indexado, sem listagem pública do bucket).
-  return c.json({ url: `${c.env.APP_URL}/api/gdpr/export/${key}` });
+  // indexado, sem listagem pública do bucket). Origin da própria request
+  // (não APP_URL, que é o domínio da company — essa rota vive aqui, no
+  // Worker services, sem prefixo /api; usar APP_URL gerava um link que
+  // nunca resolvia).
+  const origin = new URL(c.req.raw.url).origin;
+  return c.json({ url: `${origin}/gdpr/export/${key}` });
 });
 
 gdpr.get("/export/*", async (c) => {

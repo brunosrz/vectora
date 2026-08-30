@@ -4,6 +4,11 @@
  * o bastante pra justificar exigir sessão — mas `source` é restrito a uma
  * allowlist e o payload é limitado por MAX_PAYLOAD_BYTES (mesma variável já
  * usada pelo gateway pra limitar tamanho de request).
+ *
+ * Sem CORS de propósito: chamada só server-to-server (backend Python local,
+ * nunca browser) — mesmo padrão documentado em company/src/lib/services/
+ * client.ts. Se algum dia um client rodando em browser precisar chamar isto
+ * direto, precisa de CORS real, não confiar em same-origin implícito.
  */
 import { Hono } from "hono";
 import type { Env } from "../gateway/types";

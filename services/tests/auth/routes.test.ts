@@ -296,6 +296,32 @@ describe("POST /login and GET /me", () => {
   });
 });
 
+describe("POST /login rate limiting", () => {
+  it("blocks with 429 after exceeding the per-IP limit — brute force sem defesa antes desse fix", async () => {
+    const ip = `203.0.113.${Math.floor(Math.random() * 254) + 1}`;
+    const attempt = () =>
+      post(
+        "/login",
+        { email: "nobody@example.com", password: "wrong" },
+        { "cf-connecting-ip": ip },
+      );
+
+    // Limite configurado é 10/60s — 11 tentativas do mesmo IP garantem
+    // estourar. Todas antes da 11ª devem ser 401 (credencial inválida,
+    // não bloqueada); a partir dela, 429.
+    const results: number[] = [];
+    for (let i = 0; i < 11; i++) {
+      results.push((await attempt()).status);
+    }
+    expect(results.filter((s) => s === 401).length).toBeGreaterThan(0);
+    expect(results.filter((s) => s === 429).length).toBeGreaterThan(0);
+
+    const limited = await attempt();
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({ error: "rate_limited" });
+  });
+});
+
 describe("POST /logout", () => {
   it("revokes the session so it stops resolving, and is a no-op without a token", async () => {
     const body = signupBody();

@@ -67,6 +67,9 @@ describe("POST /gdpr/export", () => {
     );
     expect(res.status).toBe(200);
     const { url } = await res.json<{ url: string }>();
+    // Regressão: a URL já apontou pro domínio da company com um prefixo
+    // /api/ que nunca existiu nessa rota — o export nunca resolvia.
+    expect(new URL(url).pathname).toMatch(/^\/gdpr\/export\/exports\//);
     const key = new URL(url).pathname.replace(/^.*\/export\//, "");
 
     const download = await gdpr.request(

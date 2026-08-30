@@ -61,6 +61,20 @@ async function stripeSignature(
   return `t=${timestamp},v1=${hex}`;
 }
 
+/** POST /billing/webhooks?provider=asaas já com o header exigido pela
+ * validação de asaas-access-token (mesmo valor fixado em vitest.config.mts). */
+function asaasWebhook(body: unknown) {
+  return billing.request(
+    "/webhooks?provider=asaas",
+    {
+      method: "POST",
+      headers: { "asaas-access-token": "test-asaas-webhook-secret" },
+      body: JSON.stringify(body),
+    },
+    env,
+  );
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -87,25 +101,63 @@ describe("POST /billing/webhooks", () => {
     expect(await badSig.json()).toEqual({ error: "signature_failed" });
   });
 
+  it("rejects an asaas webhook without a valid asaas-access-token, accepts the correct one", async () => {
+    const { userId } = await makeUserWithSession();
+    vi.stubGlobal("fetch", mockFetch({ "api.resend.com": {} }));
+    const payload = {
+      event: "PAYMENT_RECEIVED",
+      payment: { externalReference: `${userId}:pro`, id: "pay_x", value: 24 },
+    };
+
+    const noToken = await billing.request(
+      "/webhooks?provider=asaas",
+      { method: "POST", body: JSON.stringify(payload) },
+      env,
+    );
+    expect(noToken.status).toBe(401);
+    expect(await noToken.json()).toEqual({ error: "invalid_webhook_token" });
+
+    const wrongToken = await billing.request(
+      "/webhooks?provider=asaas",
+      {
+        method: "POST",
+        headers: { "asaas-access-token": "forged-token" },
+        body: JSON.stringify(payload),
+      },
+      env,
+    );
+    expect(wrongToken.status).toBe(401);
+
+    // Nenhuma das duas tentativas forjadas alterou a assinatura.
+    const subBefore = await env.DB.prepare(
+      "SELECT tier FROM subscriptions WHERE user_id = ?",
+    )
+      .bind(userId)
+      .first<{ tier: string }>();
+    expect(subBefore?.tier).toBe("free");
+
+    const ok = await asaasWebhook(payload);
+    expect(ok.status).toBe(200);
+    const subAfter = await env.DB.prepare(
+      "SELECT tier FROM subscriptions WHERE user_id = ?",
+    )
+      .bind(userId)
+      .first<{ tier: string }>();
+    expect(subAfter?.tier).toBe("pro");
+  });
+
   it("records an asaas PAYMENT_RECEIVED event and upgrades the subscription to pro", async () => {
     const { userId } = await makeUserWithSession();
     vi.stubGlobal("fetch", mockFetch({ "api.resend.com": {} }));
 
-    const res = await billing.request(
-      "/webhooks?provider=asaas",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          event: "PAYMENT_RECEIVED",
-          payment: {
-            externalReference: `${userId}:pro`,
-            id: "pay_123",
-            value: 24,
-          },
-        }),
+    const res = await asaasWebhook({
+      event: "PAYMENT_RECEIVED",
+      payment: {
+        externalReference: `${userId}:pro`,
+        id: "pay_123",
+        value: 24,
       },
-      env,
-    );
+    });
     expect(res.status).toBe(200);
 
     const sub = await env.DB.prepare(
@@ -127,17 +179,10 @@ describe("POST /billing/webhooks", () => {
     const { userId } = await makeUserWithSession();
     vi.stubGlobal("fetch", mockFetch({ "api.resend.com": {} }));
 
-    const res = await billing.request(
-      "/webhooks?provider=asaas",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          event: "PAYMENT_OVERDUE",
-          payment: { externalReference: `${userId}:pro`, value: 24 },
-        }),
-      },
-      env,
-    );
+    const res = await asaasWebhook({
+      event: "PAYMENT_OVERDUE",
+      payment: { externalReference: `${userId}:pro`, value: 24 },
+    });
     expect(res.status).toBe(200);
 
     const sub = await env.DB.prepare(
@@ -164,21 +209,14 @@ describe("POST /billing/webhooks", () => {
       .run();
     vi.stubGlobal("fetch", mockFetch({ "api.resend.com": {} }));
 
-    const res = await billing.request(
-      "/webhooks?provider=asaas",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          event: "PAYMENT_RECEIVED",
-          payment: {
-            externalReference: `${userId}:12m:${couponId}`,
-            id: "pay_456",
-            value: 96,
-          },
-        }),
+    const res = await asaasWebhook({
+      event: "PAYMENT_RECEIVED",
+      payment: {
+        externalReference: `${userId}:12m:${couponId}`,
+        id: "pay_456",
+        value: 96,
       },
-      env,
-    );
+    });
     expect(res.status).toBe(200);
 
     const sub = await env.DB.prepare(
@@ -200,21 +238,14 @@ describe("POST /billing/webhooks", () => {
     expect(redemption?.count).toBe(1);
 
     // Reenvio do mesmo webhook (retry do Asaas) não redime 2x.
-    await billing.request(
-      "/webhooks?provider=asaas",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          event: "PAYMENT_CONFIRMED",
-          payment: {
-            externalReference: `${userId}:12m:${couponId}`,
-            id: "pay_456",
-            value: 96,
-          },
-        }),
+    await asaasWebhook({
+      event: "PAYMENT_CONFIRMED",
+      payment: {
+        externalReference: `${userId}:12m:${couponId}`,
+        id: "pay_456",
+        value: 96,
       },
-      env,
-    );
+    });
     const redemptionAfterRetry = await env.DB.prepare(
       "SELECT COUNT(*) as count FROM coupon_redemptions WHERE coupon_id = ? AND user_id = ?",
     )
@@ -226,17 +257,10 @@ describe("POST /billing/webhooks", () => {
   it("cancels back to free on PAYMENT_DELETED/PAYMENT_REFUNDED", async () => {
     const { userId } = await makeUserWithSession();
 
-    const res = await billing.request(
-      "/webhooks?provider=asaas",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          event: "PAYMENT_REFUNDED",
-          payment: { externalReference: `${userId}:pro` },
-        }),
-      },
-      env,
-    );
+    const res = await asaasWebhook({
+      event: "PAYMENT_REFUNDED",
+      payment: { externalReference: `${userId}:pro` },
+    });
     expect(res.status).toBe(200);
 
     const sub = await env.DB.prepare(

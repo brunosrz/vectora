@@ -23,11 +23,14 @@ export interface Env {
   STRIPE_PRICE_PRO_USD: string;
   ASAAS_API_KEY: string;
   ASAAS_API_URL: string;
+  ASAAS_WEBHOOK_SECRET: string;
   // queues
   EMAIL_QUEUE: Queue<EmailMessage>;
   JOBS_QUEUE: Queue<JobMessage>;
   // license
   LICENSE_VALIDATE_LIMITER: RateLimit;
+  // auth/license — /auth/login, /license/agent-login
+  AUTH_LOGIN_LIMITER: RateLimit;
   // registry/discovery.ts — sem token, discovery de skills via GitHub code
   // search fica desligada (não é erro, ver discoverSkills).
   GITHUB_TOKEN?: string;

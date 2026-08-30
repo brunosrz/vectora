@@ -7,6 +7,11 @@
  *
  * `scripts/release.ts` publica os binários assinados no R2 e regenera
  * `config` no KV.
+ *
+ * Sem CORS de propósito: `/updates/*` é consumido pelo electron-updater
+ * (HTTP client nativo, não browser); `/download/*` é um link de navegação
+ * de página inteira (clique direto), não um fetch/XHR cross-origin — CORS
+ * não se aplica a nenhum dos dois casos.
  */
 
 import { Hono } from "hono";
