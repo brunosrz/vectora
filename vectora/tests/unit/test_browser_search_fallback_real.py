@@ -26,7 +26,16 @@ def _chromium_available() -> bool:
         return False
 
 
-pytestmark = pytest.mark.browser
+# search_fallback() chama httpx.get() direto contra a API JSON do
+# DuckDuckGo — sem Chromium nenhum. `browser` é só pra testes que sobem
+# Chromium via Playwright (ver descrição do marker em pyproject.toml);
+# aplicado no módulo inteiro antes, isso fazia os 2 testes de
+# search_fallback (rede real de terceiro, sem mock) escaparem do filtro
+# `not live` que a CI já usa pra isolar esse tipo de teste do gate
+# principal — achado real: ConnectTimeout intermitente do runner do
+# GitHub Actions pro DuckDuckGo derrubava o job inteiro. Marker agora
+# vai por função: `live` nos 2 testes de search_fallback, `browser` só
+# nos 2 de fetch_fallback (que de fato precisam de Chromium).
 
 
 @pytest.fixture(autouse=True)
@@ -37,6 +46,7 @@ def _clean_fallback_browser():
     search_fallback.close_search_fallback_browser()
 
 
+@pytest.mark.live
 def test_search_fallback_retorna_resultados_reais_do_duckduckgo():
     results = search_fallback.search_fallback("python programming language")
 
@@ -47,6 +57,7 @@ def test_search_fallback_retorna_resultados_reais_do_duckduckgo():
         assert "content" in r
 
 
+@pytest.mark.live
 def test_search_fallback_query_sem_instant_answer_retorna_lista_vazia_sem_lancar():
     # Par de erro/borda: query sem AbstractText/RelatedTopics (ex.: string
     # aleatória sem entrada na base de instant-answers) não deve lançar —
@@ -55,6 +66,7 @@ def test_search_fallback_query_sem_instant_answer_retorna_lista_vazia_sem_lancar
     assert results == []
 
 
+@pytest.mark.browser
 @pytest.mark.skipif(
     not _chromium_available(),
     reason="Chromium não instalado — rode `playwright install chromium`",
@@ -65,6 +77,7 @@ def test_fetch_fallback_extrai_texto_visivel_de_uma_pagina_real():
     assert "Example Domain" in text
 
 
+@pytest.mark.browser
 @pytest.mark.skipif(
     not _chromium_available(),
     reason="Chromium não instalado — rode `playwright install chromium`",
