@@ -194,7 +194,7 @@ jobs:
           always() && steps.services_install.outcome == 'success' &&
           env.CLOUDFLARE_API_TOKEN != ''
         working-directory: services
-        run: pnpm exec wrangler d1 migrations apply vectora-db --remote
+        run: pnpm exec wrangler d1 migrations apply vectora-db --remote --skip-confirmation
 
       - name: Deploy services (Worker Cloudflare)
         if: >-
