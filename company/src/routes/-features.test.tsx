@@ -6,15 +6,29 @@
  * colidem) ou mostra uma linha em branco pro usuário.
  */
 import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+// Mensagens reais do catálogo pt (fonte de verdade), não um Proxy que ecoa a
+// chave — senão as asserções de "não vazio" abaixo passam sempre, mesmo com
+// uma mensagem genuinamente vazia/ausente no JSON (achado do CodeRabbit).
+const ptMessages: Record<string, string> = JSON.parse(
+  readFileSync(join(import.meta.dirname, "../../messages/pt.json"), "utf-8"),
+);
 
 vi.mock("#/paraglide/messages", () => ({
   m: new Proxy(
     {},
     {
       get:
-        (_t, prop) =>
-        (..._args: unknown[]) =>
-          String(prop),
+        (_t, prop: string) =>
+        (..._args: unknown[]) => {
+          const value = ptMessages[prop];
+          if (typeof value !== "string") {
+            throw new Error(`mensagem "${prop}" ausente em messages/pt.json`);
+          }
+          return value;
+        },
     },
   ),
 }));
