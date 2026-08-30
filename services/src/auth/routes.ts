@@ -17,6 +17,7 @@ import {
   resolveSession,
   revokeSession,
   bearerToken,
+  cookieToken,
   sha256Hex,
 } from "./session";
 import { verifyTurnstile } from "../lib/turnstile";
@@ -311,10 +312,13 @@ auth.get("/me", async (c) => {
   });
 });
 
-/** Helper reutilizado pelos outros módulos de rota (billing/license/gdpr/...). */
+/** Helper reutilizado pelos outros módulos de rota (billing/license/gdpr/...).
+ * Bearer primeiro (server-to-server, ex. company) — cookie `vsession` como
+ * fallback (browser direto, ex. painel do gha-bot embutido neste Worker). */
 export async function requireUserId(c: {
   req: { raw: Request };
   env: Env;
 }): Promise<string | null> {
-  return resolveSession(c.env.DB, bearerToken(c.req.raw));
+  const token = bearerToken(c.req.raw) ?? cookieToken(c.req.raw);
+  return resolveSession(c.env.DB, token);
 }

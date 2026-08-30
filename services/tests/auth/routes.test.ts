@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { auth } from "../../src/auth/routes";
-import { sha256Hex } from "../../src/auth/session";
+import { auth, requireUserId } from "../../src/auth/routes";
+import { createSession, sha256Hex } from "../../src/auth/session";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -360,5 +360,63 @@ describe("POST /magic-link", () => {
     const res = await post("/magic-link", {});
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "email_required" });
+  });
+});
+
+describe("requireUserId", () => {
+  async function makeUserWithSession() {
+    const userId = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)",
+    )
+      .bind(userId, `${userId}@example.com`, "pbkdf2$1$AA==$AA==")
+      .run();
+    const session = await createSession(env.DB, userId);
+    return { userId, token: session.token };
+  }
+
+  it("authenticates via Bearer, falls back to the vsession cookie, or returns null", async () => {
+    const { userId, token } = await makeUserWithSession();
+
+    const viaBearer = await requireUserId({
+      req: {
+        raw: new Request("https://x.test", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      },
+      env,
+    });
+    expect(viaBearer).toBe(userId);
+
+    const viaCookie = await requireUserId({
+      req: {
+        raw: new Request("https://x.test", {
+          headers: { Cookie: `vsession=${token}` },
+        }),
+      },
+      env,
+    });
+    expect(viaCookie).toBe(userId);
+
+    // Erro/borda: Bearer tem precedência sobre o cookie quando ambos presentes.
+    const otherSession = await makeUserWithSession();
+    const bothPresent = await requireUserId({
+      req: {
+        raw: new Request("https://x.test", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Cookie: `vsession=${otherSession.token}`,
+          },
+        }),
+      },
+      env,
+    });
+    expect(bothPresent).toBe(userId);
+
+    const neither = await requireUserId({
+      req: { raw: new Request("https://x.test") },
+      env,
+    });
+    expect(neither).toBeNull();
   });
 });

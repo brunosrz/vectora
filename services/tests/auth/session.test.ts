@@ -2,6 +2,7 @@ import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import {
   bearerToken,
+  cookieToken,
   createSession,
   resolveSession,
   revokeSession,
@@ -41,6 +42,28 @@ describe("bearerToken", () => {
       headers: { Authorization: "Basic abc123" },
     });
     expect(bearerToken(malformed)).toBeNull();
+  });
+});
+
+describe("cookieToken", () => {
+  it("extracts the token from a Cookie header, or returns null if absent/malformed", () => {
+    const withCookie = new Request("https://x.test", {
+      headers: { Cookie: "vsession=abc123" },
+    });
+    expect(cookieToken(withCookie)).toBe("abc123");
+
+    const withOtherCookies = new Request("https://x.test", {
+      headers: { Cookie: "foo=bar; vsession=abc123; baz=qux" },
+    });
+    expect(cookieToken(withOtherCookies)).toBe("abc123");
+
+    const noHeader = new Request("https://x.test");
+    expect(cookieToken(noHeader)).toBeNull();
+
+    const noVsession = new Request("https://x.test", {
+      headers: { Cookie: "foo=bar; baz=qux" },
+    });
+    expect(cookieToken(noVsession)).toBeNull();
   });
 });
 
