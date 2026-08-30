@@ -375,7 +375,7 @@ describe("requireUserId", () => {
     return { userId, token: session.token };
   }
 
-  it("authenticates via Bearer, falls back to the vsession cookie, or returns null", async () => {
+  it("authenticates via Bearer, or returns null without one", async () => {
     const { userId, token } = await makeUserWithSession();
 
     const viaBearer = await requireUserId({
@@ -387,31 +387,6 @@ describe("requireUserId", () => {
       env,
     });
     expect(viaBearer).toBe(userId);
-
-    const viaCookie = await requireUserId({
-      req: {
-        raw: new Request("https://x.test", {
-          headers: { Cookie: `vsession=${token}` },
-        }),
-      },
-      env,
-    });
-    expect(viaCookie).toBe(userId);
-
-    // Erro/borda: Bearer tem precedência sobre o cookie quando ambos presentes.
-    const otherSession = await makeUserWithSession();
-    const bothPresent = await requireUserId({
-      req: {
-        raw: new Request("https://x.test", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Cookie: `vsession=${otherSession.token}`,
-          },
-        }),
-      },
-      env,
-    });
-    expect(bothPresent).toBe(userId);
 
     const neither = await requireUserId({
       req: { raw: new Request("https://x.test") },

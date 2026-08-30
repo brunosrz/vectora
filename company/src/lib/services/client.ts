@@ -12,22 +12,12 @@ export function getSessionToken(): string | undefined {
   return getCookie(SESSION_COOKIE);
 }
 
-// Domain com "." de prefixo compartilha o cookie entre TODOS os
-// subdomínios de vectora.company (bot.vectora.company incluído) — sem
-// isso, o painel do gha-bot (embutido no Worker services/, servido em
-// bot.vectora.company) nunca recebe este cookie do browser, mesmo com o
-// usuário já logado na company. Local dev (sem domínio real) não define
-// isso — cookie fica com o domínio implícito de sempre.
-const COOKIE_DOMAIN =
-  process.env.NODE_ENV === "production" ? ".vectora.company" : undefined;
-
 export function setSessionCookie(token: string, expiresAt: string): void {
   setCookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
     path: "/",
-    domain: COOKIE_DOMAIN,
     expires: new Date(expiresAt),
   });
 }
@@ -38,7 +28,6 @@ export function clearSessionCookie(): void {
     secure: true,
     sameSite: "lax",
     path: "/",
-    domain: COOKIE_DOMAIN,
     maxAge: 0,
   });
 }
