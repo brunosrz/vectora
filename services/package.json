@@ -8,12 +8,9 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "release": "tsx scripts/release.ts",
-    "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
-    "pretest": "pnpm run i18n:compile",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "pretypecheck": "pnpm run i18n:compile",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -21,7 +18,6 @@
     "@aws-sdk/lib-storage": "^3.1120.0",
     "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^5.20260828.1",
-    "@inlang/paraglide-js": "^2.25.0",
     "@vitest/coverage-istanbul": "^4.1.11",
     "prettier": "3.9.6",
     "tsx": "^4.23.12",
