@@ -126,6 +126,15 @@ def _run(
     ``discard_stderr=True`` roteia stderr para DEVNULL — útil para ferramentas
     que emitem avisos ruidosos em stderr mas reportam erros reais via código de
     retorno (ex: bandit com comentários em língua não-inglesa).
+
+    stdin sempre vai para DEVNULL: sem isso, o subprocesso herda o stdin do
+    scons e qualquer prompt interativo não coberto pelas flags de automação
+    (--yes/--frozen-lockfile/etc — ex.: já observado no `wrangler d1
+    migrations apply` e no `vercel --prod` do deploy de produção) trava pra
+    sempre esperando uma resposta que nunca chega, em silêncio (a própria
+    saída do prompt fica bufferizada e nunca aparece no log). Com stdin
+    fechado, qualquer prompt recebe EOF na hora e o comando falha rápido e
+    visível em vez de travar por horas.
     """
     merged = {**os.environ, **(env or {})}
     run_cwd = cwd or ROOT
@@ -133,7 +142,9 @@ def _run(
     print(header)
     stderr_dest = subprocess.DEVNULL if discard_stderr else None
     if log is None:
-        result = subprocess.run(cmd, cwd=run_cwd, env=merged, stderr=stderr_dest)
+        result = subprocess.run(
+            cmd, cwd=run_cwd, env=merged, stderr=stderr_dest, stdin=subprocess.DEVNULL
+        )
         rc = result.returncode
     else:
         merged["PYTHONIOENCODING"] = "utf-8"
@@ -143,6 +154,7 @@ def _run(
             cmd,
             cwd=run_cwd,
             env=merged,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL if discard_stderr else subprocess.STDOUT,
             text=True,
