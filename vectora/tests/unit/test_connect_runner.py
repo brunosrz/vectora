@@ -248,6 +248,62 @@ class TestRunAgentForThread:
             "assistant",
         ]
 
+    async def test_delegacao_a_uma_soul_roda_sem_pausar_em_hitl(
+        self, native_session_store, monkeypatch
+    ):
+        """Gap real (revisão de 2026-08-30): nenhum teste deste arquivo
+        exercitava `native_agent.subagent_catalog` não-vazio — em produção
+        `run_agent_for_thread` só injeta `SubagentDeps` (com
+        `should_require_approval`) quando o catálogo não está vazio
+        (runner.py:76-85), e é isso que faz uma mensagem do
+        Telegram/Discord/Slack/Email conseguir de fato delegar a uma SOUL.
+        Sem este teste, um bug nesse `if` (ex.: catálogo nunca chegando
+        populado a partir de `get_native_agent`) passaria despercebido."""
+        from backend.engine.subagents import SubagentSpec
+
+        client = _ScriptedChatClient(
+            [
+                [
+                    _tool_call_chunk(
+                        index=0,
+                        id="call_soul",
+                        name="delegate_to_subagent",
+                        args='{"subagent_type": "coder", "prompt": "implemente algo"}',
+                    )
+                ],
+                [_texto_chunk("feito pela SOUL")],  # turno interno da SOUL
+                [_texto_chunk("SOUL concluiu: feito pela SOUL")],  # loop externo
+            ]
+        )
+        registry = ToolRegistry()
+        registry.register(_require_spec("delegate_to_subagent"))
+        soul = SubagentSpec(
+            name="coder",
+            description="agente de teste",
+            system_prompt="você é um agente de teste",
+            tools=[],
+        )
+        _patch_native_engine(
+            monkeypatch,
+            session_store=native_session_store,
+            tool_registry=registry,
+            subagent_catalog={"coder": soul},
+            chat_client=client,
+        )
+
+        reply = await runner.run_agent_for_thread(
+            "connect-telegram-soul", "peça pro coder implementar algo"
+        )
+
+        assert reply == "SOUL concluiu: feito pela SOUL"
+        assert client.chamadas == 3  # nunca pausou esperando aprovação
+        historico = await native_session_store.get_history("connect-telegram-soul")
+        assert [m.role.value for m in historico[-3:]] == [
+            "assistant",
+            "tool",
+            "assistant",
+        ]
+
     async def test_falha_no_chat_client_propaga_pro_handle_incoming_message(
         self, native_session_store, monkeypatch
     ):

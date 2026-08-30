@@ -49,11 +49,11 @@ export function getFeatureCategories(): Category[] {
           description: m.features_native_engine_desc(),
         },
         {
-          id: "subagents",
+          id: "souls",
           Icon: Users,
-          title: m.features_subagents_title(),
-          summary: m.features_subagents_summary(),
-          description: m.features_subagents_desc(),
+          title: m.features_souls_title(),
+          summary: m.features_souls_summary(),
+          description: m.features_souls_desc(),
         },
         {
           id: "kanban",

@@ -239,6 +239,23 @@ class TestNodeLabels:
         assert isinstance(label, str)
         assert len(label) > 0
 
+    def test_every_soul_in_catalog_has_a_real_label_not_generic(self):
+        """Achado real: node_labels.py só cobria coder/search, as outras 8
+        SOULs caíam no genérico "Processando…"/"Roteando para X…" cru. Toda
+        entrada de SOUL_CATALOG precisa de label específico dos dois dicts."""
+        from backend.agents.souls import SOUL_CATALOG
+        from backend.api.node_labels import _ROUTING_LABELS, NODE_LABELS
+
+        for name in SOUL_CATALOG:
+            assert name in NODE_LABELS, f"{name} sem entrada em NODE_LABELS"
+            assert NODE_LABELS[name] != "Processando…", (
+                f"{name} caindo no label genérico"
+            )
+            assert name in _ROUTING_LABELS, f"{name} sem entrada em _ROUTING_LABELS"
+            assert not _ROUTING_LABELS[name].startswith("Roteando para " + name), (
+                f"{name} caindo no fallback genérico de roteamento"
+            )
+
     def test_node_event_with_label_in_sse(self):
         """NodeEvent com started deve emitir label semântico no campo node_label."""
         from backend.api.schemas import NodeEvent, encode_event

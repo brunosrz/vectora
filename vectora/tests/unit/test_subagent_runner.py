@@ -25,16 +25,16 @@ def test_subagent_types_bate_com_o_catalogo_real():
     assert "search" in SUBAGENT_TYPES
 
 
-def test_spec_for_coder_retorna_soul_do_coder():
+@pytest.mark.parametrize("nome", list(SUBAGENT_TYPES))
+def test_spec_for_retorna_a_soul_certa_do_catalogo_pra_todas_as_10(nome: str):
+    """Gap real (revisão de 2026-08-30): só `coder`/`search` provavam a
+    implementação de `_spec_for` — um bug de digitação em qualquer uma das
+    outras 8 SOULs (ex.: `SOUL_CATALOG.get(nome.replace("-", "_"))`) passaria
+    despercebido, já que o teste de paridade acima só compara os NOMES das
+    chaves, não que `_spec_for` resolve cada uma pra entrada certa."""
     from backend.agents.souls import SOUL_CATALOG
 
-    assert _spec_for("coder") is SOUL_CATALOG["coder"]
-
-
-def test_spec_for_search_retorna_soul_do_search():
-    from backend.agents.souls import SOUL_CATALOG
-
-    assert _spec_for("search") is SOUL_CATALOG["search"]
+    assert _spec_for(nome) is SOUL_CATALOG[nome]
 
 
 def test_spec_for_tipo_invalido_levanta_value_error():

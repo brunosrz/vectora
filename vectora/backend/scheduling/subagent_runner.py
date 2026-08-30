@@ -31,7 +31,7 @@ def _spec_for(subagent_type: str) -> Any:
 #: este nome no topo do módulo e é importado por ``backend/nodes/tools.py``,
 #: que ``souls.py`` importa de volta (ciclo nodes.tools → background →
 #: subagent_runner → souls → nodes.tools). Testado contra o catálogo real em
-#: ``tests/unit/test_scheduling_subagent_runner.py``.
+#: ``tests/unit/test_subagent_runner.py``.
 SUBAGENT_TYPES = (
     "coder",
     "search",

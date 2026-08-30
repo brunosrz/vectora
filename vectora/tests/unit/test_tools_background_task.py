@@ -273,6 +273,34 @@ async def test_schedule_subagent_task_agenda_coder_com_sucesso() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("soul", ["planner", "reviewer"])
+async def test_schedule_subagent_task_agenda_qualquer_soul_do_catalogo(
+    soul: str,
+) -> None:
+    """Gap real (revisão de 2026-08-30): só `coder`/`search` (as 2 SOULs
+    legadas) tinham teste de agendamento com sucesso — nada provava que o
+    agendamento aceita as outras 8, incluindo uma sem
+    `needs_worktree_isolation` (`planner`) e uma read-only (`reviewer`)."""
+    with patch(
+        "backend.tools.background.background_tasks.create_task",
+        new=AsyncMock(return_value=_fake_subagent_task()),
+    ) as mock_create:
+        result = json.loads(
+            await schedule_subagent_task(
+                subagent_type=soul,
+                description="tarefa de teste",
+                when="em 30 minutos",
+                ctx=_ctx(),
+            )
+        )
+
+        assert result["status"] == "created"
+        assert result["subagent_type"] == soul
+        _, kwargs = mock_create.call_args
+        assert kwargs["trigger_config"] == {"subagent_type": soul}
+
+
+@pytest.mark.asyncio
 async def test_schedule_subagent_task_tipo_invalido_nao_cria_tarefa() -> None:
     with patch(
         "backend.tools.background.background_tasks.create_task",

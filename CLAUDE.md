@@ -110,7 +110,7 @@ Camadas:
   - `complete`: PostgreSQL (`asyncpg`) + Qdrant + Redis
   - Usuários/auth/settings **sempre** em SQLite, independente do modo.
 - **`tools/`** — tools nativas registradas via `@tool`/`register` no `TOOL_REGISTRY` (`backend/tools/registry.py`): `fs.py`, `git.py`, `web.py`, `rag.py`, `mcp.py`, etc. `mcp.py` é o client MCP (`call_mcp_tool`) que consome servidores MCP externos.
-- **`agents/`** — specs de subagents (coder, search) + identidade do agente.
+- **`agents/`** — `souls.py::SOUL_CATALOG` é o catálogo de 10 SOULs (specs de subagent pré-compiladas: `coder`, `search`, `reviewer`, `tester`, `devops`, `writer-docs`, `data-analyst`, `security-auditor`, `browser-qa`, `planner`) consumido por `agent_factory._native_subagent_catalog()` — o orquestrador delega dinamicamente via `task(subagent_type=<nome>, ...)`, lendo a `description` de cada entrada; a restrição de tools por SOUL é enforcement real (bind de function-calling), não sugestão de prompt. `_identity.py` tem a identidade do agente, compartilhada por toda SOUL.
 - **`nodes/`** — `backend/nodes/tools.py` agrupa o `ALL_TOOLS`/`FS_TOOLS`/`GIT_TOOLS`/etc. (listas de `ToolSpec` filtradas do `TOOL_REGISTRY`) consumidas pelo agent_factory; não há mais nós de grafo.
 - **`engine/`** — motor de conversa nativo: `conversation_loop.py::run_conversation` é o loop `while` imperativo que substitui o `StateGraph` (relê o histórico via `SessionStore` a cada volta, chama o `ChatClient` em streaming, executa as tool calls, repete); `stream_events.py` define o vocabulário de eventos nativo; `hitl.py`, `subagents.py`, `guardrails.py` completam o motor.
 

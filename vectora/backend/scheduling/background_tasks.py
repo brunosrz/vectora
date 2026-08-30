@@ -709,7 +709,16 @@ def _soul_tool_registry(soul: Any, user_id: str | None) -> Any:
     filtro de RBAC (kill-switch global + ABAC por usuário) que
     ``agent_factory._native_subagent_catalog`` aplica no catálogo de
     delegação síncrona, replicado aqui pra execução agendada de uma SOUL
-    isolada (``trigger_config.subagent_type``, ver ``schedule_subagent_task``)."""
+    isolada (``trigger_config.subagent_type``, ver ``schedule_subagent_task``).
+
+    Mesma salvaguarda de ``agent_factory._native_tool_registry``/
+    ``_native_subagent_catalog`` (achado real, revisão de 2026-08-30): sem
+    importar ``backend.nodes.tools`` primeiro, ``soul.tools`` pode estourar
+    ``ToolNameNotFoundError`` ao resolver um grupo (ex. ``fs`` →
+    ``list_terminals``) que só é registrado por um módulo de tool nunca
+    importado neste caminho de execução (agendamento roda fora do fluxo de
+    ``get_native_agent``, que é quem normalmente garante isso)."""
+    import backend.nodes.tools  # import registra todo @vtool no TOOL_REGISTRY
     from backend.rbac import tool_policy
     from backend.tools.registry import TOOL_REGISTRY, ToolRegistry
 

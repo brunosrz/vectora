@@ -617,7 +617,18 @@ def _native_subagent_catalog(user_id: str | None) -> dict[str, SubagentSpec]:
     """Catálogo de ``SubagentSpec`` nativas a partir de ``SOUL_CATALOG``,
     filtrando cada ``ToolSpec`` já nativo por ``TOOL_REGISTRY.get(tool.name)``
     (todo tool de ``SOUL_CATALOG`` nasce do registry nativo — ver
-    ``backend/nodes/tools.py::_bridge``)."""
+    ``backend/nodes/tools.py::_bridge``).
+
+    Achado real (revisão de 2026-08-30): esta função dependia implicitamente
+    de ``_native_tool_registry`` já ter rodado antes (via ``get_native_agent``,
+    que chama as duas nessa ordem) pra `backend.nodes.tools` já estar
+    importado — chamada isolada (ex. direto num teste, ou um refactor futuro
+    que troque a ordem) quebra em ``resolve_tool_group`` com
+    ``ToolNameNotFoundError`` pra qualquer tool só registrada fora da
+    coleção do pytest (ex. ``list_terminals``, grupo ``fs``). Mesma
+    salvaguarda de ``_native_tool_registry`` acima, agora também aqui —
+    função não pode depender da ordem de chamada de quem a invoca."""
+    import backend.nodes.tools  # import registra todo @vtool no TOOL_REGISTRY
     from backend.agents.souls import SOUL_CATALOG
     from backend.engine.subagents import SubagentSpec
     from backend.tools.registry import TOOL_REGISTRY
@@ -827,66 +838,6 @@ def _invalidate_llm_cache(user_id: str) -> None:
             )
     except Exception:
         pass
-
-
-async def coder_compensate(workspace_id: str | None = None) -> str | None:
-    """Rollback de emergência via ``git stash`` após falha catastrófica do coder.
-
-    Chamado pelo handler de exceção quando o subagent coder falha após já ter
-    começado a modificar arquivos. Executa ``git stash`` no workspace ativo
-    para reverter mudanças não commitadas e deixar o repositório limpo.
-
-    Args:
-        workspace_id: ID do workspace para resolver o path. Se None, usa home.
-
-    Returns:
-        Stdout do ``git stash`` se bem-sucedido; None se não aplicável ou falhou.
-
-    Nota:
-        Execução silenciosa — falhas aqui não relançam exceção para não ofuscar
-        o erro original que ativou a compensação.
-    """
-    import shutil
-    import subprocess  # nosec B404 — git controlado, sem shell=True
-
-    try:
-        from backend.llm.backends import _resolve_workspace_root
-
-        workspace_root = _resolve_workspace_root(workspace_id)
-        if not (workspace_root / ".git").is_dir():
-            logger.debug("coder_compensate: sem repositório git em %s", workspace_root)
-            return None
-
-        git_exe = shutil.which("git")
-        if git_exe is None:
-            return None
-
-        result = subprocess.run(  # noqa: S603, ASYNC221  # nosec B603
-            [
-                git_exe,
-                "-C",
-                str(workspace_root),
-                "stash",
-                "--include-untracked",
-                "--",
-                ".",
-            ],
-            capture_output=True,
-            timeout=30,
-            check=False,
-        )
-        output = result.stdout.decode("utf-8", errors="replace").strip()
-        if result.returncode == 0:
-            logger.warning("coder_compensate: git stash aplicado — %s", output or "ok")
-        else:
-            err = result.stderr.decode("utf-8", errors="replace").strip()
-            logger.warning(
-                "coder_compensate: git stash falhou (%d) — %s", result.returncode, err
-            )
-        return output or None
-    except Exception as exc:
-        logger.debug("coder_compensate: erro ignorado: %s", exc)
-        return None
 
 
 async def aclose() -> None:

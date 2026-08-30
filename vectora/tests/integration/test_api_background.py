@@ -569,6 +569,41 @@ async def test_manual_run_creates_run_and_registers_thread(
     assert wrong.value.status_code == 404
 
 
+async def test_manual_run_com_subagent_type_roda_a_soul_ate_o_fim(
+    db, monkeypatch, native_session_store
+):
+    """Gap real (revisão de 2026-08-30): nenhum teste de integração criava
+    uma task com `trigger_config={"subagent_type": ...}` pelo endpoint REST
+    de verdade (`post_task`) — só via `bg.create_task` direto em unit. Fecha
+    o ciclo completo: POST /tasks → POST /tasks/{id}/run → task executa a
+    SOUL pedida até `status == "done"`, mesmo caminho que
+    `test_manual_run_creates_run_and_registers_thread` já prova pro caso
+    sem `subagent_type`."""
+    _patch_native_engine(monkeypatch, session_store=native_session_store, texto="feito")
+
+    created = await post_task(
+        _req(),
+        "thread-run-soul",
+        CreateTaskRequest(
+            kind="routine",
+            name="Delegar pro coder",
+            instruction="corrigir o bug",
+            trigger_type="manual",
+            trigger_config={"subagent_type": "coder"},
+        ),
+    )
+
+    bt = BackgroundTasks()
+    resp = await run_task_endpoint(_req(), "thread-run-soul", created.id, bt)
+    assert resp["status"] == "queued"
+    await bt()
+
+    runs = await get_runs(_req(), "thread-run-soul")
+    assert len(runs) == 1
+    assert runs[0].status == "done"
+    assert runs[0].run_thread_id is not None
+
+
 async def test_resume_run_endpoint_cancel_and_approve(
     db, monkeypatch, native_session_store
 ):
