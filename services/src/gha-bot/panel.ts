@@ -7,12 +7,81 @@
  */
 import { Hono } from "hono";
 import type { Env } from "../gateway/types";
+import { m } from "../paraglide/messages";
+import { locales, type Locale } from "../paraglide/runtime";
 
 export const ghaBotPanel = new Hono<{ Bindings: Env }>();
 
-function page(appUrl: string): string {
+/** Resolve o idioma do painel — sem cookie de preferência salvo hoje (página
+ * fresca por visita), então lê o primeiro idioma suportado do
+ * `Accept-Language`, com override manual via `?lang=` pra facilitar teste.
+ * Paraglide roda no Worker (sem `window`/`navigator`), por isso o locale é
+ * sempre resolvido aqui e passado explícito em cada `m.*()` — nunca via
+ * `getLocale()` implícito. */
+export function resolveLocale(req: Request): Locale {
+  const url = new URL(req.url);
+  const override = url.searchParams.get("lang");
+  if (override && (locales as readonly string[]).includes(override)) {
+    return override as Locale;
+  }
+  const header = req.headers.get("Accept-Language") ?? "";
+  for (const part of header.split(",")) {
+    const tag = part.split(";")[0]?.trim().toLowerCase();
+    const lang = tag?.split("-")[0];
+    if (lang && (locales as readonly string[]).includes(lang)) {
+      return lang as Locale;
+    }
+  }
+  return "en";
+}
+
+// Marcador único (não pode aparecer em nenhuma tradução real) usado só pra
+// extrair o prefixo antes de {secret} em gha_bot_panel_token_generated, sem
+// depender de nenhum caractere específico da string traduzida.
+const SECRET_SPLIT_MARKER = "@@SECRET@@";
+
+function page(appUrl: string, locale: Locale): string {
+  const t = {
+    lead: m.gha_bot_panel_lead({}, { locale }),
+    gateChecking: m.gha_bot_panel_gate_checking({}, { locale }),
+    gateLoginRequired: m.gha_bot_panel_gate_login_required({}, { locale }),
+    gateLoginButton: m.gha_bot_panel_gate_login_button({}, { locale }),
+    gateProRequired: m.gha_bot_panel_gate_pro_required({}, { locale }),
+    gateProButton: m.gha_bot_panel_gate_pro_button({}, { locale }),
+    settingsTitle: m.gha_bot_panel_settings_title({}, { locale }),
+    labelProvider: m.gha_bot_panel_label_provider({}, { locale }),
+    labelModel: m.gha_bot_panel_label_model({}, { locale }),
+    labelApiKey: m.gha_bot_panel_label_api_key({}, { locale }),
+    apiKeyPlaceholder: m.gha_bot_panel_api_key_placeholder({}, { locale }),
+    labelReviewStyle: m.gha_bot_panel_label_review_style({}, { locale }),
+    reviewStyleLenient: m.gha_bot_panel_review_style_lenient({}, { locale }),
+    reviewStyleBalanced: m.gha_bot_panel_review_style_balanced({}, { locale }),
+    reviewStyleStrict: m.gha_bot_panel_review_style_strict({}, { locale }),
+    saveButton: m.gha_bot_panel_save_button({}, { locale }),
+    tokensTitle: m.gha_bot_panel_tokens_title({}, { locale }),
+    tableId: m.gha_bot_panel_table_id({}, { locale }),
+    tableCreatedAt: m.gha_bot_panel_table_created_at({}, { locale }),
+    tableStatus: m.gha_bot_panel_table_status({}, { locale }),
+    newTokenButton: m.gha_bot_panel_new_token_button({}, { locale }),
+    revokeButton: m.gha_bot_panel_revoke_button({}, { locale }),
+    statusActive: m.gha_bot_panel_status_active({}, { locale }),
+    statusRevoked: m.gha_bot_panel_status_revoked({}, { locale }),
+    noTokens: m.gha_bot_panel_no_tokens({}, { locale }),
+    installTitle: m.gha_bot_panel_install_title({}, { locale }),
+    installInstructions: m.gha_bot_panel_install_instructions({}, { locale }),
+    errorMissingModel: m.gha_bot_panel_error_missing_model({}, { locale }),
+    errorMissingKey: m.gha_bot_panel_error_missing_key({}, { locale }),
+    saved: m.gha_bot_panel_saved({}, { locale }),
+    errorPrefix: m.gha_bot_panel_error_prefix({}, { locale }),
+  };
+  // Interpolado no server (Paraglide não roda no browser) — o cliente só
+  // concatena o secret depois do prefixo, nunca chama m() por conta própria.
+  const tokenGeneratedPrefix = m
+    .gha_bot_panel_token_generated({ secret: SECRET_SPLIT_MARKER }, { locale })
+    .split(SECRET_SPLIT_MARKER)[0] as string;
+
   return `<!doctype html>
-<html lang="pt-BR">
+<html lang="${locale}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -72,17 +141,17 @@ function page(appUrl: string): string {
 <main>
   <div id="gate" hidden>
     <h1>Vectora Bot</h1>
-    <p class="lead" id="gate-text">Verificando sessão...</p>
-    <button id="gate-login" hidden>Entrar na Vectora</button>
+    <p class="lead" id="gate-text">${t.gateChecking}</p>
+    <button id="gate-login" hidden></button>
   </div>
 
   <div id="app" hidden>
     <h1>Vectora Bot</h1>
-    <p class="lead">Revisão automática de pull requests no GitHub Actions.</p>
+    <p class="lead">${t.lead}</p>
 
     <section>
-      <h2>Configuração</h2>
-      <label for="provider">Provider</label>
+      <h2>${t.settingsTitle}</h2>
+      <label for="provider">${t.labelProvider}</label>
       <select id="provider">
         <option value="anthropic">Anthropic</option>
         <option value="openai">OpenAI</option>
@@ -90,39 +159,33 @@ function page(appUrl: string): string {
         <option value="openrouter">OpenRouter</option>
         <option value="ollama">Ollama</option>
       </select>
-      <label for="model">Modelo</label>
+      <label for="model">${t.labelModel}</label>
       <input id="model" placeholder="ex.: claude-sonnet-5" />
-      <label for="apiKey">Chave de API do provider</label>
-      <input id="apiKey" type="password" placeholder="Deixe em branco para manter a chave atual" />
-      <label for="reviewStyle">Estilo de revisão</label>
+      <label for="apiKey">${t.labelApiKey}</label>
+      <input id="apiKey" type="password" placeholder="${t.apiKeyPlaceholder}" />
+      <label for="reviewStyle">${t.labelReviewStyle}</label>
       <select id="reviewStyle">
-        <option value="lenient">Leniente</option>
-        <option value="balanced">Balanceado</option>
-        <option value="strict">Rigoroso</option>
+        <option value="lenient">${t.reviewStyleLenient}</option>
+        <option value="balanced">${t.reviewStyleBalanced}</option>
+        <option value="strict">${t.reviewStyleStrict}</option>
       </select>
-      <button id="saveSettings">Salvar</button>
+      <button id="saveSettings">${t.saveButton}</button>
       <div class="msg" id="settingsMsg"></div>
     </section>
 
     <section>
-      <h2>Tokens do GitHub Actions</h2>
+      <h2>${t.tokensTitle}</h2>
       <table>
-        <thead><tr><th>ID</th><th>Criado em</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>${t.tableId}</th><th>${t.tableCreatedAt}</th><th>${t.tableStatus}</th><th></th></tr></thead>
         <tbody id="tokensBody"></tbody>
       </table>
-      <button id="newToken" class="secondary">Gerar novo token</button>
+      <button id="newToken" class="secondary">${t.newTokenButton}</button>
       <div class="msg" id="tokenMsg"></div>
     </section>
 
     <section>
-      <h2>Instalação</h2>
-      <p class="lead" style="margin-bottom:12px">
-        1. No repositório, crie um <strong>Environment</strong> chamado
-        <code>vectora-bot</code> (Settings → Environments) e registre o token
-        gerado acima como secret <code>VECTORA_BOT_TOKEN</code> desse
-        environment.<br />
-        2. Cole o workflow abaixo em <code>.github/workflows/vectora.yml</code>.
-      </p>
+      <h2>${t.installTitle}</h2>
+      <p class="lead" style="margin-bottom:12px">${t.installInstructions}</p>
       <pre id="workflowYaml"></pre>
     </section>
   </div>
@@ -130,6 +193,22 @@ function page(appUrl: string): string {
 <script>
 (function () {
   const APP_URL = ${JSON.stringify(appUrl)};
+  const LOCALE = ${JSON.stringify(locale)};
+  const T = ${JSON.stringify({
+    noTokens: t.noTokens,
+    statusActive: t.statusActive,
+    statusRevoked: t.statusRevoked,
+    revokeButton: t.revokeButton,
+    tokenGeneratedPrefix,
+    gateLoginRequired: t.gateLoginRequired,
+    gateLoginButton: t.gateLoginButton,
+    gateProRequired: t.gateProRequired,
+    gateProButton: t.gateProButton,
+    errorMissingModel: t.errorMissingModel,
+    errorMissingKey: t.errorMissingKey,
+    saved: t.saved,
+    errorPrefix: t.errorPrefix,
+  })};
   const gate = document.getElementById("gate");
   const gateText = document.getElementById("gate-text");
   const gateLogin = document.getElementById("gate-login");
@@ -173,7 +252,7 @@ function page(appUrl: string): string {
   }
 
   function fmtDate(iso) {
-    return new Date(iso.replace(" ", "T") + "Z").toLocaleString("pt-BR");
+    return new Date(iso.replace(" ", "T") + "Z").toLocaleString(LOCALE);
   }
 
   async function loadTokens() {
@@ -182,7 +261,7 @@ function page(appUrl: string): string {
     const body = document.getElementById("tokensBody");
     body.innerHTML = "";
     if (tokens.length === 0) {
-      body.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">Nenhum token ainda.</td></tr>';
+      body.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">' + T.noTokens + '</td></tr>';
       return;
     }
     for (const t of tokens) {
@@ -191,12 +270,12 @@ function page(appUrl: string): string {
       tr.innerHTML =
         "<td>" + t.id.slice(0, 8) + "</td>" +
         "<td>" + fmtDate(t.created_at) + "</td>" +
-        '<td><span class="status ' + (revoked ? "revoked" : "ok") + '">' + (revoked ? "revogado" : "ativo") + "</span></td>" +
+        '<td><span class="status ' + (revoked ? "revoked" : "ok") + '">' + (revoked ? T.statusRevoked : T.statusActive) + "</span></td>" +
         "<td></td>";
       if (!revoked) {
         const btn = document.createElement("button");
         btn.className = "danger";
-        btn.textContent = "Revogar";
+        btn.textContent = T.revokeButton;
         btn.onclick = async () => {
           btn.disabled = true;
           await api("/gha-bot/tokens/" + t.id + "/revoke", { method: "POST" });
@@ -213,7 +292,7 @@ function page(appUrl: string): string {
     const { secret } = await res.json();
     const msg = document.getElementById("tokenMsg");
     msg.className = "msg ok";
-    msg.textContent = "Token gerado — copie agora, não será mostrado de novo: " + secret;
+    msg.textContent = T.tokenGeneratedPrefix + secret;
     await loadTokens();
   };
 
@@ -234,12 +313,12 @@ function page(appUrl: string): string {
     const reviewStyle = document.getElementById("reviewStyle").value;
     if (!model) {
       msg.className = "msg error";
-      msg.textContent = "Informe o modelo.";
+      msg.textContent = T.errorMissingModel;
       return;
     }
     if (!apiKey) {
       msg.className = "msg error";
-      msg.textContent = "Informe a chave de API (a atual não é reenviada por segurança).";
+      msg.textContent = T.errorMissingKey;
       return;
     }
     const res = await api("/gha-bot/settings", {
@@ -248,12 +327,12 @@ function page(appUrl: string): string {
     });
     if (res.ok) {
       msg.className = "msg ok";
-      msg.textContent = "Salvo.";
+      msg.textContent = T.saved;
       document.getElementById("apiKey").value = "";
     } else {
       const body = await res.json().catch(() => ({}));
       msg.className = "msg error";
-      msg.textContent = "Erro: " + (body.error || res.status);
+      msg.textContent = T.errorPrefix + (body.error || res.status);
     }
   };
 
@@ -263,8 +342,9 @@ function page(appUrl: string): string {
       if (!meRes.ok) throw { unauthorized: true };
     } catch (e) {
       gate.hidden = false;
-      gateText.textContent = "Você precisa estar logado na Vectora para acessar o painel do bot.";
+      gateText.textContent = T.gateLoginRequired;
       gateLogin.hidden = false;
+      gateLogin.textContent = T.gateLoginButton;
       gateLogin.onclick = () => {
         window.location.href = APP_URL + "/login?redirect=" + encodeURIComponent(window.location.href);
       };
@@ -275,9 +355,9 @@ function page(appUrl: string): string {
     const sub = subRes && subRes.ok ? await subRes.json() : null;
     if (!sub || sub.tier !== "pro" || sub.status !== "active") {
       gate.hidden = false;
-      gateText.textContent = "O Vectora Bot exige o plano Pro.";
+      gateText.textContent = T.gateProRequired;
       gateLogin.hidden = false;
-      gateLogin.textContent = "Assinar Pro";
+      gateLogin.textContent = T.gateProButton;
       gateLogin.onclick = () => {
         window.location.href = APP_URL + "/dashboard/billing";
       };
@@ -295,4 +375,6 @@ function page(appUrl: string): string {
 </html>`;
 }
 
-ghaBotPanel.get("/", (c) => c.html(page(c.env.APP_URL)));
+ghaBotPanel.get("/", (c) =>
+  c.html(page(c.env.APP_URL, resolveLocale(c.req.raw))),
+);
