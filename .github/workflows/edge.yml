@@ -146,40 +146,52 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
+      # `always() &&` + `needs.<job>.result == 'success'` em todos os passos
+      # daqui pra baixo: cada deploy (docs/company/services) é independente
+      # dos outros (a falha de UM não deve impedir os outros de tentar —
+      # ex. docs quebrando por um problema do Hugo Modules no Vercel não
+      # deveria travar o deploy de services/), MAS só roda se a validação
+      # do PRÓPRIO projeto passou de verdade — `always()` sozinho (sem o
+      # `needs.*.result`) rodaria o deploy mesmo com lint/tests/build
+      # falhando (achado do CodeRabbit, PR #22).
       - name: Deploy docs (Vercel)
-        if: env.VERCEL_TOKEN != '' && env.VERCEL_PROJECT_ID_DOCS != ''
+        if: >-
+          always() && needs.docs.result == 'success' &&
+          env.VERCEL_TOKEN != '' && env.VERCEL_PROJECT_ID_DOCS != ''
         working-directory: docs
         env:
           VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID_DOCS }}
         run: npx --yes vercel@latest --prod --yes --token="$VERCEL_TOKEN"
 
-      # `always() &&` em todos os passos daqui pra baixo: cada deploy
-      # (docs/company/services) é independente dos outros — sem isso, a
-      # falha de UM (ex. docs quebrando por um problema do Hugo Modules no
-      # Vercel) interrompe o job inteiro e pula os passos seguintes,
-      # deixando services/ sem deploy mesmo com o secret configurado e sem
-      # nenhuma relação com o que falhou.
       - name: Deploy company (Vercel)
-        if: always() && env.VERCEL_TOKEN != '' && env.VERCEL_PROJECT_ID_COMPANY != ''
+        if: >-
+          always() && needs.company.result == 'success' &&
+          env.VERCEL_TOKEN != '' && env.VERCEL_PROJECT_ID_COMPANY != ''
         working-directory: company
         env:
           VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID_COMPANY }}
         run: npx --yes vercel@latest --prod --yes --token="$VERCEL_TOKEN"
 
       - name: Install deps (services)
-        if: always() && env.CLOUDFLARE_API_TOKEN != ''
+        if: >-
+          always() && needs.services.result == 'success' &&
+          env.CLOUDFLARE_API_TOKEN != ''
         working-directory: services
         run: pnpm install --frozen-lockfile
 
       # Migrations ANTES do deploy do worker: o código deployado assume o
       # schema mais novo — publicar sem aplicar quebra rotas em produção.
       - name: Aplica migrations D1 (services)
-        if: always() && env.CLOUDFLARE_API_TOKEN != ''
+        if: >-
+          always() && needs.services.result == 'success' &&
+          env.CLOUDFLARE_API_TOKEN != ''
         working-directory: services
         run: pnpm exec wrangler d1 migrations apply vectora-db --remote
 
       - name: Deploy services (Worker Cloudflare)
-        if: always() && env.CLOUDFLARE_API_TOKEN != ''
+        if: >-
+          always() && needs.services.result == 'success' &&
+          env.CLOUDFLARE_API_TOKEN != ''
         working-directory: services
         run: pnpm exec wrangler deploy
 
