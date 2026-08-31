@@ -185,7 +185,7 @@ class Settings(BaseSettings):
 
     # Derived connection strings
     db_dsn: str | None = None
-    """Database connection string for AsyncSqliteSaver."""
+    """Database connection string for checkpoints.db (vectora_sessions/vectora_checkpoint_artifacts)."""
 
     embedding_queue_dsn: str | None = None
     """Embedding queue connection string."""

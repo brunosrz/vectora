@@ -11,8 +11,10 @@ Endpoints REST de rewind:
     GET  /threads/{thread_id}/checkpoints  — lista checkpoints de turno
     POST /threads/{thread_id}/rewind       — restaura workspace para checkpoint
 
-Persiste no mesmo banco SQLite que o chat TUI usa, via AsyncSqliteSaver
-+ tabelas vectora_sessions / vectora_checkpoint_artifacts.
+Persiste em checkpoints.db (aiosqlite direto, sem ORM/checkpointer externo)
+via as tabelas vectora_sessions (metadados de UI) / vectora_checkpoint_artifacts
+(snapshots de rewind) — histórico real das mensagens fica em sessions.db,
+via SessionStore (backend/persistence/native/session_store.py).
 """
 
 from __future__ import annotations
