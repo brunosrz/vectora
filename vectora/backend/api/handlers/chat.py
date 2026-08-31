@@ -743,9 +743,18 @@ async def stream_chat(
             mode="chat" if chat_mode else "code",
         )
         await _increment_message_count(thread_id)
-    except Exception as exc:
-        logger.warning(
-            "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
+    except Exception:
+        # ERROR + exc_info (não WARNING sem stack trace): esta escrita é o
+        # ÚNICO jeito da thread aparecer em ListThreads — uma falha aqui
+        # engolida em silêncio faz a conversa "sumir" da sidebar mesmo com
+        # o histórico real intacto em SessionStore (achado real,
+        # 2026-08-30: bug de visibilidade, não de perda de dado, mas
+        # indistinguível pro usuário sem log alto o bastante pra investigar).
+        logger.exception(
+            "api/chat: falha ao registrar thread %s em vectora_sessions — "
+            "thread ficará invisível em ListThreads mesmo com a conversa "
+            "preservada em SessionStore",
+            thread_id,
         )
 
     from backend.services.usage import usage_tracker
