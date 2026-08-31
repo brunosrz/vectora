@@ -185,7 +185,9 @@ class Settings(BaseSettings):
 
     # Derived connection strings
     db_dsn: str | None = None
-    """Database connection string for checkpoints.db (vectora_sessions/vectora_checkpoint_artifacts)."""
+    """Database connection string for backend.db (path simples, ver
+    ``_initialize_derived_paths`` — usado por kanban/background_tasks/
+    agent_profiles/connect, NÃO é checkpoints.db)."""
 
     embedding_queue_dsn: str | None = None
     """Embedding queue connection string."""
