@@ -1070,7 +1070,7 @@ def _env_file() -> Path:
 async def get_storage_status(request: Request) -> dict:
     """Retorna o status de saúde de todos os backends de storage.
 
-    Inclui checkpointer, store (BaseStore), LanceDB e Postgres (se configurado).
+    Inclui checkpointer, store (protocolo ``StoreBackend``), LanceDB e Postgres (se configurado).
     Usado pela aba "Storage" do painel Admin.
 
     Returns:

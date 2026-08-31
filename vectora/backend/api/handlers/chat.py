@@ -390,22 +390,22 @@ def _prepend_text_context(msg: VMessage, block: str) -> VMessage:
 
 
 # ---------------------------------------------------------------------------
-# Lazy graph loader — delegado para src.graph
+# Lifecycle do motor nativo — delegado para backend.services.agent_factory
 # ---------------------------------------------------------------------------
 
 
 async def aclose_graph() -> None:
-    """Fecha o grafo + checkpointer SQLite. Idempotente.
+    """Fecha os recursos do motor nativo (checkpointer SQLite, etc). Idempotente.
 
-    Delegado para ``src.graph.aclose()`` — estado de lifecycle mantido lá.
+    Delegado para ``agent_factory.aclose()`` — estado de lifecycle mantido lá.
     """
     await agent_factory.aclose()
 
 
 async def awarm_graph() -> None:
-    """Inicializa o grafo eagerly no startup (opt-in).
+    """Inicializa o motor nativo eagerly no startup (opt-in).
 
-    Delegado para ``src.graph.awarm()``.
+    Delegado para ``agent_factory.awarm()``.
     """
     await agent_factory.awarm()
 

@@ -37,7 +37,8 @@ async def build_store(embedding_model: str | None = None) -> Any:
             compatibilidade; nenhum call-site real passa esse argumento hoje.
 
     Returns:
-        ``VectoraStore`` pronto para ser passado a ``create_deep_agent``.
+        ``VectoraStore`` pronto para ser consumido pelas tools nativas de
+        memória/skill (``backend/tools/memory.py``) via ``ToolContext``.
 
     Nota:
         Usa um pool próprio (não o pool F1 do checkpointer) porque o Store

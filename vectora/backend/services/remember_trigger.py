@@ -1,7 +1,7 @@
 """Remember — gatilho automático a cada N turnos de conversa.
 
 Disparado fire-and-forget ao final de cada turno completo do agente
-(``backend/api/adapters.py``, ``on_chain_end`` do grafo raiz). Nunca aplica
+(``backend/api/native_stream.py``, quando ``stopped_reason == "stop"``). Nunca aplica
 skill/fato sozinho — só destila o transcript e, se houver algo reaproveitável,
 grava a proposta como artifact (``create_artifact``, tipo ``remember_proposal``)
 pra aparecer na aba Plan na próxima interação. Uma proposta pendente não

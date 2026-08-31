@@ -29,9 +29,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/memory", tags=["memory"])
 
-# asearch/aput/aget vêm do Protocol de store nativo — sem tipo público
-# estável para o retorno de asearch importar aqui sem acoplar à implementação
-# concreta (InMemoryStore/AsyncSqliteStore).
+# asearch/aput/aget vêm do protocolo StoreBackend (backend/storage/protocols.py)
+# — sem tipo público estável para o retorno de asearch importar aqui sem
+# acoplar à implementação concreta (VectoraStore/VectoraPostgresStore).
 _LIST_ALL_LIMIT = 1000
 
 
