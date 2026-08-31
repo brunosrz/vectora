@@ -721,13 +721,25 @@ async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
     o cutoff é seguro. `ListThreads` já filtra `message_count > 0`, então
     isso é higiene do banco, não uma correção de comportamento visível.
 
-    Segunda passada: remove também threads com `message_count > 0` mas sem
-    nenhum registro na tabela legada `checkpoints` (se ela existir no banco)
-    — sinal inequívoco de que o agente nunca chegou a rodar pra essa thread
-    (ex.: `message_count` incrementado antes do agente inicializar). Sem
-    essa passada, threads assim ficam fantasma pra sempre: passam no filtro
-    de `message_count > 0` do `ListThreads` e a primeira passada só olha
-    `message_count = 0`.
+    ATENÇÃO — bug real corrigido aqui (2026-08-30): esta função tinha uma
+    segunda passada que apagava threads com `message_count > 0` mas sem
+    registro na tabela LEGADA `checkpoints` (do antigo grafo compilado,
+    substituído pelo motor nativo — `backend/engine/conversation_loop.py`).
+    O motor nativo nunca escreve nessa tabela, então TODA thread real virava
+    "órfã" pra essa lógica após 1h — confirmado ao vivo num banco de usuário
+    real: `vectora_sessions` (o que `ListThreads` lê) com só 2 linhas contra
+    dezenas de threads reais e intactas em `sessions.db` (SessionStore, a
+    fonte de verdade do motor). Rodando a cada boot + a cada hora
+    (`backend/api/server.py::_thread_cleanup_loop`), isso apagava
+    silenciosamente qualquer conversa real da sidebar assim que completasse
+    1h de idade — nunca perda de dados (o histórico seguia intacto em
+    `sessions.db`), mas a thread "sumia" pro usuário sem nenhum sinal de
+    erro. Removida por completo — não existe hoje nenhum sinal confiável
+    equivalente pra "thread órfã" no motor nativo (checar contra
+    `sessions.db` exigiria uma segunda conexão cross-database); se esse
+    edge case (message_count incrementado sem o agente ter rodado) voltar a
+    aparecer, a correção certa é investigar `stream_chat`/`_increment_message_count`
+    diretamente, não reintroduzir uma checagem contra uma tabela morta.
     """
     from datetime import timedelta
 
@@ -739,26 +751,6 @@ async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
     )
     await db.commit()
     deleted = cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
-
-    try:
-        async with db.execute(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='checkpoints'"
-        ) as cur2:
-            has_checkpoints_table = await cur2.fetchone() is not None
-        if has_checkpoints_table:
-            cur3 = await db.execute(
-                "DELETE FROM vectora_sessions "
-                "WHERE message_count > 0 AND created_at < ? "
-                "AND thread_id NOT IN (SELECT DISTINCT thread_id FROM checkpoints)",
-                (cutoff,),
-            )
-            await db.commit()
-            orphaned = cur3.rowcount if cur3.rowcount and cur3.rowcount > 0 else 0
-            deleted += orphaned
-    except Exception:
-        logger.warning(
-            "threads: falha ao checar threads órfãs sem checkpoint", exc_info=True
-        )
 
     if deleted:
         logger.info("threads: %d thread(s) vazia(s) removida(s) por hygiene", deleted)
@@ -1248,7 +1240,17 @@ async def get_thread_history_paginated(
                     )
                 )
         except Exception:
-            pass
+            # Best-effort (preview de resposta em andamento) — nunca deve
+            # derrubar a resposta da página de histórico, mas engolir sem
+            # log nenhum viola CLAUDE.md §11 e escondia exatamente o tipo
+            # de falha (NATS indisponível) que motivou a investigação real
+            # de 2026-08-30.
+            logger.warning(
+                "threads/history: falha ao ler partial:%s do KV — preview de "
+                "resposta em andamento não será mostrado",
+                thread_id,
+                exc_info=True,
+            )
 
     return PagedHistoryResponse(
         messages=messages,

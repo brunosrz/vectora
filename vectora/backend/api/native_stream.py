@@ -68,9 +68,22 @@ async def _spawn_save_partial(
         kv = await get_kv()
         await kv.set(f"partial:{thread_id}", content, ttl_s=300)
 
+    def _log_if_failed(task: asyncio.Task[None]) -> None:
+        # Task fire-and-forget: sem isso, uma falha (ex.: NATS indisponível)
+        # só aparece como "Task exception was never retrieved" no logger
+        # padrão do asyncio — nunca no logger estruturado da aplicação, nem
+        # no .jsonl de logs (achado real da investigação de 2026-08-30).
+        if not task.cancelled() and task.exception() is not None:
+            logger.warning(
+                "native_stream: falha ao salvar preview parcial de %s no KV",
+                thread_id,
+                exc_info=task.exception(),
+            )
+
     task = asyncio.ensure_future(_save())
     background_tasks.add(task)
     task.add_done_callback(background_tasks.discard)
+    task.add_done_callback(_log_if_failed)
 
 
 async def _clear_partial(thread_id: str) -> None:

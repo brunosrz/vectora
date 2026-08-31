@@ -9,6 +9,7 @@ persiste o title no campo extra JSON; threads registradas via
 from __future__ import annotations
 
 import json
+import logging
 import os
 from contextlib import ExitStack
 from typing import Any
@@ -411,6 +412,65 @@ class TestStreamChatRegistersThread:
         assert len(upsert_calls) == 1, "Deve ter sido chamado exatamente uma vez"
         thread_id_used = upsert_calls[0]
         assert len(thread_id_used) > 0, "thread_id gerado não deve ser vazio"
+
+    @pytest.mark.asyncio
+    async def test_stream_chat_loga_erro_alto_quando_upsert_session_falha(self, caplog):
+        """Regressão do achado real de 2026-08-30: uma falha em
+        _upsert_session (a ÚNICA escrita que faz a thread aparecer em
+        ListThreads) era engolida com logger.warning sem stack trace —
+        indistinguível de um log qualquer no meio de um burst de erros. O
+        chat continua funcionando (nunca deve propagar pro usuário), mas o
+        log precisa ser ERROR + exc_info, com o thread_id explícito, pra
+        aparecer alto o bastante no terminal e ser encontrável depois."""
+        from backend.api.schemas import StreamChatRequest
+
+        mock_ws = MagicMock()
+        mock_ws.id = "test-ws-upsert-fails"
+        mock_registry = MagicMock()
+        mock_registry.get.return_value = None
+        mock_registry.get_active.return_value = None
+        mock_registry.get_or_create_session_workspace.return_value = mock_ws
+
+        with (
+            ExitStack() as stack,
+            caplog.at_level(logging.ERROR, logger="backend.api.handlers.chat"),
+        ):
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.threads._upsert_session",
+                    side_effect=RuntimeError("disco cheio"),
+                )
+            )
+            stack.enter_context(
+                patch(
+                    "backend.workspace.workspace.workspace_registry",
+                    mock_registry,
+                )
+            )
+            import backend.api.handlers.chat as chat_mod
+
+            request = StreamChatRequest(
+                content="Olá", thread_id="thread-com-falha-upsert"
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            # Não deve propagar — o chat funciona mesmo com o registro
+            # de UI falhando.
+            _response = await chat_mod.stream_chat(request, http_request)
+
+        error_records = [r for r in caplog.records if r.levelno >= logging.ERROR]
+        assert error_records, (
+            "falha em _upsert_session deve gerar pelo menos 1 log ERROR"
+        )
+        assert any(
+            "thread-com-falha-upsert" in r.getMessage() for r in error_records
+        ), "o log de erro deve identificar qual thread ficou invisível"
+        assert any(r.exc_info for r in error_records), (
+            "o log deve incluir stack trace (exc_info) — WARNING sem exc_info "
+            "some no meio de qualquer burst de erros"
+        )
 
     @pytest.mark.asyncio
     async def test_stream_chat_does_not_upsert_when_agent_init_fails(self):
