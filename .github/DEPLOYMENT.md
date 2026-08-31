@@ -28,7 +28,7 @@ Todo push/PR roda, em ordem:
 - **Pull Requests** → apenas build de verificação (sem push).
 
 ```bash
-docker compose up -d        # usa ghcr.io/brunosrz/vectora:latest
+docker compose up -d        # usa ghcr.io/vectora-ltda/vectora:latest
 # http://localhost:8080
 ```
 
@@ -55,12 +55,12 @@ Configurados em **Settings → Secrets and variables → Actions**.
 ## Rollback (self-hosted Docker)
 
 ```bash
-docker pull ghcr.io/brunosrz/vectora:sha-<commit-anterior>
+docker pull ghcr.io/vectora-ltda/vectora:sha-<commit-anterior>
 # Aponte o docker-compose.yml para a tag específica e suba de novo.
 docker compose up -d
 ```
 
-Lista de tags: `docker image ls ghcr.io/brunosrz/vectora`.
+Lista de tags: `docker image ls ghcr.io/vectora-ltda/vectora`.
 
 ---
 

@@ -67,7 +67,7 @@ If you find a security vulnerability, **do not open a public issue**. This would
 
 **How to report:**
 
-1. Open a [GitHub Security Advisory](https://github.com/brunosrz/src/security/advisories/new) (private)
+1. Open a [GitHub Security Advisory](https://github.com/vectora-ltda/vectora/security/advisories/new) (private)
 2. Include: affected component, vulnerability type, steps to reproduce, estimated impact
 
 **What to include:**

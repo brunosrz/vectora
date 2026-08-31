@@ -52,7 +52,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: brunosrz/vectora-review-action@v1
+      - uses: vectora-ltda/vectora-review-action@v1
         with:
           token: \${{ secrets.VECTORA_BOT_TOKEN }}
           github-token: \${{ secrets.GITHUB_TOKEN }}`;
