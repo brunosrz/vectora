@@ -8,13 +8,13 @@ por projeto, gated por path) e o **pre-commit** compartilhado na raiz.
 
 ## Estrutura
 
-| Pasta                             | Projeto                                                                                                                           | Stack                            | Deploy                               |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------ |
-| [`vectora/`](vectora/README.md)   | App Vectora (assistente de IA self-hosted)                                                                                        | Python (uv) + Vite + Electron    | Docker (GHCR) + instaladores nativos |
-| [`company/`](company/README.md)   | Site institucional                                                                                                                | TanStack Start + Vite (pnpm)     | Vercel → **vectora.company**         |
-| [`docs/`](docs/README.md)         | Documentação                                                                                                                      | Docusaurus (pnpm)                | Vercel → **docs.vectora.company**    |
-| [`services/`](services/README.md) | Gateway (OAuth/webhooks pro desktop, ex-relay) + updates (distribuição de releases) — era `relay/` + `update-server/`, unificados | Hono + Cloudflare Workers (pnpm) | Cloudflare (wrangler)                |
-| `documents/`                      | Notas de design/planejamento (markdown interno)                                                                                   | —                                | não publicado                        |
+| Pasta                             | Projeto                                                                                                                           | Stack                            | Deploy                                                       |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------ |
+| [`vectora/`](vectora/README.md)   | App Vectora (assistente de IA self-hosted)                                                                                        | Python (uv) + Vite + Electron    | Instaladores nativos (Nuitka + Electron) via canal de update |
+| [`company/`](company/README.md)   | Site institucional                                                                                                                | TanStack Start + Vite (pnpm)     | Vercel → **vectora.company**                                 |
+| [`docs/`](docs/README.md)         | Documentação                                                                                                                      | Hugo                             | Vercel → **docs.vectora.company**                            |
+| [`services/`](services/README.md) | Gateway (OAuth/webhooks pro desktop, ex-relay) + updates (distribuição de releases) — era `relay/` + `update-server/`, unificados | Hono + Cloudflare Workers (pnpm) | Cloudflare (wrangler)                                        |
+| `documents/`                      | Notas de design/planejamento (markdown interno)                                                                                   | —                                | não publicado                                                |
 
 > O app em si (backend Python, frontend Vite, casca Electron) fica todo dentro
 > de `vectora/` — veja [vectora/README.md](vectora/README.md) para detalhes de
@@ -22,28 +22,27 @@ por projeto, gated por path) e o **pre-commit** compartilhado na raiz.
 
 ## CI/CD (`.github/workflows/`)
 
-Um workflow por projeto, **gated por path** (`on.push/pull_request.paths`): uma
-mudança só no `vectora/` não dispara o build/deploy de `company`, `docs` etc.
+4 workflows reais, cada um **gated por path** (`on.push/pull_request.paths`):
+uma mudança só no `vectora/` não dispara o build/deploy de `company`/`docs`/`services`.
 
-| Workflow       | Dispara em              | Faz                                                                                                                      |
-| -------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `vectora.yml`  | `vectora/**`, tags `v*` | lint • security • build • testes (unit/stress/integration/e2e) • Docker push (GHCR) • release nativo (Nuitka + Electron) |
-| `company.yml`  | `company/**`            | lint/typecheck/test/build • deploy Vercel (master)                                                                       |
-| `docs.yml`     | `docs/**`               | typecheck/build • deploy Vercel (master)                                                                                 |
-| `services.yml` | `services/**`           | install/typecheck/test • deploy Cloudflare (master)                                                                      |
-| `codeql.yml`   | master + agenda         | análise CodeQL (Python + Actions)                                                                                        |
-| `triage.yml`   | issues                  | label `needs-triage` + boas-vindas                                                                                       |
+| Workflow             | Dispara em                             | Faz                                                                                                                                 |
+| -------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `vectora.yml`        | `vectora/**`, tags `v*`                | lint • security • build • testes (unit/integration/e2e) • release nativo (Nuitka + Electron) • publica no canal de update (R2 + KV) |
+| `edge.yml`           | `company/**`, `services/**`, `docs/**` | lint/typecheck/test dos 3 projetos • deploy automático em push em master (Vercel + Cloudflare)                                      |
+| `release-please.yml` | push em master                         | mantém o PR de release acumulado (Conventional Commits) — mesclar publica a tag `vX.Y.Z`                                            |
+| `pr-checks.yml`      | pull requests                          | labels automáticos • valida título em Conventional Commits                                                                          |
+
+Não existe workflow de Docker Build/Push, CodeQL nem triage de issues — a
+distribuição do app vectora é via instaladores nativos (não imagem Docker).
 
 ### Secrets esperados
 
-| Secret                                                                                                                                     | Usado por                                        |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| `GOOGLE_API_KEY`, `COHERE_API_KEY`, `TAVILY_API_KEY`                                                                                       | testes do vectora                                |
-| `GHCR_TOKEN`                                                                                                                               | push da imagem Docker (fallback: `GITHUB_TOKEN`) |
-| `WIN_CERTIFICATE_BASE64`, `WIN_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`, `VECTORA_RELEASES_TOKEN` | assinatura/publicação dos instaladores nativos   |
-| `VERCEL_TOKEN`, `VERCEL_ORG_ID`                                                                                                            | deploy Vercel (company + docs)                   |
-| `VERCEL_PROJECT_ID_COMPANY`, `VERCEL_PROJECT_ID_DOCS`                                                                                      | projeto Vercel de cada site                      |
-| `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`                                                                                            | deploy do services                               |
+| Secret                                                                                                                                     | Usado por                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `GOOGLE_API_KEY`, `COHERE_API_KEY`, `TAVILY_API_KEY`, `LLM_PROVIDER`, `LOG_LEVEL`                                                          | testes do vectora                              |
+| `WIN_CERTIFICATE_BASE64`, `WIN_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`, `VECTORA_RELEASES_TOKEN` | assinatura/publicação dos instaladores nativos |
+| `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_COMPANY`, `VERCEL_PROJECT_ID_DOCS`                                                     | deploy Vercel (company + docs)                 |
+| `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`                                                | deploy do services + canal de update (R2)      |
 
 ## Desenvolvimento
 
@@ -56,8 +55,8 @@ cd vectora && uv sync && uv run vectora start
 # Site institucional
 cd company && pnpm install && pnpm dev
 
-# Docs
-cd docs && pnpm install && pnpm dev
+# Docs (Hugo)
+cd docs && hugo server
 
 # Services (gateway + updates)
 cd services && pnpm install && pnpm dev
