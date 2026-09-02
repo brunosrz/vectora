@@ -808,6 +808,55 @@ class TestGatewayClientForwardWorker:
             await asyncio.wait_for(client._forward_worker(queue), timeout=1.0)
         mock_fwd.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_erro_borda_job_que_falha_nao_mata_o_worker(self) -> None:
+        """Se o WebSocket já estiver fechando, até o `ws.send_json` de
+        dentro do `except` de `_forward` pode lançar (`ConnectionReset
+        Error` do aiohttp) — sem capturar isso dentro do worker, ele
+        morreria de vez. Com menos workers vivos, o dreno gracioso em
+        `_connect_once` (um `_STOP_WORKER` por worker) ficaria esperando
+        um worker que nunca mais lê a fila, travando a reconexão."""
+        client = self._client()
+        ws = AsyncMock()
+        session = AsyncMock()
+        queue: asyncio.Queue = asyncio.Queue()
+
+        bad_req: GatewayRequestItem = {
+            "id": "bad",
+            "method": "GET",
+            "path": "/a",
+            "headers": {},
+            "body": "",
+        }
+        good_req: GatewayRequestItem = {
+            "id": "good",
+            "method": "GET",
+            "path": "/b",
+            "headers": {},
+            "body": "",
+        }
+        await queue.put((ws, session, bad_req))
+        await queue.put((ws, session, good_req))
+
+        processed: list[str] = []
+
+        async def fake_forward(_ws, _session, req: GatewayRequestItem) -> None:
+            if req["id"] == "bad":
+                raise ConnectionResetError("socket já fechando")
+            processed.append(req["id"])
+
+        with patch.object(client, "_forward", side_effect=fake_forward):
+            worker = asyncio.create_task(client._forward_worker(queue))
+            await queue.join()  # espera os 2 itens serem consumidos
+
+            assert not worker.done(), "worker sobrevive ao job que falhou"
+            assert processed == ["good"]  # o job bom, depois do ruim, rodou
+
+            from backend.services.gateway import _STOP_WORKER
+
+            await queue.put(_STOP_WORKER)
+            await asyncio.wait_for(worker, timeout=1.0)
+
 
 class TestGatewayClientConcurrency:
     def _client(self):

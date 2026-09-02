@@ -278,14 +278,33 @@ class GatewayClient:
 
     async def _forward_worker(self, queue: asyncio.Queue[_ForwardJob | object]) -> None:
         """Um dos `_MAX_CONCURRENT_FORWARDS` workers fixos da conexão —
-        consome a fila até receber `_STOP_WORKER`."""
+        consome a fila até receber `_STOP_WORKER`.
+
+        `_forward` já trata os erros normais de rede/HTTP internamente
+        (devolve 502), mas se o WebSocket já estiver fechando, até o
+        `ws.send_json` de dentro do `except` de `_forward` pode lançar
+        (`ConnectionResetError` do aiohttp). Sem capturar isso AQUI, um
+        job problemático mataria o worker de vez — com menos workers
+        vivos, o dreno gracioso em `_connect_once` (`queue.put(_STOP_
+        WORKER)` um por worker) ficaria esperando um worker que nunca
+        mais lê a fila, travando a reconexão.
+        """
         while True:
             item = await queue.get()
             try:
                 if item is _STOP_WORKER:
                     return
                 ws, local_session, req = cast("_ForwardJob", item)
-                await self._forward(ws, local_session, req)
+                try:
+                    await self._forward(ws, local_session, req)
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    logger.exception(
+                        "gateway: _forward_worker: job falhou de forma"
+                        " irrecuperável (ex.: socket já fechando) — job"
+                        " descartado, worker segue vivo"
+                    )
             finally:
                 queue.task_done()
 
