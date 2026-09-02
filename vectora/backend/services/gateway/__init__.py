@@ -33,14 +33,20 @@ _BACKOFF_JITTER = (0.5, 1.5)
 #: aguarda `pending` no reconnect: um handler local travado atrasaria a
 #: reconexão em até 5 minutos.
 _LOCAL_FORWARD_TIMEOUT_S = 30.0
-#: Teto de forwards HTTP locais em voo ao mesmo tempo — sem isso, um
-#: `queued` grande ou o Worker mandando `request` mais rápido do que o
-#: backend local consegue responder faz `pending` (tasks) e conexões
-#: `local_session` crescerem sem limite, esgotando memória/sockets locais.
-#: Backpressure real: `_forward` além do teto fica bloqueado no semáforo
-#: (a task já existe em `pending`, mas não abre conexão local nem tem
-#: request próprio em voo até liberar).
+#: Nº de workers fixos processando forwards + tamanho máximo da fila entre
+#: eles e o loop de leitura do WebSocket. Um semáforo sozinho ao redor do
+#: request HTTP não bastava: a *task* de cada forward já nascia fora do
+#: teto (criada assim que a mensagem chegava), só o request HTTP em si
+#: ficava represado — um `queued` grande ainda criava uma task por item,
+#: sem limite, consumindo memória. Com fila limitada + workers fixos,
+#: `_dispatch` (via `queue.put`) bloqueia a PRÓPRIA leitura de novas
+#: mensagens do WebSocket quando a fila enche — backpressure real, não só
+#: nos requests HTTP locais.
 _MAX_CONCURRENT_FORWARDS = 20
+#: Sentinela de "pare" — um por worker, enfileirado no fechamento da
+#: conexão pra cada worker terminar o que já está processando/enfileirado
+#: e sair, em vez de ficar bloqueado pra sempre em `queue.get()`.
+_STOP_WORKER = object()
 
 
 class GatewayRequestItem(TypedDict):
@@ -70,6 +76,14 @@ class GatewayMessage(TypedDict, total=False):
     items: list[GatewayRequestItem]
 
 
+#: Item real de trabalho na fila — carrega o `ws`/`local_session` da conexão
+#: atual junto com o request, já que múltiplas conexões nunca compartilham
+#: fila (uma fila nova por `_connect_once`).
+_ForwardJob = tuple[
+    "aiohttp.ClientWebSocketResponse", "aiohttp.ClientSession", "GatewayRequestItem"
+]
+
+
 class GatewayClient:
     """WebSocket client que mantém conexão com o gateway e repassa requests ao backend local."""
 
@@ -95,8 +109,6 @@ class GatewayClient:
         #: `send_json`/`send_str` forem chamados de tasks diferentes ao
         #: mesmo tempo na mesma conexão.
         self._ws_send_lock = asyncio.Lock()
-        #: Backpressure — ver `_MAX_CONCURRENT_FORWARDS`.
-        self._forward_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_FORWARDS)
 
     # ------------------------------------------------------------------
     # Public API
@@ -167,50 +179,69 @@ class GatewayClient:
         WebSocket com o gateway; `local_session` é reusada por TODOS os
         `_forward` desta conexão (fala com o FastAPI local) — antes cada
         `_forward` abria/fechava sua própria sessão, sem reuso de conexão.
+
+        `_MAX_CONCURRENT_FORWARDS` workers fixos consomem uma fila
+        limitada — nem a fila nem o nº de forwards em voo crescem sem
+        teto, mesmo com um `queued` grande ou o Worker mandando `request`
+        mais rápido do que o backend local responde.
         """
         ws_url = f"{self._gateway_url}{_WS_PATH}{token}"
-        pending: set[asyncio.Task[None]] = set()
+        queue: asyncio.Queue[_ForwardJob | object] = asyncio.Queue(
+            maxsize=_MAX_CONCURRENT_FORWARDS
+        )
+        workers = [
+            asyncio.create_task(self._forward_worker(queue))
+            for _ in range(_MAX_CONCURRENT_FORWARDS)
+        ]
         local_timeout = aiohttp.ClientTimeout(total=_LOCAL_FORWARD_TIMEOUT_S)
-        async with (
-            aiohttp.ClientSession() as session,
-            aiohttp.ClientSession(timeout=local_timeout) as local_session,
-        ):
-            try:
-                async with session.ws_connect(ws_url) as ws:
-                    logger.info("gateway: conectado em %s", ws_url)
-                    await self._handle_messages(ws, local_session, pending)
-                    # `_handle_messages` só retorna sem lançar quando o
-                    # servidor fecha o socket sem frame de erro (`async for`
-                    # simplesmente esgota). Sem este log, isso reconecta em
-                    # silêncio — várias linhas "conectado" seguidas, sem
-                    # nenhum "desconectado" no meio, dificultando
-                    # diagnosticar se o padrão coincide com outros sintomas
-                    # (ex.: o processo sendo derrubado logo depois de
-                    # conectar).
-                    logger.warning(
-                        "gateway: conexão fechada pelo servidor sem erro — reconectando"
-                    )
-            finally:
-                # Espera (não cancela) requests em voo antes de fechar
-                # `local_session`/`ws` — um webhook/callback OAuth já
-                # despachado como task não pode ser silenciosamente
-                # descartado só porque o WebSocket fechou por perto. O
-                # backend local é o mesmo processo (loopback), então esses
-                # forwards terminam rápido; não há caminho realista de
-                # travar aqui pra sempre.
-                if pending:
-                    await asyncio.gather(*pending, return_exceptions=True)
+        try:
+            async with (
+                aiohttp.ClientSession() as session,
+                aiohttp.ClientSession(timeout=local_timeout) as local_session,
+            ):
+                try:
+                    async with session.ws_connect(ws_url) as ws:
+                        logger.info("gateway: conectado em %s", ws_url)
+                        await self._handle_messages(ws, local_session, queue)
+                        # `_handle_messages` só retorna sem lançar quando o
+                        # servidor fecha o socket sem frame de erro (`async
+                        # for` simplesmente esgota). Sem este log, isso
+                        # reconecta em silêncio — várias linhas "conectado"
+                        # seguidas, sem nenhum "desconectado" no meio,
+                        # dificultando diagnosticar se o padrão coincide com
+                        # outros sintomas (ex.: o processo sendo derrubado
+                        # logo depois de conectar).
+                        logger.warning(
+                            "gateway: conexão fechada pelo servidor sem erro — reconectando"
+                        )
+                finally:
+                    # Sinaliza fim de fila — cada worker termina o que já
+                    # está processando/enfileirado antes de sair (nenhum
+                    # webhook/callback OAuth já aceito na fila é descartado
+                    # silenciosamente só porque o WebSocket fechou por
+                    # perto); `_LOCAL_FORWARD_TIMEOUT_S` garante que essa
+                    # espera nunca é indefinida.
+                    for _ in workers:
+                        await queue.put(_STOP_WORKER)
+                    await asyncio.gather(*workers, return_exceptions=True)
+        except asyncio.CancelledError:
+            # Cancelamento externo (`stop()`) não pode esperar o dreno
+            # gracioso — cancela os workers direto.
+            for w in workers:
+                w.cancel()
+            await asyncio.gather(*workers, return_exceptions=True)
+            raise
 
     async def _handle_messages(
         self,
         ws: aiohttp.ClientWebSocketResponse,
         local_session: aiohttp.ClientSession,
-        pending: set[asyncio.Task[None]],
+        queue: asyncio.Queue[_ForwardJob | object],
     ) -> None:
         """Recebe mensagens do gateway e despacha ao FastAPI local."""
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.TEXT:
-                await self._dispatch(ws, local_session, msg.json(), pending)
+                await self._dispatch(ws, local_session, msg.json(), queue)
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 raise ConnectionError(f"ws error: {ws.exception()}")
 
@@ -219,8 +250,15 @@ class GatewayClient:
         ws: aiohttp.ClientWebSocketResponse,
         local_session: aiohttp.ClientSession,
         message: GatewayMessage,
-        pending: set[asyncio.Task[None]],
+        queue: asyncio.Queue[_ForwardJob | object],
     ) -> None:
+        """Enfileira `request`/itens de `queued` pros workers processarem.
+
+        `queue.put` bloqueia quando a fila está cheia — isso pausa a
+        LEITURA de novas mensagens do WebSocket (backpressure real), mas
+        nunca um único `ping` por trás de um forward lento: ping é
+        respondido direto aqui, sem passar pela fila.
+        """
         kind = message.get("type")
 
         if kind == "ping":
@@ -230,34 +268,26 @@ class GatewayClient:
 
         if kind == "queued":
             for item in message.get("items", []):
-                self._spawn_forward(ws, local_session, item, pending)
+                await queue.put((ws, local_session, item))
             return
 
         if kind == "request":
             # kind == "request" garante id/method/path presentes (contrato
             # do Worker, ver GatewayMessage em services/src/gateway/types.ts).
-            self._spawn_forward(
-                ws, local_session, cast("GatewayRequestItem", message), pending
-            )
+            await queue.put((ws, local_session, cast("GatewayRequestItem", message)))
 
-    def _spawn_forward(
-        self,
-        ws: aiohttp.ClientWebSocketResponse,
-        local_session: aiohttp.ClientSession,
-        req: GatewayRequestItem,
-        pending: set[asyncio.Task[None]],
-    ) -> None:
-        """Despacha `_forward` como task própria — o loop de leitura do
-        WebSocket (`_handle_messages`) segue lendo a próxima mensagem sem
-        esperar o round-trip HTTP local completar. Antes, `await` direto
-        serializava tudo na mesma conexão: uma revisão de PR demorada
-        bloqueava até um simples ping. `pending` guarda referência forte —
-        sem isso a task pode ser coletada pelo GC no meio do voo (gotcha
-        conhecido do `asyncio.create_task`).
-        """
-        task = asyncio.create_task(self._forward(ws, local_session, req))
-        pending.add(task)
-        task.add_done_callback(pending.discard)
+    async def _forward_worker(self, queue: asyncio.Queue[_ForwardJob | object]) -> None:
+        """Um dos `_MAX_CONCURRENT_FORWARDS` workers fixos da conexão —
+        consome a fila até receber `_STOP_WORKER`."""
+        while True:
+            item = await queue.get()
+            try:
+                if item is _STOP_WORKER:
+                    return
+                ws, local_session, req = cast("_ForwardJob", item)
+                await self._forward(ws, local_session, req)
+            finally:
+                queue.task_done()
 
     async def _forward(
         self,
@@ -271,25 +301,24 @@ class GatewayClient:
         req_id: str = req["id"]
         try:
             body_bytes = base64.b64decode(req.get("body", ""))
-            async with self._forward_semaphore:
-                async with local_session.request(
-                    method=req["method"],
-                    url=f"{self._local_url}{req['path']}",
-                    headers=req.get("headers", {}),
-                    data=body_bytes,
-                ) as resp:
-                    resp_body = base64.b64encode(await resp.read()).decode()
-                    resp_headers = dict(resp.headers)
-                    async with self._ws_send_lock:
-                        await ws.send_json(
-                            {
-                                "type": "response",
-                                "id": req_id,
-                                "status": resp.status,
-                                "headers": resp_headers,
-                                "body": resp_body,
-                            }
-                        )
+            async with local_session.request(
+                method=req["method"],
+                url=f"{self._local_url}{req['path']}",
+                headers=req.get("headers", {}),
+                data=body_bytes,
+            ) as resp:
+                resp_body = base64.b64encode(await resp.read()).decode()
+                resp_headers = dict(resp.headers)
+                async with self._ws_send_lock:
+                    await ws.send_json(
+                        {
+                            "type": "response",
+                            "id": req_id,
+                            "status": resp.status,
+                            "headers": resp_headers,
+                            "body": resp_body,
+                        }
+                    )
         except asyncio.CancelledError:
             raise
         except Exception:

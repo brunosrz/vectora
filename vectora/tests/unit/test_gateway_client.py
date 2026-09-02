@@ -508,41 +508,52 @@ class TestGatewayClientDispatch:
             app_secret="test-app-secret",
         )
 
+    def _queue(self):
+        from backend.services.gateway import _MAX_CONCURRENT_FORWARDS
+
+        return asyncio.Queue(maxsize=_MAX_CONCURRENT_FORWARDS)
+
     @pytest.mark.asyncio
     async def test_ping_envia_pong(self) -> None:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set[asyncio.Task[None]] = set()
-        await client._dispatch(ws, session, {"type": "ping"}, pending)
+        queue = self._queue()
+        await client._dispatch(ws, session, {"type": "ping"}, queue)
         ws.send_json.assert_awaited_once_with({"type": "pong"})
+        assert queue.qsize() == 0  # ping nunca passa pela fila
 
     @pytest.mark.asyncio
-    async def test_queued_encaminha_todos_itens(self) -> None:
-        """`_dispatch` só AGENDA os `_forward` (task própria, ver
-        `_spawn_forward`) — não espera terminar. `pending` guarda as tasks;
-        `asyncio.gather` espera todas antes de checar quantas rodaram."""
+    async def test_queued_enfileira_todos_itens_sem_rodar_forward(self) -> None:
+        """`_dispatch` só ENFILEIRA (`queue.put`) — não roda `_forward` nem
+        cria task nenhuma. Quem consome a fila são os workers fixos
+        (`_forward_worker`, testado à parte); sem nenhum worker rodando
+        aqui, os itens ficam parados na fila intactos."""
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set[asyncio.Task[None]] = set()
+        queue = self._queue()
         items: list[GatewayRequestItem] = [
             {"id": "1", "method": "POST", "path": "/w/a", "headers": {}, "body": ""},
             {"id": "2", "method": "POST", "path": "/w/b", "headers": {}, "body": ""},
         ]
         message: GatewayMessage = {"type": "queued", "items": items}
         with patch.object(client, "_forward", new=AsyncMock()) as mock_fwd:
-            await client._dispatch(ws, session, message, pending)
-            assert len(pending) == 2
-            await asyncio.gather(*pending)
-        assert mock_fwd.await_count == 2
+            await client._dispatch(ws, session, message, queue)
+            assert queue.qsize() == 2
+            mock_fwd.assert_not_called()
+
+        job1 = queue.get_nowait()
+        job2 = queue.get_nowait()
+        assert job1 == (ws, session, items[0])
+        assert job2 == (ws, session, items[1])
 
     @pytest.mark.asyncio
-    async def test_request_chama_forward(self) -> None:
+    async def test_request_enfileira_o_proprio_job(self) -> None:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set[asyncio.Task[None]] = set()
+        queue = self._queue()
         req: GatewayMessage = {
             "type": "request",
             "id": "abc",
@@ -551,44 +562,67 @@ class TestGatewayClientDispatch:
             "headers": {},
             "body": "",
         }
-        with patch.object(client, "_forward", new=AsyncMock()) as mock_fwd:
-            await client._dispatch(ws, session, req, pending)
-            await asyncio.gather(*pending)
-        mock_fwd.assert_awaited_once_with(ws, session, req)
+        await client._dispatch(ws, session, req, queue)
+
+        assert queue.qsize() == 1
+        job = queue.get_nowait()
+        assert job == (ws, session, req)
 
     @pytest.mark.asyncio
     async def test_tipo_desconhecido_ignorado(self) -> None:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set[asyncio.Task[None]] = set()
+        queue = self._queue()
         await client._dispatch(
-            ws, session, {"type": "unknown_msg"}, pending
+            ws, session, {"type": "unknown_msg"}, queue
         )  # sem exceção
-        assert pending == set()
+        assert queue.qsize() == 0
 
     @pytest.mark.asyncio
-    async def test_erro_borda_task_sai_de_pending_ao_terminar(self) -> None:
-        """`pending` não pode crescer sem limite — cada task se
-        auto-remove via `add_done_callback` quando termina."""
+    async def test_erro_borda_fila_cheia_bloqueia_dispatch_ate_um_slot_liberar(
+        self,
+    ) -> None:
+        """Backpressure real: `queue.put` (dentro de `_dispatch`) bloqueia
+        quando a fila está no teto — isso pausa a LEITURA de novas
+        mensagens do WebSocket (`_handle_messages` chama `await
+        self._dispatch(...)`), em vez de crescer sem limite como as tasks
+        soltas de antes."""
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set[asyncio.Task[None]] = set()
-        req: GatewayMessage = {
+        queue: asyncio.Queue = asyncio.Queue(maxsize=1)
+
+        first: GatewayMessage = {
             "type": "request",
-            "id": "abc",
+            "id": "1",
             "method": "GET",
-            "path": "/x",
+            "path": "/a",
             "headers": {},
             "body": "",
         }
-        with patch.object(client, "_forward", new=AsyncMock()):
-            await client._dispatch(ws, session, req, pending)
-            assert len(pending) == 1
-            (task,) = tuple(pending)
-            await task
-        assert pending == set()
+        second: GatewayMessage = {
+            "type": "request",
+            "id": "2",
+            "method": "GET",
+            "path": "/b",
+            "headers": {},
+            "body": "",
+        }
+        await client._dispatch(ws, session, first, queue)  # enche a fila (maxsize=1)
+
+        dispatch_second = asyncio.create_task(
+            client._dispatch(ws, session, second, queue)
+        )
+        for _ in range(50):
+            if dispatch_second.done():
+                break
+            await asyncio.sleep(0)
+        assert not dispatch_second.done(), "dispatch deveria bloquear com fila cheia"
+
+        queue.get_nowait()  # libera 1 slot, como um worker faria
+        await asyncio.wait_for(dispatch_second, timeout=1.0)
+        assert queue.qsize() == 1
 
 
 class TestGatewayClientForward:
@@ -723,6 +757,58 @@ class TestGatewayClientForward:
         ws.send_json.assert_not_awaited()
 
 
+class TestGatewayClientForwardWorker:
+    def _client(self):
+        from backend.services.gateway import GatewayClient
+
+        return GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
+        )
+
+    @pytest.mark.asyncio
+    async def test_worker_processa_um_job_e_continua_esperando_o_proximo(
+        self,
+    ) -> None:
+        client = self._client()
+        ws = AsyncMock()
+        session = AsyncMock()
+        queue: asyncio.Queue = asyncio.Queue()
+
+        req: GatewayRequestItem = {
+            "id": "1",
+            "method": "GET",
+            "path": "/a",
+            "headers": {},
+            "body": "",
+        }
+        await queue.put((ws, session, req))
+
+        with patch.object(client, "_forward", new=AsyncMock()) as mock_fwd:
+            worker = asyncio.create_task(client._forward_worker(queue))
+            await queue.join()  # espera o worker consumir o único item
+            mock_fwd.assert_awaited_once_with(ws, session, req)
+
+            assert not worker.done(), "worker deve seguir vivo, esperando o próximo"
+
+            from backend.services.gateway import _STOP_WORKER
+
+            await queue.put(_STOP_WORKER)
+            await asyncio.wait_for(worker, timeout=1.0)
+
+    @pytest.mark.asyncio
+    async def test_erro_borda_stop_worker_nao_chama_forward(self) -> None:
+        client = self._client()
+        queue: asyncio.Queue = asyncio.Queue()
+
+        from backend.services.gateway import _STOP_WORKER
+
+        await queue.put(_STOP_WORKER)
+        with patch.object(client, "_forward", new=AsyncMock()) as mock_fwd:
+            await asyncio.wait_for(client._forward_worker(queue), timeout=1.0)
+        mock_fwd.assert_not_called()
+
+
 class TestGatewayClientConcurrency:
     def _client(self):
         from backend.services.gateway import GatewayClient
@@ -736,13 +822,15 @@ class TestGatewayClientConcurrency:
     async def test_segunda_request_nao_espera_a_primeira_lenta_terminar(self) -> None:
         """Bug real corrigido: `_dispatch` fazia `await self._forward(...)`
         direto — uma revisão de PR demorada bloqueava o loop de leitura do
-        WebSocket inteiro, incl. um simples ping. Agora cada `_forward` é
-        uma task própria (`_spawn_forward`): a segunda request termina
-        mesmo com a primeira ainda presa."""
+        WebSocket inteiro, incl. um simples ping. Agora `_dispatch` só
+        enfileira; workers fixos (`_forward_worker`) processam em paralelo
+        — a segunda request termina mesmo com a primeira ainda presa,
+        desde que haja mais de 1 worker (o cenário real: `_connect_once`
+        sempre sobe `_MAX_CONCURRENT_FORWARDS` deles)."""
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set[asyncio.Task[None]] = set()
+        queue: asyncio.Queue = asyncio.Queue(maxsize=2)
 
         started: list[str] = []
         finished: list[str] = []
@@ -756,6 +844,10 @@ class TestGatewayClientConcurrency:
             finished.append(req["id"])
 
         with patch.object(client, "_forward", side_effect=fake_forward):
+            workers = [
+                asyncio.create_task(client._forward_worker(queue)) for _ in range(2)
+            ]
+
             await client._dispatch(
                 ws,
                 session,
@@ -767,7 +859,7 @@ class TestGatewayClientConcurrency:
                     "headers": {},
                     "body": "",
                 },
-                pending,
+                queue,
             )
             await client._dispatch(
                 ws,
@@ -780,7 +872,7 @@ class TestGatewayClientConcurrency:
                     "headers": {},
                     "body": "",
                 },
-                pending,
+                queue,
             )
 
             for _ in range(100):
@@ -792,22 +884,28 @@ class TestGatewayClientConcurrency:
             assert "slow" not in finished  # ainda preso em release_slow.wait()
 
             release_slow.set()
-            await asyncio.gather(*pending)
+            from backend.services.gateway import _STOP_WORKER
+
+            for _ in workers:
+                await queue.put(_STOP_WORKER)
+            await asyncio.gather(*workers)
 
         assert set(finished) == {"slow", "fast"}
         assert started == ["slow", "fast"]  # ordem de chegada preservada
 
     @pytest.mark.asyncio
-    async def test_forwards_sao_limitados_pelo_semaforo_max_concorrentes(
+    async def test_no_maximo_max_concurrent_forwards_workers_processam_ao_mesmo_tempo(
         self,
     ) -> None:
         """Sem limite, um `queued` grande (ou o Worker mandando `request`
-        mais rápido do que o backend local responde) faz `pending` e as
-        conexões `local_session` crescerem sem teto — `_MAX_CONCURRENT_
-        FORWARDS` bloqueia o request HTTP local além do teto até um slot
-        liberar (a task já existe em `pending`, só não abre conexão nova)."""
+        mais rápido do que o backend local responde) faz forwards em voo
+        crescerem sem teto — com `_MAX_CONCURRENT_FORWARDS` workers fixos
+        consumindo uma fila do mesmo tamanho, nunca mais que esse número
+        de requests HTTP locais roda ao mesmo tempo, e a fila em si nunca
+        cresce além do teto (o `put` de itens extras bloqueia)."""
         from backend.services.gateway import (
             _MAX_CONCURRENT_FORWARDS,
+            _STOP_WORKER,
             GatewayClient,
         )
 
@@ -839,20 +937,34 @@ class TestGatewayClientConcurrency:
             async def read(self) -> bytes:
                 return b""
 
+        def response_factory(**_kwargs: object) -> _FakeResp:
+            return _FakeResp()
+
         session = MagicMock()
-        session.request = MagicMock(side_effect=lambda **_kwargs: _FakeResp())
+        session.request = MagicMock(side_effect=response_factory)
+
+        queue: asyncio.Queue = asyncio.Queue(maxsize=_MAX_CONCURRENT_FORWARDS)
+        workers = [
+            asyncio.create_task(client._forward_worker(queue))
+            for _ in range(_MAX_CONCURRENT_FORWARDS)
+        ]
 
         total_requests = _MAX_CONCURRENT_FORWARDS + 5
-        pending: set[asyncio.Task[None]] = set()
-        for i in range(total_requests):
-            req: GatewayRequestItem = {
-                "id": str(i),
-                "method": "GET",
-                "path": "/x",
-                "headers": {},
-                "body": "",
-            }
-            client._spawn_forward(ws, session, req, pending)
+
+        async def enqueue_all() -> None:
+            for i in range(total_requests):
+                req: GatewayRequestItem = {
+                    "id": str(i),
+                    "method": "GET",
+                    "path": "/x",
+                    "headers": {},
+                    "body": "",
+                }
+                # put() bloqueia sozinho quando a fila enche — não precisa
+                # de nenhum controle explícito de backpressure aqui.
+                await queue.put((ws, session, req))
+
+        enqueue_task = asyncio.create_task(enqueue_all())
 
         for _ in range(200):
             if in_flight >= _MAX_CONCURRENT_FORWARDS:
@@ -860,9 +972,16 @@ class TestGatewayClientConcurrency:
             await asyncio.sleep(0)
 
         assert in_flight == _MAX_CONCURRENT_FORWARDS
+        # A fila só aceita mais _MAX_CONCURRENT_FORWARDS itens (5 dos 25
+        # totais) além dos que já viraram forwards em voo — o resto do
+        # `enqueue_all` está bloqueado em `queue.put`, não acumulado.
+        assert not enqueue_task.done()
 
         release.set()
-        await asyncio.gather(*pending)
+        await asyncio.wait_for(enqueue_task, timeout=2.0)
+        for _ in workers:
+            await queue.put(_STOP_WORKER)
+        await asyncio.gather(*workers)
 
         assert max_in_flight == _MAX_CONCURRENT_FORWARDS
 
