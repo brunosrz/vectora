@@ -69,4 +69,51 @@ describe("FeaturesAccordion", () => {
       screen.getByText("Descrição completa da feature B."),
     ).toBeInTheDocument();
   });
+
+  it('título/resumo não ficam dentro de um <button> nativo — browsers bloqueiam seleção de texto por clique-arraste dentro de <button> (bug real reportado, o trigger vira <div role="button">)', () => {
+    render(<FeaturesAccordion items={ITEMS} />);
+
+    const title = screen.getByText("Feature A");
+    expect(title.closest("button")).toBeNull();
+    expect(title.closest('[role="button"]')).not.toBeNull();
+  });
+
+  it("teclado: Enter no trigger expande a descrição; erro/borda: outras teclas não fazem nada", () => {
+    render(<FeaturesAccordion items={ITEMS} />);
+
+    const trigger = screen.getByText("Feature A").closest('[role="button"]')!;
+
+    fireEvent.keyDown(trigger, { key: "a" });
+    expect(
+      screen.queryByText("Descrição completa da feature A."),
+    ).not.toBeInTheDocument();
+
+    fireEvent.keyDown(trigger, { key: "Enter" });
+    expect(
+      screen.getByText("Descrição completa da feature A."),
+    ).toBeInTheDocument();
+  });
+
+  it("erro/borda: segurar Espaço (keydown repetido) não abre/fecha o accordion várias vezes", () => {
+    render(<FeaturesAccordion items={ITEMS} />);
+
+    const trigger = screen.getByText("Feature A").closest('[role="button"]')!;
+
+    // Primeiro keydown (repeat: false) abre.
+    fireEvent.keyDown(trigger, { key: " ", repeat: false });
+    expect(
+      screen.getByText("Descrição completa da feature A."),
+    ).toBeInTheDocument();
+
+    // Segurando a tecla, o browser dispara keydown repetido (repeat: true)
+    // várias vezes — sem a guarda de e.repeat, cada um chamaria click() de
+    // novo, fechando e reabrindo o accordion enquanto a tecla fica presa.
+    fireEvent.keyDown(trigger, { key: " ", repeat: true });
+    fireEvent.keyDown(trigger, { key: " ", repeat: true });
+    fireEvent.keyDown(trigger, { key: " ", repeat: true });
+
+    expect(
+      screen.getByText("Descrição completa da feature A."),
+    ).toBeInTheDocument();
+  });
 });
