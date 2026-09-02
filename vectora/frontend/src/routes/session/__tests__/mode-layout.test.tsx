@@ -76,23 +76,30 @@ vi.mock("@/components/sidebar/new-chat-dialog", () => ({
 }));
 
 // O IdeModeLayout real traz drag/resize junto; o marcador preserva os SLOTS,
-// que é sobre o que os testes de posição do Header afirmam.
+// que é sobre o que os testes de posição do Header afirmam. `slot-center`
+// espelha a coluna central real (header + navBar + workbenchContent +
+// editor) — `chat` fica FORA dela, como a coluna lateral direita do IDE.
 vi.mock("@/components/layout/ide-mode-layout", () => ({
   IdeModeLayout: ({
+    header,
     navBar,
     workbenchContent,
     editor,
     chat,
   }: {
+    header: ReactNode;
     navBar: ReactNode;
     workbenchContent: ReactNode;
     editor: ReactNode;
     chat: ReactNode;
   }) => (
     <div data-testid="ide-layout">
-      <div data-testid="slot-navbar">{navBar}</div>
-      <div data-testid="slot-workbench">{workbenchContent}</div>
-      <div data-testid="slot-editor">{editor}</div>
+      <div data-testid="slot-center">
+        {header}
+        <div data-testid="slot-navbar">{navBar}</div>
+        <div data-testid="slot-workbench">{workbenchContent}</div>
+        <div data-testid="slot-editor">{editor}</div>
+      </div>
       <div data-testid="slot-chat">{chat}</div>
     </div>
   ),
@@ -218,31 +225,27 @@ describe("SessionPage — um modo por vez, nunca dois", () => {
 });
 
 describe("SessionPage — posição do Header por modo", () => {
-  it("IDE: Header vive FORA da linha de painéis, não dentro de nenhum slot", () => {
-    // Header é renderizado uma única vez, largura cheia, acima da linha de
-    // sidebar+conteúdo — nunca aninhado dentro de um slot específico do
-    // modo (que tem largura/coluna diferente por modo, a mesma causa raiz
-    // do bug de posição do seletor de modo antes de ser unificado aqui).
+  // O app tem 3 colunas fixas (sidebar esquerda, centro, sidebar direita) —
+  // o modo (Assistente/IDE/Kanban) só recompõe QUAIS filhos aparecem em
+  // cada uma, nunca reordena as colunas em si. O Header sempre mora na
+  // coluna central, nunca esparramado por cima da coluna lateral direita
+  // (que muda de conteúdo por modo: workbench em Assistente, chat em IDE).
+
+  it("IDE: Header vive na coluna central (navBar+workbench+editor), nunca na coluna de chat (sidebar direita)", () => {
     setMode("ide");
     render(<SessionPage />);
 
     const header = screen.getByTestId("header");
-    for (const slot of [
-      "slot-navbar",
-      "slot-workbench",
-      "slot-editor",
-      "slot-chat",
-    ]) {
-      expect(screen.getByTestId(slot)).not.toContainElement(header);
-    }
+    expect(screen.getByTestId("slot-center")).toContainElement(header);
+    expect(screen.getByTestId("slot-chat")).not.toContainElement(header);
   });
 
-  it("Assistente: Header fica fora do split, não dentro da coluna de chat nem workbench", () => {
+  it("Assistente: Header fica dentro da coluna de chat (centro), nunca dentro do workbench (sidebar direita)", () => {
     setMode("assistant");
     render(<SessionPage />);
 
     const header = screen.getByTestId("header");
-    expect(screen.getByTestId("split-left")).not.toContainElement(header);
+    expect(screen.getByTestId("split-left")).toContainElement(header);
     expect(screen.getByTestId("split-right")).not.toContainElement(header);
   });
 

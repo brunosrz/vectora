@@ -15,6 +15,7 @@ function renderLayout(isNarrow: boolean) {
   return render(
     <IdeModeLayout
       isNarrow={isNarrow}
+      header={<div data-testid="panel-header">Header</div>}
       navBar={<div data-testid="panel-navbar">NavBar</div>}
       workbenchContent={<div data-testid="panel-workbench">Workbench</div>}
       editor={<div data-testid="panel-editor">Editor</div>}
@@ -63,6 +64,7 @@ describe("IdeModeLayout", () => {
     render(
       <IdeModeLayout
         isNarrow
+        header={<div data-testid="panel-header">Header</div>}
         navBar={<div data-testid="panel-navbar">NavBar</div>}
         workbenchContent={null}
         editor={<div data-testid="panel-editor">Editor</div>}
@@ -75,5 +77,26 @@ describe("IdeModeLayout", () => {
     expect(screen.getByTestId("panel-navbar")).toBeInTheDocument();
     expect(screen.queryByTestId("panel-workbench")).not.toBeInTheDocument();
     expect(() => screen.getByTestId("panel-workbench")).toThrow();
+  });
+
+  it("viewport larga: header vive na coluna central junto de navBar/workbench/editor, nunca dentro da coluna de chat", () => {
+    renderLayout(false);
+
+    const header = screen.getByTestId("panel-header");
+    const chat = screen.getByTestId("panel-chat");
+    // Mesmo ancestral comum de header+navbar+editor, mas não do chat —
+    // prova que chat é uma coluna irmã, fora do bloco que o header cobre.
+    const centerColumn = header.parentElement!;
+    expect(centerColumn).toContainElement(screen.getByTestId("panel-navbar"));
+    expect(centerColumn).toContainElement(screen.getByTestId("panel-editor"));
+    expect(centerColumn).not.toContainElement(chat);
+  });
+
+  it("viewport estreita: header aparece acima da faixa de abas, independente de qual painel está ativo", () => {
+    renderLayout(true);
+
+    expect(screen.getByTestId("panel-header")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("ide-mobile-tab-chat"));
+    expect(screen.getByTestId("panel-header")).toBeInTheDocument();
   });
 });
