@@ -29,6 +29,9 @@ const MOBILE_TABS: { id: IdeMobilePanel; icon: typeof MessageSquare }[] = [
 interface IdeModeLayoutProps {
   /** true abaixo do breakpoint `md` — só um painel visível por vez. */
   isNarrow: boolean;
+  /** Header do app — vive na coluna central (navBar+workbenchContent+editor),
+   * nunca em cima do `chat` (que no modo IDE é a coluna lateral direita). */
+  header: ReactNode;
   /** Faixa de ícones das sub-abas do workbench (Arquivos/Diff/Plano/etc). */
   navBar: ReactNode;
   /** Conteúdo da sub-aba ativa do workbench, ou `null` quando o painel está fechado. */
@@ -41,6 +44,7 @@ interface IdeModeLayoutProps {
 
 export function IdeModeLayout({
   isNarrow,
+  header,
   navBar,
   workbenchContent,
   editor,
@@ -53,9 +57,16 @@ export function IdeModeLayout({
   if (!isNarrow) {
     return (
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {navBar}
-        {workbenchContent}
-        {editor}
+        {/* Coluna central: header + workbench(navBar/content) + editor —
+            `chat` é a coluna lateral direita, fora do header. */}
+        <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
+          {header}
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            {navBar}
+            {workbenchContent}
+            {editor}
+          </div>
+        </div>
         {chat}
       </div>
     );
@@ -66,6 +77,7 @@ export function IdeModeLayout({
       className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden"
       data-testid="ide-mobile-layout"
     >
+      {header}
       <div
         role="tablist"
         aria-label={mDyn("ide.mobile.tab.workbench")}

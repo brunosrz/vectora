@@ -735,13 +735,14 @@ function SessionPage() {
         )}
 
         <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-          {/* Renderizado UMA vez aqui, dentro da coluna de conteúdo (ao
-              lado da sidebar, não acima dela) — nunca muda de lugar na
-              tela ao trocar de modo, e o seletor Assistente/IDE/Kanban
-              (centralizado dentro dele) some numa única barra com título
-              e ajuda/config, em vez de duas barras empilhadas. Cada modo
-              abaixo NÃO renderiza seu próprio Header — só este. */}
-          {headerEl}
+          {/* `headerEl` é montado uma única vez (mesmo objeto memoizado),
+              mas cada modo abaixo decide ONDE ele entra — sempre na coluna
+              central (chat em Assistente, editor+workbench em IDE, board em
+              Kanban), nunca esparramado por cima da coluna lateral direita
+              (workbench em Assistente, chat em IDE). O seletor Assistente/
+              IDE/Kanban (dentro do Header) fica preso à mesma faixa
+              horizontal que o conteúdo que ele controla, nunca por cima de
+              painéis que ele não controla. */}
 
           {/* Troca de modo é unmount/mount instantâneo — sem
               AnimatePresence mode="wait". Depender da animação de saída
@@ -751,15 +752,21 @@ function SessionPage() {
               aplicados em workbench-panel.tsx. */}
           {uiMode === "kanban" && !chatMode ? (
             // min-w-[360px]: piso mínimo pro conteúdo continuar legível
-            // quando a janela encolhe.
+            // quando a janela encolhe. Kanban não tem coluna lateral
+            // direita — header cobre a largura toda por não ter nada ao
+            // lado com quem competir.
             <div className="flex flex-col flex-1 min-w-[360px] min-h-0 overflow-hidden">
-              <KanbanBoard threadId={threadId} />
+              {headerEl}
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <KanbanBoard threadId={threadId} />
+              </div>
             </div>
           ) : uiMode === "ide" && !chatMode ? (
             // ── Layout IDE ──────────────────────────────────────────────
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <IdeModeLayout
                 isNarrow={isNarrowViewport}
+                header={headerEl}
                 navBar={<WorkbenchNavBar threadId={threadId} side="left" />}
                 workbenchContent={
                   hydrated && workbenchOpen ? (
@@ -868,12 +875,19 @@ function SessionPage() {
                     deste bloco, sempre visível) continua o jeito de
                     trocar/fechar o painel. */}
                 {isNarrowViewport && hydrated && workbenchOpen && !chatMode ? (
-                  <div className="flex-1 min-h-0 min-w-0 h-full overflow-visible">
-                    <WorkbenchContent
-                      threadId={threadId}
-                      onAddToContext={pushMention}
-                      onSendPrompt={pushDraft}
-                    />
+                  // Viewport estreita colapsa pra um único painel visível —
+                  // não há coluna lateral concorrente aqui, então o header
+                  // fica junto sem risco de esparramar por cima de outra
+                  // coluna (mesma lógica do IDE mobile).
+                  <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full overflow-visible">
+                    {headerEl}
+                    <div className="flex-1 min-h-0 min-w-0 overflow-visible">
+                      <WorkbenchContent
+                        threadId={threadId}
+                        onAddToContext={pushMention}
+                        onSendPrompt={pushDraft}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <HorizontalSplit
@@ -883,8 +897,13 @@ function SessionPage() {
                     rightSize={splitSize}
                     onResize={setSplitSize}
                     left={
-                      <div className="flex-1 min-h-0 min-w-0 h-full overflow-visible">
-                        {renderChatPanel(false)}
+                      // Header mora AQUI — dentro da coluna central (chat),
+                      // nunca em `right` (workbench, coluna lateral).
+                      <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full overflow-visible">
+                        {headerEl}
+                        <div className="flex-1 min-h-0 min-w-0 overflow-visible">
+                          {renderChatPanel(false)}
+                        </div>
                       </div>
                     }
                     right={
