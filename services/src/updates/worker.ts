@@ -37,12 +37,6 @@ interface RuntimeConfig {
 
 const app = new Hono<{ Bindings: Env }>();
 
-const MANIFEST_ARCHES: Record<string, string[]> = {
-  win: ["x64", "arm64"],
-  mac: ["arm64"],
-  linux: ["x64", "arm64"],
-};
-
 /** Hash determinístico estável → bucket [0..99] para rollout faseado. */
 export function rolloutBucket(token: string): number {
   let h = 0;
@@ -78,13 +72,15 @@ export function resolveVersion(
   return ch.previous_stable ?? null;
 }
 
-function archCandidates(os: string, arch: string): string[] {
-  const known = MANIFEST_ARCHES[os] ?? [];
-  const ordered = [arch, ...known.filter((candidate) => candidate !== arch)];
-  return [...new Set(ordered)];
-}
-
-async function getObjectAcrossArches(
+/** Busca o objeto exato da arquitetura pedida — NUNCA cai pra outra arch.
+ * O manifesto `latest.yml` de uma arch lista filenames dessa MESMA arch
+ * (`Vectora-{versão}-{os}-{arch}.{ext}`); servir o manifesto de uma arch
+ * diferente sob o path da arch pedida faz o electron-updater montar uma URL
+ * de download que mistura os dois (`/win/x64/.../Vectora-...-win-arm64.exe`)
+ * — chave que nunca existe no R2, 404 na hora de baixar o instalador mesmo
+ * o "update" tendo aparecido como disponível. Bug real reproduzido em
+ * produção (0.1.11→0.1.13, Windows arm64) antes desta correção.*/
+async function getExactArchObject(
   kv: R2Bucket,
   channel: string,
   os: string,
@@ -92,12 +88,7 @@ async function getObjectAcrossArches(
   version: string,
   filename: string,
 ): Promise<R2ObjectBody | null> {
-  for (const candidateArch of archCandidates(os, arch)) {
-    const key = `${channel}/${os}/${candidateArch}/${version}/${filename}`;
-    const obj = await kv.get(key);
-    if (obj) return obj;
-  }
-  return null;
+  return kv.get(`${channel}/${os}/${arch}/${version}/${filename}`);
 }
 
 // Sem token: Free não tem conta, checar/baixar atualização não pode depender
@@ -113,7 +104,7 @@ app.get("/updates/:channel/:os/:arch/latest.yml", async (c) => {
   }
   // O manifesto YAML em si é pré-gerado pelo script de release e fica
   // em R2 em ``<channel>/<os>/<arch>/<version>/latest.yml``.
-  const obj = await getObjectAcrossArches(
+  const obj = await getExactArchObject(
     c.env.R2,
     channel,
     os,
@@ -133,7 +124,7 @@ app.get("/updates/:channel/:os/:arch/latest.yml", async (c) => {
 
 app.get("/updates/:channel/:os/:arch/:version/:filename", async (c) => {
   const { channel, os, arch, version, filename } = c.req.param();
-  const obj = await getObjectAcrossArches(
+  const obj = await getExactArchObject(
     c.env.R2,
     channel,
     os,
