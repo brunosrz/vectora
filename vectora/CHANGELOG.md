@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.13](https://github.com/vectora-ltda/vectora/compare/vectora-v0.1.12...vectora-v0.1.13) (2026-09-02)
+
+
+### Bug Fixes
+
+* **backend:** remove 8 referências textuais obsoletas ao LangChain/LangGraph ([#40](https://github.com/vectora-ltda/vectora/issues/40)) ([a9d547b](https://github.com/vectora-ltda/vectora/commit/a9d547bb599609e6841564dc7a879abdd6ef8227))
+* **backend:** remove limpeza que apagava threads reais da sidebar após 1h ([c1e5f41](https://github.com/vectora-ltda/vectora/commit/c1e5f41733fcd640a31198c9d704d01ae0d5857c))
+* **backend:** remove limpeza que apagava threads reais da sidebar após 1h ([30d7cbb](https://github.com/vectora-ltda/vectora/commit/30d7cbb2cd480db925a8f4f9729b2f57f93ccea0))
+* **backend:** remove referências obsoletas ao AsyncSqliteSaver + anotações de tipo pendentes ([#38](https://github.com/vectora-ltda/vectora/issues/38)) ([faf9f3b](https://github.com/vectora-ltda/vectora/commit/faf9f3ba7cfde919f7d241766d2d4fe0bf4d37c8))
+* **backend:** sanitiza chave inválida do NatsKV (':' quebrava preview parcial) ([#46](https://github.com/vectora-ltda/vectora/issues/46)) ([8206702](https://github.com/vectora-ltda/vectora/commit/8206702d0ad1b33c258bb8d19c3824f43483043e))
+* **backend:** túnel do gateway — concorrência real, jitter no backoff, reuso de sessão ([#44](https://github.com/vectora-ltda/vectora/issues/44)) ([20033ef](https://github.com/vectora-ltda/vectora/commit/20033ef5cba54b7b270096dcda98555f532a8267))
+* **ci,scons:** corrige hang do scons prod e path do tar do vectora-cli ([f40bb02](https://github.com/vectora-ltda/vectora/commit/f40bb026df4d93fa98c14a640312f7414b6549e7))
+* **docs,ci:** atualiza referências de ghcr.io/brunosrz para vectora-ltda ([#39](https://github.com/vectora-ltda/vectora/issues/39)) ([cdec46e](https://github.com/vectora-ltda/vectora/commit/cdec46e111948cf63b38377caca31639a4164e0d))
+* **frontend:** corrige link do portal de billing e unifica Cobrança/Sobre ([#42](https://github.com/vectora-ltda/vectora/issues/42)) ([fafdde5](https://github.com/vectora-ltda/vectora/commit/fafdde527a86e00a6d1bb96cf60dbc4952e2dad2))
+* **frontend:** corrige overlap real do chat sobre a faixa do workbench em mobile ([d050a9a](https://github.com/vectora-ltda/vectora/commit/d050a9a2b0329177ee8f1c593d5f03142a7f23c5))
+* **frontend:** corrige overlap real do chat sobre a faixa do workbench em mobile ([38c92c6](https://github.com/vectora-ltda/vectora/commit/38c92c604c206624b63e5aed13f8737b8a59ee86))
+* **frontend:** filtra bug conhecido do jsdom que vaza como Uncaught Exception ([d2f5cdb](https://github.com/vectora-ltda/vectora/commit/d2f5cdbc31106a6d0b404835fc79d486ba5270e4))
+* **frontend:** header pertence à coluna central, nunca esparrama sobre a lateral direita ([#45](https://github.com/vectora-ltda/vectora/issues/45)) ([c742335](https://github.com/vectora-ltda/vectora/commit/c742335ff519f72c73fe440c3daeb3f249d60382))
+* **release,gateway:** sincroniza versão do instalador e corrige card de gateway falso-negativo ([#30](https://github.com/vectora-ltda/vectora/issues/30)) ([f08a43f](https://github.com/vectora-ltda/vectora/commit/f08a43f7bb60cd1530dd1c450f2bcb603679f421))
+* **tests:** corrige marker de testes que chamam DuckDuckGo real ([#32](https://github.com/vectora-ltda/vectora/issues/32)) ([a718553](https://github.com/vectora-ltda/vectora/commit/a718553a18c6514f1bccd3518d3a90e5a35db32e))
+
 ## [0.1.12](https://github.com/vectora-ltda/vectora/compare/vectora-v0.1.11...vectora-v0.1.12) (2026-08-30)
 
 ### Features
