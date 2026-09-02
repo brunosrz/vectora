@@ -8,7 +8,9 @@ lazy). A impl concreta é escolhida por ``settings.storage_mode``:
 Uso:
     from backend.storage.factory import get_store, get_vector_store_backend
 
-    store = await get_store()   # VectoraStore ou VectoraPostgresStore
+    store = await get_store()   # VectoraStore (sempre — não lê storage_mode;
+                                 # o store Postgres real é aberto por
+                                 # backend.services.agent_factory._ensure_infra)
     backend = await get_vector_store_backend()  # LanceDBBackend ou QdrantBackend
 
 O agente real (motor nativo) vive em ``backend.services.agent_factory``.
@@ -25,7 +27,10 @@ funcionam como fallback garantido independente do banco principal.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from backend.storage.protocols import StoreBackend
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +38,7 @@ logger = logging.getLogger(__name__)
 # Singletons por processo
 # ---------------------------------------------------------------------------
 
-_store: Any = None  # VectoraStore | VectoraPostgresStore (protocolo StoreBackend)
+_store: StoreBackend | None = None  # sempre VectoraStore — ver get_store()
 _pg_pool: Any = None  # asyncpg.Pool (complete mode only)
 _vector_stores: dict[str, Any] = {}  # collection → lancedb.AsyncTable (raw)
 _optimize_tasks: dict[str, Any] = {}  # collection → asyncio.Task (schedule_optimize)
@@ -44,23 +49,29 @@ _vector_store_backend: Any = None  # VectorStoreBackend nativo — 1 por process
 # ---------------------------------------------------------------------------
 
 
-async def get_store(embedding_model: str | None = None) -> Any:
+async def get_store(embedding_model: str | None = None) -> StoreBackend:
     """Retorna (ou cria) o store singleton (protocolo ``StoreBackend``).
 
-    Wrap fino sobre ``backend.llm.backends.build_store()``.
-    Em modo "lite", usa ``VectoraStore`` persistente via aiosqlite dedicado.
+    Wrap fino sobre ``backend.llm.backends.build_store()`` — sempre
+    ``VectoraStore`` (aiosqlite), independente de ``storage_mode``; não
+    existe caminho Postgres aqui (esse vive em
+    ``backend.services.agent_factory._ensure_infra``, usado pelo motor de
+    conversa nativo).
 
     Returns:
-        ``VectoraStore`` (lite) com índice Cohere opcional,
-        já inicializado (``setup()`` chamado).
+        ``VectoraStore`` com índice de embeddings opcional (fallback
+        Cohere↔Voyage↔Ollama↔OpenRouter), já inicializado (``setup()``
+        chamado).
     """
     global _store
-    if _store is None:
+    store = _store
+    if store is None:
         from backend.llm.backends import build_store
 
-        _store = await build_store(embedding_model)
-        logger.debug("storage/factory: store criado (%s)", type(_store).__name__)
-    return _store
+        store = await build_store(embedding_model)
+        _store = store
+        logger.debug("storage/factory: store criado (%s)", type(store).__name__)
+    return store
 
 
 # ---------------------------------------------------------------------------

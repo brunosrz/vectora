@@ -11,12 +11,15 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from backend.persistence.native.store import VectoraStore
 
 logger = logging.getLogger(__name__)
 
 
-async def build_store(embedding_model: str | None = None) -> Any:
+async def build_store(embedding_model: str | None = None) -> VectoraStore:
     """Constrói o ``VectoraStore`` (nativo, aiosqlite) persistente com
     embeddings opcionais (Cohere↔Voyage↔Ollama↔OpenRouter, via
     ``_build_lc_embeddings()``).

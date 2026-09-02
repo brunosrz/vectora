@@ -395,9 +395,11 @@ def _prepend_text_context(msg: VMessage, block: str) -> VMessage:
 
 
 async def aclose_graph() -> None:
-    """Fecha os recursos do motor nativo (checkpointer SQLite, etc). Idempotente.
+    """Fecha os recursos do motor nativo. Idempotente.
 
-    Delegado para ``agent_factory.aclose()`` — estado de lifecycle mantido lá.
+    Delegado para ``agent_factory.aclose()`` — fecha o store nativo
+    (SQLite/Postgres), o ``SessionStore`` e o ``ApprovalGate``; estado de
+    lifecycle mantido lá.
     """
     await agent_factory.aclose()
 
