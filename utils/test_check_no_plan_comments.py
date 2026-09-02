@@ -49,6 +49,12 @@ class TestFerramentaIaDeteccao:
         path = _write(tmp_path, "a.js", "// sugestão do copilot\nconst x = 1;\n")
         assert len(_find_violations(path)) == 1
 
+    def test_erro_borda_comentario_dentro_de_interpolacao_de_template_bloqueia(
+        self, tmp_path: Path
+    ) -> None:
+        path = _write(tmp_path, "a.ts", "const value = `${/* Claude */ 1}`;\n")
+        assert len(_find_violations(path)) == 1
+
     def test_erro_borda_nome_de_variavel_claude_nao_bloqueia_sozinho(
         self, tmp_path: Path
     ) -> None:

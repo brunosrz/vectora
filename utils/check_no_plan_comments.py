@@ -63,21 +63,48 @@ def _python_comments(text: str) -> list[tuple[int, str]]:
 
 def _js_comments(text: str) -> list[tuple[int, str]]:
     """Extrai comentários `//`/`/* */` de JS/TS/JSX ignorando o conteúdo de
-    strings (aspas simples/duplas/template literal) — sem parser completo,
-    então interpolação `${...}` dentro de template literal é tratada como
-    string comum (um `//`/`/*` ali dentro não seria detectado; caso raro
-    o bastante pra não justificar um parser de verdade)."""
+    strings (aspas simples/duplas), mas SEM tratar `${...}` de template
+    literal como string — é código de verdade (pode ter comentário/string/
+    template aninhado), então uma pilha rastreia se estamos dentro de um
+    template literal ("template") ou dentro de uma interpolação ("interp",
+    com a profundidade de chaves pra achar o `}` de fechamento certo,
+    já que a interpolação pode ter suas próprias chaves de objeto)."""
     out: list[tuple[int, str]] = []
     lineno = 1
     i = 0
     n = len(text)
+    stack: list[tuple[str, int]] = []
+
     while i < n:
         ch = text[i]
         if ch == "\n":
             lineno += 1
             i += 1
             continue
-        if ch in ("'", '"', "`"):
+
+        mode = stack[-1][0] if stack else "code"
+
+        if mode == "template":
+            if ch == "\\":
+                if i + 1 < n and text[i + 1] == "\n":
+                    lineno += 1
+                i += 2
+                continue
+            if ch == "`":
+                stack.pop()
+                i += 1
+                continue
+            if ch == "$" and i + 1 < n and text[i + 1] == "{":
+                stack.append(("interp", 1))
+                i += 2
+                continue
+            i += 1
+            continue
+
+        # "code" (nível superior) e "interp" (dentro de `${...}`) usam a
+        # mesma varredura de string/comentário/template aninhado — só
+        # "interp" também rastreia chaves.
+        if ch in ("'", '"'):
             quote = ch
             i += 1
             while i < n and text[i] != quote:
@@ -86,6 +113,10 @@ def _js_comments(text: str) -> list[tuple[int, str]]:
                 elif text[i] == "\n":
                     lineno += 1
                 i += 1
+            i += 1
+            continue
+        if ch == "`":
+            stack.append(("template", 0))
             i += 1
             continue
         if ch == "/" and i + 1 < n and text[i + 1] == "/":
@@ -103,6 +134,20 @@ def _js_comments(text: str) -> list[tuple[int, str]]:
             lineno += trecho.count("\n")
             i = fim_token
             continue
+        if mode == "interp":
+            if ch == "{":
+                nome, profundidade = stack[-1]
+                stack[-1] = (nome, profundidade + 1)
+                i += 1
+                continue
+            if ch == "}":
+                nome, profundidade = stack[-1]
+                if profundidade == 1:
+                    stack.pop()
+                else:
+                    stack[-1] = (nome, profundidade - 1)
+                i += 1
+                continue
         i += 1
     return out
 
