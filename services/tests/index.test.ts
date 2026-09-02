@@ -7,6 +7,12 @@ import {
 import { describe, expect, it, vi } from "vitest";
 import worker from "../src/index";
 
+// Testes que tocam o Durable Object de verdade (SQLite no disco) — mesma
+// limitação de gateway/gateway-session.test.ts: workerd não libera o lock
+// do arquivo no Windows antes do cleanup do isolated storage. Passa em CI
+// (Linux/Ubuntu).
+const itDO = env.TEST_IS_WINDOWS === "1" ? it.skip : it;
+
 describe("fetch dispatch by hostname", () => {
   it("routes gateway.vectora.chat to the gateway handler (DO-free /oauth/token endpoint)", async () => {
     const ctx = createExecutionContext();
@@ -24,22 +30,27 @@ describe("fetch dispatch by hostname", () => {
     expect(await res.json()).toEqual({ ok: true });
   });
 
-  // Achado ao ligar CI pra services/ pela primeira vez (antes só rodava, se
-  // rodasse, na máquina de um dev via `itDO` — sempre pulado no Windows,
-  // nunca executado de fato em CI): recebe 202 em vez do 200 esperado.
-  // gateway-session.ts::_health devolve Response.json (200 implícito) sem
-  // condicional nenhuma — a origem do 202 real ainda não foi isolada.
-  // Skip temporário, não .skip silencioso — task própria pra investigar.
-  it.skip("routes {token}.vectora.chat to the gateway Durable Object", async () => {
-    const ctx = createExecutionContext();
-    const req = new Request("https://abc123.vectora.chat/health/abc123", {
-      method: "GET",
-    });
-    const res = await worker.fetch(req, env, ctx);
-    await waitOnExecutionContext(ctx);
-    // A DO real recém-criada não tem cliente conectado — 200 com connected:false.
-    expect(res.status).toBe(200);
-  });
+  // A rota de health-check pública é gateway.vectora.chat/health/{token} —
+  // ela reescreve pra /_health e roteia pro Durable Object internamente.
+  // {token}.vectora.chat/health/{token} (path testado antes) cai na branch
+  // de subdomínio de sessão, cujo dispatcher só reconhece paths de controle
+  // reservados (/_health, /_revoke, /_set-secret) COM header interno — sem
+  // ele (como aqui, um GET externo comum) trata como request tunelado
+  // qualquer e enfileira (202), nunca bate no fast-path de health.
+  itDO(
+    "routes gateway.vectora.chat/health/{token} to the gateway Durable Object",
+    async () => {
+      const ctx = createExecutionContext();
+      const req = new Request("https://gateway.vectora.chat/health/abc123", {
+        method: "GET",
+      });
+      const res = await worker.fetch(req, env, ctx);
+      await waitOnExecutionContext(ctx);
+      // A DO real recém-criada não tem cliente conectado — 200 com connected:false.
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ connected: false, queued: 0 });
+    },
+  );
 
   it("routes an unrecognized host to the services app", async () => {
     const ctx = createExecutionContext();
