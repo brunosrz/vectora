@@ -8,10 +8,21 @@
       "release-type": "python",
       "package-name": "vectora",
       "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": false,
       "extra-files": [
         {
           "type": "json",
           "path": "frontend/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "/services/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "/company/package.json",
           "jsonpath": "$.version"
         }
       ]
