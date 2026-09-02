@@ -22,6 +22,10 @@ logger = logging.getLogger(__name__)
 _DEFAULT_TOKEN_PATH = Path.home() / ".vectora" / "gateway_token"
 _REGISTER_PATH = "/register"
 _WS_PATH = "/ws/"
+#: Mesma convenção já usada em backend/services/license.py — auto-referência
+#: hardcoded ao Worker services/, não uma env var configurável (é sempre o
+#: mesmo endpoint fixo do produto).
+_SERVICES_URL = "https://services.vectora.company"
 _BACKOFF_INITIAL = 1.0
 _BACKOFF_MAX = 60.0
 #: Jitter aplicado ao sleep de reconexão (não ao estado interno do backoff
@@ -74,6 +78,12 @@ class GatewayMessage(TypedDict, total=False):
     headers: dict[str, str]
     body: str
     items: list[GatewayRequestItem]
+    # type == "review_job" (gh-bot self-hosted, ver review_job.py) — sem
+    # `id` (não é um par request/response do túnel, ver docstring de
+    # `GatewayMessage["review_job"]` em types.ts).
+    job_id: str
+    diff: str
+    metadata: dict[str, str]
 
 
 #: Item real de trabalho na fila — carrega o `ws`/`local_session` da conexão
@@ -109,6 +119,12 @@ class GatewayClient:
         #: `send_json`/`send_str` forem chamados de tasks diferentes ao
         #: mesmo tempo na mesma conexão.
         self._ws_send_lock = asyncio.Lock()
+        #: Referência forte às tasks de review_job em voo — sem isso, o
+        #: garbage collector pode derrubar a task no meio (pegadinha
+        #: conhecida do asyncio: `create_task` sem guardar a referência não
+        #: garante a task viva até terminar). `add_done_callback` limpa
+        #: sozinho quando a task acaba (sucesso ou erro).
+        self._review_tasks: set[asyncio.Task[None]] = set()
 
     # ------------------------------------------------------------------
     # Public API
@@ -275,6 +291,68 @@ class GatewayClient:
             # kind == "request" garante id/method/path presentes (contrato
             # do Worker, ver GatewayMessage em services/src/gateway/types.ts).
             await queue.put((ws, local_session, cast("GatewayRequestItem", message)))
+            return
+
+        if kind == "review_job":
+            # Roda fora da fila de forwards (_MAX_CONCURRENT_FORWARDS é pra
+            # requests HTTP rápidas; um review job real pode levar minutos —
+            # ocupar um worker da fila até terminar atrasaria callbacks
+            # OAuth/webhooks normais). Task solta, não bloqueia a leitura do
+            # WebSocket (`_handle_messages` só chama `await self._dispatch`,
+            # nunca espera o review terminar).
+            task = asyncio.create_task(
+                self._handle_review_job(
+                    message.get("job_id", ""),
+                    message.get("diff", ""),
+                    message.get("metadata", {}),
+                ),
+                name=f"gha-review-{message.get('job_id', '')}",
+            )
+            self._review_tasks.add(task)
+            task.add_done_callback(self._review_tasks.discard)
+            return
+
+    async def _handle_review_job(
+        self, job_id: str, diff: str, metadata: dict[str, str]
+    ) -> None:
+        """Roda a revisão de PR self-hosted e posta o resultado de volta —
+        FORA do túnel (POST outbound normal, sem problema de NAT), já que o
+        job pode levar minutos e o túnel é pra request/response síncrono."""
+        from backend.services.gateway.review_job import run_review_job
+
+        try:
+            review_text = await run_review_job(diff, metadata)
+            await self._post_review_result(job_id, review_text=review_text)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.exception("gateway: review_job %s falhou", job_id)
+            await self._post_review_result(job_id, error=str(exc))
+
+    async def _post_review_result(
+        self, job_id: str, *, review_text: str | None = None, error: str | None = None
+    ) -> None:
+        body: dict[str, str] = {}
+        if review_text is not None:
+            body["review_text"] = review_text
+        if error is not None:
+            body["error"] = error
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{_SERVICES_URL}/gha-bot/review/{job_id}/result",
+                    json=body,
+                ) as resp:
+                    if resp.status != 200:
+                        logger.warning(
+                            "gateway: POST review/%s/result devolveu %d",
+                            job_id,
+                            resp.status,
+                        )
+        except Exception:
+            logger.exception(
+                "gateway: falha ao postar resultado do review_job %s", job_id
+            )
 
     async def _forward_worker(self, queue: asyncio.Queue[_ForwardJob | object]) -> None:
         """Um dos `_MAX_CONCURRENT_FORWARDS` workers fixos da conexão —

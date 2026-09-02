@@ -176,3 +176,54 @@ function routeToSession(
   const stub = env.GATEWAY_SESSION.get(id);
   return stub.fetch(request);
 }
+
+/** Header só o próprio Worker sabe montar — usado nas chamadas internas
+ * pra `GatewaySession` (`/_health`, `/_revoke`, `/_dispatch-job`) pra
+ * provar que não vieram de um client externo batendo direto no
+ * subdomínio (ver `GatewaySession::isInternalCall`). */
+function internalHeaders(env: Env): Record<string, string> {
+  return { "X-Vectora-Internal": `Bearer ${env.VECTORA_APP_SECRET}` };
+}
+
+/** Consultado por gha-bot/routes.ts (GET /gha-bot/config) pra só oferecer
+ * o modo self-hosted quando a instância do usuário está de fato
+ * conectada — chamada em-processo (DO stub), sem hop de rede real. */
+export async function checkGatewayHealth(
+  env: Env,
+  token: string,
+): Promise<{ connected: boolean }> {
+  const res = await routeToSession(
+    new Request(`https://${GATEWAY_HOST}/_health`, {
+      method: "GET",
+      headers: internalHeaders(env),
+    }),
+    token,
+    env,
+    new URL(`https://${GATEWAY_HOST}/_health`),
+  );
+  if (!res.ok) return { connected: false };
+  return res.json();
+}
+
+/** Despacha um review_job fire-and-forget pro backend Python do usuário —
+ * ver docstring de `GatewayMessage["review_job"]` (types.ts) pro porquê
+ * de não esperar `type:"response"` como as requests HTTP comuns do
+ * túnel. Chamado por gha-bot/routes.ts (POST /gha-bot/review). */
+export async function dispatchReviewJob(
+  env: Env,
+  token: string,
+  payload: { job_id: string; diff: string; metadata: Record<string, string> },
+): Promise<{ delivered: boolean }> {
+  const res = await routeToSession(
+    new Request(`https://${GATEWAY_HOST}/_dispatch-job`, {
+      method: "POST",
+      headers: { ...internalHeaders(env), "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "review_job", ...payload }),
+    }),
+    token,
+    env,
+    new URL(`https://${GATEWAY_HOST}/_dispatch-job`),
+  );
+  if (!res.ok) return { delivered: false };
+  return res.json();
+}

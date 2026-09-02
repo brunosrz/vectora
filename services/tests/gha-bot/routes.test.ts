@@ -1,7 +1,12 @@
-import { env } from "cloudflare:test";
+import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { ghaBot } from "../../src/gha-bot/routes";
 import { createSession } from "../../src/auth/session";
+
+// Testes que criam Durable Object (SQLite no disco) — mesma limitação de
+// gateway/gateway-session.test.ts: workerd não libera o lock do arquivo
+// no Windows antes do cleanup do isolated storage. Passam em CI (Linux).
+const itDO = env.TEST_IS_WINDOWS === "1" ? it.skip : it;
 
 async function makeUserWithSession() {
   const userId = crypto.randomUUID();
@@ -272,12 +277,14 @@ describe("gha-bot config (Action pública, autenticada por VECTORA_BOT_TOKEN)", 
     );
     expect(res.status).toBe(200);
     const config = await res.json<{
+      mode: string;
       provider: string;
       model: string;
       api_key: string;
       review_style: string;
     }>();
     expect(config).toEqual({
+      mode: "hosted",
       provider: "anthropic",
       model: "claude-sonnet-5",
       api_key: "sk-ant-super-secreta-de-verdade",
@@ -360,5 +367,411 @@ describe("gha-bot config (Action pública, autenticada por VECTORA_BOT_TOKEN)", 
       env,
     );
     expect(res.status).toBe(404);
+  });
+});
+
+describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/result)", () => {
+  async function makeProUserWithBotTokenAndSettings(selfHosted: boolean) {
+    const { userId, token: sessionToken } = await makeUserWithSession();
+    await env.DB.prepare(
+      "INSERT INTO subscriptions (id, user_id, tier, status) VALUES (?, ?, 'pro', 'active')",
+    )
+      .bind(crypto.randomUUID(), userId)
+      .run();
+
+    const sessionAuth = {
+      Authorization: `Bearer ${sessionToken}`,
+      "Content-Type": "application/json",
+    };
+    const created = await ghaBot.request(
+      "/tokens",
+      { method: "POST", headers: sessionAuth, body: "{}" },
+      env,
+    );
+    const { secret: botToken } = await created.json<{ secret: string }>();
+
+    await ghaBot.request(
+      "/settings",
+      {
+        method: "PUT",
+        headers: sessionAuth,
+        body: JSON.stringify({
+          provider: "anthropic",
+          model: "claude-sonnet-5",
+          provider_api_key: "sk-ant-fallback",
+          review_style: "balanced",
+          self_hosted_enabled: selfHosted,
+        }),
+      },
+      env,
+    );
+
+    return { userId, sessionToken, botToken };
+  }
+
+  async function registerGatewayToken(userId: string, gwToken: string) {
+    await env.DB.prepare(
+      "INSERT INTO tokens (id, user_id, token, token_hash) VALUES (?, ?, ?, ?)",
+    )
+      .bind(crypto.randomUUID(), userId, gwToken, `hash-${gwToken}`)
+      .run();
+  }
+
+  it("self_hosted_enabled=false — /config sempre devolve mode hosted, nunca consulta o gateway", async () => {
+    const { userId, botToken } =
+      await makeProUserWithBotTokenAndSettings(false);
+    await registerGatewayToken(userId, "tokenabc1");
+
+    const res = await ghaBot.request(
+      "/config",
+      { headers: { Authorization: `Bearer ${botToken}` } },
+      env,
+    );
+    const body = await res.json<{ mode: string }>();
+    expect(body.mode).toBe("hosted");
+  });
+
+  it("erro de borda — self_hosted_enabled=true mas usuário nunca registrou o gateway (sem linha em tokens) — cai pra hosted", async () => {
+    const { botToken } = await makeProUserWithBotTokenAndSettings(true);
+
+    const res = await ghaBot.request(
+      "/config",
+      { headers: { Authorization: `Bearer ${botToken}` } },
+      env,
+    );
+    const body = await res.json<{ mode: string }>();
+    expect(body.mode).toBe("hosted");
+  });
+
+  itDO(
+    "erro de borda — self_hosted_enabled=true e token registrado, mas instância offline (DO sem WS ativo) — cai pra hosted",
+    async () => {
+      const { userId, botToken } =
+        await makeProUserWithBotTokenAndSettings(true);
+      await registerGatewayToken(userId, "tokenoffline1");
+
+      const res = await ghaBot.request(
+        "/config",
+        { headers: { Authorization: `Bearer ${botToken}` } },
+        env,
+      );
+      const body = await res.json<{ mode: string }>();
+      expect(body.mode).toBe("hosted");
+    },
+  );
+
+  itDO(
+    "self_hosted_enabled=true, token registrado, gateway conectado — /config devolve mode self-hosted com job_endpoint",
+    async () => {
+      const { userId, botToken } =
+        await makeProUserWithBotTokenAndSettings(true);
+      const gwToken = "tokenconnected1";
+      await registerGatewayToken(userId, gwToken);
+
+      const ws = await SELF.fetch(
+        `https://gateway.vectora.chat/ws/${gwToken}`,
+        { headers: { Upgrade: "websocket" } },
+      );
+      expect(ws.status).toBe(101);
+      expect(ws.webSocket).toBeTruthy();
+      ws.webSocket!.accept();
+
+      const res = await ghaBot.request(
+        "/config",
+        { headers: { Authorization: `Bearer ${botToken}` } },
+        env,
+      );
+      const body = await res.json<{ mode: string; job_endpoint: string }>();
+      expect(body.mode).toBe("self-hosted");
+      expect(body.job_endpoint).toContain("/gha-bot/review");
+
+      ws.webSocket!.close();
+    },
+  );
+
+  itDO(
+    "POST /review entrega o job pelo túnel (WS recebe review_job) e devolve 202 + job_id",
+    async () => {
+      const { userId, botToken } =
+        await makeProUserWithBotTokenAndSettings(true);
+      const gwToken = "tokenreview1";
+      await registerGatewayToken(userId, gwToken);
+
+      const ws = await SELF.fetch(
+        `https://gateway.vectora.chat/ws/${gwToken}`,
+        { headers: { Upgrade: "websocket" } },
+      );
+      ws.webSocket!.accept();
+      const received: MessageEvent[] = [];
+      ws.webSocket!.addEventListener("message", (e) => received.push(e));
+
+      const res = await ghaBot.request(
+        "/review",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${botToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            diff: "diff --git a/a.py b/a.py\n+print(1)",
+            metadata: { pr_number: "42" },
+          }),
+        },
+        env,
+      );
+      expect(res.status).toBe(202);
+      const { job_id } = await res.json<{ job_id: string }>();
+      expect(job_id).toBeTruthy();
+
+      await new Promise((r) => setTimeout(r, 10));
+      expect(received).toHaveLength(1);
+      const msg = JSON.parse(received[0]!.data as string) as {
+        type: string;
+        job_id: string;
+        diff: string;
+      };
+      expect(msg).toEqual({
+        type: "review_job",
+        job_id,
+        diff: "diff --git a/a.py b/a.py\n+print(1)",
+        metadata: { pr_number: "42" },
+      });
+
+      const jobRow = await env.DB.prepare(
+        "SELECT status FROM gha_bot_review_jobs WHERE id = ?",
+      )
+        .bind(job_id)
+        .first<{ status: string }>();
+      expect(jobRow?.status).toBe("pending");
+
+      ws.webSocket!.close();
+    },
+  );
+
+  it("erro de borda — POST /review sem gateway registrado devolve 409, nenhum job criado", async () => {
+    const { botToken } = await makeProUserWithBotTokenAndSettings(true);
+
+    const res = await ghaBot.request(
+      "/review",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${botToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ diff: "x" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(409);
+  });
+
+  itDO(
+    "erro de borda — POST /review com instância offline marca o job como failed e devolve 502",
+    async () => {
+      const { userId, botToken } =
+        await makeProUserWithBotTokenAndSettings(true);
+      await registerGatewayToken(userId, "tokenreviewoffline1");
+
+      const res = await ghaBot.request(
+        "/review",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${botToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ diff: "x" }),
+        },
+        env,
+      );
+      expect(res.status).toBe(502);
+      const { job_id } = await res.json<{ job_id: string }>();
+
+      const jobRow = await env.DB.prepare(
+        "SELECT status, error FROM gha_bot_review_jobs WHERE id = ?",
+      )
+        .bind(job_id)
+        .first<{ status: string; error: string | null }>();
+      expect(jobRow?.status).toBe("failed");
+      expect(jobRow?.error).toBeTruthy();
+    },
+  );
+
+  it("erro de borda — POST /review sem diff no corpo devolve 400", async () => {
+    const { botToken } = await makeProUserWithBotTokenAndSettings(true);
+
+    const res = await ghaBot.request(
+      "/review",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${botToken}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      },
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("GET /review/:id devolve o status do job — pending logo após criar", async () => {
+    const { userId, botToken } = await makeProUserWithBotTokenAndSettings(true);
+    await env.DB.prepare(
+      "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+    )
+      .bind("job-pending-1", userId)
+      .run();
+
+    const res = await ghaBot.request(
+      "/review/job-pending-1",
+      { headers: { Authorization: `Bearer ${botToken}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json<{ status: string }>();
+    expect(body.status).toBe("pending");
+  });
+
+  it("erro de borda — GET /review/:id de um job de outro usuário devolve 404 (isolamento)", async () => {
+    const { userId: ownerId } = await makeProUserWithBotTokenAndSettings(true);
+    const { botToken: strangerToken } =
+      await makeProUserWithBotTokenAndSettings(true);
+    await env.DB.prepare(
+      "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+    )
+      .bind("job-isolated-1", ownerId)
+      .run();
+
+    const res = await ghaBot.request(
+      "/review/job-isolated-1",
+      { headers: { Authorization: `Bearer ${strangerToken}` } },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("POST /review/:id/result marca o job como done com o texto da revisão", async () => {
+    const { userId, botToken } = await makeProUserWithBotTokenAndSettings(true);
+    await env.DB.prepare(
+      "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+    )
+      .bind("job-result-1", userId)
+      .run();
+
+    const res = await ghaBot.request(
+      "/review/job-result-1/result",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${botToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ review_text: "LGTM, só um nit na linha 3." }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+
+    const poll = await ghaBot.request(
+      "/review/job-result-1",
+      { headers: { Authorization: `Bearer ${botToken}` } },
+      env,
+    );
+    const body = await poll.json<{ status: string; review_text: string }>();
+    expect(body.status).toBe("done");
+    expect(body.review_text).toBe("LGTM, só um nit na linha 3.");
+  });
+
+  it("erro de borda — POST /review/:id/result com error marca o job como failed", async () => {
+    const { userId, botToken } = await makeProUserWithBotTokenAndSettings(true);
+    await env.DB.prepare(
+      "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+    )
+      .bind("job-result-err-1", userId)
+      .run();
+
+    const res = await ghaBot.request(
+      "/review/job-result-err-1/result",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${botToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ error: "modelo indisponível" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+
+    const jobRow = await env.DB.prepare(
+      "SELECT status, error FROM gha_bot_review_jobs WHERE id = ?",
+    )
+      .bind("job-result-err-1")
+      .first<{ status: string; error: string }>();
+    expect(jobRow?.status).toBe("failed");
+    expect(jobRow?.error).toBe("modelo indisponível");
+  });
+
+  it("erro de borda — POST /review/:id/result não sobrescreve um job que já não está pending", async () => {
+    const { userId, botToken } = await makeProUserWithBotTokenAndSettings(true);
+    await env.DB.prepare(
+      "INSERT INTO gha_bot_review_jobs (id, user_id, status, review_text) VALUES (?, ?, 'done', 'primeira resposta')",
+    )
+      .bind("job-already-done-1", userId)
+      .run();
+
+    const res = await ghaBot.request(
+      "/review/job-already-done-1/result",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${botToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ review_text: "resposta duplicada" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(404);
+
+    const jobRow = await env.DB.prepare(
+      "SELECT review_text FROM gha_bot_review_jobs WHERE id = ?",
+    )
+      .bind("job-already-done-1")
+      .first<{ review_text: string }>();
+    expect(jobRow?.review_text).toBe("primeira resposta");
+  });
+
+  it("rejeita /review e /review/:id sem VECTORA_BOT_TOKEN válido", async () => {
+    const post = await ghaBot.request(
+      "/review",
+      { method: "POST", body: "{}" },
+      env,
+    );
+    expect(post.status).toBe(401);
+
+    const get = await ghaBot.request("/review/whatever", {}, env);
+    expect(get.status).toBe(401);
+  });
+
+  it("erro de borda — /review/:id/result não exige VECTORA_BOT_TOKEN (segurança vem do id inadivinhável + status=pending), mas job inexistente ainda 404", async () => {
+    // O backend Python que roda o job self-hosted não tem esse token
+    // disponível — ver comentário na rota. Confirma que a rota aceita a
+    // chamada mesmo sem Authorization nenhum, e que o 404 continua vindo
+    // de "job não existe/já não está pending", não de auth.
+    const result = await ghaBot.request(
+      "/review/job-nao-existe/result",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ review_text: "x" }),
+      },
+      env,
+    );
+    expect(result.status).toBe(404);
   });
 });

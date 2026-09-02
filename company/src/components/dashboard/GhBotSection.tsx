@@ -63,6 +63,9 @@ export default function GhBotSection() {
   const [model, setModel] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [reviewStyle, setReviewStyle] = useState<GhBotReviewStyle>("balanced");
+  const [selfHostedEnabled, setSelfHostedEnabled] = useState<boolean | null>(
+    null,
+  );
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [generatedSecret, setGeneratedSecret] = useState<string | null>(null);
 
@@ -81,6 +84,8 @@ export default function GhBotSection() {
   const displayProvider = settings?.provider ?? provider;
   const displayModel = model || (settings?.model ?? "");
   const displayReviewStyle = settings?.review_style ?? reviewStyle;
+  const displaySelfHosted =
+    selfHostedEnabled ?? settings?.self_hosted_enabled ?? false;
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -90,6 +95,7 @@ export default function GhBotSection() {
           model: displayModel,
           providerApiKey: apiKey,
           reviewStyle: displayReviewStyle,
+          selfHostedEnabled: displaySelfHosted,
         },
       }),
     onSuccess: () => {
@@ -204,6 +210,23 @@ export default function GhBotSection() {
             </option>
           ))}
         </select>
+
+        <label className="flex items-start gap-3 rounded-lg border border-border bg-background px-3 py-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={displaySelfHosted}
+            onChange={(e) => setSelfHostedEnabled(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+          />
+          <span className="space-y-0.5">
+            <span className="block text-xs font-medium text-foreground">
+              {m.gh_bot_self_hosted_label()}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {m.gh_bot_self_hosted_hint()}
+            </span>
+          </span>
+        </label>
 
         {settingsError && (
           <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-md">

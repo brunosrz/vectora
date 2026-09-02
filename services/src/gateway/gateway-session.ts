@@ -4,6 +4,7 @@ import type {
   GatewayMessage,
   ClientMessage,
 } from "./types";
+import { timingSafeEqual } from "./auth";
 
 const QUEUE_TTL_DEFAULT = 600_000; // 10 min
 // 30s é por design pra request/response HTTP síncrono (callback OAuth, etc)
@@ -38,6 +39,19 @@ export class GatewaySession implements DurableObject {
     });
   }
 
+  /** Prova que a chamada veio do próprio Worker (rota interna chamando a
+   * DO), não de um client externo batendo direto em
+   * `{token}.vectora.chat/_dispatch-job` — sem isso, qualquer um que
+   * soubesse/adivinhasse o token conseguiria mandar um "review_job" com
+   * diff/metadata arbitrários pro backend local do usuário rodar (o
+   * agente real, com tools). Mesmo secret fixo já usado por
+   * `requireAppSecret` em `/register` (`VECTORA_APP_SECRET`), só que
+   * comparado num header próprio pra não confundir com auth de client. */
+  private isInternalCall(request: Request): boolean {
+    const auth = request.headers.get("X-Vectora-Internal") ?? "";
+    return timingSafeEqual(auth, `Bearer ${this.env.VECTORA_APP_SECRET}`);
+  }
+
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
@@ -58,7 +72,27 @@ export class GatewaySession implements DurableObject {
       return this.handleRevoke();
     }
 
+    if (
+      path === "/_dispatch-job" &&
+      request.method === "POST" &&
+      this.isInternalCall(request)
+    ) {
+      return this.handleDispatchJob(request);
+    }
+
     return this.forwardToLocal(request);
+  }
+
+  private async handleDispatchJob(request: Request): Promise<Response> {
+    const msg = await request.json<GatewayMessage>().catch(() => null);
+    if (!msg || msg.type !== "review_job") {
+      return new Response("Bad Request", { status: 400 });
+    }
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return Response.json({ ok: true, delivered: false });
+    }
+    this.ws.send(JSON.stringify(msg));
+    return Response.json({ ok: true, delivered: true });
   }
 
   private handleWebSocketUpgrade(_request: Request): Response {

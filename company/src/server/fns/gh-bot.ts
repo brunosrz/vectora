@@ -20,6 +20,11 @@ export interface GhBotSettings {
   provider: GhBotProvider;
   model: string;
   review_style: GhBotReviewStyle;
+  /** "Usar minha própria instância Vectora" — revisão roda no motor nativo
+   * da instância do usuário (via túnel do gateway) em vez do runner
+   * efêmero do GitHub Actions. Cai pro modo padrão automaticamente se a
+   * instância estiver offline no momento do PR (ver GET /gha-bot/config). */
+  self_hosted_enabled: boolean;
   updated_at: string;
 }
 
@@ -41,6 +46,7 @@ const SaveGhBotSettingsSchema = z.object({
   model: z.string().min(1),
   providerApiKey: z.string().min(1),
   reviewStyle: z.enum(GH_BOT_REVIEW_STYLES),
+  selfHostedEnabled: z.boolean(),
 });
 
 export const saveGhBotSettings = createServerFn({ method: "POST" })
@@ -53,6 +59,7 @@ export const saveGhBotSettings = createServerFn({ method: "POST" })
         model: data.model,
         provider_api_key: data.providerApiKey,
         review_style: data.reviewStyle,
+        self_hosted_enabled: data.selfHostedEnabled,
       }),
     });
   });

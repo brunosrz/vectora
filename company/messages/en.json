@@ -519,6 +519,8 @@
   "gh_bot_label_api_key": "Provider API key",
   "gh_bot_api_key_placeholder": "Leave blank to keep the current key",
   "gh_bot_label_review_style": "Review style",
+  "gh_bot_self_hosted_label": "Use my own Vectora instance",
+  "gh_bot_self_hosted_hint": "Runs the review with your own agent (memory, RAG, tools) through the gateway tunnel, instead of the ephemeral GitHub Actions runner. Falls back automatically if your instance is offline when the PR opens.",
   "gh_bot_review_style_lenient": "Lenient",
   "gh_bot_review_style_balanced": "Balanced",
   "gh_bot_review_style_strict": "Strict",
