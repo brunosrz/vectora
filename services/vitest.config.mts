@@ -7,6 +7,7 @@ const workerOptions = {
   miniflare: {
     bindings: {
       VECTORA_APP_SECRET: "test-app-secret-fixo-por-produto",
+      GATEWAY_INTERNAL_SECRET: "test-internal-secret-worker-only",
       GATEWAY_HMAC_SECRET: "test-hmac-secret-32-chars-minimum",
       VECTORA_OAUTH_SECRET: "test-oauth-secret",
       APP_URL: "https://vectora.company",

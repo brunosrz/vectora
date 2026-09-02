@@ -1,4 +1,9 @@
-import { timingSafeEqual, generateGatewayToken } from "./auth";
+import {
+  timingSafeEqual,
+  generateGatewayToken,
+  generateConnectorSecret,
+  hashConnectorSecret,
+} from "./auth";
 import { GatewaySession } from "./gateway-session";
 import type { Env, RegisterRequest, RegisterResponse } from "./types";
 
@@ -36,7 +41,10 @@ const gatewayHandler = {
       const token = url.pathname.slice(8);
       if (!token) return new Response("Bad Request", { status: 400 });
       return routeToSession(
-        new Request(`https://${GATEWAY_HOST}/_health`, { method: "GET" }),
+        new Request(`https://${GATEWAY_HOST}/_health`, {
+          method: "GET",
+          headers: internalHeaders(env),
+        }),
         token,
         env,
         url,
@@ -50,7 +58,10 @@ const gatewayHandler = {
       const token = url.pathname.slice("/gateway/session/".length);
       if (!token) return new Response("Bad Request", { status: 400 });
       return routeToSession(
-        new Request(`https://${GATEWAY_HOST}/_revoke`, { method: "DELETE" }),
+        new Request(`https://${GATEWAY_HOST}/_revoke`, {
+          method: "DELETE",
+          headers: internalHeaders(env),
+        }),
         token,
         env,
         url,
@@ -84,9 +95,31 @@ function requireAppSecret(request: Request, env: Env): boolean {
   return timingSafeEqual(auth, expected);
 }
 
+/** Header só o próprio Worker sabe montar — usado nas chamadas internas
+ * pra `GatewaySession` (`/_health`, `/_revoke`, `/_set-secret`) pra provar
+ * que não vieram de um client externo batendo direto no subdomínio (ver
+ * `GatewaySession::isInternalCall`). Secret dedicado (`GATEWAY_INTERNAL_SECRET`),
+ * não `VECTORA_APP_SECRET` — este último é distribuído a toda instalação do
+ * produto, então qualquer client legítimo o conhece e poderia forjar o
+ * header se fosse o mesmo valor. */
+function internalHeaders(env: Env): Record<string, string> {
+  return { "X-Vectora-Internal": `Bearer ${env.GATEWAY_INTERNAL_SECRET}` };
+}
+
+function clientIp(request: Request): string {
+  return request.headers.get("CF-Connecting-IP") ?? "unknown";
+}
+
 async function handleRegister(request: Request, env: Env): Promise<Response> {
   if (!requireAppSecret(request, env)) {
     return new Response("Unauthorized", { status: 401 });
+  }
+
+  const { success } = await env.GATEWAY_LIMITER.limit({
+    key: clientIp(request),
+  });
+  if (!success) {
+    return new Response("Too Many Requests", { status: 429 });
   }
 
   let body: RegisterRequest;
@@ -106,10 +139,36 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
     body.fingerprint,
     env.GATEWAY_HMAC_SECRET,
   );
+
+  // Novo segredo a cada /register (mesmo pra um token/fingerprint já
+  // conhecido) — reinstalar/perder o arquivo local simplesmente reemite um
+  // segredo novo pro MESMO subdomínio (token continua determinístico), sem
+  // precisar de fluxo de recuperação separado; o segredo antigo, se
+  // existir, para de valer a partir daqui.
+  const connectorSecret = generateConnectorSecret();
+  const secretHash = await hashConnectorSecret(connectorSecret);
+  const setSecretResp = await routeToSession(
+    new Request(`https://${GATEWAY_HOST}/_set-secret`, {
+      method: "POST",
+      headers: {
+        ...internalHeaders(env),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ secretHash }),
+    }),
+    token,
+    env,
+    new URL(request.url),
+  );
+  if (!setSecretResp.ok) {
+    return new Response("Internal Error", { status: 500 });
+  }
+
   const response: RegisterResponse = {
     token,
     subdomain: `${token}.${GATEWAY_BASE_DOMAIN}`,
     websocket_url: `wss://${GATEWAY_HOST}/ws/${token}`,
+    connector_secret: connectorSecret,
   };
 
   return Response.json(response);

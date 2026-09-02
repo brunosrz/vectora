@@ -17,12 +17,14 @@ describe("POST /register", () => {
       token: string;
       subdomain: string;
       websocket_url: string;
+      connector_secret: string;
     };
-    expect(data.token).toMatch(/^[a-z0-9]{6}$/);
+    expect(data.token).toMatch(/^[a-z0-9]{10}$/);
     expect(data.subdomain).toBe(`${data.token}.vectora.chat`);
     expect(data.websocket_url).toBe(
       `wss://gateway.vectora.chat/ws/${data.token}`,
     );
+    expect(data.connector_secret).toMatch(/^[A-Za-z0-9_-]{43}$/);
   });
 
   it("retorna 401 sem o Authorization header", async () => {
@@ -238,6 +240,141 @@ describe("webhook via subdomínio (Durable Object)", () => {
         },
       );
       expect(res.status).toBe(202);
+    },
+  );
+});
+
+describe("achado de segurança: rotas de controle (_health/_revoke) não são alcançáveis direto pelo subdomínio", () => {
+  itDO(
+    "GET direto em {token}.vectora.chat/_health não devolve o JSON de status — cai como request tunelado comum (202, sem client conectado)",
+    async () => {
+      const res = await SELF.fetch("https://abc123.vectora.chat/_health");
+      expect(res.status).toBe(202);
+    },
+  );
+
+  itDO(
+    "DELETE direto em {token}.vectora.chat/_revoke não revoga a sessão — cai como request tunelado comum",
+    async () => {
+      const res = await SELF.fetch("https://abc123.vectora.chat/_revoke", {
+        method: "DELETE",
+      });
+      // Nunca o 200 estruturado de handleRevoke — sem client conectado,
+      // forwardToLocal enfileira (202) em vez de aceitar como comando.
+      expect(res.status).toBe(202);
+    },
+  );
+
+  itDO(
+    "a rota oficial gateway.vectora.chat/health/{token} continua funcionando normalmente",
+    async () => {
+      const res = await SELF.fetch(
+        "https://gateway.vectora.chat/health/abc123",
+      );
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as { connected: boolean };
+      expect(data.connected).toBe(false);
+    },
+  );
+});
+
+describe("achado de segurança: WebSocket exige o connector_secret quando um já foi emitido", () => {
+  itDO(
+    "abrir /ws/{token} sem Authorization, depois de /register já ter emitido um secret → 401",
+    async () => {
+      const register = await SELF.fetch(
+        "https://gateway.vectora.chat/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.VECTORA_APP_SECRET}`,
+          },
+          body: JSON.stringify({ fingerprint: "fp-ws-sem-secret" }),
+        },
+      );
+      const { token } = (await register.json()) as { token: string };
+
+      const res = await SELF.fetch(`https://gateway.vectora.chat/ws/${token}`, {
+        headers: { Upgrade: "websocket" },
+      });
+      expect(res.status).toBe(401);
+    },
+  );
+
+  itDO("abrir /ws/{token} com Authorization errado → 401", async () => {
+    const register = await SELF.fetch("https://gateway.vectora.chat/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.VECTORA_APP_SECRET}`,
+      },
+      body: JSON.stringify({ fingerprint: "fp-ws-secret-errado" }),
+    });
+    const { token } = (await register.json()) as { token: string };
+
+    const res = await SELF.fetch(`https://gateway.vectora.chat/ws/${token}`, {
+      headers: {
+        Upgrade: "websocket",
+        Authorization: "Bearer secret-que-nao-e-o-certo",
+      },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  itDO(
+    "abrir /ws/{token} com o connector_secret certo → aceita o upgrade (par de acerto)",
+    async () => {
+      const register = await SELF.fetch(
+        "https://gateway.vectora.chat/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.VECTORA_APP_SECRET}`,
+          },
+          body: JSON.stringify({ fingerprint: "fp-ws-secret-certo" }),
+        },
+      );
+      const { token, connector_secret } = (await register.json()) as {
+        token: string;
+        connector_secret: string;
+      };
+
+      const res = await SELF.fetch(`https://gateway.vectora.chat/ws/${token}`, {
+        headers: {
+          Upgrade: "websocket",
+          Authorization: `Bearer ${connector_secret}`,
+        },
+      });
+      expect(res.status).toBe(101);
+    },
+  );
+
+  itDO(
+    "sem /register prévio (secretHash nunca setado) — upgrade rejeitado mesmo sem Authorization",
+    async () => {
+      const res = await SELF.fetch(
+        "https://gateway.vectora.chat/ws/token-nunca-registrado",
+        { headers: { Upgrade: "websocket" } },
+      );
+      expect(res.status).toBe(401);
+    },
+  );
+
+  itDO(
+    "sem /register prévio (secretHash nunca setado) — upgrade rejeitado mesmo com Authorization presente",
+    async () => {
+      const res = await SELF.fetch(
+        "https://gateway.vectora.chat/ws/outro-token-nunca-registrado",
+        {
+          headers: {
+            Upgrade: "websocket",
+            Authorization: "Bearer qualquer-coisa",
+          },
+        },
+      );
+      expect(res.status).toBe(401);
     },
   );
 });
