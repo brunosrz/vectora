@@ -143,6 +143,7 @@ async def test_webhook_via_gateway_producao_dispara_background_task(
         app_secret=_APP_SECRET,
         local_url=f"http://127.0.0.1:{port}",
         token_path=token_path,
+        secret_path=tmp_path / "gateway_connector_secret",
     )
 
     try:

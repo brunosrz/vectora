@@ -60,6 +60,11 @@ name = "AUTH_LOGIN_LIMITER"
 namespace_id = "1002"
 simple = { limit = 10, period = 60 }
 
+[[ratelimits]]
+name = "GATEWAY_LIMITER"
+namespace_id = "1003"
+simple = { limit = 20, period = 60 }
+
 [[queues.producers]]
 binding = "EMAIL_QUEUE"
 queue = "vectora-email"

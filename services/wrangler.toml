@@ -93,6 +93,14 @@ name = "AUTH_LOGIN_LIMITER"
 namespace_id = "1002"
 simple = { limit = 10, period = 60 }
 
+# POST /register (gateway) já exige VECTORA_APP_SECRET (embutido no
+# binário) — isso é defesa em profundidade contra automação em massa
+# batendo o endpoint, não a proteção primária.
+[[ratelimits]]
+name = "GATEWAY_LIMITER"
+namespace_id = "1003"
+simple = { limit = 20, period = 60 }
+
 # vectora-email: desacopla o envio de verdade (Resend) do request/response —
 # 9 pontos no código faziam `await sendEmail(...)` síncrono antes disso.
 [[queues.producers]]
@@ -135,6 +143,10 @@ GATEWAY_URL = "https://gateway.vectora.chat"
 #                            batia com um secret único no Worker — o "sub"
 #                            do JWT sempre foi a constante "relay-system",
 #                            então essa granularidade nunca existiu de fato).
+#   GATEWAY_INTERNAL_SECRET — gateway: só o Worker conhece, autentica chamadas
+#                            internas do gatewayHandler pro GatewaySession
+#                            (/_health, /_revoke, /_set-secret) — nunca
+#                            distribuído em nenhum binário do produto
 #   GATEWAY_HMAC_SECRET    — gateway: assina o token de 6 chars por fingerprint
 #   VECTORA_OAUTH_SECRET   — gateway: Bearer auth nos endpoints /oauth/token
 #   RESEND_API_KEY         — auth/billing/gdpr/issues: envio de email transacional

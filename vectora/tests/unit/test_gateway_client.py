@@ -21,6 +21,11 @@ def gateway_token_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def gateway_secret_file(tmp_path: Path) -> Path:
+    return tmp_path / "gateway_connector_secret"
+
+
+@pytest.fixture
 def gateway_url() -> str:
     return "wss://gateway.vectora.chat"
 
@@ -85,7 +90,7 @@ class TestGatewayClientBackoff:
                 ):
                     with patch(
                         "backend.services.gateway.GatewayClient._register",
-                        return_value="tok123",
+                        return_value=("tok123", "sec123"),
                     ):
                         with contextlib.suppress(asyncio.CancelledError):
                             await client._connect_loop()
@@ -116,7 +121,7 @@ class TestGatewayClientBackoff:
                 ):
                     with patch(
                         "backend.services.gateway.GatewayClient._register",
-                        return_value="tok123",
+                        return_value=("tok123", "sec123"),
                     ):
                         with contextlib.suppress(asyncio.CancelledError):
                             await client._connect_loop()
@@ -152,7 +157,7 @@ class TestGatewayClientBackoff:
             ):
                 with patch(
                     "backend.services.gateway.GatewayClient._register",
-                    return_value="tok123",
+                    return_value=("tok123", "sec123"),
                 ):
                     with contextlib.suppress(asyncio.CancelledError):
                         await client._connect_loop()
@@ -165,21 +170,26 @@ class TestGatewayClientBackoff:
 class TestGatewayClientRegister:
     @pytest.mark.asyncio
     async def test_register_usa_app_secret_e_fingerprint(
-        self, gateway_token_file: Path
+        self, gateway_token_file: Path, gateway_secret_file: Path
     ) -> None:
         """O handshake de registro autentica com o secret fixo do produto
         (embutido no build), não mais um JWT por-instalação — o corpo carrega
-        só o fingerprint da máquina."""
+        só o fingerprint da máquina. A resposta também traz o connector_secret
+        (único fator que autoriza abrir o WebSocket como dono da sessão —
+        ver services/src/gateway/gateway-session.ts), persistido à parte."""
         from backend.services.gateway import GatewayClient
 
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value={"token": "abc123"})
+        mock_response.json = AsyncMock(
+            return_value={"token": "abc123", "connector_secret": "sec-abc123"}
+        )
 
         client = GatewayClient(
             gateway_url="wss://gateway.vectora.chat",
             app_secret="fixed-product-secret",
             token_path=gateway_token_file,
+            secret_path=gateway_secret_file,
             fingerprint="fp-machine-a",
         )
 
@@ -197,10 +207,12 @@ class TestGatewayClientRegister:
             )
             mock_session_cls.return_value = mock_session
 
-            token = await client._register()
+            token, secret = await client._register()
 
         assert token == "abc123"
+        assert secret == "sec-abc123"
         assert gateway_token_file.read_text() == "abc123"
+        assert gateway_secret_file.read_text() == "sec-abc123"
         _, call_kwargs = mock_session.post.call_args
         assert call_kwargs["headers"]["Authorization"] == "Bearer fixed-product-secret"
         assert call_kwargs["json"] == {"fingerprint": "fp-machine-a"}
@@ -218,12 +230,18 @@ class TestGatewayClientRegister:
         for fp, expected_token in (("fp-a", "tok-a"), ("fp-b", "tok-b")):
             mock_response = AsyncMock()
             mock_response.status = 200
-            mock_response.json = AsyncMock(return_value={"token": expected_token})
+            mock_response.json = AsyncMock(
+                return_value={
+                    "token": expected_token,
+                    "connector_secret": f"sec-{expected_token}",
+                }
+            )
 
             client = GatewayClient(
                 gateway_url="wss://gateway.vectora.chat",
                 app_secret="shared-product-secret",
                 token_path=tmp_path / f"gateway_token_{fp}",
+                secret_path=tmp_path / f"gateway_secret_{fp}",
                 fingerprint=fp,
             )
 
@@ -241,9 +259,10 @@ class TestGatewayClientRegister:
                 )
                 mock_session_cls.return_value = mock_session
 
-                token = await client._register()
+                token, secret = await client._register()
 
             assert token == expected_token
+            assert secret == f"sec-{expected_token}"
             _, call_kwargs = mock_session.post.call_args
             assert (
                 call_kwargs["headers"]["Authorization"]
@@ -251,25 +270,78 @@ class TestGatewayClientRegister:
             )
 
     @pytest.mark.asyncio
-    async def test_register_reutiliza_token_existente(
-        self, gateway_token_file: Path
+    async def test_register_reutiliza_token_e_secret_existentes(
+        self, gateway_token_file: Path, gateway_secret_file: Path
     ) -> None:
         from backend.services.gateway import GatewayClient
 
         gateway_token_file.write_text("existing")
+        gateway_secret_file.write_text("existing-secret")
         client = GatewayClient(
             gateway_url="wss://gateway.vectora.chat",
             app_secret="test-app-secret",
             token_path=gateway_token_file,
+            secret_path=gateway_secret_file,
         )
 
         with patch(
             "backend.services.gateway.aiohttp.ClientSession"
         ) as mock_session_cls:
-            token = await client._register()
+            token, secret = await client._register()
 
         assert token == "existing"
+        assert secret == "existing-secret"
         mock_session_cls.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_erro_borda_token_sem_secret_reregistra_migracao_transparente(
+        self, gateway_token_file: Path, gateway_secret_file: Path
+    ) -> None:
+        """Migração de uma instalação de antes desta correção: só o token
+        estava salvo localmente (secret nunca existiu). `_register` detecta
+        a ausência do secret e chama a API de novo — como o token é
+        determinístico por fingerprint, o `/register` novo devolve o MESMO
+        subdomínio (nenhuma URL de callback OAuth já configurada pelo
+        usuário quebra), só o connector_secret é novo."""
+        from backend.services.gateway import GatewayClient
+
+        gateway_token_file.write_text("existing")
+        assert not gateway_secret_file.exists()
+
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(
+            return_value={"token": "existing", "connector_secret": "novo-secret"}
+        )
+
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
+            token_path=gateway_token_file,
+            secret_path=gateway_secret_file,
+            fingerprint="fp-migracao",
+        )
+
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession"
+        ) as mock_session_cls:
+            mock_session = AsyncMock()
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=None)
+            mock_session.post = MagicMock(
+                return_value=AsyncMock(
+                    __aenter__=AsyncMock(return_value=mock_response),
+                    __aexit__=AsyncMock(return_value=None),
+                )
+            )
+            mock_session_cls.return_value = mock_session
+
+            token, secret = await client._register()
+
+        assert token == "existing"
+        assert secret == "novo-secret"
+        assert gateway_secret_file.read_text() == "novo-secret"
+        mock_session_cls.assert_called_once()
 
 
 class TestGatewayClientStop:
@@ -325,6 +397,32 @@ class TestGatewayClientConnectOnce:
         )
 
     @pytest.mark.asyncio
+    async def test_abre_websocket_com_o_connector_secret_no_header(self) -> None:
+        """O secret é o único fator que autoriza abrir a conexão como dono
+        da sessão (ver gateway-session.ts::handleWebSocketUpgrade) — sem
+        mandar `Authorization: Bearer <secret>` no handshake do próprio
+        WS, o Worker rejeita com 401."""
+        client = self._client()
+        ws = AsyncMock()
+        session = MagicMock()
+        session.ws_connect = MagicMock(return_value=_AsyncCtx(ws))
+
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession",
+            return_value=_AsyncCtx(session),
+        ):
+            with patch.object(client, "_handle_messages", new=AsyncMock()):
+                await client._connect_once("tok123", "meu-secret-de-conector")
+
+        call_args: tuple[object, ...]
+        call_kwargs: dict[str, object]
+        call_args, call_kwargs = session.ws_connect.call_args
+        assert call_args[0] == "wss://gateway.vectora.chat/ws/tok123"
+        assert call_kwargs["headers"] == {
+            "Authorization": "Bearer meu-secret-de-conector"
+        }
+
+    @pytest.mark.asyncio
     async def test_fechamento_limpo_do_servidor_loga_warning_antes_de_reconectar(
         self, caplog: pytest.LogCaptureFixture
     ) -> None:
@@ -344,7 +442,7 @@ class TestGatewayClientConnectOnce:
         ):
             with patch.object(client, "_handle_messages", new=AsyncMock()):
                 with caplog.at_level("WARNING", logger="backend.services.gateway"):
-                    await client._connect_once("tok123")
+                    await client._connect_once("tok123", "sec123")
 
         assert any(
             "fechada pelo servidor sem erro" in rec.message for rec in caplog.records
@@ -373,7 +471,7 @@ class TestGatewayClientConnectOnce:
             ):
                 with caplog.at_level("WARNING", logger="backend.services.gateway"):
                     with pytest.raises(ConnectionError):
-                        await client._connect_once("tok123")
+                        await client._connect_once("tok123", "sec123")
 
         assert not any(
             "fechada pelo servidor sem erro" in rec.message for rec in caplog.records
@@ -406,7 +504,7 @@ class TestGatewayClientConnectOnce:
             side_effect=session_factory,
         ):
             with patch.object(client, "_handle_messages", new=AsyncMock()):
-                await client._connect_once("tok123")
+                await client._connect_once("tok123", "sec123")
 
         assert len(calls) == 2
         _, local_session_kwargs = calls[1]
@@ -497,7 +595,7 @@ class TestGatewayClientConnectOnce:
             side_effect=session_factory,
         ):
             with patch.object(client, "_forward", side_effect=fake_forward):
-                await client._connect_once("tok123")
+                await client._connect_once("tok123", "sec123")
 
         assert len(created) == 2, "1 sessão pro WS + 1 reusada — não 1 por forward"
         assert sessions_seen == [local_session_marker, local_session_marker]

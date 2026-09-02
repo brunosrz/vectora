@@ -20,6 +20,13 @@ from backend.services.gateway.token import load_token, save_token
 logger = logging.getLogger(__name__)
 
 _DEFAULT_TOKEN_PATH = Path.home() / ".vectora" / "gateway_token"
+#: Segredo de conector — único fator que autoriza abrir o WebSocket como
+#: dono da sessão (o token público/subdomínio sozinho não basta mais, ver
+#: `services/src/gateway/gateway-session.ts::handleWebSocketUpgrade`).
+#: Arquivo separado do token (mesmo diretório) — se só o token existir
+#: (instalação de antes desta correção), `_register` detecta a ausência e
+#: re-registra pra obter um secret novo, sem trocar de subdomínio.
+_DEFAULT_SECRET_PATH = Path.home() / ".vectora" / "gateway_connector_secret"
 _REGISTER_PATH = "/register"
 _WS_PATH = "/ws/"
 #: Mesma convenção já usada em backend/services/license.py — auto-referência
@@ -104,6 +111,7 @@ class GatewayClient:
         app_secret: str,
         local_url: str = "http://localhost:8000",
         token_path: Path = _DEFAULT_TOKEN_PATH,
+        secret_path: Path = _DEFAULT_SECRET_PATH,
         fingerprint: str | None = None,
     ) -> None:
         self._gateway_url = gateway_url.rstrip("/")
@@ -113,6 +121,7 @@ class GatewayClient:
         self._app_secret = app_secret
         self._local_url = local_url.rstrip("/")
         self._token_path = token_path
+        self._secret_path = secret_path
         self._fingerprint = fingerprint or _machine_fingerprint()
         self._task: asyncio.Task[None] | None = None
         #: Serializa `ws.send_json` — `_forward` roda concorrente (uma task
@@ -147,11 +156,18 @@ class GatewayClient:
     # Internals
     # ------------------------------------------------------------------
 
-    async def _register(self) -> str:
-        """Retorna token existente ou registra novo no gateway e persiste."""
-        existing = load_token(self._token_path)
-        if existing:
-            return existing
+    async def _register(self) -> tuple[str, str]:
+        """Retorna (token, connector_secret) existentes ou registra no
+        gateway e persiste — chama a API de novo (idempotente pro token,
+        que é determinístico por fingerprint) sempre que o secret local
+        estiver ausente, mesmo com um token já salvo: cobre tanto a
+        primeira instalação quanto a migração transparente de uma
+        instalação de antes desta correção (token salvo sem secret nenhum
+        — o gateway aceitava WebSocket só com o token até então)."""
+        existing_token = load_token(self._token_path)
+        existing_secret = load_token(self._secret_path)
+        if existing_token and existing_secret:
+            return existing_token, existing_secret
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -163,18 +179,20 @@ class GatewayClient:
                 data: dict[str, str] = await resp.json()
 
         token: str = data["token"]
+        secret: str = data["connector_secret"]
         save_token(token, self._token_path)
+        save_token(secret, self._secret_path)
         logger.info("gateway: token registrado — %s.vectora.chat", token)
-        return token
+        return token, secret
 
     async def _connect_loop(self) -> None:
         """Loop infinito com backoff exponencial até cancelamento."""
         backoff = _BACKOFF_INITIAL
-        token = await self._register()
+        token, secret = await self._register()
 
         while True:
             try:
-                await self._connect_once(token)
+                await self._connect_once(token, secret)
                 backoff = _BACKOFF_INITIAL
             except asyncio.CancelledError:
                 raise
@@ -189,7 +207,7 @@ class GatewayClient:
                 await asyncio.sleep(sleep_for)
                 backoff = min(backoff * 2, _BACKOFF_MAX)
 
-    async def _connect_once(self, token: str) -> None:
+    async def _connect_once(self, token: str, secret: str) -> None:
         """Abre WebSocket, processa mensagens até fechar.
 
         Duas sessões aiohttp com propósitos distintos: `session` é dona do
@@ -217,7 +235,9 @@ class GatewayClient:
                 aiohttp.ClientSession(timeout=local_timeout) as local_session,
             ):
                 try:
-                    async with session.ws_connect(ws_url) as ws:
+                    async with session.ws_connect(
+                        ws_url, headers={"Authorization": f"Bearer {secret}"}
+                    ) as ws:
                         logger.info("gateway: conectado em %s", ws_url)
                         await self._handle_messages(ws, local_session, queue)
                         # `_handle_messages` só retorna sem lançar quando o
