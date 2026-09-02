@@ -19,12 +19,59 @@ import asyncio
 import contextlib
 import inspect
 import logging
+import re
 import socket
 import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+#: Charset aceito por chave de bucket JetStream KV — qualquer outro
+#: caractere (ex.: `:`, usado como separador em várias chamadas do resto do
+#: backend, como `f"partial:{thread_id}"`) faz `kv.put`/`kv.get` do NATS
+#: levantar `InvalidKeyError` em runtime. MemoryKV/RedisKV não têm essa
+#: restrição — o bug só aparece quando o backend NATS está ativo (default
+#: de toda instalação sem Redis configurado).
+_NATS_KEY_UNSAFE = re.compile(r"[^-/_=a-zA-Z0-9]")
+#: Prefixo de escape — precisa estar no charset aceito (por isso `.`, que
+#: sobra livre já que não faz parte de `_NATS_KEY_UNSAFE` acima) e nunca
+#: pode aparecer "cru" na saída, senão a codificação deixa de ser injetiva
+#: (ver `_nats_safe_key`).
+_NATS_KEY_ESCAPE = "."
+
+
+def _nats_safe_key(key: str) -> str:
+    """Codifica `key` pro charset aceito por chave JetStream KV de forma
+    INJETIVA — chaves lógicas diferentes nunca colidem no mesmo registro.
+
+    Uma substituição simples (ex.: todo caractere fora do charset vira
+    `_`) não é injetiva: `"a:b"` e `"a_b"` colidiriam na mesma chave real
+    do bucket, um `set` de uma sobrescrevendo silenciosamente o registro
+    da outra. Aqui, cada byte UTF-8 de um caractere fora do charset (ou
+    do próprio caractere de escape `.`, que senão criaria a mesma
+    ambiguidade) vira `.XX` (hex de 2 dígitos) — só existe uma forma de
+    decodificar essa sequência de volta (escaneando da esquerda: `.`
+    sempre inicia um grupo de exatos 3 caracteres, qualquer outro
+    caractere é literal), o que garante que strings de entrada diferentes
+    produzem saídas diferentes.
+
+    `errors="surrogatepass"`: um surrogate isolado (`"\\ud800"`, só
+    aparece por engano — payload malformado do lado do Worker, nunca
+    gerado por código nosso) faz `str.encode("utf-8")` sem esse argumento
+    lançar `UnicodeEncodeError`, derrubando `set`/`get`/`delete` por
+    completo em vez de só produzir uma chave esquisita porém válida."""
+    out: list[str] = []
+    for ch in key:
+        if ch == _NATS_KEY_ESCAPE or _NATS_KEY_UNSAFE.match(ch):
+            out.extend(
+                f"{_NATS_KEY_ESCAPE}{b:02x}"
+                for b in ch.encode("utf-8", errors="surrogatepass")
+            )
+        else:
+            out.append(ch)
+    return "".join(out)
+
 
 # Resultado do probe por URL — process-lifetime, igual aos singletons que o
 # consomem (get_kv/get_mq). Subir o Redis depois exige reiniciar o servidor.
@@ -241,7 +288,7 @@ class NatsKV:
     async def get(self, key: str) -> str | None:
         kv = await self._connect()
         try:
-            entry = await kv.get(key)
+            entry = await kv.get(_nats_safe_key(key))
         except Exception:
             return None
         return entry.value.decode("utf-8") if entry and entry.value else None
@@ -250,12 +297,12 @@ class NatsKV:
         # ttl_s ignorado — JetStream KV usa TTL de bucket, não por chave;
         # os usos atuais (invalidação de cache L2) toleram entradas sem TTL.
         kv = await self._connect()
-        await kv.put(key, value.encode("utf-8"))
+        await kv.put(_nats_safe_key(key), value.encode("utf-8"))
 
     async def delete(self, key: str) -> None:
         kv = await self._connect()
         with contextlib.suppress(Exception):
-            await kv.delete(key)
+            await kv.delete(_nats_safe_key(key))
 
     async def publish(self, channel: str, payload: str) -> None:
         await self._connect()
