@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
-"""Rejeita comentários/strings de código-fonte com proveniência de processo:
+"""Rejeita COMENTÁRIOS de código-fonte com proveniência de processo:
 referência de planejamento (Sprint/Bloco/Fase) ou menção a ferramenta/revisor
 de IA (CodeRabbit, Claude, Copilot, ChatGPT, etc). Comentários descrevem o
 que o código faz agora, não como ou por quem ele chegou nesse estado —
 histórico de planejamento/revisão mora em markdown ou na mensagem do commit,
 nunca em `.py`/`.ts`/`.tsx`/`.js`/`.jsx`. Roda como hook local de pre-commit,
 recebendo os arquivos staged como argv.
+
+Só comentários são varridos, nunca strings/identificadores — o Vectora tem
+strings/identificadores legítimos citando os mesmos nomes (ex.: ID de modelo
+`"claude-3-5-sonnet"`, detecção de harness `"claude_code"`); tratar string
+como comentário reintroduziria falso positivo em código de produção real.
 """
 
+from __future__ import annotations
+
+import io
 import re
 import sys
+import tokenize
 
 reconfigure = getattr(sys.stdout, "reconfigure", None)
 if reconfigure is not None and sys.stdout.encoding.lower() != "utf-8":
@@ -42,31 +51,87 @@ _AI_TOOL_PATTERN = re.compile(
 _PATTERN = re.compile(f"{_PLAN_PATTERN.pattern}|{_AI_TOOL_PATTERN.pattern}")
 
 
+def _python_comments(text: str) -> list[tuple[int, str]]:
+    try:
+        tokens = tokenize.generate_tokens(io.StringIO(text).readline)
+        return [
+            (tok.start[0], tok.string) for tok in tokens if tok.type == tokenize.COMMENT
+        ]
+    except (tokenize.TokenError, SyntaxError, IndentationError):
+        return []
+
+
+def _js_comments(text: str) -> list[tuple[int, str]]:
+    """Extrai comentários `//`/`/* */` de JS/TS/JSX ignorando o conteúdo de
+    strings (aspas simples/duplas/template literal) — sem parser completo,
+    então interpolação `${...}` dentro de template literal é tratada como
+    string comum (um `//`/`/*` ali dentro não seria detectado; caso raro
+    o bastante pra não justificar um parser de verdade)."""
+    out: list[tuple[int, str]] = []
+    lineno = 1
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "\n":
+            lineno += 1
+            i += 1
+            continue
+        if ch in ("'", '"', "`"):
+            quote = ch
+            i += 1
+            while i < n and text[i] != quote:
+                if text[i] == "\\":
+                    i += 1
+                elif text[i] == "\n":
+                    lineno += 1
+                i += 1
+            i += 1
+            continue
+        if ch == "/" and i + 1 < n and text[i + 1] == "/":
+            end = text.find("\n", i)
+            end = n if end == -1 else end
+            out.append((lineno, text[i:end]))
+            i = end
+            continue
+        if ch == "/" and i + 1 < n and text[i + 1] == "*":
+            start_line = lineno
+            end = text.find("*/", i + 2)
+            fim_token = n if end == -1 else end + 2
+            trecho = text[i:fim_token]
+            out.append((start_line, trecho))
+            lineno += trecho.count("\n")
+            i = fim_token
+            continue
+        i += 1
+    return out
+
+
 def _find_violations(path: str) -> list[tuple[int, str]]:
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
+            text = f.read()
     except OSError:
         return []
+
+    comments = _python_comments(text) if path.endswith(".py") else _js_comments(text)
     return [
-        (i, line.rstrip("\n"))
-        for i, line in enumerate(lines, start=1)
-        if _PATTERN.search(line)
+        (lineno, comment.strip())
+        for lineno, comment in comments
+        if _PATTERN.search(comment)
     ]
 
 
 def main(argv: list[str]) -> int:
     had_violation = False
     for path in argv:
-        for lineno, line in _find_violations(path):
+        for lineno, comment in _find_violations(path):
             had_violation = True
-            print(
-                f"{path}:{lineno}: proveniência de processo em código-fonte: {line.strip()}"
-            )
+            print(f"{path}:{lineno}: proveniência de processo em comentário: {comment}")
     if had_violation:
         print(
-            "\nComentários/strings de código não referenciam Sprint/Bloco/Fase "
-            "nem ferramenta/revisor de IA (CodeRabbit, Claude, Copilot, etc). "
+            "\nComentários de código não referenciam Sprint/Bloco/Fase nem "
+            "ferramenta/revisor de IA (CodeRabbit, Claude, Copilot, etc). "
             "Reescreva descrevendo só o estado atual do código — histórico de "
             "planejamento/revisão vai em docs/, .claude/plans/ ou na mensagem "
             "do commit."

@@ -57,6 +57,18 @@ class TestFerramentaIaDeteccao:
         )
         assert _find_violations(path) == []
 
+    def test_erro_borda_identificador_claude_em_codigo_real_nao_bloqueia(
+        self, tmp_path: Path
+    ) -> None:
+        path = _write(tmp_path, "a.py", "claude = object()\n")
+        assert _find_violations(path) == []
+
+    def test_erro_borda_string_com_id_de_modelo_claude_nao_bloqueia(
+        self, tmp_path: Path
+    ) -> None:
+        path = _write(tmp_path, "a.py", 'model = "claude-3-5-sonnet-latest"\n')
+        assert _find_violations(path) == []
+
 
 class TestMain:
     def test_erro_borda_arquivo_limpo_retorna_zero(self, tmp_path: Path) -> None:
