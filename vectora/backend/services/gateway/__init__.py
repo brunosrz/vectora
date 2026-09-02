@@ -84,6 +84,7 @@ class GatewayMessage(TypedDict, total=False):
     job_id: str
     diff: str
     metadata: dict[str, str]
+    callback_secret: str
 
 
 #: Item real de trabalho na fila — carrega o `ws`/`local_session` da conexão
@@ -305,6 +306,7 @@ class GatewayClient:
                     message.get("job_id", ""),
                     message.get("diff", ""),
                     message.get("metadata", {}),
+                    message.get("callback_secret", ""),
                 ),
                 name=f"gha-review-{message.get('job_id', '')}",
             )
@@ -313,7 +315,7 @@ class GatewayClient:
             return
 
     async def _handle_review_job(
-        self, job_id: str, diff: str, metadata: dict[str, str]
+        self, job_id: str, diff: str, metadata: dict[str, str], callback_secret: str
     ) -> None:
         """Roda a revisão de PR self-hosted e posta o resultado de volta —
         FORA do túnel (POST outbound normal, sem problema de NAT), já que o
@@ -322,15 +324,22 @@ class GatewayClient:
 
         try:
             review_text = await run_review_job(diff, metadata)
-            await self._post_review_result(job_id, review_text=review_text)
+            await self._post_review_result(
+                job_id, callback_secret, review_text=review_text
+            )
         except asyncio.CancelledError:
             raise
         except Exception as exc:
             logger.exception("gateway: review_job %s falhou", job_id)
-            await self._post_review_result(job_id, error=str(exc))
+            await self._post_review_result(job_id, callback_secret, error=str(exc))
 
     async def _post_review_result(
-        self, job_id: str, *, review_text: str | None = None, error: str | None = None
+        self,
+        job_id: str,
+        callback_secret: str,
+        *,
+        review_text: str | None = None,
+        error: str | None = None,
     ) -> None:
         body: dict[str, str] = {}
         if review_text is not None:
@@ -342,6 +351,7 @@ class GatewayClient:
                 async with session.post(
                     f"{_SERVICES_URL}/gha-bot/review/{job_id}/result",
                     json=body,
+                    headers={"Authorization": f"Bearer {callback_secret}"},
                 ) as resp:
                     if resp.status != 200:
                         logger.warning(

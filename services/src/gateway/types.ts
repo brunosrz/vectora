@@ -83,6 +83,12 @@ export type GatewayMessage =
       job_id: string;
       diff: string;
       metadata: Record<string, string>;
+      // Gerado no INSERT de POST /review, entregue só aqui (nunca na
+      // resposta HTTP da Action, que aparece em log de workflow) — exigido
+      // via Bearer em POST /review/:id/result. Sem isto, job_id sozinho
+      // (visível em log) bastaria pra qualquer um escrever review_text
+      // arbitrário no PR.
+      callback_secret: string;
     };
 
 export type ClientMessage =

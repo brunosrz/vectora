@@ -43,6 +43,7 @@ async def run_review_job(diff: str, metadata: dict[str, str]) -> str:
     from backend.engine.hitl import should_require_approval
     from backend.llm.fallback_chat_client import FallbackChatClient
     from backend.services import agent_factory
+    from backend.tools.registry import ToolRegistry
     from backend.vtypes.context import ctx_from_config
     from backend.vtypes.message import MessageRole, text_message
 
@@ -89,21 +90,17 @@ async def run_review_job(diff: str, metadata: dict[str, str]) -> str:
     chat_client = FallbackChatClient(primary_model_id=model_id)
     loop_config = LoopConfig(max_iterations=50)
 
-    if native_agent.subagent_catalog:
-        from backend.tools.subagent_delegate import SubagentDeps
-
-        run_ctx._extra["subagent_deps"] = SubagentDeps(
-            catalog=native_agent.subagent_catalog,
-            session_store=session_store,
-            chat_client=chat_client,
-            config=loop_config,
-            should_require_approval=should_require_approval,
-        )
-
+    # `diff` vem de um PR de terceiros — conteúdo não-confiável. Rodar com
+    # `native_agent.tool_registry` (fs/git/web/mcp, todas as ferramentas do
+    # agente completo) e `permission_mode="auto"` daria a uma instrução
+    # maliciosa embutida no diff acesso irrestrito a filesystem, rede e
+    # delegação de subagents, sem nenhum humano no loop pra aprovar. Um
+    # registry vazio elimina a superfície inteira: o modelo só pode
+    # responder texto (a revisão), nunca invocar uma tool.
     result = await run_conversation(
         session_store=session_store,
         chat_client=chat_client,
-        tool_registry=native_agent.tool_registry,
+        tool_registry=ToolRegistry(),
         ctx=run_ctx,
         thread_id=thread_id,
         config=loop_config,

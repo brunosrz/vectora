@@ -5,6 +5,8 @@ pelo túnel do gateway (ver backend/services/gateway/__init__.py::_dispatch).
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -18,11 +20,11 @@ from backend.services.agent_factory import NativeAgent
 from backend.services.gateway import review_job
 from backend.storage.sqlite.pool import AsyncConnectionPool
 from backend.tools.registry import ToolRegistry
-from backend.vtypes.message import VMessageChunk
+from backend.vtypes.message import MessageRole, VMessageChunk, text_message
 
 
 @pytest.fixture
-async def native_session_store(tmp_path):
+async def native_session_store(tmp_path: Path) -> AsyncIterator[SessionStore]:
     pool = AsyncConnectionPool(
         str(tmp_path / "review-job-sessions.db"), min_size=1, max_size=2
     )
@@ -48,21 +50,33 @@ class _ScriptedChatClient:
         self.chamadas = 0
         self.model_ids: list[str] = []
 
-    async def astream(self, messages, *, tools=None, temperature=None, max_tokens=None):
+    async def astream(
+        self,
+        messages: list[Any],
+        *,
+        tools: list[Any] | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> AsyncIterator[VMessageChunk]:
         self.chamadas += 1
         turno = self._turnos[self.chamadas - 1]
         for chunk in turno:
             yield chunk
 
     async def agenerate(
-        self, messages, *, tools=None, temperature=None, max_tokens=None
-    ):
+        self,
+        messages: list[Any],
+        *,
+        tools: list[Any] | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> Any:
         msg = "não usado (astream-only)"
         raise NotImplementedError(msg)
 
 
 def _patch_native_engine(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
     *,
     session_store: SessionStore,
     chat_client: Any = None,
@@ -121,14 +135,14 @@ class TestBuildTask:
 
 class TestRunReviewJob:
     async def test_erro_borda_sem_vectora_model_levanta_erro_tipado(
-        self, monkeypatch
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.delenv("VECTORA_MODEL", raising=False)
         with pytest.raises(review_job.ReviewJobModelNotConfiguredError):
             await review_job.run_review_job("diff x", {})
 
     async def test_roda_a_revisao_e_devolve_o_texto_final(
-        self, native_session_store, monkeypatch
+        self, native_session_store: SessionStore, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("VECTORA_MODEL", "google_genai:gemini-flash")
         client = _ScriptedChatClient([[_texto_chunk("LGTM, só um nit.")]])
@@ -145,12 +159,12 @@ class TestRunReviewJob:
         assert client.model_ids == ["google_genai:gemini-flash"]
 
     async def test_erro_borda_sem_mensagem_final_devolve_string_vazia(
-        self, native_session_store, monkeypatch
+        self, native_session_store: SessionStore, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("VECTORA_MODEL", "google_genai:gemini-flash")
         from backend.engine.conversation_loop import LoopResult
 
-        async def _fake_run_conversation(**kwargs):
+        async def _fake_run_conversation(**kwargs: Any) -> LoopResult:
             return LoopResult(stopped_reason="stop", final_message=None)
 
         _patch_native_engine(monkeypatch, session_store=native_session_store)
@@ -163,14 +177,14 @@ class TestRunReviewJob:
         assert texto == ""
 
     async def test_erro_de_execucao_se_propaga_pro_chamador(
-        self, native_session_store, monkeypatch
+        self, native_session_store: SessionStore, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """`run_review_job` não engole erro nenhum — quem decide como
         reportar (postar `error` em vez de `review_text`) é o chamador
         (`GatewayClient._handle_review_job`), não esta função."""
         monkeypatch.setenv("VECTORA_MODEL", "google_genai:gemini-flash")
 
-        async def _fake_run_conversation(**kwargs):
+        async def _fake_run_conversation(**kwargs: Any) -> None:
             msg = "provider indisponível"
             raise ConnectionError(msg)
 
@@ -181,3 +195,71 @@ class TestRunReviewJob:
 
         with pytest.raises(ConnectionError, match="provider indisponível"):
             await review_job.run_review_job("diff x", {})
+
+    async def test_roda_com_tool_registry_vazio_mesmo_quando_o_agente_tem_ferramentas(
+        self, native_session_store: SessionStore, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Achado de segurança: `diff` vem de um PR de terceiros (não
+        confiável) — rodar com o registry completo do agente (fs/git/web/mcp)
+        e permission_mode="auto" daria a uma instrução maliciosa embutida no
+        diff acesso irrestrito, sem humano no loop pra aprovar. Mesmo que
+        `native_agent.tool_registry` venha com ferramentas de verdade,
+        `run_conversation` deve receber um registry vazio."""
+        monkeypatch.setenv("VECTORA_MODEL", "google_genai:gemini-flash")
+
+        from pydantic import BaseModel
+
+        from backend.tools.registry import ToolExtras, ToolSpec
+
+        class _SemArgs(BaseModel):
+            pass
+
+        async def _nunca_deveria_ser_chamado() -> str:
+            return "não deveria nunca ser chamado"
+
+        registro_com_ferramentas = ToolRegistry()
+        registro_com_ferramentas.register(
+            ToolSpec(
+                name="fs_write",
+                description="escreve arquivo",
+                args_model=_SemArgs,
+                handler=_nunca_deveria_ser_chamado,
+                extras=ToolExtras(),
+                needs_ctx=False,
+            )
+        )
+        native_agent = NativeAgent(
+            tool_registry=registro_com_ferramentas,
+            subagent_catalog={},
+            system_prompt="system",
+        )
+
+        async def _fake_get_native_agent(
+            user_id: str | None = None,
+            chat_mode: bool = False,
+            workspace_id: str | None = None,
+        ) -> NativeAgent:
+            return native_agent
+
+        _patch_native_engine(monkeypatch, session_store=native_session_store)
+        monkeypatch.setattr(agent_factory, "get_native_agent", _fake_get_native_agent)
+
+        registros_recebidos: list[ToolRegistry] = []
+
+        async def _fake_run_conversation(**kwargs: Any) -> Any:
+            from backend.engine.conversation_loop import LoopResult
+
+            registros_recebidos.append(kwargs["tool_registry"])
+            return LoopResult(
+                stopped_reason="stop",
+                final_message=text_message(MessageRole.ASSISTANT, "ok"),
+            )
+
+        monkeypatch.setattr(
+            conversation_loop, "run_conversation", _fake_run_conversation
+        )
+
+        await review_job.run_review_job("diff x", {})
+
+        assert len(registros_recebidos) == 1
+        assert registros_recebidos[0].all() == []

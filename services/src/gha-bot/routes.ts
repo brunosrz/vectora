@@ -5,6 +5,7 @@ import { requireUserId } from "../auth/routes";
 import { bearerToken, sha256Hex } from "../auth/session";
 import { decryptProviderKey, encryptProviderKey } from "./crypto";
 import { checkGatewayHealth, dispatchReviewJob } from "../gateway";
+import { timingSafeEqual } from "../gateway/auth";
 
 export const ghaBot = new Hono<{ Bindings: Env }>();
 
@@ -299,16 +300,18 @@ ghaBot.post("/review", async (c) => {
   }
 
   const jobId = crypto.randomUUID();
+  const callbackSecret = crypto.randomUUID();
   await c.env.DB.prepare(
-    "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+    "INSERT INTO gha_bot_review_jobs (id, user_id, callback_secret, status) VALUES (?, ?, ?, 'pending')",
   )
-    .bind(jobId, userId)
+    .bind(jobId, userId, callbackSecret)
     .run();
 
   const { delivered } = await dispatchReviewJob(c.env, tokenRow.token, {
     job_id: jobId,
     diff: body.diff,
     metadata: body.metadata ?? {},
+    callback_secret: callbackSecret,
   });
 
   if (!delivered) {
@@ -341,22 +344,21 @@ ghaBot.get("/review/:id", async (c) => {
 
 /**
  * O backend Python do usuário chama isto quando termina a revisão — FORA
- * do túnel (POST outbound normal, sem problema de NAT/firewall). Mesmo
- * VECTORA_BOT_TOKEN de /config autentica (a instância já tem ele — é o
- * mesmo token que baixou a config do job originalmente).
+ * do túnel (POST outbound normal, sem problema de NAT/firewall). Autenticado
+ * por `callback_secret`, não pelo VECTORA_BOT_TOKEN de /config (o backend
+ * Python que roda o job não tem esse token disponível — é gerado só pra
+ * Action, no painel). O secret é por-job, gerado no INSERT de POST /review e
+ * entregue só dentro do payload `review_job` pelo túnel — nunca na resposta
+ * HTTP da Action, que aparece em log de workflow. `job_id` sozinho (esse
+ * sim, visível em log) não bastaria: sem o secret, qualquer um que soubesse
+ * o id escreveria review_text arbitrário no PR antes do backend legítimo.
+ * `AND status = 'pending'` mantém o update de uso único.
  */
-// Sem VECTORA_BOT_TOKEN — o backend Python que roda o job (GatewayClient,
-// review_job.py) não tem esse token disponível (é gerado só pra Action, no
-// painel), e obrigar o usuário a configurar mais um secret na própria
-// instância só pra este callback seria atrito sem necessidade real de
-// segurança: `id` já é um UUID aleatório de 122 bits (crypto.randomUUID,
-// inadivinhável), entregue só por dentro do túnel do gateway pro backend
-// exato do dono do job — e o `AND status = 'pending'` abaixo faz o update
-// de uso único, travando qualquer replay depois do primeiro resultado
-// aceito. Mesmo modelo de "token de capacidade" de uma URL com UUID
-// inadivinhável, não um bearer token separado.
 ghaBot.post("/review/:id/result", async (c) => {
   const id = c.req.param("id");
+  const secret = bearerToken(c.req.raw);
+  if (!secret) return c.json({ error: "unauthorized" }, 401);
+
   const body = await c.req
     .json<{ review_text?: string; error?: string }>()
     .catch(() => null);
@@ -364,13 +366,22 @@ ghaBot.post("/review/:id/result", async (c) => {
     return c.json({ error: "missing_fields" }, 400);
   }
 
+  const row = await c.env.DB.prepare(
+    "SELECT callback_secret FROM gha_bot_review_jobs WHERE id = ? AND status = 'pending'",
+  )
+    .bind(id)
+    .first<{ callback_secret: string }>();
+  if (!row || !timingSafeEqual(secret, row.callback_secret)) {
+    return c.json({ error: "not_found" }, 404);
+  }
+
   const status = body.error ? "failed" : "done";
   const result = await c.env.DB.prepare(
     `UPDATE gha_bot_review_jobs
      SET status = ?, review_text = ?, error = ?, updated_at = datetime('now')
-     WHERE id = ? AND status = 'pending'`,
+     WHERE id = ? AND callback_secret = ? AND status = 'pending'`,
   )
-    .bind(status, body.review_text ?? null, body.error ?? null, id)
+    .bind(status, body.review_text ?? null, body.error ?? null, id, secret)
     .run();
 
   if (result.meta.changes === 0) return c.json({ error: "not_found" }, 404);

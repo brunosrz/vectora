@@ -368,42 +368,14 @@ CREATE INDEX IF NOT EXISTS gha_bot_tokens_hash_idx ON gha_bot_tokens(token_hash)
 -- puro. Cloudflare Secrets Store não serve aqui: exige 1 binding
 -- estático por secret, declarado no deploy — não dá pra ler um valor
 -- dinâmico por usuário em runtime.
--- `self_hosted_enabled`: usuário optou por rodar a revisão na própria
--- instância Vectora (via túnel do gateway, `tokens.token` do mesmo user_id)
--- em vez do runner efêmero do GitHub Actions — ver gha_bot_review_jobs
--- abaixo. D1/SQLite não suporta `ALTER TABLE ... ADD COLUMN IF NOT
--- EXISTS` — bancos já provisionados antes desta mudança precisam de
--- `ALTER TABLE gha_bot_config ADD COLUMN self_hosted_enabled INTEGER NOT NULL DEFAULT 0`
--- manual (uma vez, fora deste arquivo) antes de reaplicar.
 CREATE TABLE IF NOT EXISTS gha_bot_config (
   user_id                     TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   provider                    TEXT NOT NULL,
   model                       TEXT NOT NULL,
   provider_api_key_encrypted  TEXT NOT NULL,
   review_style                TEXT NOT NULL DEFAULT 'balanced' CHECK (review_style IN ('strict', 'balanced', 'lenient')),
-  self_hosted_enabled         INTEGER NOT NULL DEFAULT 0,
   updated_at                  TEXT NOT NULL DEFAULT (datetime('now'))
 );
-
--- Job assíncrono de revisão rodada na instância Vectora do próprio usuário
--- (modo self-hosted) — a Action cria com POST /gha-bot/review e recebe
--- 202+job_id na hora (o job em si é despachado pro backend Python via
--- fire-and-forget pelo túnel do gateway, sidesteps o teto de 30s do
--- GatewaySession, que é pra request/response HTTP síncrono, não pra isto),
--- depois faz long-poll em GET /gha-bot/review/:id até status != 'pending'.
--- O backend Python chama POST /gha-bot/review/:id/result quando termina —
--- fora do túnel (outbound normal, sem problema de NAT).
-CREATE TABLE IF NOT EXISTS gha_bot_review_jobs (
-  id         TEXT PRIMARY KEY,
-  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  status     TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'done', 'failed')),
-  review_text TEXT,
-  error       TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS gha_bot_review_jobs_user_id_idx ON gha_bot_review_jobs(user_id);
 
 -- Seed idempotente do catálogo de planos.
 INSERT OR IGNORE INTO plans (id, months, price_usd_cents, price_brl_cents) VALUES

@@ -3,12 +3,16 @@
 import asyncio
 import contextlib
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
 import pytest
 
 from backend.services.gateway import GatewayMessage, GatewayRequestItem
+
+if TYPE_CHECKING:
+    from backend.services.gateway import GatewayClient
 
 
 @pytest.fixture
@@ -626,7 +630,7 @@ class TestGatewayClientDispatch:
 
 
 class TestGatewayClientReviewJob:
-    def _client(self):
+    def _client(self) -> "GatewayClient":
         from backend.services.gateway import GatewayClient
 
         return GatewayClient(
@@ -634,7 +638,7 @@ class TestGatewayClientReviewJob:
             app_secret="test-app-secret",
         )
 
-    def _queue(self):
+    def _queue(self) -> "asyncio.Queue[object]":
         from backend.services.gateway import _MAX_CONCURRENT_FORWARDS
 
         return asyncio.Queue(maxsize=_MAX_CONCURRENT_FORWARDS)
@@ -659,13 +663,16 @@ class TestGatewayClientReviewJob:
                     "job_id": "job-1",
                     "diff": "diff x",
                     "metadata": {"pr": "1"},
+                    "callback_secret": "secret-do-job",
                 },
                 queue,
             )
             await asyncio.sleep(0)  # deixa a task criada rodar
 
         assert queue.qsize() == 0
-        mock_handle.assert_awaited_once_with("job-1", "diff x", {"pr": "1"})
+        mock_handle.assert_awaited_once_with(
+            "job-1", "diff x", {"pr": "1"}, "secret-do-job"
+        )
 
     @pytest.mark.asyncio
     async def test_handle_review_job_sucesso_posta_review_text(self) -> None:
@@ -678,9 +685,9 @@ class TestGatewayClientReviewJob:
             with patch.object(
                 client, "_post_review_result", new=AsyncMock()
             ) as mock_post:
-                await client._handle_review_job("job-1", "diff x", {})
+                await client._handle_review_job("job-1", "diff x", {}, "secret-do-job")
 
-        mock_post.assert_awaited_once_with("job-1", review_text="LGTM")
+        mock_post.assert_awaited_once_with("job-1", "secret-do-job", review_text="LGTM")
 
     @pytest.mark.asyncio
     async def test_erro_borda_handle_review_job_falha_posta_error_em_vez_de_propagar(
@@ -698,9 +705,11 @@ class TestGatewayClientReviewJob:
             with patch.object(
                 client, "_post_review_result", new=AsyncMock()
             ) as mock_post:
-                await client._handle_review_job("job-1", "diff x", {})
+                await client._handle_review_job("job-1", "diff x", {}, "secret-do-job")
 
-        mock_post.assert_awaited_once_with("job-1", error="provider indisponível")
+        mock_post.assert_awaited_once_with(
+            "job-1", "secret-do-job", error="provider indisponível"
+        )
 
     @pytest.mark.asyncio
     async def test_post_review_result_manda_pro_endpoint_certo(self) -> None:
@@ -722,13 +731,16 @@ class TestGatewayClientReviewJob:
             "backend.services.gateway.aiohttp.ClientSession",
             return_value=mock_session,
         ):
-            await client._post_review_result("job-1", review_text="LGTM")
+            await client._post_review_result(
+                "job-1", "secret-do-job", review_text="LGTM"
+            )
 
         call_args, call_kwargs = mock_session.post.call_args
         assert call_args[0] == (
             "https://services.vectora.company/gha-bot/review/job-1/result"
         )
         assert call_kwargs["json"] == {"review_text": "LGTM"}
+        assert call_kwargs["headers"] == {"Authorization": "Bearer secret-do-job"}
 
     @pytest.mark.asyncio
     async def test_erro_borda_post_review_result_falha_de_rede_nao_propaga(
@@ -744,7 +756,9 @@ class TestGatewayClientReviewJob:
             "backend.services.gateway.aiohttp.ClientSession",
             side_effect=ConnectionError("sem rede"),
         ):
-            await client._post_review_result("job-1", error="x")  # não lança
+            await client._post_review_result(
+                "job-1", "secret-do-job", error="x"
+            )  # não lança
 
 
 class TestGatewayClientForward:

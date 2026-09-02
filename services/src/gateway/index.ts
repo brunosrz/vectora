@@ -212,7 +212,12 @@ export async function checkGatewayHealth(
 export async function dispatchReviewJob(
   env: Env,
   token: string,
-  payload: { job_id: string; diff: string; metadata: Record<string, string> },
+  payload: {
+    job_id: string;
+    diff: string;
+    metadata: Record<string, string>;
+    callback_secret: string;
+  },
 ): Promise<{ delivered: boolean }> {
   const res = await routeToSession(
     new Request(`https://${GATEWAY_HOST}/_dispatch-job`, {

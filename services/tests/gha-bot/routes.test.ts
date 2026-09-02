@@ -530,20 +530,24 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
         type: string;
         job_id: string;
         diff: string;
+        metadata: Record<string, string>;
+        callback_secret: string;
       };
-      expect(msg).toEqual({
-        type: "review_job",
-        job_id,
-        diff: "diff --git a/a.py b/a.py\n+print(1)",
-        metadata: { pr_number: "42" },
-      });
+      expect(msg.type).toBe("review_job");
+      expect(msg.job_id).toBe(job_id);
+      expect(msg.diff).toBe("diff --git a/a.py b/a.py\n+print(1)");
+      expect(msg.metadata).toEqual({ pr_number: "42" });
+      // Não distribuído em lugar nenhum além deste payload pelo túnel — ver
+      // achado de segurança em POST /review/:id/result.
+      expect(msg.callback_secret).toBeTruthy();
 
       const jobRow = await env.DB.prepare(
-        "SELECT status FROM gha_bot_review_jobs WHERE id = ?",
+        "SELECT status, callback_secret FROM gha_bot_review_jobs WHERE id = ?",
       )
         .bind(job_id)
-        .first<{ status: string }>();
+        .first<{ status: string; callback_secret: string }>();
       expect(jobRow?.status).toBe("pending");
+      expect(jobRow?.callback_secret).toBe(msg.callback_secret);
 
       ws.webSocket!.close();
     },
@@ -620,7 +624,7 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
   it("GET /review/:id devolve o status do job — pending logo após criar", async () => {
     const { userId, botToken } = await makeProUserWithBotTokenAndSettings(true);
     await env.DB.prepare(
-      "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+      "INSERT INTO gha_bot_review_jobs (id, user_id, callback_secret, status) VALUES (?, ?, 'secret-pending-1', 'pending')",
     )
       .bind("job-pending-1", userId)
       .run();
@@ -640,7 +644,7 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
     const { botToken: strangerToken } =
       await makeProUserWithBotTokenAndSettings(true);
     await env.DB.prepare(
-      "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+      "INSERT INTO gha_bot_review_jobs (id, user_id, callback_secret, status) VALUES (?, ?, 'secret-isolated-1', 'pending')",
     )
       .bind("job-isolated-1", ownerId)
       .run();
@@ -656,7 +660,7 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
   it("POST /review/:id/result marca o job como done com o texto da revisão", async () => {
     const { userId, botToken } = await makeProUserWithBotTokenAndSettings(true);
     await env.DB.prepare(
-      "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+      "INSERT INTO gha_bot_review_jobs (id, user_id, callback_secret, status) VALUES (?, ?, 'secret-result-1', 'pending')",
     )
       .bind("job-result-1", userId)
       .run();
@@ -666,7 +670,7 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${botToken}`,
+          Authorization: "Bearer secret-result-1",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ review_text: "LGTM, só um nit na linha 3." }),
@@ -688,7 +692,7 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
   it("erro de borda — POST /review/:id/result com error marca o job como failed", async () => {
     const { userId, botToken } = await makeProUserWithBotTokenAndSettings(true);
     await env.DB.prepare(
-      "INSERT INTO gha_bot_review_jobs (id, user_id, status) VALUES (?, ?, 'pending')",
+      "INSERT INTO gha_bot_review_jobs (id, user_id, callback_secret, status) VALUES (?, ?, 'secret-result-err-1', 'pending')",
     )
       .bind("job-result-err-1", userId)
       .run();
@@ -698,7 +702,7 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${botToken}`,
+          Authorization: "Bearer secret-result-err-1",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ error: "modelo indisponível" }),
@@ -719,7 +723,7 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
   it("erro de borda — POST /review/:id/result não sobrescreve um job que já não está pending", async () => {
     const { userId, botToken } = await makeProUserWithBotTokenAndSettings(true);
     await env.DB.prepare(
-      "INSERT INTO gha_bot_review_jobs (id, user_id, status, review_text) VALUES (?, ?, 'done', 'primeira resposta')",
+      "INSERT INTO gha_bot_review_jobs (id, user_id, callback_secret, status, review_text) VALUES (?, ?, 'secret-already-done-1', 'done', 'primeira resposta')",
     )
       .bind("job-already-done-1", userId)
       .run();
@@ -729,7 +733,7 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${botToken}`,
+          Authorization: "Bearer secret-already-done-1",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ review_text: "resposta duplicada" }),
@@ -758,16 +762,62 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
     expect(get.status).toBe(401);
   });
 
-  it("erro de borda — /review/:id/result não exige VECTORA_BOT_TOKEN (segurança vem do id inadivinhável + status=pending), mas job inexistente ainda 404", async () => {
-    // O backend Python que roda o job self-hosted não tem esse token
-    // disponível — ver comentário na rota. Confirma que a rota aceita a
-    // chamada mesmo sem Authorization nenhum, e que o 404 continua vindo
-    // de "job não existe/já não está pending", não de auth.
+  it("erro de borda — POST /review/:id/result sem Authorization devolve 401 antes de tocar o banco", async () => {
     const result = await ghaBot.request(
       "/review/job-nao-existe/result",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ review_text: "x" }),
+      },
+      env,
+    );
+    expect(result.status).toBe(401);
+  });
+
+  it("erro de borda — POST /review/:id/result com callback_secret errado devolve 404, não sobrescreve o job", async () => {
+    // Achado de segurança: job_id sozinho (visível em log de workflow) não
+    // pode bastar pra escrever review_text arbitrário — precisa também
+    // acertar o callback_secret gerado no INSERT.
+    const { userId } = await makeProUserWithBotTokenAndSettings(true);
+    await env.DB.prepare(
+      "INSERT INTO gha_bot_review_jobs (id, user_id, callback_secret, status) VALUES (?, ?, 'secret-certo', 'pending')",
+    )
+      .bind("job-secret-errado-1", userId)
+      .run();
+
+    const res = await ghaBot.request(
+      "/review/job-secret-errado-1/result",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer secret-errado",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ review_text: "review forjado" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(404);
+
+    const jobRow = await env.DB.prepare(
+      "SELECT status, review_text FROM gha_bot_review_jobs WHERE id = ?",
+    )
+      .bind("job-secret-errado-1")
+      .first<{ status: string; review_text: string | null }>();
+    expect(jobRow?.status).toBe("pending");
+    expect(jobRow?.review_text).toBeNull();
+  });
+
+  it("erro de borda — POST /review/:id/result de um job inexistente com qualquer secret devolve 404", async () => {
+    const result = await ghaBot.request(
+      "/review/job-nao-existe/result",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer qualquer-coisa",
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ review_text: "x" }),
       },
       env,
