@@ -912,7 +912,15 @@ _OAUTH_SOURCE_PREFIX = "__oauth_source__:"
 async def set_env_override(
     user_id: str, key: str, value: str, *, source: str = "manual"
 ) -> None:
-    """Define (ou sobrescreve) um env override para o usuário."""
+    """Define (ou sobrescreve) um env override para o usuário.
+
+    Rejeita `key` iniciada por `_OAUTH_SOURCE_PREFIX` — sem isso, uma
+    escrita manual (`POST /auth/envs`, que aceita qualquer nome de chave)
+    poderia forjar `__oauth_source__:GITHUB_TOKEN` e, se `GITHUB_TOKEN` já
+    existisse, fazer `is_oauth_sourced` mentir que veio de OAuth."""
+    if key.startswith(_OAUTH_SOURCE_PREFIX):
+        msg = f"chave reservada, não pode ser setada diretamente: {key!r}"
+        raise ValueError(msg)
     if user_id == "local":
         from backend.workspace.runtime_settings import runtime_settings
 

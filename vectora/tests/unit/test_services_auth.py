@@ -533,7 +533,7 @@ class TestEnvOverrides:
         assert overrides == {}
 
     @pytest.mark.asyncio
-    async def test_source_oauth_marca_is_oauth_sourced(self):
+    async def test_source_oauth_marca_is_oauth_sourced(self) -> None:
         from backend.rbac.auth import (
             get_env_overrides,
             is_oauth_sourced,
@@ -548,7 +548,7 @@ class TestEnvOverrides:
         assert is_oauth_sourced(overrides, "GITHUB_TOKEN") is True
 
     @pytest.mark.asyncio
-    async def test_source_manual_default_nao_marca_is_oauth_sourced(self):
+    async def test_source_manual_default_nao_marca_is_oauth_sourced(self) -> None:
         from backend.rbac.auth import (
             get_env_overrides,
             is_oauth_sourced,
@@ -563,7 +563,9 @@ class TestEnvOverrides:
         assert is_oauth_sourced(overrides, "GITHUB_TOKEN") is False
 
     @pytest.mark.asyncio
-    async def test_resetar_override_via_source_manual_apaga_marca_oauth_previa(self):
+    async def test_resetar_override_via_source_manual_apaga_marca_oauth_previa(
+        self,
+    ) -> None:
         """Erro/borda: se um usuário conectou via OAuth e depois cola um
         token manualmente por cima (mesma env var), a marca de proveniência
         OAuth não pode sobreviver — senão a UI continuaria mostrando
@@ -584,7 +586,20 @@ class TestEnvOverrides:
         assert is_oauth_sourced(overrides, "GITHUB_TOKEN") is False
 
     @pytest.mark.asyncio
-    async def test_delete_override_remove_tambem_a_marca_oauth(self):
+    async def test_erro_borda_chave_reservada_de_proveniencia_oauth_e_rejeitada(
+        self,
+    ) -> None:
+        """Uma escrita manual não pode forjar a chave-sombra de proveniência
+        OAuth — senão, com um GITHUB_TOKEN qualquer já setado, is_oauth_sourced
+        mentiria que veio de OAuth."""
+        from backend.rbac.auth import set_env_override, signup
+
+        user, _, _ = await signup("forja-oauth@example.com", "senhasegura1234")
+        with pytest.raises(ValueError, match="chave reservada"):
+            await set_env_override(user.id, "__oauth_source__:GITHUB_TOKEN", "1")
+
+    @pytest.mark.asyncio
+    async def test_delete_override_remove_tambem_a_marca_oauth(self) -> None:
         from backend.rbac.auth import (
             delete_env_override,
             get_env_overrides,
