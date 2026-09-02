@@ -17,12 +17,12 @@
         },
         {
           "type": "json",
-          "path": "../services/package.json",
+          "path": "/services/package.json",
           "jsonpath": "$.version"
         },
         {
           "type": "json",
-          "path": "../company/package.json",
+          "path": "/company/package.json",
           "jsonpath": "$.version"
         }
       ]
