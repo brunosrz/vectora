@@ -142,6 +142,8 @@
   "account_role_viewer": "Visualizador",
   "prefs_theme": "Tema de interfaz",
   "prefs_theme_system": "Sistema (automático)",
+  "prefs_theme_mode": "Apariencia",
+  "prefs_theme_search_placeholder": "Buscar paletas...",
   "prefs_theme_light": "Claro",
   "prefs_theme_dark": "Oscuro",
   "prefs_theme_palette": "Paleta de colores",

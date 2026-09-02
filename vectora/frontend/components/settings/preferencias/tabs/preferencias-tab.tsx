@@ -38,7 +38,10 @@ import {
   DEFAULT_CUSTOM_COLORS,
   type BaseThemeColors,
 } from "@/lib/theme/presets";
-import { ThemePicker } from "@/components/settings/preferencias/theme-picker";
+import {
+  ThemePicker,
+  ThemeModeToggle,
+} from "@/components/settings/preferencias/theme-picker";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 /** Deriva o `Theme` (claro/escuro) a partir do id de um preset. */
@@ -397,27 +400,25 @@ export function PreferenciasTab() {
     setCustomThemeColors({ ...activeCustomColors, [key]: value });
   };
 
-  // Seletor unificado de tema: "system" | "custom" | id de THEME_PRESETS.
-  // "default" (sentinela de "sem preset, usa o tema base") é tratado como "system".
-  const selectedTheme =
-    themePreset === "custom"
-      ? "custom"
-      : themePreset === "default"
-        ? "system"
-        : themePreset;
+  // Grid de paletas: "custom" | id de THEME_PRESETS — "default" (sentinela
+  // de "sem preset, usa o tema base") não corresponde a nenhum card, então
+  // nenhum fica marcado como ativo (comportamento correto: nenhuma paleta
+  // específica escolhida ainda). Claro/escuro/sistema agora é um controle
+  // próprio (ThemeModeToggle), não mais uma entrada do grid.
+  const selectedTheme = themePreset === "custom" ? "custom" : themePreset;
 
   const handleThemeChange = (value: string) => {
     if (value === "custom") {
       setThemePreset("custom");
       return;
     }
-    if (value === "system") {
-      setTheme("system");
-      setThemePreset("default");
-      return;
-    }
     setTheme(themeForPreset(value));
     setThemePreset(value);
+  };
+
+  const handleModeChange = (mode: Theme) => {
+    setTheme(mode);
+    if (mode === "system") setThemePreset("default");
   };
 
   const handleAddTrainingBlock = () => {
@@ -444,14 +445,27 @@ export function PreferenciasTab() {
         </h3>
 
         <div className="space-y-2">
+          <Label>{m.prefs_theme_mode()}</Label>
+          <ThemeModeToggle
+            value={theme}
+            onChange={handleModeChange}
+            labels={{
+              system: m.prefs_theme_system(),
+              light: m.prefs_theme_light(),
+              dark: m.prefs_theme_dark(),
+            }}
+          />
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="theme">{m.prefs_theme()}</Label>
           <ThemePicker
             value={selectedTheme}
             onChange={handleThemeChange}
             presets={THEME_PRESETS}
-            systemLabel={m.prefs_theme_system()}
             customLabel={m.prefs_theme_palette_custom()}
             customColors={activeCustomColors}
+            searchPlaceholder={m.prefs_theme_search_placeholder()}
           />
           <p className="text-xs text-muted-foreground">
             {m.prefs_theme_palette_help()}

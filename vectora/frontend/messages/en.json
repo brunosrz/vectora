@@ -141,6 +141,8 @@
   "account_role_member": "Member",
   "account_role_viewer": "Viewer",
   "prefs_theme": "Interface theme",
+  "prefs_theme_mode": "Appearance",
+  "prefs_theme_search_placeholder": "Search palettes...",
   "prefs_theme_system": "System (automatic)",
   "prefs_theme_light": "Light",
   "prefs_theme_dark": "Dark",
