@@ -34,6 +34,9 @@ Todo push/PR que toque `vectora/**` roda, em ordem:
 
 ## Python 3.13 (não 3.14, por ora)
 
+A versão de Python é fixada explicitamente no workflow — não segue a mais
+recente disponível automaticamente, por causa da restrição do Nuitka abaixo.
+
 `PYTHON_VERSION: "3.13"` no workflow casa com o `requires-python` do projeto,
 com o `.python-version` da raiz e com a CPython que o `uv` resolve localmente.
 O Nuitka 4.1.x (usado no `release-native`) **só suporta oficialmente até 3.13**
@@ -54,6 +57,9 @@ Configurados em **Settings → Secrets and variables → Actions**.
 | `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`                  | publish-update-channel, publish-gha-bot-cli | Upload S3-compatível pro bucket R2.                             |
 
 ## Rollback
+
+Sem imagem Docker publicada, o rollback do app acontece pelo canal de
+update dos instaladores nativos, não por reapontar um `docker-compose.yml`.
 
 O canal de update (`services/scripts/release.ts`) mantém `previous_stable` e
 uma lista de quarentena por versão — uma versão problemática pode ser
