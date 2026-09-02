@@ -38,7 +38,7 @@ export function BillingPanel() {
     try {
       const res = await fetch("/license/portal", { method: "POST" });
       if (!res.ok) {
-        void openUrl("https://vectora.company/pricing");
+        void openUrl("https://vectora.company/dashboard/billing");
         return;
       }
       const data = (await res.json()) as { url?: string };
@@ -64,7 +64,9 @@ export function BillingPanel() {
         </p>
         <button
           type="button"
-          onClick={() => void openUrl("https://vectora.company/pricing")}
+          onClick={() =>
+            void openUrl("https://vectora.company/dashboard/billing")
+          }
           className="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-muted/50 transition-colors"
         >
           {m.billing_panel_upgrade_button()}

@@ -138,6 +138,27 @@ const AboutPanelLazy = lazyWithRetry(
   "settings-about-tab",
 );
 
+/** Cobrança + Sobre empilhados numa categoria só — telas pequenas demais
+ * (poucos campos cada) pra justificar 2 entradas separadas no rail. */
+function BillingAndAboutPanel() {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-sm font-medium mb-3">
+          {m.settings_category_billing()}
+        </h3>
+        <BillingPanelLazy />
+      </div>
+      <div>
+        <h3 className="text-sm font-medium mb-3">
+          {m.settings_category_about()}
+        </h3>
+        <AboutPanelLazy />
+      </div>
+    </div>
+  );
+}
+
 export type SettingsGroupId =
   "preferencias" | "ambiente" | "administracao" | "geral_grupo";
 
@@ -285,13 +306,7 @@ export function buildSettingsCategoryGroups({
       id: "billing",
       group: "geral_grupo",
       label: m.settings_category_billing(),
-      Component: BillingPanelLazy,
-    },
-    {
-      id: "about",
-      group: "geral_grupo",
-      label: m.settings_category_about(),
-      Component: AboutPanelLazy,
+      Component: BillingAndAboutPanel,
     },
   ];
 
@@ -319,12 +334,22 @@ export function buildSettingsCategoryGroups({
   return groups;
 }
 
+/** "about" foi mesclado dentro da categoria "billing" (Cobrança + Sobre
+ * empilhados) — mantido como alias pra não quebrar deep-links antigos que
+ * ainda abrem `openCategory("about")` diretamente. */
+const CATEGORY_ALIASES: Partial<
+  Record<SettingsCategoryId, SettingsCategoryId>
+> = {
+  about: "billing",
+};
+
 export function findCategory(
   groups: SettingsCategoryGroup[],
   id: SettingsCategoryId,
 ): SettingsCategory | undefined {
+  const resolvedId = CATEGORY_ALIASES[id] ?? id;
   for (const group of groups) {
-    const found = group.categories.find((c) => c.id === id);
+    const found = group.categories.find((c) => c.id === resolvedId);
     if (found) return found;
   }
   return undefined;
