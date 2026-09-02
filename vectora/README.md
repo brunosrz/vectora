@@ -80,7 +80,7 @@ Os artefatos do Context Graph e o cache ficam em `.vectora/context-graph/` dentr
 ## Início rápido (a partir do código fonte)
 
 ```bash
-git clone https://github.com/brunosrz/vectora.git
+git clone https://github.com/vectora-ltda/vectora.git
 cd vectora/vectora
 
 # Instalar dependências Python
