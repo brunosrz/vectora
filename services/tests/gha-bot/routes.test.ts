@@ -2,6 +2,7 @@ import { env, SELF } from "cloudflare:test";
 import { describe, expect, it, vi } from "vitest";
 import { ghaBot } from "../../src/gha-bot/routes";
 import { createSession } from "../../src/auth/session";
+import { hashConnectorSecret } from "../../src/gateway/auth";
 
 // Testes que criam Durable Object (SQLite no disco) — mesma limitação de
 // gateway/gateway-session.test.ts: workerd não libera o lock do arquivo
@@ -417,6 +418,36 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
       .run();
   }
 
+  // Além da linha em `tokens` (o que os testes acima já cobrem via
+  // registerGatewayToken), abrir o WebSocket como dono da sessão agora
+  // exige um connector_secret que bata com o secretHash guardado na DO
+  // (ver achado de segurança do túnel — handleWebSocketUpgrade rejeita
+  // sem isso). Fora do fluxo real de POST /register, simula o mesmo
+  // passo interno (`/_set-secret`) que /register faz, devolvendo o
+  // secret em texto puro pro teste usar no Authorization do handshake.
+  const CONNECTOR_SECRET = "test-connector-secret-para-ws-gha-bot";
+
+  async function registerGatewayTokenWithSecret(
+    userId: string,
+    gwToken: string,
+  ): Promise<string> {
+    await registerGatewayToken(userId, gwToken);
+    const secretHash = await hashConnectorSecret(CONNECTOR_SECRET);
+    const setSecretResp = await SELF.fetch(
+      `https://${gwToken}.vectora.chat/_set-secret`,
+      {
+        method: "POST",
+        headers: {
+          "X-Vectora-Internal": `Bearer ${env.GATEWAY_INTERNAL_SECRET}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ secretHash }),
+      },
+    );
+    expect(setSecretResp.ok).toBe(true);
+    return CONNECTOR_SECRET;
+  }
+
   it("self_hosted_enabled=false — /config sempre devolve mode hosted, nunca consulta o gateway", async () => {
     const { userId, botToken } =
       await makeProUserWithBotTokenAndSettings(false);
@@ -466,11 +497,16 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
       const { userId, botToken } =
         await makeProUserWithBotTokenAndSettings(true);
       const gwToken = "tokenconnected1";
-      await registerGatewayToken(userId, gwToken);
+      const secret = await registerGatewayTokenWithSecret(userId, gwToken);
 
       const ws = await SELF.fetch(
         `https://gateway.vectora.chat/ws/${gwToken}`,
-        { headers: { Upgrade: "websocket" } },
+        {
+          headers: {
+            Upgrade: "websocket",
+            Authorization: `Bearer ${secret}`,
+          },
+        },
       );
       expect(ws.status).toBe(101);
       expect(ws.webSocket).toBeTruthy();
@@ -495,11 +531,16 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
       const { userId, botToken } =
         await makeProUserWithBotTokenAndSettings(true);
       const gwToken = "tokenreview1";
-      await registerGatewayToken(userId, gwToken);
+      const secret = await registerGatewayTokenWithSecret(userId, gwToken);
 
       const ws = await SELF.fetch(
         `https://gateway.vectora.chat/ws/${gwToken}`,
-        { headers: { Upgrade: "websocket" } },
+        {
+          headers: {
+            Upgrade: "websocket",
+            Authorization: `Bearer ${secret}`,
+          },
+        },
       );
       ws.webSocket!.accept();
       const received: MessageEvent[] = [];
