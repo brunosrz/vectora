@@ -23,7 +23,7 @@ ALTER TABLE gha_bot_config ADD COLUMN self_hosted_enabled INTEGER NOT NULL DEFAU
 -- este secret via Bearer, senão job_id sozinho (visível em log público)
 -- bastaria pra qualquer um escrever review_text arbitrário no PR.
 CREATE TABLE gha_bot_review_jobs (
-  id              TEXT PRIMARY KEY,
+  id              TEXT NOT NULL PRIMARY KEY,
   user_id         TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   callback_secret TEXT NOT NULL,
   status          TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'done', 'failed')),
