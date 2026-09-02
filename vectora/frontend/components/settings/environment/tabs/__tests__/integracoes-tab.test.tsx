@@ -171,10 +171,14 @@ const BASE_INTEGRATIONS = [
     connected: false,
   },
   {
+    // kind "apikey" reflete o registry real do backend (oauth.py) — Slack
+    // exige xoxb- (bot) + xapp- (app, Socket Mode), e o app-level token não
+    // sai de um fluxo OAuth padrão, então a conexão é sempre por token
+    // colado, nunca "OAuth-styled".
     id: "slack",
     name: "Slack",
     env_var: "SLACK_BOT_TOKEN",
-    kind: "oauth",
+    kind: "apikey",
     description: "Slack messaging",
     docs_url: "https://api.slack.com",
     icon: "slack",
@@ -303,27 +307,41 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("providers OAuth-only (gitlab/google/slack) também aceitam token manual", async () => {
+  it("todo provider (independente de kind) também aceita token manual", async () => {
     // Todo provider, independente de kind, expõe o botão de expandir pra
     // colar token manualmente (title = "Colar token manualmente") — o fluxo
-    // OAuth não é a única via.
+    // OAuth não é a única via, nem existe pra Slack (apikey).
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
       const pasteButtons = screen.getAllByTitle(/colar token manualmente/i);
-      // github(hybrid) + gitlab + google + slack = 4 no mínimo
-      // (google-drive é filho, não conta)
+      // github(hybrid) + gitlab(oauth) + google(oauth) + slack(apikey) = 4
+      // no mínimo (google-drive é filho, não conta)
       expect(pasteButtons.length).toBeGreaterThanOrEqual(4);
     });
   });
 
-  it("Slack conectado via OAuth exibe botão Desconectar", async () => {
+  it("GitHub (hybrid) conectado exibe botão Desconectar de OAuth", async () => {
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
       const disconnectBtns = screen.getAllByText(/desconectar/i);
       expect(disconnectBtns.length).toBeGreaterThan(0);
     });
+  });
+
+  it("erro de borda — Slack (kind apikey) conectado NÃO exibe botão de Desconectar OAuth, só remoção manual da chave", async () => {
+    // isOAuthProvider deriva 100% de integ.kind — Slack é apikey (Socket
+    // Mode exige xapp- que OAuth puro não entrega), então nunca deve
+    // renderizar a seção estilo-OAuth mesmo conectado.
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getAllByText("Slack").length).toBeGreaterThan(0);
+    });
+    const slackCard = screen.getAllByText("Slack")[0]!.closest("div[class]")!
+      .parentElement!.parentElement!;
+    expect(within(slackCard).queryByText(/desconectar/i)).toBeNull();
   });
 
   it("GitLab sem OAuth App configurado não mostra 'Conectar via OAuth' e já expõe o campo de token", async () => {
@@ -397,6 +415,51 @@ describe("IntegracoesTab", () => {
       const webhookUrls = screen.getAllByText(/\/webhook\/slack/i);
       expect(webhookUrls.length).toBeGreaterThan(0);
     });
+  });
+
+  it("provider OAuth sem app configurado exibe a callback URL pra cadastro, quando o gateway já tem subdomínio", async () => {
+    mockFetch(BASE_INTEGRATIONS, {
+      connected: true,
+      state: "connected",
+      token: "abc123",
+      subdomain: "abc123.vectora.chat",
+      webhook_base: "https://abc123.vectora.chat",
+      detail: null,
+    });
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      const callbackUrls = screen.getAllByText(
+        /abc123\.vectora\.chat\/auth\/gitlab\/callback/i,
+      );
+      expect(callbackUrls.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("erro de borda — sem subdomínio do gateway ainda, a callback URL não aparece (nada pra copiar)", async () => {
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getAllByText("GitLab").length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText(/\/auth\/gitlab\/callback/i)).toBeNull();
+  });
+
+  it("erro de borda — provider apikey (Slack) nunca exibe a callback URL de OAuth", async () => {
+    mockFetch(BASE_INTEGRATIONS, {
+      connected: true,
+      state: "connected",
+      token: "abc123",
+      subdomain: "abc123.vectora.chat",
+      webhook_base: "https://abc123.vectora.chat",
+      detail: null,
+    });
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getAllByText("Slack").length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText(/\/auth\/slack\/callback/i)).toBeNull();
   });
 
   it("renderiza indicador de carregamento antes da resposta", async () => {
