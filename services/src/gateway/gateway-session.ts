@@ -4,6 +4,7 @@ import type {
   GatewayMessage,
   ClientMessage,
 } from "./types";
+import { timingSafeEqual, hashConnectorSecret } from "./auth";
 
 const QUEUE_TTL_DEFAULT = 600_000; // 10 min
 // 30s é por design pra request/response HTTP síncrono (callback OAuth, etc)
@@ -26,6 +27,7 @@ export class GatewaySession implements DurableObject {
   private pending = new Map<string, PendingResponse>();
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private readonly ttlMs: number;
+  private secretHash: string | null = null;
 
   constructor(
     private readonly state: DurableObjectState,
@@ -35,7 +37,25 @@ export class GatewaySession implements DurableObject {
     this.state.blockConcurrencyWhile(async () => {
       this.queue =
         (await this.state.storage.get<QueuedRequest[]>("queue")) ?? [];
+      this.secretHash =
+        (await this.state.storage.get<string>("secretHash")) ?? null;
     });
+  }
+
+  /** Só o path do túnel: `/_health`, `/_revoke` e `/_set-secret` são
+   * operações de controle internas, chamadas exclusivamente pelo Worker
+   * (nunca por um client externo) — mas como esta DO recebe QUALQUER
+   * request roteada pelo subdomínio `{token}.vectora.chat/*` sem
+   * distinguir a origem, um path reservado sozinho não bastava: um
+   * atacante que soubesse/adivinhasse o token podia chamar
+   * `{token}.vectora.chat/_revoke` direto e derrubar a sessão de outro
+   * usuário, ou `/_health` pra sondar se alguém está conectado — sem
+   * autenticação nenhuma. VECTORA_APP_SECRET (mesmo secret fixo que prova
+   * "é um build genuíno do produto" em `/register`) reaproveitado aqui só
+   * pra provar que a chamada veio do próprio Worker, não de fora.*/
+  private isInternalCall(request: Request): boolean {
+    const auth = request.headers.get("X-Vectora-Internal") ?? "";
+    return timingSafeEqual(auth, `Bearer ${this.env.VECTORA_APP_SECRET}`);
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -47,21 +67,64 @@ export class GatewaySession implements DurableObject {
 
     const path = url.pathname;
 
-    if (path === "/_health") {
+    if (path === "/_health" && this.isInternalCall(request)) {
       return Response.json({
         connected: this.ws !== null,
         queued: this.queue.length,
       });
     }
 
-    if (path === "/_revoke" && request.method === "DELETE") {
+    if (
+      path === "/_revoke" &&
+      request.method === "DELETE" &&
+      this.isInternalCall(request)
+    ) {
       return this.handleRevoke();
     }
 
+    if (
+      path === "/_set-secret" &&
+      request.method === "POST" &&
+      this.isInternalCall(request)
+    ) {
+      return this.handleSetSecret(request);
+    }
+
+    // Path de controle chamado sem o header interno (ex.: alguém batendo
+    // direto em `{token}.vectora.chat/_health` de fora) cai aqui de
+    // propósito — vira um request tunelado comum pro backend local, que
+    // não tem essa rota, então 404 lá em vez de expor estado da sessão.
     return this.forwardToLocal(request);
   }
 
-  private handleWebSocketUpgrade(_request: Request): Response {
+  private async handleSetSecret(request: Request): Promise<Response> {
+    const body = await request
+      .json<{ secretHash?: string }>()
+      .catch(() => null);
+    if (!body?.secretHash) {
+      return new Response("Bad Request", { status: 400 });
+    }
+    this.secretHash = body.secretHash;
+    await this.state.storage.put("secretHash", this.secretHash);
+    return Response.json({ ok: true });
+  }
+
+  private async handleWebSocketUpgrade(request: Request): Promise<Response> {
+    // `secretHash` ausente = sessão registrada antes desta correção
+    // existir — aceita (migração transparente: o client Python re-registra
+    // sozinho na próxima subida e passa a exigir o secret dali em diante,
+    // sem trocar de subdomínio nem quebrar quem já está rodando).
+    if (this.secretHash) {
+      const auth = request.headers.get("Authorization") ?? "";
+      const presented = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      const presentedHash = presented
+        ? await hashConnectorSecret(presented)
+        : "";
+      if (!presentedHash || !timingSafeEqual(presentedHash, this.secretHash)) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+    }
+
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
 

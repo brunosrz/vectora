@@ -1,5 +1,15 @@
 const BASE36_CHARS = "0123456789abcdefghijklmnopqrstuvwxyz";
-const TOKEN_LENGTH = 6;
+// 10 chars base36 ≈ 51.7 bits — no esquema antigo (6 chars, só 4 bytes do
+// HMAC) o valor de 32 bits ia até ~4.29bi mas 36^6 ≈ 2.18bi, então o
+// `.slice` do final descartava dígito(s) mais significativo(s) sempre que
+// o valor excedia esse teto — silenciosamente colidindo fingerprints
+// diferentes no mesmo token em mais de 46% dos casos. Aqui: BigInt sobre o
+// digest inteiro (256 bits) reduzido por módulo ANTES de codificar — sem
+// truncamento de dígito, e com margem suficiente pra qualquer volume
+// realista de instalações (birthday bound despresível até dezenas de
+// milhões de tokens).
+const TOKEN_LENGTH = 10;
+const TOKEN_SPACE = 36n ** BigInt(TOKEN_LENGTH);
 
 /** Compara duas strings em tempo constante — evita timing attack no secret fixo do app. */
 export function timingSafeEqual(a: string, b: string): boolean {
@@ -14,6 +24,15 @@ export function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+function bytesToBigInt(bytes: Uint8Array): bigint {
+  let n = 0n;
+  for (const b of bytes) n = (n << 8n) | BigInt(b);
+  return n;
+}
+
+/** Token público (subdomínio) — determinístico por fingerprint, mas NUNCA é
+ * o único fator de autenticação (ver `generateConnectorSecret`): identifica
+ * a sessão, não autoriza sozinho quem pode assumi-la. */
 export async function generateGatewayToken(
   fingerprint: string,
   secret: string,
@@ -25,25 +44,44 @@ export async function generateGatewayToken(
     false,
     ["sign"],
   );
-
-  const data = new TextEncoder().encode(fingerprint);
-  const sig = await crypto.subtle.sign("HMAC", key, data);
-  const bytes = new Uint8Array(sig);
-
-  // 4 bytes → 32-bit unsigned int → base36 → pad to TOKEN_LENGTH
-  const num =
-    ((bytes[0] ?? 0) << 24) |
-    ((bytes[1] ?? 0) << 16) |
-    ((bytes[2] ?? 0) << 8) |
-    (bytes[3] ?? 0);
-  const unsigned = num >>> 0;
+  const sig = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(fingerprint),
+  );
+  const n = bytesToBigInt(new Uint8Array(sig)) % TOKEN_SPACE;
 
   let result = "";
-  let n = unsigned;
+  let rest = n;
   do {
-    result = (BASE36_CHARS[n % 36] ?? "0") + result;
-    n = Math.floor(n / 36);
-  } while (n > 0);
+    result = BASE36_CHARS[Number(rest % 36n)] + result;
+    rest /= 36n;
+  } while (rest > 0n);
 
-  return result.padStart(TOKEN_LENGTH, "0").slice(-TOKEN_LENGTH);
+  return result.padStart(TOKEN_LENGTH, "0");
+}
+
+/** Segredo de conector — 32 bytes aleatórios (256 bits), devolvido em texto
+ * puro só na resposta de `/register`, nunca mais recuperável depois disso
+ * (só o hash fica guardado, ver `hashConnectorSecret`). É o ÚNICO fator que
+ * autoriza abrir o WebSocket como dono de uma sessão — o token público
+ * (subdomínio) sozinho não basta mais, ao contrário do esquema anterior. */
+export function generateConnectorSecret(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary)
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+}
+
+export async function hashConnectorSecret(secret: string): Promise<string> {
+  const buf = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(secret),
+  );
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }

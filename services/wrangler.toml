@@ -93,6 +93,14 @@ name = "AUTH_LOGIN_LIMITER"
 namespace_id = "1002"
 simple = { limit = 10, period = 60 }
 
+# POST /register (gateway) já exige VECTORA_APP_SECRET (embutido no
+# binário) — isso é defesa em profundidade contra automação em massa
+# batendo o endpoint, não a proteção primária.
+[[ratelimits]]
+name = "GATEWAY_LIMITER"
+namespace_id = "1003"
+simple = { limit = 20, period = 60 }
+
 # vectora-email: desacopla o envio de verdade (Resend) do request/response —
 # 9 pontos no código faziam `await sendEmail(...)` síncrono antes disso.
 [[queues.producers]]

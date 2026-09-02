@@ -31,6 +31,9 @@ export interface Env {
   LICENSE_VALIDATE_LIMITER: RateLimit;
   // auth/license — /auth/login, /license/agent-login
   AUTH_LOGIN_LIMITER: RateLimit;
+  // gateway/index.ts — POST /register (token de app já defende, isto é
+  // defesa em profundidade contra automação em massa).
+  GATEWAY_LIMITER: RateLimit;
   // registry/discovery.ts — sem token, discovery de skills via GitHub code
   // search fica desligada (não é erro, ver discoverSkills).
   GITHUB_TOKEN?: string;
@@ -48,6 +51,10 @@ export interface RegisterResponse {
   token: string;
   subdomain: string;
   websocket_url: string;
+  // Devolvido só nesta resposta — o Worker guarda apenas o hash (ver
+  // hashConnectorSecret em auth.ts). Sem isto, o WS não abre (ver
+  // GatewaySession::handleWebSocketUpgrade).
+  connector_secret: string;
 }
 
 export interface QueuedRequest {
