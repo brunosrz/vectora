@@ -206,13 +206,13 @@ describe("GET /download/:channel/:target", () => {
     expect(res.status).toBe(404);
   });
 
-  it("faz fallback para outra arquitetura quando o asset existe em outro diretório", async () => {
+  it("serve o binário certo quando ele existe no R2", async () => {
     const env = fakeEnv({
       config: {
         channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
         quarantined: [],
       },
-      fileBody: "binario-arm64",
+      fileBody: "binario-x64",
     });
 
     const res = await app.request(
@@ -222,7 +222,7 @@ describe("GET /download/:channel/:target", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(await res.text()).toBe("binario-arm64");
+    expect(await res.text()).toBe("binario-x64");
   });
 });
 
@@ -360,7 +360,14 @@ describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
     expect(await res.text()).toBe("manifest missing");
   });
 
-  it("faz fallback entre arquiteturas se o manifesto só existir em outra pasta", async () => {
+  it("erro de borda — manifesto só existe em outra arch (arm64) → 404, NUNCA serve o manifesto errado", async () => {
+    // Bug real reproduzido em produção (0.1.11→0.1.13, Windows): quando o
+    // manifesto x64 não existe mas o arm64 sim, o código antigo caía pro
+    // arm64 e o servia sob o path x64 — o electron-updater então montava
+    // a URL de download combinando o path pedido (win/x64) com o filename
+    // do manifesto servido (Vectora-...-win-arm64.exe), uma chave que
+    // nunca existe no R2 → "update encontrado" mas download 404 sempre.
+    // getExactArchObject nunca deve misturar arch pedida com arch servida.
     const env = {
       KV: {
         get: async () =>
@@ -388,8 +395,119 @@ describe("GET /updates/:channel/:os/:arch/latest.yml — sem token", () => {
       env as never,
     );
 
+    expect(res.status).toBe(404);
+    expect(await res.text()).toBe("manifest missing");
+  });
+
+  it("erro de borda — manifesto da própria arch existe → 200 com o conteúdo certo (par de acerto do teste acima)", async () => {
+    const env = {
+      KV: {
+        get: async () =>
+          JSON.stringify({
+            channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
+            quarantined: [],
+          }),
+        put: async () => {},
+      },
+      R2: {
+        get: async (key: string) =>
+          key.includes("/x64/")
+            ? {
+                body: "manifest-x64",
+                httpMetadata: { contentType: "application/x-yaml" },
+                httpEtag: '"etag-x64"',
+              }
+            : null,
+      },
+    };
+
+    const res = await app.request(
+      "/updates/latest/win/x64/latest.yml",
+      {},
+      env as never,
+    );
+
     expect(res.status).toBe(200);
-    expect(await res.text()).toBe("manifest-arm64");
+    expect(await res.text()).toBe("manifest-x64");
+  });
+});
+
+describe("regressão: fluxo completo de update entre versões (0.1.11 → 0.1.13, arch publicada parcialmente)", () => {
+  /** Simula R2 com só a build arm64 da nova versão publicada — cenário
+   * exato do bug relatado em produção: a build win-x64 da 0.1.13 não
+   * tinha sido publicada ainda (ou falhou), só a win-arm64. */
+  function fakeEnvArm64Only() {
+    const files = new Map<string, string>([
+      [
+        "latest/win/arm64/1.2.0/latest.yml",
+        "version: 1.2.0\npath: Vectora-1.2.0-win-arm64.exe",
+      ],
+      ["latest/win/arm64/1.2.0/Vectora-1.2.0-win-arm64.exe", "binario-arm64"],
+      // win/x64/1.2.0/* deliberadamente ausente do R2.
+    ]);
+    return {
+      KV: {
+        get: async () =>
+          JSON.stringify({
+            channels: { latest: { version: "1.2.0", rollout_percent: 100 } },
+            quarantined: [],
+          }),
+        put: async () => {},
+      },
+      R2: {
+        get: async (key: string) => {
+          const body = files.get(key);
+          if (!body) return null;
+          return {
+            body,
+            httpMetadata: { contentType: "application/octet-stream" },
+            httpEtag: `"etag-${key}"`,
+          };
+        },
+      },
+    };
+  }
+
+  it("cliente win-x64 checando update: manifesto 404 de forma honesta, nunca um manifesto de outra arch", async () => {
+    const env = fakeEnvArm64Only();
+
+    const manifestRes = await app.request(
+      "/updates/latest/win/x64/latest.yml",
+      {},
+      env as never,
+    );
+    expect(manifestRes.status).toBe(404);
+
+    // Mesmo se o electron-updater ignorasse o 404 e tentasse baixar o
+    // instalador arm64 sob o path x64 (o que o bug antigo levava a
+    // acontecer), essa combinação de path nunca existe no R2 — 404 limpo,
+    // não um 200 com o binário errado.
+    const wrongComboRes = await app.request(
+      "/updates/latest/win/x64/1.2.0/Vectora-1.2.0-win-arm64.exe",
+      {},
+      env as never,
+    );
+    expect(wrongComboRes.status).toBe(404);
+  });
+
+  it("cliente win-arm64 checando a mesma release: manifesto e download funcionam normalmente", async () => {
+    const env = fakeEnvArm64Only();
+
+    const manifestRes = await app.request(
+      "/updates/latest/win/arm64/latest.yml",
+      {},
+      env as never,
+    );
+    expect(manifestRes.status).toBe(200);
+    expect(await manifestRes.text()).toContain("Vectora-1.2.0-win-arm64.exe");
+
+    const downloadRes = await app.request(
+      "/updates/latest/win/arm64/1.2.0/Vectora-1.2.0-win-arm64.exe",
+      {},
+      env as never,
+    );
+    expect(downloadRes.status).toBe(200);
+    expect(await downloadRes.text()).toBe("binario-arm64");
   });
 });
 
