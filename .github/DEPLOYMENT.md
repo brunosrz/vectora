@@ -8,7 +8,12 @@ monorepo (`company/`, `docs/`, `services/`) tem ciclo próprio em
 
 ## Visão geral do pipeline (`vectora.yml`)
 
-Todo push/PR que toque `vectora/**` roda, em ordem:
+Disparado por `push` em `master` ou tag `v*`, por `pull_request` contra
+`master` (ambos filtrados por path: `vectora/**`, este workflow e
+`.github/actions/**`), ou manualmente via `workflow_dispatch`. Os jobs 1-5
+rodam em qualquer disparo dentro do path filtrado; 6 (integration/e2e) só em
+`master`/tags; 7-9 (release nativo + publicação) só em tag `v*` ou
+`workflow_dispatch`. Em ordem:
 
 1. **Lint & Format Check** — `ruff check`/`ruff format --check` + `ty check` (Python).
 2. **Security Scanning** — `bandit` + `pip-audit` (best-effort, não bloqueia).
@@ -29,7 +34,7 @@ Todo push/PR que toque `vectora/**` roda, em ordem:
 > `services/` (gateway + updates unificados, era `relay/` + `update-server/`).
 > **Não existe imagem Docker do app publicada em nenhum registry** — o
 > `docker-compose.yml` da raiz de `vectora/` sobe só a infra de
-> desenvolvimento (PostgreSQL + Redis + Qdrant, modo `storage_mode=complete`);
+> desenvolvimento (PostgreSQL + Redis + Qdrant, modo `STORAGE_MODE=complete`);
 > o backend em si roda no host, nunca como container (ver `CLAUDE.md`).
 
 ## Python 3.13 (não 3.14, por ora)
