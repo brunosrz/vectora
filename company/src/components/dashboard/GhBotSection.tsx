@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { m } from "#/paraglide/messages";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
 import {
   getGhBotSettings,
   saveGhBotSettings,
@@ -304,9 +304,22 @@ export default function GhBotSection() {
         <p className="text-xs text-muted-foreground">
           2. {m.gh_bot_install_step2()}
         </p>
-        <pre className="rounded-lg border border-border bg-background p-3 text-[11px] overflow-x-auto">
-          {WORKFLOW_YAML}
-        </pre>
+        <div className="relative">
+          <pre className="rounded-lg border border-border bg-background p-3 pr-10 text-[11px] overflow-x-auto">
+            {WORKFLOW_YAML}
+          </pre>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(WORKFLOW_YAML);
+              toast.success(m.token_copied());
+            }}
+            className="absolute top-2 right-2 rounded-lg p-1.5 text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
+            title={m.token_copy_cta()}
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );

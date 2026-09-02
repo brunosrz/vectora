@@ -65,6 +65,7 @@ function renderWithClient(ui: ReactNode) {
 beforeEach(() => {
   vi.clearAllMocks();
   mockListGhBotTokens.mockResolvedValue([]);
+  Object.assign(navigator, { clipboard: { writeText: vi.fn() } });
 });
 
 describe("GhBotSection", () => {
@@ -228,5 +229,19 @@ describe("GhBotSection", () => {
         data: { id: "11111111-2222-3333-4444-555555555555" },
       }),
     );
+  });
+
+  it("botão de copiar o YAML de instalação copia o conteúdo pro clipboard e mostra toast", async () => {
+    mockGetGhBotSettings.mockResolvedValue(null);
+    renderWithClient(<GhBotSection />);
+    await waitFor(() => screen.getByText("gh_bot_install_title"));
+
+    fireEvent.click(screen.getByTitle("token_copy_cta"));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+    const copied = (navigator.clipboard.writeText as ReturnType<typeof vi.fn>)
+      .mock.calls[0][0] as string;
+    expect(copied).toContain("vectora-ltda/vectora-review-action@v1");
+    expect(mockToastSuccess).toHaveBeenCalledWith("token_copied");
   });
 });

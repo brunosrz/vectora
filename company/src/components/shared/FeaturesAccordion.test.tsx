@@ -69,4 +69,28 @@ describe("FeaturesAccordion", () => {
       screen.getByText("Descrição completa da feature B."),
     ).toBeInTheDocument();
   });
+
+  it('título/resumo não ficam dentro de um <button> nativo — browsers bloqueiam seleção de texto por clique-arraste dentro de <button> (bug real reportado, o trigger vira <div role="button">)', () => {
+    render(<FeaturesAccordion items={ITEMS} />);
+
+    const title = screen.getByText("Feature A");
+    expect(title.closest("button")).toBeNull();
+    expect(title.closest('[role="button"]')).not.toBeNull();
+  });
+
+  it("teclado: Enter no trigger expande a descrição; erro/borda: outras teclas não fazem nada", () => {
+    render(<FeaturesAccordion items={ITEMS} />);
+
+    const trigger = screen.getByText("Feature A").closest('[role="button"]')!;
+
+    fireEvent.keyDown(trigger, { key: "a" });
+    expect(
+      screen.queryByText("Descrição completa da feature A."),
+    ).not.toBeInTheDocument();
+
+    fireEvent.keyDown(trigger, { key: "Enter" });
+    expect(
+      screen.getByText("Descrição completa da feature A."),
+    ).toBeInTheDocument();
+  });
 });
