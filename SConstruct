@@ -914,12 +914,12 @@ def _action_prod(target, source, env):
         # Migrations ANTES do deploy do worker: o código deployado assume o
         # schema mais novo (ex.: users.role) — publicar worker sem aplicar as
         # migrations quebra rotas em produção com SQLITE_ERROR.
-        # --skip-confirmation: sem isso, o wrangler pede confirmação
-        # interativa ("Would you like to apply these migrations?") sempre
-        # que stdin é um TTY real — mesmo com stdout redirecionado pro pipe
-        # do _run() (pra espelhar no log), o prompt ainda espera resposta no
-        # stdin herdado, só que sem UI visível (achado real: travou 30min
-        # sem nenhum output, indistinguível de um hang).
+        # Sem flag de confirmação: `wrangler d1 migrations apply` moderno
+        # detecta stdin não-TTY sozinho (`_run()` já redireciona pra
+        # DEVNULL) e pula o prompt interativo automaticamente — uma flag
+        # `--skip-confirmation` chegou a existir numa versão anterior do
+        # wrangler mas não existe mais (`Unknown arguments`), então passá-la
+        # quebra o comando em vez de proteger contra o prompt.
         _run(
             [
                 WRANGLER,
@@ -928,7 +928,6 @@ def _action_prod(target, source, env):
                 "apply",
                 "vectora-db",
                 "--remote",
-                "--skip-confirmation",
             ],
             log=log,
             cwd=SERVICES,
