@@ -68,6 +68,12 @@ interface Integration {
   oauth_scopes?: string[];
   parent?: string;
   connected: boolean;
+  /** Diferente de `connected`: só true quando o valor setado veio do fluxo
+   * OAuth de verdade (callback em oauth.py), não de um token colado
+   * manualmente num provider `hybrid` como GitHub. A seção OAuth usa isto
+   * pra decidir entre "Conectar via OAuth" e "Conexão ativa (OAuth)" —
+   * usar `connected` aqui faria a UI mentir sobre a origem da conexão. */
+  oauth_connected: boolean;
   env_var_aliases?: string[];
   extra_vars?: string[];
   /** true só quando o operador desta instância registrou um OAuth App
@@ -541,9 +547,9 @@ function IntegrationCard({
           app próprio no provider (sem isso, sempre falharia com 503); o botão de
           desconectar continua disponível mesmo que a config tenha sido
           removida depois de já haver uma conexão ativa. */}
-      {isOAuthProvider && (integ.oauth_configured || integ.connected) && (
+      {isOAuthProvider && (integ.oauth_configured || integ.oauth_connected) && (
         <div className="px-3 pb-3 border-t pt-3 space-y-2">
-          {integ.connected ? (
+          {integ.oauth_connected ? (
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
                 Conexão ativa (OAuth)

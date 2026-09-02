@@ -402,6 +402,54 @@ class TestListIntegrationsAlias:
         assert gemini["connected"] is True
 
 
+class TestOauthConnectedFlag:
+    """`oauth_connected` separa "tem override setado" (`connected`) de
+    "conectou via OAuth de verdade" — colar GITHUB_TOKEN manualmente também
+    deixa `connected=True`, e a UI não pode mostrar "Conexão ativa (OAuth)"
+    nesse caso."""
+
+    def test_token_colado_manualmente_fica_connected_mas_nao_oauth_connected(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        with patch(
+            "backend.rbac.auth.get_env_overrides",
+            AsyncMock(return_value={"GITHUB_TOKEN": "ghp_colado_a_mao"}),
+        ):
+            resp = client.get("/integrations")
+        github = next(i for i in resp.json()["integrations"] if i["id"] == "github")
+        assert github["connected"] is True
+        assert github["oauth_connected"] is False
+
+    def test_token_via_callback_oauth_fica_connected_e_oauth_connected(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        with patch(
+            "backend.rbac.auth.get_env_overrides",
+            AsyncMock(
+                return_value={
+                    "GITHUB_TOKEN": "ghp_via_oauth",
+                    "__oauth_source__:GITHUB_TOKEN": "1",
+                }
+            ),
+        ):
+            resp = client.get("/integrations")
+        github = next(i for i in resp.json()["integrations"] if i["id"] == "github")
+        assert github["connected"] is True
+        assert github["oauth_connected"] is True
+
+    def test_sem_nenhum_override_fica_desconectado_nos_dois(
+        self, client: TestClient, monkeypatch
+    ) -> None:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        github = next(i for i in resp.json()["integrations"] if i["id"] == "github")
+        assert github["connected"] is False
+        assert github["oauth_connected"] is False
+
+
 class TestSetupHint:
     """`setup_hint` é a linha inline de "como obter esta credencial" que a aba
     Integrações mostra ao expandir o card — o catálogo do backend é a única

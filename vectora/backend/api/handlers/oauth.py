@@ -366,17 +366,28 @@ async def list_integrations(request: Request) -> dict:
     except Exception:
         overrides = {}
 
+    from backend.rbac.auth import is_oauth_sourced
+
     items = []
     for integ in INTEGRATIONS_REGISTRY:
         env_vars = [integ["env_var"], *integ.get("env_var_aliases", [])]
         # Considera conectado se há override do usuário OU env global setada,
         # em qualquer um dos nomes aceitos (env_var principal ou alias).
         connected = any(overrides.get(v) or os.environ.get(v) for v in env_vars)
+        # Diferente de `connected`: só true se o valor setado veio do fluxo
+        # OAuth (callback em oauth.py), não de um token colado manualmente
+        # num provider `hybrid` como GitHub — a UI usa isto pra decidir se
+        # mostra as ações OAuth (desconectar via /auth/<provider>) em vez do
+        # badge/remoção manual genéricos.
+        oauth_connected = any(
+            overrides.get(v) and is_oauth_sourced(overrides, v) for v in env_vars
+        )
         oauth_provider_id = integ.get("parent", integ["id"])
         items.append(
             {
                 **integ,
                 "connected": connected,
+                "oauth_connected": oauth_connected,
                 # Nunca expõe o valor — apenas informa se existe
                 "oauth_configured": (
                     _oauth_configured(oauth_provider_id)
@@ -630,7 +641,9 @@ async def github_oauth_callback(
     try:
         from backend.rbac import auth as auth_svc
 
-        await auth_svc.set_env_override(user_id, "GITHUB_TOKEN", access_token)
+        await auth_svc.set_env_override(
+            user_id, "GITHUB_TOKEN", access_token, source="oauth"
+        )
         logger.info("GitHub OAuth: token salvo para user_id=%s", user_id)
     except Exception as exc:
         logger.exception("GitHub OAuth: falha ao salvar token: %s", exc)
@@ -763,7 +776,9 @@ async def gitlab_oauth_callback(
     try:
         from backend.rbac import auth as auth_svc
 
-        await auth_svc.set_env_override(state, "GITLAB_TOKEN", access_token)
+        await auth_svc.set_env_override(
+            state, "GITLAB_TOKEN", access_token, source="oauth"
+        )
         logger.info("GitLab OAuth: token salvo para user_id=%s", state)
     except Exception as exc:
         logger.exception("GitLab OAuth: falha ao salvar token: %s", exc)
@@ -897,10 +912,12 @@ async def google_oauth_callback(
     try:
         from backend.rbac import auth as auth_svc
 
-        await auth_svc.set_env_override(state, "GOOGLE_ACCESS_TOKEN", access_token)
+        await auth_svc.set_env_override(
+            state, "GOOGLE_ACCESS_TOKEN", access_token, source="oauth"
+        )
         if refresh_token:
             await auth_svc.set_env_override(
-                state, "GOOGLE_REFRESH_TOKEN", refresh_token
+                state, "GOOGLE_REFRESH_TOKEN", refresh_token, source="oauth"
             )
         logger.info("Google OAuth: token salvo para user_id=%s", state)
     except Exception as exc:
@@ -1035,7 +1052,9 @@ async def slack_oauth_callback(
     try:
         from backend.rbac import auth as auth_svc
 
-        await auth_svc.set_env_override(state, "SLACK_BOT_TOKEN", bot_token)
+        await auth_svc.set_env_override(
+            state, "SLACK_BOT_TOKEN", bot_token, source="oauth"
+        )
         logger.info("Slack OAuth: token salvo para user_id=%s", state)
     except Exception as exc:
         logger.exception("Slack OAuth: falha ao salvar token: %s", exc)

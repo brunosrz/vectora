@@ -532,6 +532,75 @@ class TestEnvOverrides:
         overrides = await get_env_overrides(user.id)
         assert overrides == {}
 
+    @pytest.mark.asyncio
+    async def test_source_oauth_marca_is_oauth_sourced(self):
+        from backend.rbac.auth import (
+            get_env_overrides,
+            is_oauth_sourced,
+            set_env_override,
+            signup,
+        )
+
+        user, _, _ = await signup("oauth-src@example.com", "senhasegura1234")
+        await set_env_override(user.id, "GITHUB_TOKEN", "ghp_via_oauth", source="oauth")
+
+        overrides = await get_env_overrides(user.id)
+        assert is_oauth_sourced(overrides, "GITHUB_TOKEN") is True
+
+    @pytest.mark.asyncio
+    async def test_source_manual_default_nao_marca_is_oauth_sourced(self):
+        from backend.rbac.auth import (
+            get_env_overrides,
+            is_oauth_sourced,
+            set_env_override,
+            signup,
+        )
+
+        user, _, _ = await signup("manual-src@example.com", "senhasegura1234")
+        await set_env_override(user.id, "GITHUB_TOKEN", "ghp_colado_a_mao")
+
+        overrides = await get_env_overrides(user.id)
+        assert is_oauth_sourced(overrides, "GITHUB_TOKEN") is False
+
+    @pytest.mark.asyncio
+    async def test_resetar_override_via_source_manual_apaga_marca_oauth_previa(self):
+        """Erro/borda: se um usuário conectou via OAuth e depois cola um
+        token manualmente por cima (mesma env var), a marca de proveniência
+        OAuth não pode sobreviver — senão a UI continuaria mostrando
+        "Conexão ativa (OAuth)" pra uma credencial que não é mais OAuth."""
+        from backend.rbac.auth import (
+            get_env_overrides,
+            is_oauth_sourced,
+            set_env_override,
+            signup,
+        )
+
+        user, _, _ = await signup("oauth-then-manual@example.com", "senhasegura1234")
+        await set_env_override(user.id, "GITHUB_TOKEN", "ghp_via_oauth", source="oauth")
+        await set_env_override(user.id, "GITHUB_TOKEN", "ghp_colado_por_cima")
+
+        overrides = await get_env_overrides(user.id)
+        assert overrides["GITHUB_TOKEN"] == "ghp_colado_por_cima"
+        assert is_oauth_sourced(overrides, "GITHUB_TOKEN") is False
+
+    @pytest.mark.asyncio
+    async def test_delete_override_remove_tambem_a_marca_oauth(self):
+        from backend.rbac.auth import (
+            delete_env_override,
+            get_env_overrides,
+            is_oauth_sourced,
+            set_env_override,
+            signup,
+        )
+
+        user, _, _ = await signup("oauth-delete@example.com", "senhasegura1234")
+        await set_env_override(user.id, "GITHUB_TOKEN", "ghp_via_oauth", source="oauth")
+        await delete_env_override(user.id, "GITHUB_TOKEN")
+
+        overrides = await get_env_overrides(user.id)
+        assert "GITHUB_TOKEN" not in overrides
+        assert is_oauth_sourced(overrides, "GITHUB_TOKEN") is False
+
 
 class TestEnvOverridesLocalUser:
     """O usuário virtual "local" (modo sem conta) nunca tem linha em

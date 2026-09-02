@@ -124,6 +124,7 @@ const BASE_INTEGRATIONS = [
     docs_url: "https://github.com/settings/tokens",
     icon: "github",
     connected: true,
+    oauth_connected: true,
     oauth_configured: false,
   },
   {
@@ -328,6 +329,49 @@ describe("IntegracoesTab", () => {
       const disconnectBtns = screen.getAllByText(/desconectar/i);
       expect(disconnectBtns.length).toBeGreaterThan(0);
     });
+  });
+
+  it("GitHub (hybrid) com token colado manualmente (connected mas não oauth_connected) NÃO exibe botão Desconectar de OAuth, só oferece Conectar via OAuth", async () => {
+    // connected=true por si só não prova que a credencial veio do fluxo
+    // OAuth — um token colado manualmente também deixa connected=true. A UI
+    // usa oauth_connected pra decidir se mostra "Conexão ativa (OAuth)" +
+    // Desconectar.
+    mockFetch(
+      BASE_INTEGRATIONS.map((i) =>
+        i.id === "github"
+          ? {
+              ...i,
+              connected: true,
+              oauth_connected: false,
+              oauth_configured: true,
+            }
+          : i,
+      ),
+    );
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText(/conexão ativa \(oauth\)/i)).toBeNull();
+    expect(screen.getByText(/conectar via oauth/i)).toBeInTheDocument();
+  });
+
+  it("GitHub (hybrid) conectado via OAuth de verdade (oauth_connected) exibe 'Conexão ativa (OAuth)' e Desconectar", async () => {
+    mockFetch(
+      BASE_INTEGRATIONS.map((i) =>
+        i.id === "github"
+          ? { ...i, connected: true, oauth_connected: true }
+          : i,
+      ),
+    );
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0);
+    });
+    expect(screen.getByText(/conexão ativa \(oauth\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/desconectar/i)).toBeInTheDocument();
   });
 
   it("erro de borda — Slack (kind apikey) conectado NÃO exibe botão de Desconectar OAuth, só remoção manual da chave", async () => {

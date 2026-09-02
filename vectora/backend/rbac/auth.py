@@ -897,13 +897,28 @@ async def get_env_overrides(user_id: str) -> dict[str, str]:
         return {}
 
 
-async def set_env_override(user_id: str, key: str, value: str) -> None:
+#: Prefixo de chave-sombra no mesmo blob JSON de overrides — não é um env
+#: var real (nomes de env var nunca começam com `__`), então não colide.
+#: Marca que o override em `key` veio do fluxo OAuth, não de um token colado
+#: manualmente — só `oauth.py`'s callbacks passam `source="oauth"`; todo
+#: outro caller (settings manuais, `tools/library.py`) fica no default
+#: "manual". Usado por `oauth.py::list_integrations` pra distinguir
+#: "tem override setado" (`connected`) de "conectou via OAuth de verdade"
+#: (`oauth_connected`) — sem isso, colar um token manual pra um provider
+#: `hybrid` fazia a UI mostrar "Conexão ativa (OAuth)" por engano.
+_OAUTH_SOURCE_PREFIX = "__oauth_source__:"
+
+
+async def set_env_override(
+    user_id: str, key: str, value: str, *, source: str = "manual"
+) -> None:
     """Define (ou sobrescreve) um env override para o usuário."""
     if user_id == "local":
         from backend.workspace.runtime_settings import runtime_settings
 
         overrides = _local_env_overrides()
         overrides[key] = value
+        _apply_oauth_source(overrides, key, source)
         runtime_settings.set(_LOCAL_ENV_OVERRIDES_KEY, overrides)
         return
 
@@ -911,12 +926,21 @@ async def set_env_override(user_id: str, key: str, value: str) -> None:
 
     overrides = await get_env_overrides(user_id)
     overrides[key] = value
+    _apply_oauth_source(overrides, key, source)
     db = await _get_db()
     await db.execute(
         "UPDATE users SET env_overrides_json = ? WHERE id = ?",
         (json.dumps(overrides), user_id),
     )
     await db.commit()
+
+
+def _apply_oauth_source(overrides: dict[str, str], key: str, source: str) -> None:
+    shadow_key = _OAUTH_SOURCE_PREFIX + key
+    if source == "oauth":
+        overrides[shadow_key] = "1"
+    else:
+        overrides.pop(shadow_key, None)
 
 
 async def delete_env_override(user_id: str, key: str) -> None:
@@ -926,6 +950,7 @@ async def delete_env_override(user_id: str, key: str) -> None:
 
         overrides = _local_env_overrides()
         overrides.pop(key, None)
+        overrides.pop(_OAUTH_SOURCE_PREFIX + key, None)
         runtime_settings.set(_LOCAL_ENV_OVERRIDES_KEY, overrides)
         return
 
@@ -933,12 +958,19 @@ async def delete_env_override(user_id: str, key: str) -> None:
 
     overrides = await get_env_overrides(user_id)
     overrides.pop(key, None)
+    overrides.pop(_OAUTH_SOURCE_PREFIX + key, None)
     db = await _get_db()
     await db.execute(
         "UPDATE users SET env_overrides_json = ? WHERE id = ?",
         (json.dumps(overrides), user_id),
     )
     await db.commit()
+
+
+def is_oauth_sourced(overrides: dict[str, str], key: str) -> bool:
+    """`True` se o override de `key` veio do fluxo OAuth (não de um token
+    colado manualmente) — ver `_OAUTH_SOURCE_PREFIX`."""
+    return overrides.get(_OAUTH_SOURCE_PREFIX + key) == "1"
 
 
 # ---------------------------------------------------------------------------
