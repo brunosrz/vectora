@@ -11,6 +11,7 @@ import asyncio
 import logging
 import random
 from pathlib import Path
+from typing import TypedDict, cast
 
 import aiohttp
 
@@ -27,6 +28,38 @@ _BACKOFF_MAX = 60.0
 #: exponencial) — evita thundering herd quando o Worker do gateway reinicia
 #: e todas as instâncias tentam reconectar no mesmo instante.
 _BACKOFF_JITTER = (0.5, 1.5)
+#: Teto do round-trip HTTP local (loopback, mesmo processo) — sem isso o
+#: `ClientTimeout(total=300)` default do aiohttp valeria, e `_connect_once`
+#: aguarda `pending` no reconnect: um handler local travado atrasaria a
+#: reconexão em até 5 minutos.
+_LOCAL_FORWARD_TIMEOUT_S = 30.0
+
+
+class GatewayRequestItem(TypedDict):
+    """Item de `type: "request"` ou de dentro de `type: "queued"` — sempre
+    tem `id`/`method`/`path`; `headers`/`body` seguem lidos via `.get()`
+    (payload malformado do lado do Worker não pode derrubar o forward)."""
+
+    id: str
+    method: str
+    path: str
+    headers: dict[str, str]
+    body: str
+
+
+class GatewayMessage(TypedDict, total=False):
+    """Mensagem do protocolo do túnel (ver `services/src/gateway/types.ts`,
+    fonte de verdade do formato — este é só o espelho do lado Python).
+    `total=False` porque cada `type` tem um subconjunto diferente de campos
+    obrigatórios (`ping` só tem `type`, `request` tem id/method/path...)."""
+
+    type: str
+    id: str
+    method: str
+    path: str
+    headers: dict[str, str]
+    body: str
+    items: list[GatewayRequestItem]
 
 
 class GatewayClient:
@@ -127,9 +160,10 @@ class GatewayClient:
         """
         ws_url = f"{self._gateway_url}{_WS_PATH}{token}"
         pending: set[asyncio.Task[None]] = set()
+        local_timeout = aiohttp.ClientTimeout(total=_LOCAL_FORWARD_TIMEOUT_S)
         async with (
             aiohttp.ClientSession() as session,
-            aiohttp.ClientSession() as local_session,
+            aiohttp.ClientSession(timeout=local_timeout) as local_session,
         ):
             try:
                 async with session.ws_connect(ws_url) as ws:
@@ -174,7 +208,7 @@ class GatewayClient:
         self,
         ws: aiohttp.ClientWebSocketResponse,
         local_session: aiohttp.ClientSession,
-        message: dict,
+        message: GatewayMessage,
         pending: set[asyncio.Task[None]],
     ) -> None:
         kind = message.get("type")
@@ -190,13 +224,17 @@ class GatewayClient:
             return
 
         if kind == "request":
-            self._spawn_forward(ws, local_session, message, pending)
+            # kind == "request" garante id/method/path presentes (contrato
+            # do Worker, ver GatewayMessage em services/src/gateway/types.ts).
+            self._spawn_forward(
+                ws, local_session, cast("GatewayRequestItem", message), pending
+            )
 
     def _spawn_forward(
         self,
         ws: aiohttp.ClientWebSocketResponse,
         local_session: aiohttp.ClientSession,
-        req: dict,
+        req: GatewayRequestItem,
         pending: set[asyncio.Task[None]],
     ) -> None:
         """Despacha `_forward` como task própria — o loop de leitura do
@@ -215,7 +253,7 @@ class GatewayClient:
         self,
         ws: aiohttp.ClientWebSocketResponse,
         local_session: aiohttp.ClientSession,
-        req: dict,
+        req: GatewayRequestItem,
     ) -> None:
         """Encaminha request ao FastAPI local e devolve response ao gateway."""
         import base64
@@ -244,8 +282,13 @@ class GatewayClient:
         except asyncio.CancelledError:
             raise
         except Exception:
+            # Nunca logar headers/body inteiros — callback OAuth carrega
+            # `code`/tokens no corpo, webhooks carregam assinaturas em
+            # headers de auth. method/path bastam pro diagnóstico.
             logger.exception(
-                "gateway: erro ao encaminhar request %s", req_id, extra={"req": req}
+                "gateway: erro ao encaminhar request %s",
+                req_id,
+                extra={"method": req.get("method"), "path": req.get("path")},
             )
             async with self._ws_send_lock:
                 await ws.send_json(

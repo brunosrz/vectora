@@ -8,6 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 import pytest
 
+from backend.services.gateway import GatewayMessage, GatewayRequestItem
+
 
 @pytest.fixture
 def gateway_token_file(tmp_path: Path) -> Path:
@@ -374,6 +376,42 @@ class TestGatewayClientConnectOnce:
         )
 
     @pytest.mark.asyncio
+    async def test_local_session_tem_timeout_explicito_nao_o_default_de_5min(
+        self,
+    ) -> None:
+        """Sem `timeout=` explícito, `local_session` usaria o
+        `ClientTimeout(total=300)` default do aiohttp — como `_connect_once`
+        aguarda `pending` no `finally` antes de reconectar, um handler local
+        travado atrasaria a reconexão em até 5 minutos."""
+        from backend.services.gateway import _LOCAL_FORWARD_TIMEOUT_S
+
+        client = self._client()
+        ws = AsyncMock()
+        session = MagicMock()
+        session.ws_connect = MagicMock(return_value=_AsyncCtx(ws))
+
+        calls: list[tuple[tuple, dict]] = []
+
+        def session_factory(*args, **kwargs):
+            calls.append((args, kwargs))
+            value = session if len(calls) == 1 else MagicMock()
+            return _AsyncCtx(value)
+
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession",
+            side_effect=session_factory,
+        ):
+            with patch.object(client, "_handle_messages", new=AsyncMock()):
+                await client._connect_once("tok123")
+
+        assert len(calls) == 2
+        _, local_session_kwargs = calls[1]
+        timeout = local_session_kwargs.get("timeout")
+        assert timeout is not None
+        assert timeout.total == _LOCAL_FORWARD_TIMEOUT_S
+        assert timeout.total < 300
+
+    @pytest.mark.asyncio
     async def test_reusa_a_mesma_local_session_entre_varios_forwards(self) -> None:
         """`local_session` é aberta UMA vez em `_connect_once` e reusada por
         todos os `_forward` da conexão — antes, cada `_forward` abria a
@@ -473,7 +511,7 @@ class TestGatewayClientDispatch:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set = set()
+        pending: set[asyncio.Task[None]] = set()
         await client._dispatch(ws, session, {"type": "ping"}, pending)
         ws.send_json.assert_awaited_once_with({"type": "pong"})
 
@@ -485,15 +523,14 @@ class TestGatewayClientDispatch:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set = set()
-        items = [
+        pending: set[asyncio.Task[None]] = set()
+        items: list[GatewayRequestItem] = [
             {"id": "1", "method": "POST", "path": "/w/a", "headers": {}, "body": ""},
             {"id": "2", "method": "POST", "path": "/w/b", "headers": {}, "body": ""},
         ]
+        message: GatewayMessage = {"type": "queued", "items": items}
         with patch.object(client, "_forward", new=AsyncMock()) as mock_fwd:
-            await client._dispatch(
-                ws, session, {"type": "queued", "items": items}, pending
-            )
+            await client._dispatch(ws, session, message, pending)
             assert len(pending) == 2
             await asyncio.gather(*pending)
         assert mock_fwd.await_count == 2
@@ -503,8 +540,8 @@ class TestGatewayClientDispatch:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set = set()
-        req = {
+        pending: set[asyncio.Task[None]] = set()
+        req: GatewayMessage = {
             "type": "request",
             "id": "abc",
             "method": "POST",
@@ -522,7 +559,7 @@ class TestGatewayClientDispatch:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set = set()
+        pending: set[asyncio.Task[None]] = set()
         await client._dispatch(
             ws, session, {"type": "unknown_msg"}, pending
         )  # sem exceção
@@ -535,8 +572,8 @@ class TestGatewayClientDispatch:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set = set()
-        req = {
+        pending: set[asyncio.Task[None]] = set()
+        req: GatewayMessage = {
             "type": "request",
             "id": "abc",
             "method": "GET",
@@ -583,7 +620,7 @@ class TestGatewayClientForward:
         mock_session = MagicMock()
         mock_session.request = MagicMock(return_value=mock_resp)
 
-        req = {
+        req: GatewayRequestItem = {
             "id": "req-1",
             "method": "POST",
             "path": "/webhook/github",
@@ -620,6 +657,41 @@ class TestGatewayClientForward:
         call_kwargs = ws.send_json.call_args[0][0]
         assert call_kwargs["status"] == 502
         assert call_kwargs["id"] == "req-2"
+
+    @pytest.mark.asyncio
+    async def test_erro_de_rede_nao_loga_headers_nem_body(self, caplog) -> None:
+        """Erro/borda: `headers`/`body` podem carregar segredos (token
+        `Authorization`, assinatura de webhook, `code` de callback OAuth) —
+        o log de erro só pode conter method/path, nunca o request inteiro."""
+        client = self._client()
+        ws = AsyncMock()
+        mock_session = MagicMock()
+        mock_session.request = MagicMock(side_effect=ConnectionError("down"))
+
+        with caplog.at_level("ERROR", logger="backend.services.gateway"):
+            await client._forward(
+                ws,
+                mock_session,
+                {
+                    "id": "req-secret",
+                    "method": "POST",
+                    "path": "/webhook/github",
+                    "headers": {"Authorization": "Bearer super-secret-token"},
+                    "body": "codigo_oauth_sigiloso",
+                },
+            )
+
+        record = next(
+            r for r in caplog.records if "erro ao encaminhar request" in r.message
+        )
+        assert getattr(record, "method", None) == "POST"
+        assert getattr(record, "path", None) == "/webhook/github"
+        assert not hasattr(record, "headers")
+        assert not hasattr(record, "body")
+        assert not hasattr(record, "req")
+        rendered = record.getMessage()
+        assert "super-secret-token" not in rendered
+        assert "codigo_oauth_sigiloso" not in rendered
 
     @pytest.mark.asyncio
     async def test_erro_borda_cancelamento_repropaga_sem_enviar_response(self) -> None:
@@ -666,7 +738,7 @@ class TestGatewayClientConcurrency:
         client = self._client()
         ws = AsyncMock()
         session = AsyncMock()
-        pending: set = set()
+        pending: set[asyncio.Task[None]] = set()
 
         started: list[str] = []
         finished: list[str] = []
