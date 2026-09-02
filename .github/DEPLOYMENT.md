@@ -37,10 +37,10 @@ rodam em qualquer disparo dentro do path filtrado; 6 (integration/e2e) só em
 > desenvolvimento (PostgreSQL + Redis + Qdrant, modo `STORAGE_MODE=complete`);
 > o backend em si roda no host, nunca como container (ver `CLAUDE.md`).
 
-## Python 3.13 (não 3.14, por ora)
-
 A versão de Python é fixada explicitamente no workflow — não segue a mais
 recente disponível automaticamente, por causa da restrição do Nuitka abaixo.
+
+## Python 3.13 (não 3.14, por ora)
 
 `PYTHON_VERSION: "3.13"` no workflow casa com o `requires-python` do projeto,
 com o `.python-version` da raiz e com a CPython que o `uv` resolve localmente.
@@ -61,10 +61,10 @@ Configurados em **Settings → Secrets and variables → Actions**.
 | `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`             | publish-update-channel, publish-gha-bot-cli | Auth Cloudflare (KV/Workers).                                   |
 | `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`                  | publish-update-channel, publish-gha-bot-cli | Upload S3-compatível pro bucket R2.                             |
 
-## Rollback
-
 Sem imagem Docker publicada, o rollback do app acontece pelo canal de
 update dos instaladores nativos, não por reapontar um `docker-compose.yml`.
+
+## Rollback
 
 O canal de update (`services/scripts/release.ts`) mantém `previous_stable` e
 uma lista de quarentena por versão — uma versão problemática pode ser
