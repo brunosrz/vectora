@@ -19,12 +19,30 @@ import asyncio
 import contextlib
 import inspect
 import logging
+import re
 import socket
 import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+#: Charset aceito por chave de bucket JetStream KV — qualquer outro
+#: caractere (ex.: `:`, usado como separador em várias chamadas do resto do
+#: backend, como `f"partial:{thread_id}"`) faz `kv.put`/`kv.get` do NATS
+#: levantar `InvalidKeyError` em runtime. MemoryKV/RedisKV não têm essa
+#: restrição — o bug só aparece quando o backend NATS está ativo (default
+#: de toda instalação sem Redis configurado).
+_NATS_KEY_UNSAFE = re.compile(r"[^-/_=.a-zA-Z0-9]")
+
+
+def _nats_safe_key(key: str) -> str:
+    """Substitui todo caractere fora do charset aceito por chave JetStream
+    KV por `_` — determinístico (mesma chave lógica sempre mapeia pro mesmo
+    valor sanitizado), então get/set/delete da MESMA chave continuam
+    round-trip corretos mesmo depois da substituição."""
+    return _NATS_KEY_UNSAFE.sub("_", key)
+
 
 # Resultado do probe por URL — process-lifetime, igual aos singletons que o
 # consomem (get_kv/get_mq). Subir o Redis depois exige reiniciar o servidor.
@@ -241,7 +259,7 @@ class NatsKV:
     async def get(self, key: str) -> str | None:
         kv = await self._connect()
         try:
-            entry = await kv.get(key)
+            entry = await kv.get(_nats_safe_key(key))
         except Exception:
             return None
         return entry.value.decode("utf-8") if entry and entry.value else None
@@ -250,12 +268,12 @@ class NatsKV:
         # ttl_s ignorado — JetStream KV usa TTL de bucket, não por chave;
         # os usos atuais (invalidação de cache L2) toleram entradas sem TTL.
         kv = await self._connect()
-        await kv.put(key, value.encode("utf-8"))
+        await kv.put(_nats_safe_key(key), value.encode("utf-8"))
 
     async def delete(self, key: str) -> None:
         kv = await self._connect()
         with contextlib.suppress(Exception):
-            await kv.delete(key)
+            await kv.delete(_nats_safe_key(key))
 
     async def publish(self, channel: str, payload: str) -> None:
         await self._connect()

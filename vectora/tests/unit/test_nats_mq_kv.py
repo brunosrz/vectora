@@ -108,3 +108,60 @@ async def test_nats_kv_get_returns_none_on_miss():
         result = await kv.get("nao-existe")
 
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_nats_kv_sanitiza_dois_pontos_na_chave():
+    """Bug real: `f"partial:{thread_id}"` (usado em native_stream.py/
+    threads.py) e `f"watch:{channel}:{workspace_id}"` (file_watcher.py)
+    usam `:` como separador — o bucket JetStream KV real rejeita esse
+    caractere com `InvalidKeyError` (charset aceito:
+    `[-/_=.a-zA-Z0-9]`), então todo save de preview parcial de streaming
+    falhava silenciosamente (só um WARNING no log). A chave chega
+    sanitizada no `put`/`get`/`delete` reais, sem precisar caçar cada
+    call-site do resto do backend que usa `:`."""
+    fake_entry = MagicMock(value=b"valor")
+    fake_bucket = MagicMock()
+    fake_bucket.get = AsyncMock(return_value=fake_entry)
+    fake_bucket.put = AsyncMock()
+    fake_bucket.delete = AsyncMock()
+
+    fake_js = MagicMock()
+    fake_js.key_value = AsyncMock(return_value=fake_bucket)
+    fake_nc = MagicMock()
+    fake_nc.jetstream = MagicMock(return_value=fake_js)
+
+    kv = NatsKV("nats://127.0.0.1:4222")
+    thread_id = "ae535959-ec7f-41d6-a423-3c4d188c4b9d"
+    with patch("nats.connect", new=AsyncMock(return_value=fake_nc)):
+        await kv.set(f"partial:{thread_id}", "conteudo parcial")
+        await kv.get(f"partial:{thread_id}")
+        await kv.delete(f"partial:{thread_id}")
+
+    expected = f"partial_{thread_id}"
+    fake_bucket.put.assert_awaited_once_with(expected, b"conteudo parcial")
+    fake_bucket.get.assert_awaited_once_with(expected)
+    fake_bucket.delete.assert_awaited_once_with(expected)
+
+
+@pytest.mark.asyncio
+async def test_erro_borda_chave_sem_caractere_invalido_passa_intacta():
+    """Chaves já válidas (sem `:` nem outro caractere fora do charset) não
+    podem ser alteradas pela sanitização — round-trip continua idêntico."""
+    fake_entry = MagicMock(value=b"valor")
+    fake_bucket = MagicMock()
+    fake_bucket.get = AsyncMock(return_value=fake_entry)
+    fake_bucket.put = AsyncMock()
+
+    fake_js = MagicMock()
+    fake_js.key_value = AsyncMock(return_value=fake_bucket)
+    fake_nc = MagicMock()
+    fake_nc.jetstream = MagicMock(return_value=fake_js)
+
+    kv = NatsKV("nats://127.0.0.1:4222")
+    with patch("nats.connect", new=AsyncMock(return_value=fake_nc)):
+        await kv.set("valida.chave_123/x-y", "valor")
+        await kv.get("valida.chave_123/x-y")
+
+    fake_bucket.put.assert_awaited_once_with("valida.chave_123/x-y", b"valor")
+    fake_bucket.get.assert_awaited_once_with("valida.chave_123/x-y")
