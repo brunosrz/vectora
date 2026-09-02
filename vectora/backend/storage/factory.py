@@ -3,33 +3,34 @@
 Cada ``get_*()`` retorna sempre a mesma instância por processo (singleton
 lazy). A impl concreta é escolhida por ``settings.storage_mode``:
     "lite"     — SQLite + LanceDB (default)
-    "complete" — Postgres + Qdrant + Redis (Pro gate, F7+)
-
-Wraps finos nesta fase: as factories delegam para os services existentes
-sem alterar sua lógica. Quando F4-F8 forem implementados, os factories
-passarão a instanciar os backends unificados.
+    "complete" — Postgres + Qdrant + Redis (Pro)
 
 Uso:
     from backend.storage.factory import get_store, get_vector_store_backend
 
-    store = await get_store()   # AsyncSqliteStore ou PostgresStore
+    store = await get_store()   # VectoraStore (sempre — não lê storage_mode;
+                                 # o store Postgres real é aberto por
+                                 # backend.services.agent_factory._ensure_infra)
     backend = await get_vector_store_backend()  # LanceDBBackend ou QdrantBackend
 
 O agente real (motor nativo) vive em ``backend.services.agent_factory``.
 
 Garantia de produto — usuários/auth/settings/config NUNCA em Postgres:
-``storage_mode`` ("lite"/"complete") afeta apenas checkpointer, BaseStore,
-vector store e cache. Usuários, sessões, audit, invites
-(``src/services/auth.py::_get_db``) e configurações (``runtime_settings``,
-``~/.vectora/config.toml``) sempre vivem em SQLite/JSON/TOML, mesmo com
-``storage_mode == "complete"`` — funcionam como fallback garantido
-independente do banco principal.
+``storage_mode`` ("lite"/"complete") afeta apenas o store de memórias/skills
+(protocolo ``StoreBackend`` em ``backend/storage/protocols.py``), vector
+store e cache. Usuários, sessões, audit, invites (``backend/rbac/auth.py``)
+e configurações (``runtime_settings``, ``~/.vectora/config.toml``) sempre
+vivem em SQLite/JSON/TOML, mesmo com ``storage_mode == "complete"`` —
+funcionam como fallback garantido independente do banco principal.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from backend.storage.protocols import StoreBackend
 
 logger = logging.getLogger(__name__)
 
@@ -37,34 +38,40 @@ logger = logging.getLogger(__name__)
 # Singletons por processo
 # ---------------------------------------------------------------------------
 
-_store: Any = None  # BaseStore
+_store: StoreBackend | None = None  # sempre VectoraStore — ver get_store()
 _pg_pool: Any = None  # asyncpg.Pool (complete mode only)
 _vector_stores: dict[str, Any] = {}  # collection → lancedb.AsyncTable (raw)
 _optimize_tasks: dict[str, Any] = {}  # collection → asyncio.Task (schedule_optimize)
 _vector_store_backend: Any = None  # VectorStoreBackend nativo — 1 por processo
 
 # ---------------------------------------------------------------------------
-# Store (F5 stub — wrap do build_store existente)
+# Store (memórias/skills — wrap do build_store existente)
 # ---------------------------------------------------------------------------
 
 
-async def get_store(embedding_model: str | None = None) -> Any:
-    """Retorna (ou cria) o BaseStore singleton.
+async def get_store(embedding_model: str | None = None) -> StoreBackend:
+    """Retorna (ou cria) o store singleton (protocolo ``StoreBackend``).
 
-    Wrap fino sobre ``src.services.backends.build_store()``.
-    F5: usa ``AsyncSqliteStore`` (lite) persistente via aiosqlite dedicado.
+    Wrap fino sobre ``backend.llm.backends.build_store()`` — sempre
+    ``VectoraStore`` (aiosqlite), independente de ``storage_mode``; não
+    existe caminho Postgres aqui (esse vive em
+    ``backend.services.agent_factory._ensure_infra``, usado pelo motor de
+    conversa nativo).
 
     Returns:
-        ``AsyncSqliteStore`` (lite) com índice Cohere opcional,
-        já inicializado (``setup()`` chamado).
+        ``VectoraStore`` com índice de embeddings opcional (fallback
+        Cohere↔Voyage↔Ollama↔OpenRouter), já inicializado (``setup()``
+        chamado).
     """
     global _store
-    if _store is None:
+    store = _store
+    if store is None:
         from backend.llm.backends import build_store
 
-        _store = await build_store(embedding_model)
-        logger.debug("storage/factory: store criado (%s)", type(_store).__name__)
-    return _store
+        store = await build_store(embedding_model)
+        _store = store
+        logger.debug("storage/factory: store criado (%s)", type(store).__name__)
+    return store
 
 
 # ---------------------------------------------------------------------------
@@ -489,7 +496,7 @@ async def storage_health() -> dict[str, Any]:
     except Exception as exc:
         result["checkpointer"] = {"ok": False, "error": str(exc), "internal": True}
 
-    # Store — verifica se o AsyncSqliteStore foi criado e a conexão está ativa
+    # Store — verifica se o VectoraStore foi criado e a conexão está ativa
     try:
         store = await get_store()
         result["store"] = {"ok": store is not None, "error": None, "internal": True}

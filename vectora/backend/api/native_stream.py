@@ -135,9 +135,9 @@ def stream_engine_events(
 
     Os efeitos de fim-de-turno (checkpoint de rewind, limpar conteúdo
     parcial do KV, gatilho do Remember) só disparam quando
-    ``stopped_reason == "stop"`` — mesmo invariante de ``adapt_stream``
-    (aquele código só alcançava o ``on_chain_end`` do grafo raiz numa
-    conclusão real, nunca numa pausa HITL).
+    ``stopped_reason == "stop"`` — uma pausa HITL (aguardando aprovação)
+    não é uma conclusão real de turno, então nenhum desses efeitos roda
+    até o turno de fato terminar.
     """
     import asyncio
 
