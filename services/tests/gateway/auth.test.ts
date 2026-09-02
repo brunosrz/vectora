@@ -77,10 +77,9 @@ describe("generateGatewayToken", () => {
 });
 
 describe("generateConnectorSecret", () => {
-  it("gera um valor não-vazio, seguro pra URL/header (base64url, sem +/=)", () => {
+  it("gera 32 bytes de entropia como base64url sem padding (43 chars)", () => {
     const secret = generateConnectorSecret();
-    expect(secret.length).toBeGreaterThan(0);
-    expect(secret).not.toMatch(/[+/=]/);
+    expect(secret).toMatch(/^[A-Za-z0-9_-]{43}$/);
   });
 
   it("é diferente a cada chamada (aleatório, não determinístico)", () => {

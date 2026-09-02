@@ -24,7 +24,7 @@ describe("POST /register", () => {
     expect(data.websocket_url).toBe(
       `wss://gateway.vectora.chat/ws/${data.token}`,
     );
-    expect(data.connector_secret.length).toBeGreaterThan(0);
+    expect(data.connector_secret).toMatch(/^[A-Za-z0-9_-]{43}$/);
   });
 
   it("retorna 401 sem o Authorization header", async () => {
@@ -352,13 +352,29 @@ describe("achado de segurança: WebSocket exige o connector_secret quando um já
   );
 
   itDO(
-    "sem /register prévio (secretHash nunca setado) — upgrade aceita sem Authorization (migração transparente de instalações antigas)",
+    "sem /register prévio (secretHash nunca setado) — upgrade rejeitado mesmo sem Authorization",
     async () => {
       const res = await SELF.fetch(
         "https://gateway.vectora.chat/ws/token-nunca-registrado",
         { headers: { Upgrade: "websocket" } },
       );
-      expect(res.status).toBe(101);
+      expect(res.status).toBe(401);
+    },
+  );
+
+  itDO(
+    "sem /register prévio (secretHash nunca setado) — upgrade rejeitado mesmo com Authorization presente",
+    async () => {
+      const res = await SELF.fetch(
+        "https://gateway.vectora.chat/ws/outro-token-nunca-registrado",
+        {
+          headers: {
+            Upgrade: "websocket",
+            Authorization: "Bearer qualquer-coisa",
+          },
+        },
+      );
+      expect(res.status).toBe(401);
     },
   );
 });

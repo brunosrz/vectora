@@ -50,12 +50,13 @@ export class GatewaySession implements DurableObject {
    * atacante que soubesse/adivinhasse o token podia chamar
    * `{token}.vectora.chat/_revoke` direto e derrubar a sessão de outro
    * usuário, ou `/_health` pra sondar se alguém está conectado — sem
-   * autenticação nenhuma. VECTORA_APP_SECRET (mesmo secret fixo que prova
-   * "é um build genuíno do produto" em `/register`) reaproveitado aqui só
-   * pra provar que a chamada veio do próprio Worker, não de fora.*/
+   * autenticação nenhuma. GATEWAY_INTERNAL_SECRET (dedicado, nunca
+   * distribuído a nenhum client — diferente do VECTORA_APP_SECRET, que
+   * todo build do produto conhece) prova que a chamada veio do próprio
+   * Worker, não de fora. */
   private isInternalCall(request: Request): boolean {
     const auth = request.headers.get("X-Vectora-Internal") ?? "";
-    return timingSafeEqual(auth, `Bearer ${this.env.VECTORA_APP_SECRET}`);
+    return timingSafeEqual(auth, `Bearer ${this.env.GATEWAY_INTERNAL_SECRET}`);
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -110,19 +111,20 @@ export class GatewaySession implements DurableObject {
   }
 
   private async handleWebSocketUpgrade(request: Request): Promise<Response> {
-    // `secretHash` ausente = sessão registrada antes desta correção
-    // existir — aceita (migração transparente: o client Python re-registra
-    // sozinho na próxima subida e passa a exigir o secret dali em diante,
-    // sem trocar de subdomínio nem quebrar quem já está rodando).
-    if (this.secretHash) {
-      const auth = request.headers.get("Authorization") ?? "";
-      const presented = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-      const presentedHash = presented
-        ? await hashConnectorSecret(presented)
-        : "";
-      if (!presentedHash || !timingSafeEqual(presentedHash, this.secretHash)) {
-        return new Response("Unauthorized", { status: 401 });
-      }
+    // `secretHash` só existe depois de um `/register` completo (que chama
+    // `/_set-secret` antes de devolver o token pro client) — uma sessão sem
+    // ele nunca terminou o registro, seja por nunca ter existido, seja por
+    // um `token` adivinhado/reciclado. Nenhum caso legítimo de conexão passa
+    // por aqui sem secretHash: sempre rejeitar.
+    const auth = request.headers.get("Authorization") ?? "";
+    const presented = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    const presentedHash = presented ? await hashConnectorSecret(presented) : "";
+    if (
+      !this.secretHash ||
+      !presentedHash ||
+      !timingSafeEqual(presentedHash, this.secretHash)
+    ) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     const pair = new WebSocketPair();

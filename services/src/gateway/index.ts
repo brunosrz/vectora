@@ -98,9 +98,12 @@ function requireAppSecret(request: Request, env: Env): boolean {
 /** Header só o próprio Worker sabe montar — usado nas chamadas internas
  * pra `GatewaySession` (`/_health`, `/_revoke`, `/_set-secret`) pra provar
  * que não vieram de um client externo batendo direto no subdomínio (ver
- * `GatewaySession::isInternalCall`). */
+ * `GatewaySession::isInternalCall`). Secret dedicado (`GATEWAY_INTERNAL_SECRET`),
+ * não `VECTORA_APP_SECRET` — este último é distribuído a toda instalação do
+ * produto, então qualquer client legítimo o conhece e poderia forjar o
+ * header se fosse o mesmo valor. */
 function internalHeaders(env: Env): Record<string, string> {
-  return { "X-Vectora-Internal": `Bearer ${env.VECTORA_APP_SECRET}` };
+  return { "X-Vectora-Internal": `Bearer ${env.GATEWAY_INTERNAL_SECRET}` };
 }
 
 function clientIp(request: Request): string {

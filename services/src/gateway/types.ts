@@ -4,6 +4,12 @@ export interface Env {
   GATEWAY_SESSION: DurableObjectNamespace;
   GATEWAY_METRICS: KVNamespace;
   VECTORA_APP_SECRET: string;
+  // Nunca embutido em nenhum binário distribuído — só o Worker conhece este
+  // valor. Prova que uma chamada a `/_health`, `/_revoke`, `/_set-secret`
+  // veio do próprio gatewayHandler, não de um client externo batendo direto
+  // no subdomínio `{token}.vectora.chat` com o VECTORA_APP_SECRET (esse sim
+  // distribuído a toda instalação, então não serve pra provar origem interna).
+  GATEWAY_INTERNAL_SECRET: string;
   GATEWAY_HMAC_SECRET: string;
   VECTORA_OAUTH_SECRET: string;
   GATEWAY_URL: string;

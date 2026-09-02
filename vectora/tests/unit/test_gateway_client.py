@@ -410,7 +410,8 @@ class TestGatewayClientConnectOnce:
             with patch.object(client, "_handle_messages", new=AsyncMock()):
                 await client._connect_once("tok123", "meu-secret-de-conector")
 
-        _, call_kwargs = session.ws_connect.call_args
+        call_args, call_kwargs = session.ws_connect.call_args
+        assert call_args[0] == "wss://gateway.vectora.chat/ws/tok123"
         assert call_kwargs["headers"] == {
             "Authorization": "Bearer meu-secret-de-conector"
         }
