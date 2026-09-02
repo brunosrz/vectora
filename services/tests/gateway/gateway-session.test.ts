@@ -377,4 +377,70 @@ describe("achado de segurança: WebSocket exige o connector_secret quando um já
       expect(res.status).toBe(401);
     },
   );
+
+  itDO(
+    "trocar o secret via novo /register fecha a conexão WS ativa (secret comprometido não continua autenticado)",
+    async () => {
+      const register1 = await SELF.fetch(
+        "https://gateway.vectora.chat/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.VECTORA_APP_SECRET}`,
+          },
+          body: JSON.stringify({ fingerprint: "fp-rotacao-secret" }),
+        },
+      );
+      const { token, connector_secret: secret1 } = (await register1.json()) as {
+        token: string;
+        connector_secret: string;
+      };
+
+      const ws1 = await SELF.fetch(`https://gateway.vectora.chat/ws/${token}`, {
+        headers: { Upgrade: "websocket", Authorization: `Bearer ${secret1}` },
+      });
+      expect(ws1.status).toBe(101);
+      ws1.webSocket!.accept();
+
+      const closed = new Promise<void>((resolve) => {
+        ws1.webSocket!.addEventListener("close", () => resolve());
+      });
+
+      // Novo /register — mesmo fingerprint (token determinístico), secret NOVO.
+      const register2 = await SELF.fetch(
+        "https://gateway.vectora.chat/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.VECTORA_APP_SECRET}`,
+          },
+          body: JSON.stringify({ fingerprint: "fp-rotacao-secret" }),
+        },
+      );
+      const { connector_secret: secret2 } = (await register2.json()) as {
+        connector_secret: string;
+      };
+      expect(secret2).not.toBe(secret1);
+
+      await closed;
+
+      const wsOld = await SELF.fetch(
+        `https://gateway.vectora.chat/ws/${token}`,
+        {
+          headers: { Upgrade: "websocket", Authorization: `Bearer ${secret1}` },
+        },
+      );
+      expect(wsOld.status).toBe(401);
+
+      const wsNew = await SELF.fetch(
+        `https://gateway.vectora.chat/ws/${token}`,
+        {
+          headers: { Upgrade: "websocket", Authorization: `Bearer ${secret2}` },
+        },
+      );
+      expect(wsNew.status).toBe(101);
+    },
+  );
 });

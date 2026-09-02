@@ -117,6 +117,20 @@ export class GatewaySession implements DurableObject {
     }
     this.secretHash = body.secretHash;
     await this.state.storage.put("secretHash", this.secretHash);
+    // Uma conexão já aberta foi autenticada com o secret ANTERIOR — trocar
+    // o hash sem derrubá-la deixaria um secret comprometido continuar
+    // recebendo review_job/requests até o client desconectar sozinho. O
+    // client reconecta sozinho com o secret novo (mesmo backoff do resto
+    // do protocolo), então fechar aqui não perde nenhum request em voo:
+    // eles caem na fila normal, como qualquer desconexão.
+    if (this.ws) {
+      try {
+        this.ws.close(1000, "secret rotated");
+      } catch {
+        /* ignore */
+      }
+      this.ws = null;
+    }
     return Response.json({ ok: true });
   }
 
