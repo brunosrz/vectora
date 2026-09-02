@@ -44,10 +44,6 @@ import {
 } from "@/components/settings/preferencias/theme-picker";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
-/** Deriva o `Theme` (claro/escuro) a partir do id de um preset. */
-function themeForPreset(id: string): Theme {
-  return id === "light" || id.endsWith("-light") ? "light" : "dark";
-}
 
 /** Rótulo do tema selecionado, resolvido explicitamente (não deixado pro
  * registro interno do Radix Select) — sem isso o trigger mostra vazio no
@@ -412,13 +408,11 @@ export function PreferenciasTab() {
       setThemePreset("custom");
       return;
     }
-    setTheme(themeForPreset(value));
     setThemePreset(value);
   };
 
   const handleModeChange = (mode: Theme) => {
     setTheme(mode);
-    if (mode === "system") setThemePreset("default");
   };
 
   const handleAddTrainingBlock = () => {
