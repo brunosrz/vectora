@@ -5,6 +5,7 @@ import contextlib
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import aiohttp
 import pytest
 
 
@@ -54,6 +55,9 @@ class TestGatewayTokenPersistence:
 class TestGatewayClientBackoff:
     @pytest.mark.asyncio
     async def test_backoff_dobra_a_cada_falha(self) -> None:
+        """Jitter neutralizado (`random.uniform` fixo em 1.0) pra testar só
+        a duplicação do backoff-base, sem a variação aleatória do sleep
+        real — essa variação tem teste próprio abaixo."""
         from backend.services.gateway import GatewayClient
 
         client = GatewayClient(
@@ -68,16 +72,17 @@ class TestGatewayClientBackoff:
                 raise asyncio.CancelledError
 
         with patch("backend.services.gateway.asyncio.sleep", fake_sleep):
-            with patch(
-                "backend.services.gateway.GatewayClient._connect_once",
-                side_effect=ConnectionError("fail"),
-            ):
+            with patch("backend.services.gateway.random.uniform", return_value=1.0):
                 with patch(
-                    "backend.services.gateway.GatewayClient._register",
-                    return_value="tok123",
+                    "backend.services.gateway.GatewayClient._connect_once",
+                    side_effect=ConnectionError("fail"),
                 ):
-                    with contextlib.suppress(asyncio.CancelledError):
-                        await client._connect_loop()
+                    with patch(
+                        "backend.services.gateway.GatewayClient._register",
+                        return_value="tok123",
+                    ):
+                        with contextlib.suppress(asyncio.CancelledError):
+                            await client._connect_loop()
 
         assert len(delays) >= 2
         assert delays[1] == delays[0] * 2
@@ -98,6 +103,43 @@ class TestGatewayClientBackoff:
                 raise asyncio.CancelledError
 
         with patch("backend.services.gateway.asyncio.sleep", fake_sleep):
+            with patch("backend.services.gateway.random.uniform", return_value=1.0):
+                with patch(
+                    "backend.services.gateway.GatewayClient._connect_once",
+                    side_effect=ConnectionError("fail"),
+                ):
+                    with patch(
+                        "backend.services.gateway.GatewayClient._register",
+                        return_value="tok123",
+                    ):
+                        with contextlib.suppress(asyncio.CancelledError):
+                            await client._connect_loop()
+
+        assert all(d <= 60.0 for d in delays)
+        assert max(delays) == 60.0
+
+    @pytest.mark.asyncio
+    async def test_jitter_faz_delays_variarem_mesmo_com_backoff_estavel(self) -> None:
+        """Sem neutralizar `random.uniform` (jitter real): depois que o
+        backoff-base satura em 60s (bem antes da 15ª tentativa: 1,2,4,...,
+        60), os últimos delays vêm todos do MESMO backoff-base — só variam
+        se o jitter estiver de fato sendo aplicado no sleep. Prova a defesa
+        contra thundering herd (várias instalações reconectando ao mesmo
+        tempo depois de o Worker do gateway reiniciar)."""
+        from backend.services.gateway import GatewayClient
+
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
+        )
+        delays: list[float] = []
+
+        async def fake_sleep(d: float) -> None:
+            delays.append(d)
+            if len(delays) >= 15:
+                raise asyncio.CancelledError
+
+        with patch("backend.services.gateway.asyncio.sleep", fake_sleep):
             with patch(
                 "backend.services.gateway.GatewayClient._connect_once",
                 side_effect=ConnectionError("fail"),
@@ -109,8 +151,9 @@ class TestGatewayClientBackoff:
                     with contextlib.suppress(asyncio.CancelledError):
                         await client._connect_loop()
 
-        assert all(d <= 60.0 for d in delays)
-        assert max(delays) == 60.0
+        stabilized = delays[-5:]
+        assert len(set(stabilized)) > 1, "delays no teto deveriam variar (jitter real)"
+        assert all(30.0 <= d <= 90.0 for d in stabilized)
 
 
 class TestGatewayClientRegister:
@@ -330,6 +373,91 @@ class TestGatewayClientConnectOnce:
             "fechada pelo servidor sem erro" in rec.message for rec in caplog.records
         )
 
+    @pytest.mark.asyncio
+    async def test_reusa_a_mesma_local_session_entre_varios_forwards(self) -> None:
+        """`local_session` é aberta UMA vez em `_connect_once` e reusada por
+        todos os `_forward` da conexão — antes, cada `_forward` abria a
+        própria `aiohttp.ClientSession()` (2 requests processadas = 3
+        sessões: 1 do WS + 2 do forward; agora são só 2: 1 do WS + 1
+        reusada)."""
+        client = self._client()
+
+        class _FakeMsg:
+            def __init__(self, tp, data=None) -> None:
+                self.type = tp
+                self._data = data
+
+            def json(self):
+                return self._data
+
+        class _FakeWS:
+            def __init__(self, messages) -> None:
+                self._messages = list(messages)
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                if not self._messages:
+                    raise StopAsyncIteration
+                return self._messages.pop(0)
+
+            async def send_json(self, _data) -> None:
+                return None
+
+        ws = _FakeWS(
+            [
+                _FakeMsg(
+                    aiohttp.WSMsgType.TEXT,
+                    {
+                        "type": "request",
+                        "id": "r1",
+                        "method": "GET",
+                        "path": "/a",
+                        "headers": {},
+                        "body": "",
+                    },
+                ),
+                _FakeMsg(
+                    aiohttp.WSMsgType.TEXT,
+                    {
+                        "type": "request",
+                        "id": "r2",
+                        "method": "GET",
+                        "path": "/b",
+                        "headers": {},
+                        "body": "",
+                    },
+                ),
+            ]
+        )
+
+        ws_owner_session = MagicMock()
+        ws_owner_session.ws_connect = MagicMock(return_value=_AsyncCtx(ws))
+        local_session_marker = MagicMock()
+
+        created: list[object] = []
+
+        def session_factory(*_args, **_kwargs):
+            value = ws_owner_session if len(created) == 0 else local_session_marker
+            created.append(value)
+            return _AsyncCtx(value)
+
+        sessions_seen: list[object] = []
+
+        async def fake_forward(_ws, session_arg, req) -> None:
+            sessions_seen.append(session_arg)
+
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession",
+            side_effect=session_factory,
+        ):
+            with patch.object(client, "_forward", side_effect=fake_forward):
+                await client._connect_once("tok123")
+
+        assert len(created) == 2, "1 sessão pro WS + 1 reusada — não 1 por forward"
+        assert sessions_seen == [local_session_marker, local_session_marker]
+
 
 class TestGatewayClientDispatch:
     def _client(self):
@@ -344,25 +472,38 @@ class TestGatewayClientDispatch:
     async def test_ping_envia_pong(self) -> None:
         client = self._client()
         ws = AsyncMock()
-        await client._dispatch(ws, {"type": "ping"})
+        session = AsyncMock()
+        pending: set = set()
+        await client._dispatch(ws, session, {"type": "ping"}, pending)
         ws.send_json.assert_awaited_once_with({"type": "pong"})
 
     @pytest.mark.asyncio
     async def test_queued_encaminha_todos_itens(self) -> None:
+        """`_dispatch` só AGENDA os `_forward` (task própria, ver
+        `_spawn_forward`) — não espera terminar. `pending` guarda as tasks;
+        `asyncio.gather` espera todas antes de checar quantas rodaram."""
         client = self._client()
         ws = AsyncMock()
+        session = AsyncMock()
+        pending: set = set()
         items = [
             {"id": "1", "method": "POST", "path": "/w/a", "headers": {}, "body": ""},
             {"id": "2", "method": "POST", "path": "/w/b", "headers": {}, "body": ""},
         ]
         with patch.object(client, "_forward", new=AsyncMock()) as mock_fwd:
-            await client._dispatch(ws, {"type": "queued", "items": items})
+            await client._dispatch(
+                ws, session, {"type": "queued", "items": items}, pending
+            )
+            assert len(pending) == 2
+            await asyncio.gather(*pending)
         assert mock_fwd.await_count == 2
 
     @pytest.mark.asyncio
     async def test_request_chama_forward(self) -> None:
         client = self._client()
         ws = AsyncMock()
+        session = AsyncMock()
+        pending: set = set()
         req = {
             "type": "request",
             "id": "abc",
@@ -372,14 +513,43 @@ class TestGatewayClientDispatch:
             "body": "",
         }
         with patch.object(client, "_forward", new=AsyncMock()) as mock_fwd:
-            await client._dispatch(ws, req)
-        mock_fwd.assert_awaited_once_with(ws, req)
+            await client._dispatch(ws, session, req, pending)
+            await asyncio.gather(*pending)
+        mock_fwd.assert_awaited_once_with(ws, session, req)
 
     @pytest.mark.asyncio
     async def test_tipo_desconhecido_ignorado(self) -> None:
         client = self._client()
         ws = AsyncMock()
-        await client._dispatch(ws, {"type": "unknown_msg"})  # sem exceção
+        session = AsyncMock()
+        pending: set = set()
+        await client._dispatch(
+            ws, session, {"type": "unknown_msg"}, pending
+        )  # sem exceção
+        assert pending == set()
+
+    @pytest.mark.asyncio
+    async def test_erro_borda_task_sai_de_pending_ao_terminar(self) -> None:
+        """`pending` não pode crescer sem limite — cada task se
+        auto-remove via `add_done_callback` quando termina."""
+        client = self._client()
+        ws = AsyncMock()
+        session = AsyncMock()
+        pending: set = set()
+        req = {
+            "type": "request",
+            "id": "abc",
+            "method": "GET",
+            "path": "/x",
+            "headers": {},
+            "body": "",
+        }
+        with patch.object(client, "_forward", new=AsyncMock()):
+            await client._dispatch(ws, session, req, pending)
+            assert len(pending) == 1
+            (task,) = tuple(pending)
+            await task
+        assert pending == set()
 
 
 class TestGatewayClientForward:
@@ -394,6 +564,9 @@ class TestGatewayClientForward:
 
     @pytest.mark.asyncio
     async def test_forward_sucesso_envia_response(self) -> None:
+        """`_forward` recebe a sessão local já pronta (reuso — ver
+        `_connect_once`), não abre/fecha uma `aiohttp.ClientSession()`
+        própria a cada chamada."""
         import base64
 
         client = self._client()
@@ -407,10 +580,8 @@ class TestGatewayClientForward:
         mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
         mock_resp.__aexit__ = AsyncMock(return_value=None)
 
-        mock_session = AsyncMock()
+        mock_session = MagicMock()
         mock_session.request = MagicMock(return_value=mock_resp)
-        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_session.__aexit__ = AsyncMock(return_value=None)
 
         req = {
             "id": "req-1",
@@ -419,10 +590,7 @@ class TestGatewayClientForward:
             "headers": {"Content-Type": "application/json"},
             "body": base64.b64encode(b'{"ref":"main"}').decode(),
         }
-        with patch(
-            "backend.services.gateway.aiohttp.ClientSession", return_value=mock_session
-        ):
-            await client._forward(ws, req)
+        await client._forward(ws, mock_session, req)
 
         call_kwargs = ws.send_json.call_args[0][0]
         assert call_kwargs["type"] == "response"
@@ -434,25 +602,124 @@ class TestGatewayClientForward:
     async def test_forward_erro_de_rede_envia_502(self) -> None:
         client = self._client()
         ws = AsyncMock()
+        mock_session = MagicMock()
+        mock_session.request = MagicMock(side_effect=ConnectionError("down"))
 
-        with patch(
-            "backend.services.gateway.aiohttp.ClientSession",
-            side_effect=ConnectionError("down"),
-        ):
-            await client._forward(
-                ws,
-                {
-                    "id": "req-2",
-                    "method": "GET",
-                    "path": "/health",
-                    "headers": {},
-                    "body": "",
-                },
-            )
+        await client._forward(
+            ws,
+            mock_session,
+            {
+                "id": "req-2",
+                "method": "GET",
+                "path": "/health",
+                "headers": {},
+                "body": "",
+            },
+        )
 
         call_kwargs = ws.send_json.call_args[0][0]
         assert call_kwargs["status"] == 502
         assert call_kwargs["id"] == "req-2"
+
+    @pytest.mark.asyncio
+    async def test_erro_borda_cancelamento_repropaga_sem_enviar_response(self) -> None:
+        """`asyncio.CancelledError` (conexão fechando, `_connect_once`
+        cancelando `pending`) precisa se propagar — não pode ser tratado
+        como erro genérico e mascarado por um 502 enviado num socket que já
+        pode estar fechando."""
+        client = self._client()
+        ws = AsyncMock()
+        mock_session = MagicMock()
+        mock_session.request = MagicMock(side_effect=asyncio.CancelledError())
+
+        with pytest.raises(asyncio.CancelledError):
+            await client._forward(
+                ws,
+                mock_session,
+                {
+                    "id": "req-3",
+                    "method": "GET",
+                    "path": "/x",
+                    "headers": {},
+                    "body": "",
+                },
+            )
+        ws.send_json.assert_not_awaited()
+
+
+class TestGatewayClientConcurrency:
+    def _client(self):
+        from backend.services.gateway import GatewayClient
+
+        return GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
+        )
+
+    @pytest.mark.asyncio
+    async def test_segunda_request_nao_espera_a_primeira_lenta_terminar(self) -> None:
+        """Bug real corrigido: `_dispatch` fazia `await self._forward(...)`
+        direto — uma revisão de PR demorada bloqueava o loop de leitura do
+        WebSocket inteiro, incl. um simples ping. Agora cada `_forward` é
+        uma task própria (`_spawn_forward`): a segunda request termina
+        mesmo com a primeira ainda presa."""
+        client = self._client()
+        ws = AsyncMock()
+        session = AsyncMock()
+        pending: set = set()
+
+        started: list[str] = []
+        finished: list[str] = []
+        release_slow = asyncio.Event()
+
+        async def fake_forward(ws_arg, session_arg, req) -> None:
+            assert session_arg is session  # mesma sessão reusada nas duas
+            started.append(req["id"])
+            if req["id"] == "slow":
+                await release_slow.wait()
+            finished.append(req["id"])
+
+        with patch.object(client, "_forward", side_effect=fake_forward):
+            await client._dispatch(
+                ws,
+                session,
+                {
+                    "type": "request",
+                    "id": "slow",
+                    "method": "GET",
+                    "path": "/a",
+                    "headers": {},
+                    "body": "",
+                },
+                pending,
+            )
+            await client._dispatch(
+                ws,
+                session,
+                {
+                    "type": "request",
+                    "id": "fast",
+                    "method": "GET",
+                    "path": "/b",
+                    "headers": {},
+                    "body": "",
+                },
+                pending,
+            )
+
+            for _ in range(100):
+                if "fast" in finished:
+                    break
+                await asyncio.sleep(0)
+
+            assert "fast" in finished
+            assert "slow" not in finished  # ainda preso em release_slow.wait()
+
+            release_slow.set()
+            await asyncio.gather(*pending)
+
+        assert set(finished) == {"slow", "fast"}
+        assert started == ["slow", "fast"]  # ordem de chegada preservada
 
 
 class TestMachineFingerprint:
