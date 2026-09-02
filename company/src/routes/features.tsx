@@ -174,40 +174,6 @@ export function getFeatureCategories(): Category[] {
       ],
     },
     {
-      id: "plataforma",
-      label: m.features_cat_plataforma,
-      items: [
-        {
-          id: "desktop",
-          Icon: MonitorSmartphone,
-          title: m.features_desktop_title(),
-          summary: m.features_desktop_summary(),
-          description: m.features_desktop_desc(),
-        },
-        {
-          id: "web-multiuser",
-          Icon: Users,
-          title: m.features_web_multiuser_title(),
-          summary: m.features_web_multiuser_summary(),
-          description: m.features_web_multiuser_desc(),
-        },
-        {
-          id: "services",
-          Icon: Cloud,
-          title: m.features_services_title(),
-          summary: m.features_services_summary(),
-          description: m.features_services_desc(),
-        },
-        {
-          id: "i18n",
-          Icon: Languages,
-          title: m.features_i18n_title(),
-          summary: m.features_i18n_summary(),
-          description: m.features_i18n_desc(),
-        },
-      ],
-    },
-    {
       id: "pro",
       label: m.features_cat_pro,
       items: [
@@ -242,6 +208,41 @@ export function getFeatureCategories(): Category[] {
           summary: m.features_bot_gha_summary(),
           description: m.features_bot_gha_desc(),
           pro: true,
+        },
+      ],
+    },
+    {
+      id: "plataforma",
+      label: m.features_cat_plataforma,
+      items: [
+        {
+          id: "desktop",
+          Icon: MonitorSmartphone,
+          title: m.features_desktop_title(),
+          summary: m.features_desktop_summary(),
+          description: m.features_desktop_desc(),
+        },
+        {
+          id: "web-multiuser",
+          Icon: Users,
+          title: m.features_web_multiuser_title(),
+          summary: m.features_web_multiuser_summary(),
+          description: m.features_web_multiuser_desc(),
+          pro: true,
+        },
+        {
+          id: "services",
+          Icon: Cloud,
+          title: m.features_services_title(),
+          summary: m.features_services_summary(),
+          description: m.features_services_desc(),
+        },
+        {
+          id: "i18n",
+          Icon: Languages,
+          title: m.features_i18n_title(),
+          summary: m.features_i18n_summary(),
+          description: m.features_i18n_desc(),
         },
       ],
     },
