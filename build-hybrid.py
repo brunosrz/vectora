@@ -38,6 +38,15 @@ COLLECT_ALL = [
     "tiktoken_ext",
 ]
 
+# Mesma lista, sem "lancedb" — só pro vectora-cli headless (Etapa 2b). RAG
+# não entra no caminho do gh-bot self-hosted: review_job.py roda a revisão
+# com um ToolRegistry() vazio (nenhuma tool, RAG incluído — ver achado de
+# segurança sobre isolar ferramentas de um diff de PR não-confiável), então
+# os binários nativos Rust/Arrow do lancedb (a maior fatia dos ~473 MiB que
+# estouravam o limite de 300 MiB do wrangler r2 object put) nunca são
+# exercitados nesse binário. O app desktop completo continua com RAG.
+COLLECT_ALL_CLI = [pkg for pkg in COLLECT_ALL if pkg != "lancedb"]
+
 # Módulos que precisam de hidden-import adicional além do collect-all.
 # tiktoken_ext.openai_public é o plugin que define cl100k_base, p50k_base etc.;
 # em ambiente congelado pkgutil.iter_modules pode não enumerar namespace packages
@@ -170,9 +179,12 @@ def main() -> None:
     # código/dados/binários) — sem os metadados, importlib.metadata.version
     # ("vectora") levanta PackageNotFoundError dentro do binário congelado e
     # backend.version.get_vectora_version() cai silenciosamente no fallback
-    # "0.1.0" (achado real do CodeRabbit no PR que adicionou a versão ao log
-    # de startup: o binário sempre relataria a versão errada).
+    # "0.1.0", relatando a versão errada no log de startup.
     collect += ["--copy-metadata", "vectora"]
+    collect_cli: list[str] = []
+    for pkg in COLLECT_ALL_CLI:
+        collect_cli += ["--collect-all", pkg]
+    collect_cli += ["--copy-metadata", "vectora"]
     hidden: list[str] = []
     for mod in HIDDEN_IMPORTS:
         hidden += ["--hidden-import", mod]
@@ -272,7 +284,11 @@ def main() -> None:
     # Etapa 2b (opcional) — vectora-cli: mesmo backend.pyd, sem Electron/GUI.
     # Reusa o pyd já compilado na Etapa 1, roda só quando pedido explicitamente
     # (workflow de release liga isso só na combinação linux/x64, pra virar o
-    # binário headless que a Vectora Bot Action roda em runners de CI).
+    # binário headless que a Vectora Bot Action roda em runners de CI). Sem
+    # nats-server/ffmpeg/ffprobe (--add-binary) nem lancedb (collect_cli, ver
+    # COLLECT_ALL_CLI acima) — nenhum necessário só pra revisar um diff de PR,
+    # e juntos eram a maior fatia dos ~473 MiB que estouravam o limite de
+    # 300 MiB do `wrangler r2 object put`.
     if os.environ.get("VECTORA_BUILD_CLI") == "1":
         run(
             [
@@ -289,17 +305,11 @@ def main() -> None:
                 f"--specpath={ROOT / 'build'}",
                 "--add-binary",
                 f"{pyd}{SEP}.",
-                "--add-binary",
-                f"{nats_binary}{SEP}nats",
-                "--add-binary",
-                f"{ffmpeg_binary}{SEP}ffmpeg",
-                "--add-binary",
-                f"{ffprobe_binary}{SEP}ffmpeg",
                 "--add-data",
                 f"{VECTORA / 'backend' / 'assets'}{SEP}backend/assets",
                 "--add-data",
                 f"{VECTORA / 'backend' / 'storage' / 'migrations' / 'sqlite' / 'schema.sql'}{SEP}backend/storage/migrations/sqlite",
-                *collect,
+                *collect_cli,
                 *hidden,
                 *excludes,
                 str(VECTORA / "launcher.py"),

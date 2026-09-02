@@ -557,16 +557,12 @@ jobs:
     environment:
       name: production
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 11.5.0
       - name: Read version from pyproject.toml
         id: version
         working-directory: .
@@ -578,18 +574,20 @@ jobs:
         with:
           name: gha-bot-cli-linux-x64
           path: dist/vectora-cli
-      - name: Install services deps
-        working-directory: services
-        run: pnpm install --frozen-lockfile
-      - name: Tar + publish to R2
+      - name: Tar + publish to R2 (multipart via S3-compatible API)
         working-directory: .
         run: |
-          # `pnpm --dir services exec` roda o processo filho (wrangler) com o
-          # cwd trocado pra services/ — um --file= relativo à raiz do repo
-          # (onde o tar era criado antes) nunca resolvia, sempre "does not
-          # exist". Cria o tarball já dentro de services/ pra bater com o
-          # cwd real do wrangler nesse comando.
-          tar -czf services/vectora-cli-linux-x64.tar.gz -C dist/vectora-cli .
-          pnpm --dir services exec wrangler r2 object put \
-            "vectora-r2/gha-bot/${{ steps.version.outputs.value }}/vectora-cli-linux-x64.tar.gz" \
-            --file=vectora-cli-linux-x64.tar.gz --remote
+          # `wrangler r2 object put` (comando simples, sem multipart) rejeita
+          # qualquer arquivo acima de 300 MiB — o vectora-cli chegou a 473 MiB
+          # antes do enxugamento em build-hybrid.py (achado real: CI travado
+          # com "Wrangler only supports uploading files up to 300 MiB"). `aws
+          # s3 cp` contra o endpoint S3-compatível do R2 faz multipart
+          # automático pra arquivos grandes, sem esse teto — usado aqui como
+          # rede de segurança, independente de quão enxuto o binário fique.
+          # Credenciais são as R2 API Tokens (Access Key ID/Secret), geradas
+          # no dashboard Cloudflare em R2 > Manage API Tokens — DIFERENTES do
+          # CLOUDFLARE_API_TOKEN usado pelo wrangler no resto do workflow.
+          tar -czf vectora-cli-linux-x64.tar.gz -C dist/vectora-cli .
+          aws s3 cp vectora-cli-linux-x64.tar.gz \
+            "s3://vectora-r2/gha-bot/${{ steps.version.outputs.value }}/vectora-cli-linux-x64.tar.gz" \
+            --endpoint-url "https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com"
