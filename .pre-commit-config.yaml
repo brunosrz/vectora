@@ -100,15 +100,16 @@ repos:
         types: [python]
 
   # ==========================================
-  # Sem proveniência de plano em código
+  # Sem proveniência de processo em código
   # ==========================================
   - repo: local
     hooks:
       - id: no-plan-comments
-        name: Sem Sprint/Bloco/Fase em código
-        entry: uv run python scripts/check_no_plan_comments.py
+        name: Sem Sprint/Bloco/Fase ou menção a ferramenta de IA em código
+        entry: uv run python utils/check_no_plan_comments.py
         language: system
         files: \.(py|ts|tsx|js|jsx)$
+        exclude: ^utils/(check_no_plan_comments|test_check_no_plan_comments)\.py$
 
   # ==========================================
   # Python Validation
