@@ -33,6 +33,14 @@ _BACKOFF_JITTER = (0.5, 1.5)
 #: aguarda `pending` no reconnect: um handler local travado atrasaria a
 #: reconexão em até 5 minutos.
 _LOCAL_FORWARD_TIMEOUT_S = 30.0
+#: Teto de forwards HTTP locais em voo ao mesmo tempo — sem isso, um
+#: `queued` grande ou o Worker mandando `request` mais rápido do que o
+#: backend local consegue responder faz `pending` (tasks) e conexões
+#: `local_session` crescerem sem limite, esgotando memória/sockets locais.
+#: Backpressure real: `_forward` além do teto fica bloqueado no semáforo
+#: (a task já existe em `pending`, mas não abre conexão local nem tem
+#: request próprio em voo até liberar).
+_MAX_CONCURRENT_FORWARDS = 20
 
 
 class GatewayRequestItem(TypedDict):
@@ -87,6 +95,8 @@ class GatewayClient:
         #: `send_json`/`send_str` forem chamados de tasks diferentes ao
         #: mesmo tempo na mesma conexão.
         self._ws_send_lock = asyncio.Lock()
+        #: Backpressure — ver `_MAX_CONCURRENT_FORWARDS`.
+        self._forward_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_FORWARDS)
 
     # ------------------------------------------------------------------
     # Public API
@@ -261,24 +271,25 @@ class GatewayClient:
         req_id: str = req["id"]
         try:
             body_bytes = base64.b64decode(req.get("body", ""))
-            async with local_session.request(
-                method=req["method"],
-                url=f"{self._local_url}{req['path']}",
-                headers=req.get("headers", {}),
-                data=body_bytes,
-            ) as resp:
-                resp_body = base64.b64encode(await resp.read()).decode()
-                resp_headers = dict(resp.headers)
-                async with self._ws_send_lock:
-                    await ws.send_json(
-                        {
-                            "type": "response",
-                            "id": req_id,
-                            "status": resp.status,
-                            "headers": resp_headers,
-                            "body": resp_body,
-                        }
-                    )
+            async with self._forward_semaphore:
+                async with local_session.request(
+                    method=req["method"],
+                    url=f"{self._local_url}{req['path']}",
+                    headers=req.get("headers", {}),
+                    data=body_bytes,
+                ) as resp:
+                    resp_body = base64.b64encode(await resp.read()).decode()
+                    resp_headers = dict(resp.headers)
+                    async with self._ws_send_lock:
+                        await ws.send_json(
+                            {
+                                "type": "response",
+                                "id": req_id,
+                                "status": resp.status,
+                                "headers": resp_headers,
+                                "body": resp_body,
+                            }
+                        )
         except asyncio.CancelledError:
             raise
         except Exception:

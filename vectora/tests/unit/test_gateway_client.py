@@ -322,7 +322,7 @@ class TestGatewayClientConnectOnce:
 
     @pytest.mark.asyncio
     async def test_fechamento_limpo_do_servidor_loga_warning_antes_de_reconectar(
-        self, caplog
+        self, caplog: pytest.LogCaptureFixture
     ) -> None:
         """`_handle_messages` retornando sem lançar significa que o servidor
         fechou o socket sem frame de erro — sem log nenhum, isso reconecta
@@ -348,7 +348,7 @@ class TestGatewayClientConnectOnce:
 
     @pytest.mark.asyncio
     async def test_conexao_com_erro_nao_loga_o_warning_de_fechamento_limpo(
-        self, caplog
+        self, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Erro/borda: quando `_handle_messages` lança (ws error de verdade,
         já reportado por `_connect_loop` como "desconectado"), o novo
@@ -390,9 +390,9 @@ class TestGatewayClientConnectOnce:
         session = MagicMock()
         session.ws_connect = MagicMock(return_value=_AsyncCtx(ws))
 
-        calls: list[tuple[tuple, dict]] = []
+        calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
 
-        def session_factory(*args, **kwargs):
+        def session_factory(*args: object, **kwargs: object) -> _AsyncCtx:
             calls.append((args, kwargs))
             value = session if len(calls) == 1 else MagicMock()
             return _AsyncCtx(value)
@@ -407,9 +407,11 @@ class TestGatewayClientConnectOnce:
         assert len(calls) == 2
         _, local_session_kwargs = calls[1]
         timeout = local_session_kwargs.get("timeout")
-        assert timeout is not None
-        assert timeout.total == _LOCAL_FORWARD_TIMEOUT_S
-        assert timeout.total < 300
+        assert isinstance(timeout, aiohttp.ClientTimeout)
+        total = timeout.total
+        assert total is not None
+        assert total == _LOCAL_FORWARD_TIMEOUT_S
+        assert total < 300
 
     @pytest.mark.asyncio
     async def test_reusa_a_mesma_local_session_entre_varios_forwards(self) -> None:
@@ -659,7 +661,9 @@ class TestGatewayClientForward:
         assert call_kwargs["id"] == "req-2"
 
     @pytest.mark.asyncio
-    async def test_erro_de_rede_nao_loga_headers_nem_body(self, caplog) -> None:
+    async def test_erro_de_rede_nao_loga_headers_nem_body(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Erro/borda: `headers`/`body` podem carregar segredos (token
         `Authorization`, assinatura de webhook, `code` de callback OAuth) —
         o log de erro só pode conter method/path, nunca o request inteiro."""
@@ -792,6 +796,75 @@ class TestGatewayClientConcurrency:
 
         assert set(finished) == {"slow", "fast"}
         assert started == ["slow", "fast"]  # ordem de chegada preservada
+
+    @pytest.mark.asyncio
+    async def test_forwards_sao_limitados_pelo_semaforo_max_concorrentes(
+        self,
+    ) -> None:
+        """Sem limite, um `queued` grande (ou o Worker mandando `request`
+        mais rápido do que o backend local responde) faz `pending` e as
+        conexões `local_session` crescerem sem teto — `_MAX_CONCURRENT_
+        FORWARDS` bloqueia o request HTTP local além do teto até um slot
+        liberar (a task já existe em `pending`, só não abre conexão nova)."""
+        from backend.services.gateway import (
+            _MAX_CONCURRENT_FORWARDS,
+            GatewayClient,
+        )
+
+        client = GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
+        )
+        ws = AsyncMock()
+
+        in_flight = 0
+        max_in_flight = 0
+        release = asyncio.Event()
+
+        class _FakeResp:
+            status = 200
+            headers: dict[str, str] = {}
+
+            async def __aenter__(self) -> "_FakeResp":
+                nonlocal in_flight, max_in_flight
+                in_flight += 1
+                max_in_flight = max(max_in_flight, in_flight)
+                await release.wait()
+                return self
+
+            async def __aexit__(self, *exc_info: object) -> None:
+                nonlocal in_flight
+                in_flight -= 1
+
+            async def read(self) -> bytes:
+                return b""
+
+        session = MagicMock()
+        session.request = MagicMock(side_effect=lambda **_kwargs: _FakeResp())
+
+        total_requests = _MAX_CONCURRENT_FORWARDS + 5
+        pending: set[asyncio.Task[None]] = set()
+        for i in range(total_requests):
+            req: GatewayRequestItem = {
+                "id": str(i),
+                "method": "GET",
+                "path": "/x",
+                "headers": {},
+                "body": "",
+            }
+            client._spawn_forward(ws, session, req, pending)
+
+        for _ in range(200):
+            if in_flight >= _MAX_CONCURRENT_FORWARDS:
+                break
+            await asyncio.sleep(0)
+
+        assert in_flight == _MAX_CONCURRENT_FORWARDS
+
+        release.set()
+        await asyncio.gather(*pending)
+
+        assert max_in_flight == _MAX_CONCURRENT_FORWARDS
 
 
 class TestMachineFingerprint:
