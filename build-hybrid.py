@@ -45,7 +45,7 @@ COLLECT_ALL = [
 # os binários nativos Rust/Arrow do lancedb (a maior fatia dos ~473 MiB que
 # estouravam o limite de 300 MiB do wrangler r2 object put) nunca são
 # exercitados nesse binário. O app desktop completo continua com RAG.
-COLLECT_ALL_CLI = [pkg for pkg in COLLECT_ALL if pkg != "lancedb"]
+COLLECT_ALL_CLI: list[str] = [pkg for pkg in COLLECT_ALL if pkg != "lancedb"]
 
 # Módulos que precisam de hidden-import adicional além do collect-all.
 # tiktoken_ext.openai_public é o plugin que define cl100k_base, p50k_base etc.;
