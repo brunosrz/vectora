@@ -3,12 +3,16 @@
 import asyncio
 import contextlib
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
 import pytest
 
 from backend.services.gateway import GatewayMessage, GatewayRequestItem
+
+if TYPE_CHECKING:
+    from backend.services.gateway import GatewayClient
 
 
 @pytest.fixture
@@ -721,6 +725,138 @@ class TestGatewayClientDispatch:
         queue.get_nowait()  # libera 1 slot, como um worker faria
         await asyncio.wait_for(dispatch_second, timeout=1.0)
         assert queue.qsize() == 1
+
+
+class TestGatewayClientReviewJob:
+    def _client(self) -> "GatewayClient":
+        from backend.services.gateway import GatewayClient
+
+        return GatewayClient(
+            gateway_url="wss://gateway.vectora.chat",
+            app_secret="test-app-secret",
+        )
+
+    def _queue(self) -> "asyncio.Queue[object]":
+        from backend.services.gateway import _MAX_CONCURRENT_FORWARDS
+
+        return asyncio.Queue(maxsize=_MAX_CONCURRENT_FORWARDS)
+
+    @pytest.mark.asyncio
+    async def test_dispatch_de_review_job_nao_passa_pela_fila_de_forwards(self) -> None:
+        """review_job roda fora da fila de `_MAX_CONCURRENT_FORWARDS`
+        workers (essa é pra requests HTTP rápidas) — uma task solta, pra
+        não bloquear callbacks OAuth/webhooks normais atrás de um job que
+        pode levar minutos."""
+        client = self._client()
+        ws = AsyncMock()
+        session = AsyncMock()
+        queue = self._queue()
+
+        with patch.object(client, "_handle_review_job", new=AsyncMock()) as mock_handle:
+            await client._dispatch(
+                ws,
+                session,
+                {
+                    "type": "review_job",
+                    "job_id": "job-1",
+                    "diff": "diff x",
+                    "metadata": {"pr": "1"},
+                    "callback_secret": "secret-do-job",
+                },
+                queue,
+            )
+            await asyncio.sleep(0)  # deixa a task criada rodar
+
+        assert queue.qsize() == 0
+        mock_handle.assert_awaited_once_with(
+            "job-1", "diff x", {"pr": "1"}, "secret-do-job"
+        )
+
+    @pytest.mark.asyncio
+    async def test_handle_review_job_sucesso_posta_review_text(self) -> None:
+        client = self._client()
+
+        with patch(
+            "backend.services.gateway.review_job.run_review_job",
+            new=AsyncMock(return_value="LGTM"),
+        ):
+            with patch.object(
+                client, "_post_review_result", new=AsyncMock()
+            ) as mock_post:
+                await client._handle_review_job("job-1", "diff x", {}, "secret-do-job")
+
+        mock_post.assert_awaited_once_with("job-1", "secret-do-job", review_text="LGTM")
+
+    @pytest.mark.asyncio
+    async def test_erro_borda_handle_review_job_falha_posta_error_em_vez_de_propagar(
+        self,
+    ) -> None:
+        """Um erro rodando a revisão não pode derrubar a task solta em
+        silêncio — vira um `error` postado de volta, pra Action saber que o
+        job falhou em vez de ficar em `pending` pra sempre."""
+        client = self._client()
+
+        with patch(
+            "backend.services.gateway.review_job.run_review_job",
+            new=AsyncMock(side_effect=ConnectionError("provider indisponível")),
+        ):
+            with patch.object(
+                client, "_post_review_result", new=AsyncMock()
+            ) as mock_post:
+                await client._handle_review_job("job-1", "diff x", {}, "secret-do-job")
+
+        mock_post.assert_awaited_once_with(
+            "job-1", "secret-do-job", error="provider indisponível"
+        )
+
+    @pytest.mark.asyncio
+    async def test_post_review_result_manda_pro_endpoint_certo(self) -> None:
+        client = self._client()
+
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_session = AsyncMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        mock_session.post = MagicMock(
+            return_value=AsyncMock(
+                __aenter__=AsyncMock(return_value=mock_resp),
+                __aexit__=AsyncMock(return_value=None),
+            )
+        )
+
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession",
+            return_value=mock_session,
+        ):
+            await client._post_review_result(
+                "job-1", "secret-do-job", review_text="LGTM"
+            )
+
+        call_args, call_kwargs = mock_session.post.call_args
+        assert call_args[0] == (
+            "https://services.vectora.company/gha-bot/review/job-1/result"
+        )
+        assert call_kwargs["json"] == {"review_text": "LGTM"}
+        assert call_kwargs["headers"] == {"Authorization": "Bearer secret-do-job"}
+
+    @pytest.mark.asyncio
+    async def test_erro_borda_post_review_result_falha_de_rede_nao_propaga(
+        self,
+    ) -> None:
+        """Se o POST em si falhar (provider offline, DNS, etc.), não pode
+        derrubar a task solta — só loga; o job fica `pending` no D1 até a
+        Action desistir do long-poll, o que é aceitável (não há pra onde
+        mais reportar o erro nesse cenário)."""
+        client = self._client()
+
+        with patch(
+            "backend.services.gateway.aiohttp.ClientSession",
+            side_effect=ConnectionError("sem rede"),
+        ):
+            await client._post_review_result(
+                "job-1", "secret-do-job", error="x"
+            )  # não lança
 
 
 class TestGatewayClientForward:

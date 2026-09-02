@@ -85,6 +85,7 @@ describe("GhBotSection", () => {
       provider: "openai",
       model: "gpt-5",
       review_style: "strict",
+      self_hosted_enabled: false,
       updated_at: "2026-01-01 00:00:00",
     });
     renderWithClient(<GhBotSection />);
@@ -93,6 +94,55 @@ describe("GhBotSection", () => {
       expect(screen.getByDisplayValue("gpt-5")).toBeInTheDocument(),
     );
     expect(screen.getByDisplayValue("OpenAI")).toBeInTheDocument();
+  });
+
+  it("pré-marca o toggle self-hosted quando já estava ligado nas settings salvas", async () => {
+    mockGetGhBotSettings.mockResolvedValue({
+      provider: "anthropic",
+      model: "claude-sonnet-5",
+      review_style: "balanced",
+      self_hosted_enabled: true,
+      updated_at: "2026-01-01 00:00:00",
+    });
+    renderWithClient(<GhBotSection />);
+
+    await waitFor(() =>
+      expect(screen.getByText("gh_bot_self_hosted_label")).toBeInTheDocument(),
+    );
+    const checkbox = screen.getByRole("checkbox") as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+  });
+
+  it("erro de borda — clicar no toggle self-hosted inverte o estado e é enviado no save", async () => {
+    mockGetGhBotSettings.mockResolvedValue({
+      provider: "anthropic",
+      model: "claude-sonnet-5",
+      review_style: "balanced",
+      self_hosted_enabled: false,
+      updated_at: "2026-01-01 00:00:00",
+    });
+    mockSaveGhBotSettings.mockResolvedValue({ ok: true });
+    renderWithClient(<GhBotSection />);
+    await waitFor(() => screen.getByText("gh_bot_self_hosted_label"));
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.change(
+      screen.getByPlaceholderText("gh_bot_api_key_placeholder"),
+      { target: { value: "sk-ant-abc" } },
+    );
+    fireEvent.click(screen.getByText("gh_bot_save_button"));
+
+    await waitFor(() =>
+      expect(mockSaveGhBotSettings).toHaveBeenCalledWith({
+        data: {
+          provider: "anthropic",
+          model: "claude-sonnet-5",
+          providerApiKey: "sk-ant-abc",
+          reviewStyle: "balanced",
+          selfHostedEnabled: true,
+        },
+      }),
+    );
   });
 
   it("erro/borda: salvar sem modelo mostra o erro e não chama o servidor", async () => {
@@ -146,6 +196,7 @@ describe("GhBotSection", () => {
           model: "claude-sonnet-5",
           providerApiKey: "sk-ant-abc",
           reviewStyle: "balanced",
+          selfHostedEnabled: false,
         },
       }),
     );

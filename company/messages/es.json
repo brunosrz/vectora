@@ -517,6 +517,8 @@
   "gh_bot_label_api_key": "Clave de API del proveedor",
   "gh_bot_api_key_placeholder": "Deja en blanco para mantener la clave actual",
   "gh_bot_label_review_style": "Estilo de revisión",
+  "gh_bot_self_hosted_label": "Usar mi propia instancia de Vectora",
+  "gh_bot_self_hosted_hint": "Ejecuta la revisión con tu propio agente (memoria, RAG, herramientas) a través del túnel del gateway, en vez del runner efímero de GitHub Actions. Vuelve al modo predeterminado automáticamente si tu instancia está desconectada cuando se abre el PR.",
   "gh_bot_review_style_lenient": "Indulgente",
   "gh_bot_review_style_balanced": "Equilibrado",
   "gh_bot_review_style_strict": "Riguroso",

@@ -84,7 +84,25 @@ export type GatewayMessage =
     }
   | { type: "queued"; items: QueuedRequest[] }
   | { type: "ping" }
-  | { type: "health"; connected: boolean; queued: number };
+  | { type: "health"; connected: boolean; queued: number }
+  // Fire-and-forget — diferente de "request", não espera `type:"response"`
+  // de volta pelo túnel (job pode levar minutos; o client Python responde
+  // via POST normal, fora do túnel, quando terminar — ver
+  // gha-bot/routes.ts POST /review/:id/result). Só despachada se o
+  // WebSocket estiver conectado no momento — sem fila/retry, o caller
+  // (gha-bot/routes.ts) trata "não entregue" marcando o job como falho.
+  | {
+      type: "review_job";
+      job_id: string;
+      diff: string;
+      metadata: Record<string, string>;
+      // Gerado no INSERT de POST /review, entregue só aqui (nunca na
+      // resposta HTTP da Action, que aparece em log de workflow) — exigido
+      // via Bearer em POST /review/:id/result. Sem isto, job_id sozinho
+      // (visível em log) bastaria pra qualquer um escrever review_text
+      // arbitrário no PR.
+      callback_secret: string;
+    };
 
 export type ClientMessage =
   | {

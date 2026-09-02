@@ -42,14 +42,16 @@ export class GatewaySession implements DurableObject {
     });
   }
 
-  /** Só o path do túnel: `/_health`, `/_revoke` e `/_set-secret` são
-   * operações de controle internas, chamadas exclusivamente pelo Worker
-   * (nunca por um client externo) — mas como esta DO recebe QUALQUER
-   * request roteada pelo subdomínio `{token}.vectora.chat/*` sem
-   * distinguir a origem, um path reservado sozinho não bastava: um
-   * atacante que soubesse/adivinhasse o token podia chamar
-   * `{token}.vectora.chat/_revoke` direto e derrubar a sessão de outro
-   * usuário, ou `/_health` pra sondar se alguém está conectado — sem
+  /** Só o path do túnel: `/_health`, `/_revoke`, `/_set-secret` e
+   * `/_dispatch-job` são operações de controle internas, chamadas
+   * exclusivamente pelo Worker (nunca por um client externo) — mas como
+   * esta DO recebe QUALQUER request roteada pelo subdomínio
+   * `{token}.vectora.chat/*` sem distinguir a origem, um path reservado
+   * sozinho não bastava: um atacante que soubesse/adivinhasse o token
+   * podia chamar `{token}.vectora.chat/_revoke` direto e derrubar a
+   * sessão de outro usuário, `/_health` pra sondar se alguém está
+   * conectado, ou `/_dispatch-job` pra mandar um "review_job" com
+   * diff/metadata arbitrários pro backend local do usuário rodar — sem
    * autenticação nenhuma. GATEWAY_INTERNAL_SECRET (dedicado, nunca
    * distribuído a nenhum client — diferente do VECTORA_APP_SECRET, que
    * todo build do produto conhece) prova que a chamada veio do próprio
@@ -91,6 +93,14 @@ export class GatewaySession implements DurableObject {
       return this.handleSetSecret(request);
     }
 
+    if (
+      path === "/_dispatch-job" &&
+      request.method === "POST" &&
+      this.isInternalCall(request)
+    ) {
+      return this.handleDispatchJob(request);
+    }
+
     // Path de controle chamado sem o header interno (ex.: alguém batendo
     // direto em `{token}.vectora.chat/_health` de fora) cai aqui de
     // propósito — vira um request tunelado comum pro backend local, que
@@ -107,7 +117,33 @@ export class GatewaySession implements DurableObject {
     }
     this.secretHash = body.secretHash;
     await this.state.storage.put("secretHash", this.secretHash);
+    // Uma conexão já aberta foi autenticada com o secret ANTERIOR — trocar
+    // o hash sem derrubá-la deixaria um secret comprometido continuar
+    // recebendo review_job/requests até o client desconectar sozinho. O
+    // client reconecta sozinho com o secret novo (mesmo backoff do resto
+    // do protocolo), então fechar aqui não perde nenhum request em voo:
+    // eles caem na fila normal, como qualquer desconexão.
+    if (this.ws) {
+      try {
+        this.ws.close(1000, "secret rotated");
+      } catch {
+        /* ignore */
+      }
+      this.ws = null;
+    }
     return Response.json({ ok: true });
+  }
+
+  private async handleDispatchJob(request: Request): Promise<Response> {
+    const msg = await request.json<GatewayMessage>().catch(() => null);
+    if (!msg || msg.type !== "review_job") {
+      return new Response("Bad Request", { status: 400 });
+    }
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return Response.json({ ok: true, delivered: false });
+    }
+    this.ws.send(JSON.stringify(msg));
+    return Response.json({ ok: true, delivered: true });
   }
 
   private async handleWebSocketUpgrade(request: Request): Promise<Response> {
