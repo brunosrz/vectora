@@ -54,11 +54,20 @@ def _nats_safe_key(key: str) -> str:
     decodificar essa sequência de volta (escaneando da esquerda: `.`
     sempre inicia um grupo de exatos 3 caracteres, qualquer outro
     caractere é literal), o que garante que strings de entrada diferentes
-    produzem saídas diferentes."""
+    produzem saídas diferentes.
+
+    `errors="surrogatepass"`: um surrogate isolado (`"\\ud800"`, só
+    aparece por engano — payload malformado do lado do Worker, nunca
+    gerado por código nosso) faz `str.encode("utf-8")` sem esse argumento
+    lançar `UnicodeEncodeError`, derrubando `set`/`get`/`delete` por
+    completo em vez de só produzir uma chave esquisita porém válida."""
     out: list[str] = []
     for ch in key:
         if ch == _NATS_KEY_ESCAPE or _NATS_KEY_UNSAFE.match(ch):
-            out.extend(f"{_NATS_KEY_ESCAPE}{b:02x}" for b in ch.encode("utf-8"))
+            out.extend(
+                f"{_NATS_KEY_ESCAPE}{b:02x}"
+                for b in ch.encode("utf-8", errors="surrogatepass")
+            )
         else:
             out.append(ch)
     return "".join(out)

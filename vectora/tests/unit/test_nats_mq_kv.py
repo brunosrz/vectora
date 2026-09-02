@@ -199,3 +199,37 @@ async def test_erro_borda_codificacao_e_injetiva_mesmo_para_chaves_que_colidiria
     keys = ["a:b", "a_b", "a.b", "watch:x:y", "watch_x_y", "partial:1", "partial.1"]
     encoded = [_nats_safe_key(k) for k in keys]
     assert len(set(encoded)) == len(keys)
+
+
+@pytest.mark.asyncio
+async def test_erro_borda_surrogate_isolado_nao_lanca_unicodeencodeerror() -> None:
+    """Achado do CodeRabbit: `"\\ud800"` (surrogate isolado — só chega por
+    payload malformado do Worker, nunca gerado por código nosso) faz
+    `str.encode("utf-8")` sem `errors="surrogatepass"` lançar
+    `UnicodeEncodeError`, derrubando `NatsKV.set` por completo (`get`
+    passaria a devolver `None` sempre — não porque a chave não existe,
+    mas porque a sanitização quebra antes de tentar o bucket real)."""
+    from backend.persistence.kv import _nats_safe_key
+
+    encoded = _nats_safe_key("partial:\ud800")
+    assert encoded.startswith("partial.3a")
+    # 3 bytes UTF-8 do surrogate isolado (via surrogatepass), cada um
+    # virando seu próprio grupo ".XX" — determinístico e sem exceção.
+    assert encoded == "partial.3a.ed.a0.80"
+
+
+@pytest.mark.asyncio
+async def test_erro_borda_kv_set_com_surrogate_isolado_nao_propaga_excecao() -> None:
+    fake_bucket = MagicMock()
+    fake_bucket.put = AsyncMock()
+
+    fake_js = MagicMock()
+    fake_js.key_value = AsyncMock(return_value=fake_bucket)
+    fake_nc = MagicMock()
+    fake_nc.jetstream = MagicMock(return_value=fake_js)
+
+    kv = NatsKV("nats://127.0.0.1:4222")
+    with patch("nats.connect", new=AsyncMock(return_value=fake_nc)):
+        await kv.set("partial:\ud800", "conteudo")  # não deve lançar
+
+    fake_bucket.put.assert_awaited_once()
