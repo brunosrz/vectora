@@ -324,7 +324,7 @@ class TestOauthConfiguredFlag:
     falharia com 503 e a UI usa esta flag pra nunca oferecer o botão."""
 
     def test_sem_client_id_secret_oauth_configured_false(
-        self, client: TestClient, monkeypatch
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         for var in ("GITLAB_OAUTH_CLIENT_ID", "GITLAB_OAUTH_CLIENT_SECRET"):
             monkeypatch.delenv(var, raising=False)
@@ -334,7 +334,7 @@ class TestOauthConfiguredFlag:
         assert gitlab["oauth_configured"] is False
 
     def test_com_client_id_e_secret_oauth_configured_true(
-        self, client: TestClient, monkeypatch
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("GITLAB_OAUTH_CLIENT_ID", "cid")
         monkeypatch.setenv("GITLAB_OAUTH_CLIENT_SECRET", "csecret")
@@ -344,7 +344,7 @@ class TestOauthConfiguredFlag:
         assert gitlab["oauth_configured"] is True
 
     def test_provider_filho_herda_configuracao_do_pai(
-        self, client: TestClient, monkeypatch
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """google-drive/gmail não têm CLIENT_ID próprio — usam o do
         provider pai ("google", via `parent`)."""
@@ -368,7 +368,7 @@ class TestOauthConfiguredFlag:
 
 class TestListIntegrationsAlias:
     def test_github_connected_via_alias_sem_env_var_principal(
-        self, client: TestClient, monkeypatch
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Erro/borda: usuário configurou só GITHUB_PERSONAL_ACCESS_TOKEN (o
         nome que o MCP marketplace usa), sem GITHUB_TOKEN — o card GitHub
@@ -382,7 +382,7 @@ class TestListIntegrationsAlias:
         assert github["connected"] is True
 
     def test_gemini_desconectado_sem_google_api_key(
-        self, client: TestClient, monkeypatch
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
         with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
@@ -392,7 +392,7 @@ class TestListIntegrationsAlias:
         assert gemini["connected"] is False
 
     def test_gemini_conectado_com_google_api_key(
-        self, client: TestClient, monkeypatch
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("GOOGLE_API_KEY", "AIza-fake")
         with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
@@ -400,6 +400,55 @@ class TestListIntegrationsAlias:
         assert resp.status_code == 200
         gemini = next(i for i in resp.json()["integrations"] if i["id"] == "gemini")
         assert gemini["connected"] is True
+
+
+class TestOauthConnectedFlag:
+    """`oauth_connected` separa "tem override setado" (`connected`) de
+    "conectou via OAuth de verdade" — colar GITHUB_TOKEN manualmente também
+    deixa `connected=True`, e a UI não pode mostrar "Conexão ativa (OAuth)"
+    nesse caso."""
+
+    def test_token_colado_manualmente_fica_connected_mas_nao_oauth_connected(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        with patch(
+            "backend.rbac.auth.get_env_overrides",
+            AsyncMock(return_value={"GITHUB_TOKEN": "ghp_colado_a_mao"}),
+        ):
+            resp = client.get("/integrations")
+        github = next(i for i in resp.json()["integrations"] if i["id"] == "github")
+        assert github["connected"] is True
+        assert github["oauth_connected"] is False
+
+    def test_token_via_callback_oauth_fica_connected_e_oauth_connected(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        with patch(
+            "backend.rbac.auth.get_env_overrides",
+            AsyncMock(
+                return_value={
+                    "GITHUB_TOKEN": "ghp_via_oauth",
+                    "__oauth_source__:GITHUB_TOKEN": "1",
+                }
+            ),
+        ):
+            resp = client.get("/integrations")
+        github = next(i for i in resp.json()["integrations"] if i["id"] == "github")
+        assert github["connected"] is True
+        assert github["oauth_connected"] is True
+
+    def test_sem_nenhum_override_fica_desconectado_nos_dois(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        monkeypatch.delenv("GITHUB_PERSONAL_ACCESS_TOKEN", raising=False)
+        with patch("backend.rbac.auth.get_env_overrides", AsyncMock(return_value={})):
+            resp = client.get("/integrations")
+        github = next(i for i in resp.json()["integrations"] if i["id"] == "github")
+        assert github["connected"] is False
+        assert github["oauth_connected"] is False
 
 
 class TestSetupHint:
