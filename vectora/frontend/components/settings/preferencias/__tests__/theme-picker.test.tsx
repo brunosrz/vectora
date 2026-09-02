@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import { ThemePicker } from "../theme-picker";
+import { ThemePicker, ThemeModeToggle } from "../theme-picker";
 import { THEME_PRESETS, type BaseThemeColors } from "@/lib/theme/presets";
 
 afterEach(() => {
@@ -28,21 +28,20 @@ const customColors: BaseThemeColors = {
 };
 
 describe("ThemePicker", () => {
-  it("renderiza system + todos os presets + custom, um botão por opção", () => {
+  it("renderiza todos os presets + custom, um card por opção (sem 'system' no grid)", () => {
     render(
       <ThemePicker
-        value="system"
+        value={THEME_PRESETS[0].id}
         onChange={vi.fn()}
         presets={THEME_PRESETS}
-        systemLabel="Sistema"
         customLabel="Personalizado"
         customColors={customColors}
+        searchPlaceholder="Buscar..."
       />,
     );
 
     const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(THEME_PRESETS.length + 2);
-    expect(screen.getByText("Sistema")).toBeInTheDocument();
+    expect(buttons).toHaveLength(THEME_PRESETS.length + 1);
     expect(screen.getByText("Personalizado")).toBeInTheDocument();
     for (const preset of THEME_PRESETS) {
       expect(screen.getByText(preset.label)).toBeInTheDocument();
@@ -53,18 +52,18 @@ describe("ThemePicker", () => {
     const onChange = vi.fn();
     render(
       <ThemePicker
-        value="system"
+        value={THEME_PRESETS[0].id}
         onChange={onChange}
         presets={THEME_PRESETS}
-        systemLabel="Sistema"
         customLabel="Personalizado"
         customColors={customColors}
+        searchPlaceholder="Buscar..."
       />,
     );
 
-    fireEvent.click(screen.getByText(THEME_PRESETS[0].label));
+    fireEvent.click(screen.getByText(THEME_PRESETS[1].label));
 
-    expect(onChange).toHaveBeenCalledWith(THEME_PRESETS[0].id);
+    expect(onChange).toHaveBeenCalledWith(THEME_PRESETS[1].id);
   });
 
   it("opção ativa fica marcada com aria-pressed e as demais não", () => {
@@ -73,9 +72,9 @@ describe("ThemePicker", () => {
         value={THEME_PRESETS[0].id}
         onChange={vi.fn()}
         presets={THEME_PRESETS}
-        systemLabel="Sistema"
         customLabel="Personalizado"
         customColors={customColors}
+        searchPlaceholder="Buscar..."
       />,
     );
 
@@ -84,57 +83,113 @@ describe("ThemePicker", () => {
       .closest("button");
     expect(activeButton).toHaveAttribute("aria-pressed", "true");
 
-    const systemButton = screen.getByText("Sistema").closest("button");
-    expect(systemButton).toHaveAttribute("aria-pressed", "false");
+    const otherButton = screen
+      .getByText(THEME_PRESETS[1].label)
+      .closest("button");
+    expect(otherButton).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("swatch do preset usa as cores reais do preset, não valor fixo — erro/borda", () => {
+  it("card pintado usa a cor real de background do preset (não um valor fixo) — erro/borda", () => {
     render(
       <ThemePicker
-        value="system"
+        value={THEME_PRESETS[0].id}
         onChange={vi.fn()}
         presets={THEME_PRESETS}
-        systemLabel="Sistema"
         customLabel="Personalizado"
         customColors={customColors}
+        searchPlaceholder="Buscar..."
       />,
     );
 
     const firstPreset = THEME_PRESETS[0];
-    const button = screen.getByText(firstPreset.label).closest("button");
-    const swatchSpans = button!.querySelectorAll<HTMLElement>("span[style]");
-    expect(swatchSpans).toHaveLength(3);
-    expect(swatchSpans[0].style.background).toBe(
+    const button = screen.getByText(firstPreset.label).closest("button")!;
+    expect(button.style.background).toBe(
       hexToRgb(firstPreset.colors.background),
-    );
-    expect(swatchSpans[1].style.background).toBe(
-      hexToRgb(firstPreset.colors.primary),
-    );
-    expect(swatchSpans[2].style.background).toBe(
-      hexToRgb(firstPreset.colors.accent),
     );
   });
 
-  it("swatch do custom reflete customColors passado, não os presets — erro/borda", () => {
+  it("card do custom reflete customColors passado, não os presets — erro/borda", () => {
     render(
       <ThemePicker
         value="custom"
         onChange={vi.fn()}
         presets={THEME_PRESETS}
-        systemLabel="Sistema"
         customLabel="Personalizado"
         customColors={customColors}
+        searchPlaceholder="Buscar..."
       />,
     );
 
-    const button = screen.getByText("Personalizado").closest("button");
-    const swatchSpans = button!.querySelectorAll<HTMLElement>("span[style]");
-    expect(swatchSpans[0].style.background).toBe(
-      hexToRgb(customColors.background),
+    const button = screen.getByText("Personalizado").closest("button")!;
+    expect(button.style.background).toBe(hexToRgb(customColors.background));
+  });
+
+  it("busca filtra as opções por label", () => {
+    render(
+      <ThemePicker
+        value={THEME_PRESETS[0].id}
+        onChange={vi.fn()}
+        presets={THEME_PRESETS}
+        customLabel="Personalizado"
+        customColors={customColors}
+        searchPlaceholder="Buscar..."
+      />,
     );
-    expect(swatchSpans[1].style.background).toBe(
-      hexToRgb(customColors.primary),
+
+    const target = THEME_PRESETS.find((p) => p.label === "GitHub Dark")!;
+    fireEvent.change(screen.getByPlaceholderText("Buscar..."), {
+      target: { value: "GitHub Dark" },
+    });
+
+    expect(screen.getByText(target.label)).toBeInTheDocument();
+    for (const preset of THEME_PRESETS.filter((p) => p.id !== target.id)) {
+      expect(screen.queryByText(preset.label)).toBeNull();
+    }
+    expect(screen.queryByText("Personalizado")).toBeNull();
+  });
+
+  it("erro de borda — busca sem nenhum resultado não quebra, só não renderiza cards", () => {
+    render(
+      <ThemePicker
+        value={THEME_PRESETS[0].id}
+        onChange={vi.fn()}
+        presets={THEME_PRESETS}
+        customLabel="Personalizado"
+        customColors={customColors}
+        searchPlaceholder="Buscar..."
+      />,
     );
-    expect(swatchSpans[2].style.background).toBe(hexToRgb(customColors.accent));
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar..."), {
+      target: { value: "paleta-que-nao-existe-em-lugar-nenhum" },
+    });
+
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+});
+
+describe("ThemeModeToggle", () => {
+  const labels = { system: "Sistema", light: "Claro", dark: "Escuro" };
+
+  it("renderiza os 3 modos, com o valor atual marcado ativo", () => {
+    render(<ThemeModeToggle value="dark" onChange={vi.fn()} labels={labels} />);
+
+    expect(screen.getByText("Sistema")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.getByText("Claro")).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByText("Escuro")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("clicar num modo chama onChange com esse modo", () => {
+    const onChange = vi.fn();
+    render(
+      <ThemeModeToggle value="system" onChange={onChange} labels={labels} />,
+    );
+
+    fireEvent.click(screen.getByText("Claro"));
+
+    expect(onChange).toHaveBeenCalledWith("light");
   });
 });
