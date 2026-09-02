@@ -49,7 +49,11 @@ export default function FeaturesAccordion({ items }: FeaturesAccordionProps) {
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
+                    // e.repeat: segurar Enter/Espaço dispara keydown repetido
+                    // pelo auto-repeat do teclado — sem essa guarda, cada
+                    // repetição chamava click() de novo, abrindo/fechando o
+                    // accordion várias vezes enquanto a tecla ficava presa.
+                    if ((e.key === "Enter" || e.key === " ") && !e.repeat) {
                       e.preventDefault();
                       e.currentTarget.click();
                     }

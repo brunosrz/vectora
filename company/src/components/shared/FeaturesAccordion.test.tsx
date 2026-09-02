@@ -93,4 +93,27 @@ describe("FeaturesAccordion", () => {
       screen.getByText("Descrição completa da feature A."),
     ).toBeInTheDocument();
   });
+
+  it("erro/borda: segurar Espaço (keydown repetido) não abre/fecha o accordion várias vezes", () => {
+    render(<FeaturesAccordion items={ITEMS} />);
+
+    const trigger = screen.getByText("Feature A").closest('[role="button"]')!;
+
+    // Primeiro keydown (repeat: false) abre.
+    fireEvent.keyDown(trigger, { key: " ", repeat: false });
+    expect(
+      screen.getByText("Descrição completa da feature A."),
+    ).toBeInTheDocument();
+
+    // Segurando a tecla, o browser dispara keydown repetido (repeat: true)
+    // várias vezes — sem a guarda de e.repeat, cada um chamaria click() de
+    // novo, fechando e reabrindo o accordion enquanto a tecla fica presa.
+    fireEvent.keyDown(trigger, { key: " ", repeat: true });
+    fireEvent.keyDown(trigger, { key: " ", repeat: true });
+    fireEvent.keyDown(trigger, { key: " ", repeat: true });
+
+    expect(
+      screen.getByText("Descrição completa da feature A."),
+    ).toBeInTheDocument();
+  });
 });

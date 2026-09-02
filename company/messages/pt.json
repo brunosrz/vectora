@@ -538,5 +538,7 @@
   "gh_bot_token_generated": "Token gerado — copie agora, não será mostrado de novo:",
   "gh_bot_install_title": "Instalação",
   "gh_bot_install_step1": "No repositório, crie um Environment chamado vectora-bot (Settings → Environments) e registre o token gerado acima como secret VECTORA_BOT_TOKEN desse environment.",
-  "gh_bot_install_step2": "Cole o workflow abaixo em .github/workflows/vectora.yml."
+  "gh_bot_install_step2": "Cole o workflow abaixo em .github/workflows/vectora.yml.",
+  "gh_bot_yaml_copy_cta": "Copiar YAML",
+  "gh_bot_yaml_copied": "YAML copiado."
 }

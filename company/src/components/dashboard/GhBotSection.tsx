@@ -130,6 +130,15 @@ export default function GhBotSection() {
     saveMutation.mutate();
   }
 
+  async function handleCopyYaml() {
+    try {
+      await navigator.clipboard.writeText(WORKFLOW_YAML);
+      toast.success(m.gh_bot_yaml_copied());
+    } catch {
+      toast.error(m.error_generic());
+    }
+  }
+
   if (loadingSettings) {
     return (
       <div className="h-40 max-w-xl rounded-xl bg-card/30 animate-pulse" />
@@ -310,12 +319,9 @@ export default function GhBotSection() {
           </pre>
           <button
             type="button"
-            onClick={() => {
-              navigator.clipboard.writeText(WORKFLOW_YAML);
-              toast.success(m.token_copied());
-            }}
+            onClick={() => void handleCopyYaml()}
             className="absolute top-2 right-2 rounded-lg p-1.5 text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
-            title={m.token_copy_cta()}
+            title={m.gh_bot_yaml_copy_cta()}
           >
             <Copy className="h-3.5 w-3.5" />
           </button>

@@ -236,12 +236,32 @@ describe("GhBotSection", () => {
     renderWithClient(<GhBotSection />);
     await waitFor(() => screen.getByText("gh_bot_install_title"));
 
-    fireEvent.click(screen.getByTitle("token_copy_cta"));
+    fireEvent.click(screen.getByTitle("gh_bot_yaml_copy_cta"));
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1),
+    );
     const copied = (navigator.clipboard.writeText as ReturnType<typeof vi.fn>)
       .mock.calls[0][0] as string;
     expect(copied).toContain("vectora-ltda/vectora-review-action@v1");
-    expect(mockToastSuccess).toHaveBeenCalledWith("token_copied");
+    await waitFor(() =>
+      expect(mockToastSuccess).toHaveBeenCalledWith("gh_bot_yaml_copied"),
+    );
+  });
+
+  it("erro/borda: falha ao copiar o YAML (clipboard rejeitado) mostra toast de erro, não de sucesso", async () => {
+    mockGetGhBotSettings.mockResolvedValue(null);
+    Object.assign(navigator, {
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+    });
+    renderWithClient(<GhBotSection />);
+    await waitFor(() => screen.getByText("gh_bot_install_title"));
+
+    fireEvent.click(screen.getByTitle("gh_bot_yaml_copy_cta"));
+
+    await waitFor(() =>
+      expect(mockToastError).toHaveBeenCalledWith("error_generic"),
+    );
+    expect(mockToastSuccess).not.toHaveBeenCalledWith("gh_bot_yaml_copied");
   });
 });
