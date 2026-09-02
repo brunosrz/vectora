@@ -1,5 +1,5 @@
 import { env, SELF } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ghaBot } from "../../src/gha-bot/routes";
 import { createSession } from "../../src/auth/session";
 
@@ -524,8 +524,9 @@ describe("gha-bot self-hosted (GET /config, POST/GET /review, POST /review/:id/r
       const { job_id } = await res.json<{ job_id: string }>();
       expect(job_id).toBeTruthy();
 
-      await new Promise((r) => setTimeout(r, 10));
-      expect(received).toHaveLength(1);
+      await vi.waitFor(() => expect(received).toHaveLength(1), {
+        timeout: 2000,
+      });
       const msg = JSON.parse(received[0]!.data as string) as {
         type: string;
         job_id: string;
