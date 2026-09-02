@@ -6,6 +6,11 @@ import type {
 } from "./types";
 
 const QUEUE_TTL_DEFAULT = 600_000; // 10 min
+// 30s é por design pra request/response HTTP síncrono (callback OAuth, etc)
+// — não deve subir pra acomodar jobs longos (ex.: revisão de PR completa,
+// que pode levar minutos). Job longo usa outro padrão: fire-and-forget
+// pelo túnel + callback assíncrono direto do client pra services.vectora.company
+// quando terminar, sem manter esta Promise pendente esperando.
 const FORWARD_TIMEOUT_MS = 30_000;
 const PING_INTERVAL_MS = 20_000;
 
