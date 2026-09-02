@@ -28,8 +28,8 @@ describe("encryptProviderKey / decryptProviderKey", () => {
     const encrypted = await encryptProviderKey(MASTER_KEY, "x");
     const parts = encrypted.split(".");
     expect(parts).toHaveLength(2);
-    expect(parts[0]!.length).toBeGreaterThan(0);
-    expect(parts[1]!.length).toBeGreaterThan(0);
+    expect(() => atob(parts[0]!)).not.toThrow();
+    expect(() => atob(parts[1]!)).not.toThrow();
   });
 
   it("erro de borda — valor sem separador '.' levanta erro tipado", async () => {
