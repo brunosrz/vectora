@@ -144,7 +144,7 @@ system prompt.
 - **Persistent memory** across sessions via SQLite (`save_memory`, `get_memory`)
 - **Async fire-and-forget embedding** with BackgroundEmbeddingWorker
 - **MCP client** — connects to external MCP servers to extend available tools
-- **Multi-session** support with checkpointing (AsyncSqliteSaver)
+- **Multi-session** support via SessionStore (SQLite) — full conversation history reloaded from persistence on every turn
 - **Workspace support** — each workspace has its own directory, MANIFEST.md, and isolated RAG base
 - **Context Graph** — structural knowledge graph of the workspace: who calls
   whom, which components are affected by a change, god nodes, suggested

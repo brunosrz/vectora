@@ -414,7 +414,9 @@ class TestStreamChatRegistersThread:
         assert len(thread_id_used) > 0, "thread_id gerado não deve ser vazio"
 
     @pytest.mark.asyncio
-    async def test_stream_chat_loga_erro_alto_quando_upsert_session_falha(self, caplog):
+    async def test_stream_chat_loga_erro_alto_quando_upsert_session_falha(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Regressão do achado real de 2026-08-30: uma falha em
         _upsert_session (a ÚNICA escrita que faz a thread aparecer em
         ListThreads) era engolida com logger.warning sem stack trace —

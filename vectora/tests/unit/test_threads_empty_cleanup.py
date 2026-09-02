@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
+import aiosqlite
 import pytest
 
 from backend.api.handlers.threads import (
@@ -108,7 +109,7 @@ class TestCleanupNuncaApagaThreadRealSemCheckpointLegado:
     """
 
     @staticmethod
-    async def _create_legacy_checkpoints_table(db) -> None:
+    async def _create_legacy_checkpoints_table(db: aiosqlite.Connection) -> None:
         # Simula um banco com resíduo do antigo AsyncSqliteSaver — a
         # tabela pode existir (migração incompleta/dado antigo) mesmo que
         # nada mais escreva nela.
@@ -119,8 +120,8 @@ class TestCleanupNuncaApagaThreadRealSemCheckpointLegado:
 
     @pytest.mark.asyncio
     async def test_thread_real_antiga_sem_checkpoint_legado_nunca_e_apagada(
-        self, mem_db
-    ):
+        self, mem_db: aiosqlite.Connection
+    ) -> None:
         await self._create_legacy_checkpoints_table(mem_db)
         old = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
         await _insert_session(mem_db, "conversa-real-antiga", 82, old)
@@ -134,8 +135,8 @@ class TestCleanupNuncaApagaThreadRealSemCheckpointLegado:
 
     @pytest.mark.asyncio
     async def test_thread_real_sobrevive_mesmo_sem_a_tabela_checkpoints_existir(
-        self, mem_db
-    ):
+        self, mem_db: aiosqlite.Connection
+    ) -> None:
         # Banco sem resíduo nenhum do grafo antigo (instalação nova) —
         # continua não apagando threads reais, é o caso comum hoje.
         old = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
