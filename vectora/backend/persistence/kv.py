@@ -33,15 +33,35 @@ logger = logging.getLogger(__name__)
 #: levantar `InvalidKeyError` em runtime. MemoryKV/RedisKV não têm essa
 #: restrição — o bug só aparece quando o backend NATS está ativo (default
 #: de toda instalação sem Redis configurado).
-_NATS_KEY_UNSAFE = re.compile(r"[^-/_=.a-zA-Z0-9]")
+_NATS_KEY_UNSAFE = re.compile(r"[^-/_=a-zA-Z0-9]")
+#: Prefixo de escape — precisa estar no charset aceito (por isso `.`, que
+#: sobra livre já que não faz parte de `_NATS_KEY_UNSAFE` acima) e nunca
+#: pode aparecer "cru" na saída, senão a codificação deixa de ser injetiva
+#: (ver `_nats_safe_key`).
+_NATS_KEY_ESCAPE = "."
 
 
 def _nats_safe_key(key: str) -> str:
-    """Substitui todo caractere fora do charset aceito por chave JetStream
-    KV por `_` — determinístico (mesma chave lógica sempre mapeia pro mesmo
-    valor sanitizado), então get/set/delete da MESMA chave continuam
-    round-trip corretos mesmo depois da substituição."""
-    return _NATS_KEY_UNSAFE.sub("_", key)
+    """Codifica `key` pro charset aceito por chave JetStream KV de forma
+    INJETIVA — chaves lógicas diferentes nunca colidem no mesmo registro.
+
+    Uma substituição simples (ex.: todo caractere fora do charset vira
+    `_`) não é injetiva: `"a:b"` e `"a_b"` colidiriam na mesma chave real
+    do bucket, um `set` de uma sobrescrevendo silenciosamente o registro
+    da outra. Aqui, cada byte UTF-8 de um caractere fora do charset (ou
+    do próprio caractere de escape `.`, que senão criaria a mesma
+    ambiguidade) vira `.XX` (hex de 2 dígitos) — só existe uma forma de
+    decodificar essa sequência de volta (escaneando da esquerda: `.`
+    sempre inicia um grupo de exatos 3 caracteres, qualquer outro
+    caractere é literal), o que garante que strings de entrada diferentes
+    produzem saídas diferentes."""
+    out: list[str] = []
+    for ch in key:
+        if ch == _NATS_KEY_ESCAPE or _NATS_KEY_UNSAFE.match(ch):
+            out.extend(f"{_NATS_KEY_ESCAPE}{b:02x}" for b in ch.encode("utf-8"))
+        else:
+            out.append(ch)
+    return "".join(out)
 
 
 # Resultado do probe por URL — process-lifetime, igual aos singletons que o
