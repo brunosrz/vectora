@@ -98,6 +98,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -107,10 +109,10 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
       - name: Registra o número do PR pro job de comentário
-        if: failure()
+        if: failure() && steps.check.conclusion == 'failure'
         run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
       - name: Upload do número do PR (consumido pelo job trusted)
-        if: failure()
+        if: failure() && steps.check.conclusion == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: no-plan-metadata-failure

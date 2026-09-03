@@ -38,7 +38,7 @@ if reconfigure is not None and sys.stdout.encoding.lower() != "utf-8":
 # capitalização (`(?i:...)` escopado só a ela) — o identificador de letra
 # que segue continua exigindo maiúscula, senão "sprint e atualiza" (texto
 # comum, sem relação com plano) também bateria.
-_PLAN_PATTERN = re.compile(
+_PLAN_PATTERN: re.Pattern[str] = re.compile(
     r"(?i:\bsprint\s+)(?:\d+|[A-Z])\b|\bBloco\s+[A-Z][\w.]*\b|(?i:\bfase[\s-]+\d+[a-z]?\b)"
 )
 
@@ -52,11 +52,13 @@ _PLAN_PATTERN = re.compile(
 # citar esse arquivo (ex.: "CLAUDE.md §1") é proveniência de REGRA, não de
 # ferramenta que gerou o código; sem a exceção, toda menção legítima ao
 # arquivo de instruções do projeto seria bloqueada.
-_AI_TOOL_PATTERN = re.compile(
+_AI_TOOL_PATTERN: re.Pattern[str] = re.compile(
     r"(?i:\b(?:coderabbit(?:ai)?|claude(?:\s*code)?|chatgpt|copilot|codex)\b)(?!\.md)"
 )
 
-_PATTERN = re.compile(f"{_PLAN_PATTERN.pattern}|{_AI_TOOL_PATTERN.pattern}")
+_PATTERN: re.Pattern[str] = re.compile(
+    f"{_PLAN_PATTERN.pattern}|{_AI_TOOL_PATTERN.pattern}"
+)
 
 
 def _python_comments(text: str) -> list[tuple[int, str]]:
