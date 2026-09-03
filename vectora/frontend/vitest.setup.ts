@@ -43,7 +43,7 @@ if (typeof Element !== "undefined") {
 }
 
 // jsdom não implementa ResizeObserver — qualquer componente que meça a
-// própria largura via `useElementWidth` (Header, IdeModeSwitch) lança
+// própria largura via `useElementWidth` (Header, ModeSwitch) lança
 // "ResizeObserver is not defined" ao montar sem esse stub. Não observa de
 // verdade (não há layout real em jsdom); só evita o crash — testes que
 // precisam de uma largura específica passam `width` como prop ou mockam

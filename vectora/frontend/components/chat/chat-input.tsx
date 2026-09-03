@@ -327,7 +327,11 @@ export function ChatInput({
             {/* Input container — borda única, sem glow nem ring duplicado. */}
             <div className="relative">
               <div
-                className={`relative rounded-xl border transition-colors duration-200 ${compact ? "bg-sidebar" : "bg-background"} ${isDragging ? "border-primary bg-primary/5" : "border-border/60 group-focus-within:border-primary/70"}`}
+                // Uma única cor de destaque (primary) e uma única camada de
+                // fundo — o overlay de drop já dá o feedback de cor durante o
+                // drag (abaixo), então o container não precisa de um segundo
+                // tom de fundo próprio (`bg-primary/5`) competindo com ele.
+                className={`relative rounded-xl border transition-colors duration-200 ${compact ? "bg-sidebar" : "bg-background"} ${isDragging ? "border-primary" : "border-border/60 group-focus-within:border-primary/70"}`}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
@@ -444,11 +448,10 @@ export function ChatInput({
             </div>
           )}
 
-          {/* Rodapé do input — "meio-termo" entre o estilo Claude Code
-              (dois grupos minimalistas) e a chip row do Codex (contexto →
-              configuração). Grupo esquerdo: workspace (onde) → modo de
-              permissão; direita: modelo e medidor de uso. Sem barra de
-              contexto acima do input (poluição visual desnecessária). */}
+          {/* Rodapé do input — dois grupos minimalistas de texto/ícone, sem
+              barra de contexto acima do input (poluição visual
+              desnecessária). Grupo esquerdo: workspace (onde) → modo de
+              permissão; direita: modelo e medidor de uso. */}
           <div className="flex flex-wrap @sm/composer:flex-nowrap items-center justify-between gap-x-2 gap-y-1 mt-1 px-1">
             <div className="flex items-center gap-1 min-w-0">
               <PlusMenu

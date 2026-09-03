@@ -10,7 +10,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 
 import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 import { useSettingsStore } from "@/lib/stores/settings-store";
-import { IdeModeSwitch } from "../ide-mode-switcher";
+import { ModeSwitch } from "../mode-switcher";
 
 beforeEach(() => {
   overwriteGetLocale(() => "pt");
@@ -21,11 +21,11 @@ afterEach(() => {
 });
 
 async function montar(width = 300) {
-  render(<IdeModeSwitch show width={width} />);
+  render(<ModeSwitch show width={width} />);
   await act(async () => {});
 }
 
-describe("IdeModeSwitch — 3ª posição (Kanban, feature pública)", () => {
+describe("ModeSwitch — 3ª posição (Kanban, feature pública)", () => {
   it("Kanban sempre aparece, junto com Assistente e IDE", async () => {
     await montar();
 
@@ -37,14 +37,14 @@ describe("IdeModeSwitch — 3ª posição (Kanban, feature pública)", () => {
   });
 
   it("show=false esconde o seletor inteiro", async () => {
-    render(<IdeModeSwitch show={false} width={300} />);
+    render(<ModeSwitch show={false} width={300} />);
     await act(async () => {});
 
     expect(screen.queryByRole("group")).not.toBeInTheDocument();
   });
 });
 
-describe("IdeModeSwitch — colapso responsivo", () => {
+describe("ModeSwitch — colapso responsivo", () => {
   it("largura grande mostra o texto completo, visível (sem sr-only)", async () => {
     await montar(1000);
     const botao = screen.getByRole("button", { name: /assistente/i });
@@ -72,7 +72,7 @@ describe("IdeModeSwitch — colapso responsivo", () => {
   });
 });
 
-describe("IdeModeSwitch — cor por modo ativo", () => {
+describe("ModeSwitch — cor por modo ativo", () => {
   afterEach(async () => {
     await act(async () => {
       useSettingsStore.getState().setUiMode("ide");

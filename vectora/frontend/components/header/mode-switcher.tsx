@@ -7,7 +7,7 @@ import { useSettingsStore } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 import type { UiMode } from "@/lib/stores/settings-store";
 
-interface IdeModeProps {
+interface ModeSwitchProps {
   show?: boolean;
   //: Largura do Header inteiro (medida por ele, não por este componente) —
   //: o switcher vive dentro da mesma linha que o título e os ícones de
@@ -48,9 +48,9 @@ const MODES: { mode: UiMode; Icon: LucideIcon }[] = [
   { mode: "kanban", Icon: KanbanSquare },
 ];
 
-//: Aba plana no estilo VS Code/Claude Code — cada modo é seu próprio
+//: Aba plana — cada modo é seu próprio
 //: retângulo; o destaque de "ativo" vem do indicador deslizante do pai
-//: (`IdeModeSwitch`), não de uma borda própria — permite a barra animar
+//: (`ModeSwitch`), não de uma borda própria — permite a barra animar
 //: de posição/largura ao trocar de modo em vez de saltar.
 function ModeButton({
   mode,
@@ -114,7 +114,7 @@ function ModeButton({
   );
 }
 
-export function IdeModeSwitch({ show = false, width }: IdeModeProps) {
+export function ModeSwitch({ show = false, width }: ModeSwitchProps) {
   const uiMode = useSettingsStore((s) => s.uiMode);
   const setUiMode = useSettingsStore((s) => s.setUiMode);
   const groupRef = useRef<HTMLDivElement>(null);

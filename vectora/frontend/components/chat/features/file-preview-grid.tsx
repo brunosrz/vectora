@@ -158,7 +158,7 @@ function PdfThumbnail({ file }: { file: ImageAttachment }) {
         {fileName}
       </span>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-red-900/40 text-red-300">
+        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground">
           {error ? "PDF" : "PDF…"}
         </span>
         {fileSizeKB > 0 && (
@@ -240,7 +240,7 @@ function AudioChip({ file }: { file: ImageAttachment }) {
         {fileName}
       </span>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-purple-900/40 text-purple-300">
+        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground">
           {m.audio_attachment_badge()}
         </span>
         {fileSizeKB > 0 && (
@@ -273,7 +273,7 @@ function FilePreviewCard({
   const fileSizeKB = file.size ? Math.round(file.size / 1024) : 0;
 
   return (
-    <div className="group relative h-24 rounded-lg border-2 border-border hover:border-primary bg-card/50 hover:bg-muted/50 transition-all flex flex-col overflow-hidden">
+    <div className="group relative h-24 rounded-lg border border-border/60 hover:border-border bg-card/50 hover:bg-muted/50 transition-colors flex flex-col overflow-hidden">
       {isImage ? (
         // ── Imagem — thumbnail direto
         <div className="relative h-full w-full">
@@ -308,7 +308,7 @@ function FilePreviewCard({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="w-8 h-8 mb-1.5 text-white"
+            className="w-8 h-8 mb-1.5 text-muted-foreground"
           >
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
@@ -320,7 +320,7 @@ function FilePreviewCard({
             {fileName}
           </span>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-white">
+            <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground">
               {fileExt.toUpperCase().slice(0, 4) || "FILE"}
             </span>
             {fileSizeKB > 0 && (
