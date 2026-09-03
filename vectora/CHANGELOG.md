@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.14](https://github.com/vectora-ltda/vectora/compare/v0.1.13...v0.1.14) (2026-09-03)
+
+
+### Features
+
+* **frontend:** theme picker com cards pintados + toggle claro/escuro/sistema ([#51](https://github.com/vectora-ltda/vectora/issues/51)) ([52514ad](https://github.com/vectora-ltda/vectora/commit/52514ad2191d1dabe94df030b4edaf73b7f712f2))
+* **gha-bot:** modo self-hosted — revisão roda na própria instância Vectora ([#52](https://github.com/vectora-ltda/vectora/issues/52)) ([71fdf4e](https://github.com/vectora-ltda/vectora/commit/71fdf4ee254f6bdb68de8b2a6aba371580e9014a))
+
+
+### Bug Fixes
+
+* **backend,services:** hardening real do túnel do gateway (secret separado do token público) ([#49](https://github.com/vectora-ltda/vectora/issues/49)) ([cdac330](https://github.com/vectora-ltda/vectora/commit/cdac330de7d55db8f0be7478251e518f86cd2120))
+* **frontend:** altura do Header, rename do mode switcher e composer mais limpo ([#61](https://github.com/vectora-ltda/vectora/issues/61)) ([b248113](https://github.com/vectora-ltda/vectora/commit/b248113f381eb91406855c61c74dd9a05b1581c2))
+* **frontend:** tela de Integrações dirigida 100% pelo registry do backend ([#50](https://github.com/vectora-ltda/vectora/issues/50)) ([0ec8c51](https://github.com/vectora-ltda/vectora/commit/0ec8c51d6ae5ca91ff44fd5f041781e5f7dfc3b6))
+
 ## [0.1.13](https://github.com/vectora-ltda/vectora/compare/vectora-v0.1.12...vectora-v0.1.13) (2026-09-02)
 
 
