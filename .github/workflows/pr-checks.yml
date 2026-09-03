@@ -87,3 +87,34 @@ jobs:
               });
             }
             core.setFailed(message);
+
+  no-plan-metadata:
+    name: Sem Sprint/Bloco/Fase ou menção a ferramenta de IA em título/descrição do PR
+    # Sem `permissions: pull-requests: write` aqui de propósito: este job já
+    # roda com o título/corpo do PR (dado potencialmente hostil, ex. fork).
+    # Comentar no PR exige escrita; quem comenta é o job trusted em
+    # pr-checks-comment.yml (workflow_run, contexto do branch base) — nunca
+    # o job que processa dado da PR direto.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - id: check
+        run: python utils/check_no_plan_pr_metadata.py
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+      - name: Registra o número do PR pro job de comentário
+        if: failure() && steps.check.conclusion == 'failure'
+        run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
+      - name: Upload do número do PR (consumido pelo job trusted)
+        if: failure() && steps.check.conclusion == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-plan-metadata-failure
+          path: pr-number.txt
+          retention-days: 1
