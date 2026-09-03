@@ -23,6 +23,10 @@ class TestPlanoDeteccao:
         path = _write(tmp_path, "a.py", "# Sprint 3: ajusta cache\nx = 1\n")
         assert _find_violations(path) == [(1, "# Sprint 3: ajusta cache")]
 
+    def test_bloqueia_sprint_com_letra(self, tmp_path: Path) -> None:
+        path = _write(tmp_path, "a.py", "# Sprint E: enxuga o build\nx = 1\n")
+        assert len(_find_violations(path)) == 1
+
     def test_bloqueia_bloco_com_letra_maiuscula(self, tmp_path: Path) -> None:
         path = _write(tmp_path, "a.ts", "// Bloco T10.4 concluído\nconst x = 1;\n")
         assert len(_find_violations(path)) == 1

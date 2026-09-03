@@ -26,16 +26,19 @@ if reconfigure is not None and sys.stdout.encoding.lower() != "utf-8":
 
 # Três formas usadas neste repo pra numerar etapas de plano: a primeira
 # palavra de release ("SPRINT" em qualquer capitalização) seguida de um
-# número; a palavra de subdivisão de release ("PHASE", em português)
+# número OU de uma letra maiúscula única (planos deste repo já usaram as
+# duas convenções — "Sprint 3" e "Sprint E" identificam etapa da mesma
+# forma); a palavra de subdivisão de release ("PHASE", em português)
 # seguida de um número (com sufixo de letra ou hífen opcional); e a
 # palavra de bloco de trabalho ("BLOCK", em português) com "B" maiúsculo
 # literal seguida de um identificador iniciado por maiúscula/dígito — sem
 # essa última exigência, o regex bateria em qualquer uso comum do
 # substantivo equivalente em português (como em "bloco de código"), que
 # não tem nada a ver com plano. As duas primeiras casam sem distinguir
-# maiúscula (`(?i:...)` escopado só a elas).
+# maiúscula (`(?i:...)` escopado só a elas) — "sprint e" solto numa frase
+# comum é raro o bastante pra não virar falso positivo real neste repo.
 _PLAN_PATTERN = re.compile(
-    r"(?i:\bsprint\s+\d+\b)|\bBloco\s+[A-Z][\w.]*\b|(?i:\bfase[\s-]+\d+[a-z]?\b)"
+    r"(?i:\bsprint\s+(?:\d+|[A-Z])\b)|\bBloco\s+[A-Z][\w.]*\b|(?i:\bfase[\s-]+\d+[a-z]?\b)"
 )
 
 # Nome de ferramenta/revisor de IA — mesmo princípio do padrão de plano

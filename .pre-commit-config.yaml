@@ -109,7 +109,7 @@ repos:
         entry: uv run python utils/check_no_plan_comments.py
         language: system
         files: \.(py|ts|tsx|js|jsx)$
-        exclude: ^utils/(check_no_plan_comments|test_check_no_plan_comments)\.py$
+        exclude: ^utils/(check_no_plan_comments|test_check_no_plan_comments|check_no_plan_pr_metadata|test_check_no_plan_pr_metadata)\.py$
 
   # ==========================================
   # Python Validation
