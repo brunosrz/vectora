@@ -80,6 +80,11 @@ export default defineConfig({
         test: {
           name: "node",
           include: ["tests/scripts/**/*.test.ts"],
+          // Depende de rede/produção real (services.vectora.company) — nunca
+          // roda como parte de `scons tests`/CI hermético. Config própria
+          // (vitest.live.config.mts), sob demanda: ver o cabeçalho do
+          // arquivo pro comando exato.
+          exclude: ["tests/scripts/live-update.test.ts"],
         },
       },
     ],
