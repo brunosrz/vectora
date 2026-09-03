@@ -12,5 +12,10 @@ export default defineConfig({
   test: {
     reporters: ["default"],
     include: ["tests/scripts/live-update.test.ts"],
+    // Default do Vitest (5s) é curto pra requests contra rede/produção
+    // real — generoso o bastante pra não ficar flaky em latência normal,
+    // sem mascarar uma falha de verdade (endpoint fora do ar já erra bem
+    // antes disso).
+    testTimeout: 30_000,
   },
 });

@@ -97,7 +97,7 @@ describe("live update — contra o Worker real de produção", () => {
     const downloadRes = await fetch(downloadUrl);
     expect(downloadRes.status).toBe(200);
     expect(await firstChunkNonEmpty(downloadRes)).toBe(true);
-  }, 30_000); // timeout default do vitest. // Download de verificação contra a rede real — mais generoso que o
+  });
 
   it("GET /download/latest/win-x64.exe (primeira instalação, sem token) resolve pra um binário real", async () => {
     const res = await fetch(`${BASE_URL}/download/latest/win-x64.exe`);
