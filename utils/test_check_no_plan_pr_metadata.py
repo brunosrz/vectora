@@ -50,6 +50,12 @@ class TestDescricao:
         body = "## Resumo\nCorrige o cross-arch fallback do updater.\n"
         assert _run(monkeypatch, "fix: cross-arch", body) == 0
 
+    def test_erro_borda_referencia_a_claude_md_na_descricao_nao_bloqueia(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        body = "CLAUDE.md §1 cobre também mensagens de PR.\n"
+        assert _run(monkeypatch, "fix: x", body) == 0
+
     def test_erro_borda_sem_body_nao_quebra(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

@@ -34,11 +34,12 @@ if reconfigure is not None and sys.stdout.encoding.lower() != "utf-8":
 # literal seguida de um identificador iniciado por maiúscula/dígito — sem
 # essa última exigência, o regex bateria em qualquer uso comum do
 # substantivo equivalente em português (como em "bloco de código"), que
-# não tem nada a ver com plano. As duas primeiras casam sem distinguir
-# maiúscula (`(?i:...)` escopado só a elas) — "sprint e" solto numa frase
-# comum é raro o bastante pra não virar falso positivo real neste repo.
+# não tem nada a ver com plano. Só a palavra "sprint" em si ignora
+# capitalização (`(?i:...)` escopado só a ela) — o identificador de letra
+# que segue continua exigindo maiúscula, senão "sprint e atualiza" (texto
+# comum, sem relação com plano) também bateria.
 _PLAN_PATTERN = re.compile(
-    r"(?i:\bsprint\s+(?:\d+|[A-Z])\b)|\bBloco\s+[A-Z][\w.]*\b|(?i:\bfase[\s-]+\d+[a-z]?\b)"
+    r"(?i:\bsprint\s+)(?:\d+|[A-Z])\b|\bBloco\s+[A-Z][\w.]*\b|(?i:\bfase[\s-]+\d+[a-z]?\b)"
 )
 
 # Nome de ferramenta/revisor de IA — mesmo princípio do padrão de plano
@@ -46,9 +47,13 @@ _PLAN_PATTERN = re.compile(
 # nome usa fronteira de palavra (\b) pra não colidir com substantivo comum
 # (ex.: "copilot" sozinho já é o produto, sem risco de falso positivo real
 # neste repo; "codex" também é específico o bastante). Case-insensitive —
-# "CodeRabbit", "coderabbit", "CODERABBIT" são o mesmo problema.
+# "CodeRabbit", "coderabbit", "CODERABBIT" são o mesmo problema. O lookahead
+# negativo `(?!\.md)` exclui referência ao arquivo `CLAUDE.md` deste repo —
+# citar esse arquivo (ex.: "CLAUDE.md §1") é proveniência de REGRA, não de
+# ferramenta que gerou o código; sem a exceção, toda menção legítima ao
+# arquivo de instruções do projeto seria bloqueada.
 _AI_TOOL_PATTERN = re.compile(
-    r"(?i:\b(?:coderabbit(?:ai)?|claude(?:\s*code)?|chatgpt|copilot|codex)\b)"
+    r"(?i:\b(?:coderabbit(?:ai)?|claude(?:\s*code)?|chatgpt|copilot|codex)\b)(?!\.md)"
 )
 
 _PATTERN = re.compile(f"{_PLAN_PATTERN.pattern}|{_AI_TOOL_PATTERN.pattern}")
