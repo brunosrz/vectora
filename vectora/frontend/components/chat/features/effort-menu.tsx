@@ -10,7 +10,7 @@
  */
 
 import { useState } from "react";
-import { Check, ChevronDown, Gauge } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 import {
   Popover,
@@ -37,7 +37,6 @@ export function EffortMenu() {
           title={msg.effort_title()}
           aria-expanded={open}
         >
-          <Gauge className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate font-medium">
             {mDyn(`effort.${effort}`)}
           </span>

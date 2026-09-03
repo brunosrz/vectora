@@ -14,7 +14,7 @@
  */
 
 import { useState } from "react";
-import { Check, ChevronDown, ShieldCheck } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 import {
   Popover,
@@ -41,7 +41,6 @@ export function PermissionModeMenu() {
           title={msg.permission_title()}
           aria-expanded={open}
         >
-          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate font-medium">
             {mDyn(`permission.mode.${mode}`)}
           </span>
