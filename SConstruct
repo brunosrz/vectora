@@ -920,6 +920,32 @@ def _action_prod(target, source, env):
         # `--skip-confirmation` chegou a existir numa versão anterior do
         # wrangler mas não existe mais (`Unknown arguments`), então passá-la
         # quebra o comando em vez de proteger contra o prompt.
+        #
+        # `0001_schema.sql` fica FORA do rastreamento de `d1 migrations apply`
+        # de propósito (arquivo único idempotente, reaplicado por completo a
+        # cada mudança de schema — ver o cabeçalho do próprio arquivo). Isso
+        # significa que `d1 migrations apply` sozinho NUNCA propaga uma tabela
+        # nova adicionada ali pra produção — só os arquivos numerados em
+        # `migrations/000N_*.sql` entram nesse rastreamento. Sem o `d1
+        # execute` abaixo, uma tabela como `gha_bot_config` (adicionada a
+        # `0001_schema.sql` no código, nunca reaplicada manualmente) fica
+        # inexistente em produção indefinidamente, e a migration numerada que
+        # depende dela (`ALTER TABLE gha_bot_config ADD COLUMN ...`) falha com
+        # `no such table` no primeiro deploy que tentar rodá-la. Reaplicar
+        # aqui, sempre, antes de `migrations apply`, é seguro (só `CREATE
+        # TABLE/INDEX IF NOT EXISTS`) e elimina esse modo de falha de vez.
+        _run(
+            [
+                WRANGLER,
+                "d1",
+                "execute",
+                "vectora-db",
+                "--remote",
+                "--file=migrations/0001_schema.sql",
+            ],
+            log=log,
+            cwd=SERVICES,
+        )
         _run(
             [
                 WRANGLER,

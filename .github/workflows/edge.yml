@@ -198,10 +198,26 @@ jobs:
 
       # Migrations ANTES do deploy do worker: o código deployado assume o
       # schema mais novo — publicar sem aplicar quebra rotas em produção.
+      #
+      # `0001_schema.sql` fica FORA do rastreamento de `d1 migrations apply`
+      # de propósito (arquivo único idempotente, reaplicado por completo a
+      # cada mudança de schema — ver o cabeçalho do próprio arquivo). Sem
+      # reaplicá-lo aqui, uma tabela nova adicionada só nesse arquivo nunca
+      # chega em produção, e a primeira migration numerada que depender dela
+      # falha com "no such table". Reaplicar é seguro (só `CREATE TABLE/INDEX
+      # IF NOT EXISTS`).
+      - name: Aplica schema base D1 (services)
+        id: services_schema
+        if: >-
+          always() && steps.services_install.outcome == 'success' &&
+          env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: services
+        run: pnpm exec wrangler d1 execute vectora-db --remote --file=migrations/0001_schema.sql
+
       - name: Aplica migrations D1 (services)
         id: services_migrations
         if: >-
-          always() && steps.services_install.outcome == 'success' &&
+          always() && steps.services_schema.outcome == 'success' &&
           env.CLOUDFLARE_API_TOKEN != ''
         working-directory: services
         run: pnpm exec wrangler d1 migrations apply vectora-db --remote
