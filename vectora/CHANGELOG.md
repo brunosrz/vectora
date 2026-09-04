@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.15](https://github.com/vectora-ltda/vectora/compare/v0.1.14...v0.1.15) (2026-09-04)
+
+
+### Bug Fixes
+
+* **backend:** reconcile_vectora_sessions preserva/repara workspace_id ([#67](https://github.com/vectora-ltda/vectora/issues/67)) ([23eab8c](https://github.com/vectora-ltda/vectora/commit/23eab8c081d7dca8ca88d14044b4777811258398))
+* **backend:** reconcilia vectora_sessions com sessions.db ([#63](https://github.com/vectora-ltda/vectora/issues/63)) ([29ca467](https://github.com/vectora-ltda/vectora/commit/29ca46743e71f18e53b290637a8f483b7f758837))
+* release-please rastreia o monorepo inteiro, não só vectora/ ([#65](https://github.com/vectora-ltda/vectora/issues/65)) ([c416cc3](https://github.com/vectora-ltda/vectora/commit/c416cc32ac2cfb710c9a3bb9448f69e9fbfca7ef))
+* **services:** filtra versão no loop de upload e rejeita instalador duplicado ([#64](https://github.com/vectora-ltda/vectora/issues/64)) ([521007d](https://github.com/vectora-ltda/vectora/commit/521007ddd5b165ba3233e2a4214860307f68a26d))
+* **services:** reconstrói o manifesto de update por arch ([#62](https://github.com/vectora-ltda/vectora/issues/62)) ([48b4e68](https://github.com/vectora-ltda/vectora/commit/48b4e688edbcbe7e11b56e7aed7dcabdf8bdb50e))
+
 ## [0.1.14](https://github.com/vectora-ltda/vectora/compare/v0.1.13...v0.1.14) (2026-09-03)
 
 
