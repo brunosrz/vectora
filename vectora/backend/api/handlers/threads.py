@@ -808,42 +808,60 @@ async def reconcile_vectora_sessions() -> int:
             )
         except Exception:
             current_workspace_id = ""
-        workspace_diverges = bool(real_workspace_id) and (
-            current_workspace_id != real_workspace_id
-        )
+        # Diverge tanto quando SessionStore tem um workspace que `extra`
+        # ainda não reflete QUANTO quando SessionStore não tem workspace
+        # nenhum mas `extra` guarda um valor obsoleto (thread que perdeu o
+        # workspace, ou um valor stale de antes desta correção).
+        workspace_diverges = current_workspace_id != real_workspace_id
         if current_count == real_count and not workspace_diverges:
             continue
 
         mode_col = _normalize_mode(session["mode"])
-        patch_json = (
-            json.dumps({"workspace_id": real_workspace_id})
-            if real_workspace_id
-            else "{}"
-        )
-        # ON CONFLICT (não IF/else INSERT-ou-UPDATE): duas execuções
-        # concorrentes (loop periódico + recuperação manual, ou dois boots
-        # sobrepostos) podem ambas ler a mesma thread como ausente antes de
-        # qualquer INSERT — a 2ª bateria na PRIMARY KEY e derrubava o loop
-        # de hygiene. `json_patch` mescla só a chave workspace_id no extra
-        # já existente (título/pins gravados por outro caminho nunca são
-        # apagados por uma reconciliação).
+        # Dois statements, não um só INSERT...ON CONFLICT com extra
+        # calculado em VALUES: um `null` de verdade em `patch_json` (pra
+        # REMOVER workspace_id obsoleto via JSON Merge Patch, RFC 7396, é o
+        # que `json_patch` do SQLite implementa) não pode virar o `extra`
+        # de uma linha NOVA — `Thread.workspace_id` é `str` estrito no
+        # schema (nunca `str | None`); um `{"workspace_id": null}` literal
+        # ali quebraria a validação Pydantic na próxima leitura. INSERT
+        # sempre nasce com extra limpo (nunca null); o UPDATE seguinte —
+        # sempre executado, idempotente por PK — aplica o merge-patch de
+        # verdade (populando ou removendo a chave conforme o caso).
+        #
+        # `INSERT ... ON CONFLICT DO NOTHING` nunca lança em PK duplicada
+        # (protege a mesma corrida de execuções sobrepostas de antes), e o
+        # UPDATE por thread_id é seguro mesmo se dois processos rodarem o
+        # mesmo par de statements ao mesmo tempo.
         await db.execute(
             """
             INSERT INTO vectora_sessions
                 (thread_id, created_at, last_activity, message_count, extra, mode)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT(thread_id) DO UPDATE SET
-                message_count = excluded.message_count,
-                extra = json_patch(vectora_sessions.extra, excluded.extra)
+            VALUES (?, ?, ?, ?, '{}', ?)
+            ON CONFLICT(thread_id) DO NOTHING
             """,
             (
                 thread_id,
                 session["created_at"],
                 session["updated_at"],
                 real_count,
-                patch_json,
                 mode_col,
             ),
+        )
+        patch_json = json.dumps({"workspace_id": real_workspace_id or None})
+        # `json_valid` normaliza um `extra` corrompido pra `'{}'` antes do
+        # merge — senão `json_patch` lança em JSON malformado e derruba o
+        # lote inteiro antes do commit.
+        await db.execute(
+            """
+            UPDATE vectora_sessions
+            SET message_count = ?,
+                extra = json_patch(
+                    CASE WHEN json_valid(extra) THEN extra ELSE '{}' END,
+                    ?
+                )
+            WHERE thread_id = ?
+            """,
+            (real_count, patch_json, thread_id),
         )
         reconciled += 1
 

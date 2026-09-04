@@ -265,3 +265,59 @@ class TestReconcilePreservaWorkspaceId:
         extra = json.loads(row[0])
         assert extra["workspace_id"] == "ws-real"
         assert extra["title"] == "Ja titulada"
+
+    async def test_remove_workspace_id_obsoleto_quando_session_store_nao_tem_mais(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        """Erro/borda: a divergência precisa ser detectada mesmo quando
+        SessionStore NÃO tem workspace — se a thread perdeu o workspace
+        (ou o valor em `extra` ficou obsoleto de outra forma) e
+        `sessions.workspace_id` virou None, a chave velha precisa ser
+        removida, não deixar a thread associada ao workspace errado."""
+        await _real_thread(session_store, "thread-1", 3)  # sem workspace_id
+        await checkpoints_db.execute(
+            "INSERT INTO vectora_sessions "
+            "(thread_id, created_at, last_activity, message_count, extra) "
+            "VALUES ('thread-1', '2026-01-01', '2026-01-01', 3, ?)",
+            (json.dumps({"workspace_id": "ws-obsoleto", "title": "Titulo"}),),
+        )
+        await checkpoints_db.commit()
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 1
+        async with checkpoints_db.execute(
+            "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        extra = json.loads(row[0])
+        assert "workspace_id" not in extra
+        assert extra["title"] == "Titulo"
+
+    async def test_extra_json_corrompido_nao_derruba_a_reconciliacao(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        """Erro/borda: `extra` malformado não pode fazer json_patch lançar
+        e derrubar o lote inteiro antes do commit."""
+        await _real_thread(session_store, "thread-1", 3, workspace_id="ws-real")
+        await checkpoints_db.execute(
+            "INSERT INTO vectora_sessions "
+            "(thread_id, created_at, last_activity, message_count, extra) "
+            "VALUES ('thread-1', '2026-01-01', '2026-01-01', 1, 'nao-e-json-valido')"
+        )
+        await checkpoints_db.commit()
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 1
+        async with checkpoints_db.execute(
+            "SELECT message_count, extra FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        count, extra_json = row
+        assert count == 3
+        assert json.loads(extra_json)["workspace_id"] == "ws-real"
