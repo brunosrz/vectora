@@ -44,12 +44,19 @@ def test_pyproject_version_bate_com_frontend_package_json():
 
 def test_release_please_config_sincroniza_frontend_package_json():
     """Sem essa entrada, release-please bumpa só pyproject.toml a cada
-    release e o teste acima volta a falhar na release seguinte."""
+    release e o teste acima volta a falhar na release seguinte.
+
+    release-please-config.json rastreia o monorepo INTEIRO como um único
+    pacote (chave "." — path é interpretado literalmente pelo release-please,
+    não é um nome arbitrário; uma chave "vectora" faria o path virar
+    `vectora/`, restringindo commits contados só àquela pasta). Os paths de
+    extra-files, por isso, são relativos à raiz do repo."""
     config = json.loads(
         (_MONOREPO_ROOT / "release-please-config.json").read_text(encoding="utf-8")
     )
-    extra_files = config["packages"]["vectora"].get("extra-files", [])
+    extra_files = config["packages"]["."].get("extra-files", [])
     paths = {
         entry.get("path") if isinstance(entry, dict) else entry for entry in extra_files
     }
-    assert "frontend/package.json" in paths
+    assert "vectora/frontend/package.json" in paths
+    assert "vectora/pyproject.toml" in paths
