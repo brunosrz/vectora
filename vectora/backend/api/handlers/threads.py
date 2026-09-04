@@ -759,6 +759,82 @@ async def cleanup_empty_threads(max_age_hours: float = 1.0) -> int:
     return deleted
 
 
+async def reconcile_vectora_sessions() -> int:
+    """Repovoa `vectora_sessions` (o que a sidebar lê) a partir de
+    `sessions.db`/`SessionStore` (fonte de verdade do motor nativo) — rede
+    de segurança contra qualquer divergência entre as duas tabelas, seja
+    qual for a causa (upsert que falhou, binário antigo com um bug já
+    corrigido, corrida de processos, etc.).
+
+    Acionada tanto pela recuperação manual de dados quanto pelo
+    `_thread_cleanup_loop` periódico (`backend/api/server.py`) — mesma
+    rotina, um jeito só de reconciliar. Idempotente: rodar de novo sobre um
+    banco já sincronizado não faz nada.
+
+    Para cada thread real em `sessions.db` com pelo menos 1 mensagem:
+    - Ausente de `vectora_sessions` → cria (repovoa a visibilidade na sidebar).
+    - Presente mas com `message_count` divergente do real → corrige a
+      contagem, sem mexer no `extra` (título/pins já gravados na UI).
+    Nunca apaga nada — só preenche o que está faltando ou errado.
+    """
+    session_store = await _get_session_store()
+    real_sessions = await session_store.list_all_sessions()
+    real_with_messages = [s for s in real_sessions if s["message_count"] > 0]
+    if not real_with_messages:
+        return 0
+
+    db = await _get_db()
+    thread_ids = [s["thread_id"] for s in real_with_messages]
+    placeholders = ",".join("?" for _ in thread_ids)
+    async with db.execute(
+        f"SELECT thread_id, message_count FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+        thread_ids,
+    ) as cur:
+        existing = {row[0]: row[1] for row in await cur.fetchall()}
+
+    reconciled = 0
+    for session in real_with_messages:
+        thread_id = session["thread_id"]
+        real_count = session["message_count"]
+        current_count = existing.get(thread_id)
+        if current_count == real_count:
+            continue
+
+        mode_col = _normalize_mode(session["mode"])
+        # ON CONFLICT (não IF current_count is None / else): duas execuções
+        # concorrentes (loop periódico + recuperação manual, ou dois boots
+        # sobrepostos) podem ambas ler a mesma thread como ausente antes de
+        # qualquer INSERT — a 2ª bateria na PRIMARY KEY e derrubava o loop
+        # de hygiene. UPDATE só toca message_count; extra/pinned/mode já
+        # gravados por outro caminho (upsert_session, UpdateThread) nunca
+        # são pisados por uma reconciliação.
+        await db.execute(
+            """
+            INSERT INTO vectora_sessions
+                (thread_id, created_at, last_activity, message_count, extra, mode)
+            VALUES (?, ?, ?, ?, '{}', ?)
+            ON CONFLICT(thread_id) DO UPDATE SET
+                message_count = excluded.message_count
+            """,
+            (
+                thread_id,
+                session["created_at"],
+                session["updated_at"],
+                real_count,
+                mode_col,
+            ),
+        )
+        reconciled += 1
+
+    if reconciled:
+        await db.commit()
+        logger.info(
+            "threads: %d thread(s) real(is) repovoada(s)/corrigida(s) em vectora_sessions",
+            reconciled,
+        )
+    return reconciled
+
+
 # ---------------------------------------------------------------------------
 # DeleteThread
 # ---------------------------------------------------------------------------

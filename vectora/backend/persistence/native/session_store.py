@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from backend.vtypes.message import VMessage
 
@@ -103,6 +103,18 @@ def _row_to_message(row: Any) -> VMessage:
         "is_error": bool(is_error),
     }
     return VMessage.from_dict(data)
+
+
+class SessionSummary(TypedDict):
+    """Uma linha de `SessionStore.list_all_sessions` — metadados da thread
+    em `sessions` mais a contagem real de mensagens em `messages`."""
+
+    thread_id: str
+    user_id: str
+    mode: str
+    created_at: str
+    updated_at: str
+    message_count: int
 
 
 class SessionStore:
@@ -379,6 +391,32 @@ class SessionStore:
             cur = await conn.execute(query, (user_id, *thread_ids))
             rows = await cur.fetchall()
         return {r[0] for r in rows}
+
+    async def list_all_sessions(self) -> list[SessionSummary]:
+        """Todas as threads registradas em `sessions` (fonte de verdade),
+        com a contagem real de mensagens de cada uma — usado pela
+        reconciliação de `vectora_sessions` (metadados de UI), que precisa
+        comparar as duas tabelas pra achar threads reais ausentes/
+        desatualizadas na tabela que a sidebar lê."""
+        await self.setup()
+        async with self._pool.acquire() as conn:
+            cur = await conn.execute(
+                "SELECT s.thread_id, s.user_id, s.mode, s.created_at, s.updated_at, "
+                "(SELECT COUNT(*) FROM messages m WHERE m.thread_id = s.thread_id) "
+                "AS message_count FROM sessions s"
+            )
+            rows = await cur.fetchall()
+        return [
+            {
+                "thread_id": r[0],
+                "user_id": r[1],
+                "mode": r[2],
+                "created_at": r[3],
+                "updated_at": r[4],
+                "message_count": r[5],
+            }
+            for r in rows
+        ]
 
     async def list_active_user_ids(self, since_iso: str) -> list[str]:
         """`user_id` distintos com pelo menos uma sessão atualizada desde

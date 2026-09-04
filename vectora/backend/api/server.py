@@ -322,18 +322,48 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
     # Hygiene: apaga threads sem mensagem (abandonadas antes do 1º envio,
     # ex. crash/cancelamento) a cada hora — sessões fantasma na sidebar.
+    # Reconcilia junto (rede de segurança): repovoa vectora_sessions com
+    # qualquer thread real que exista em sessions.db mas esteja ausente/
+    # desatualizada ali — nunca deixa uma conversa real ficar invisível na
+    # sidebar por muito mais de 1h, seja qual for a causa da divergência.
     thread_cleanup_task: asyncio.Task[None] | None = None
     try:
-        from backend.api.handlers.threads import cleanup_empty_threads
+        from backend.api.handlers.threads import (
+            cleanup_empty_threads,
+            reconcile_vectora_sessions,
+        )
+
+        async def _reconcile_safe() -> None:
+            # Isolada do cleanup: se SessionStore não estiver disponível
+            # (ex.: app headless sem motor nativo configurado) ou qualquer
+            # outra falha, a reconciliação não pode derrubar a task e
+            # impedir cleanup_empty_threads de rodar.
+            try:
+                await reconcile_vectora_sessions()
+            except Exception as exc:
+                logger.warning("api/server: falha ao reconciliar threads: %s", exc)
+
+        async def _cleanup_safe() -> None:
+            try:
+                await cleanup_empty_threads()
+            except Exception as exc:
+                logger.warning("api/server: falha ao limpar threads vazias: %s", exc)
 
         async def _thread_cleanup_loop() -> None:
+            # Reconcilia ANTES de limpar: uma thread real com message_count
+            # zerado por alguma falha (upsert perdido) e mais velha que o
+            # cutoff seria apagada por cleanup_empty_threads antes de
+            # reconcile_vectora_sessions ter a chance de corrigir a
+            # contagem — nessa ordem, a reconciliação sempre roda primeiro.
             # Roda uma vez já no boot (não só após 1h de sleep) — sem isso,
             # threads fantasma de uma sessão anterior (crash/cancelamento
             # antes do 1º envio) ficavam visíveis por até 1h a cada restart.
-            await cleanup_empty_threads()
+            await _reconcile_safe()
+            await _cleanup_safe()
             while True:
                 await asyncio.sleep(3600)
-                await cleanup_empty_threads()
+                await _reconcile_safe()
+                await _cleanup_safe()
 
         thread_cleanup_task = asyncio.create_task(_thread_cleanup_loop())
     except Exception as exc:
