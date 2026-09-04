@@ -773,8 +773,12 @@ async def reconcile_vectora_sessions() -> int:
 
     Para cada thread real em `sessions.db` com pelo menos 1 mensagem:
     - Ausente de `vectora_sessions` → cria (repovoa a visibilidade na sidebar).
-    - Presente mas com `message_count` divergente do real → corrige a
-      contagem, sem mexer no `extra` (título/pins já gravados na UI).
+    - Presente mas com `message_count` divergente do real → corrige a contagem.
+    - `workspace_id` ausente/divergente de `extra` → mescla (nunca apaga
+      título/pins já gravados — usa `json_patch`, só adiciona/atualiza a
+      chave `workspace_id`). Sem isso, uma thread repovoada aparecia na
+      sidebar sem o workspace correto (achado real, 2026-09-04 — o INSERT
+      gravava `extra` fixo como `'{}'`, nunca lendo `sessions.workspace_id`).
     Nunca apaga nada — só preenche o que está faltando ou errado.
     """
     session_store = await _get_session_store()
@@ -787,40 +791,57 @@ async def reconcile_vectora_sessions() -> int:
     thread_ids = [s["thread_id"] for s in real_with_messages]
     placeholders = ",".join("?" for _ in thread_ids)
     async with db.execute(
-        f"SELECT thread_id, message_count FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+        f"SELECT thread_id, message_count, extra FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
         thread_ids,
     ) as cur:
-        existing = {row[0]: row[1] for row in await cur.fetchall()}
+        existing = {row[0]: (row[1], row[2]) for row in await cur.fetchall()}
 
     reconciled = 0
     for session in real_with_messages:
         thread_id = session["thread_id"]
         real_count = session["message_count"]
-        current_count = existing.get(thread_id)
-        if current_count == real_count:
+        real_workspace_id = session["workspace_id"] or ""
+        current_count, current_extra_json = existing.get(thread_id, (None, None))
+        try:
+            current_workspace_id = json.loads(current_extra_json or "{}").get(
+                "workspace_id", ""
+            )
+        except Exception:
+            current_workspace_id = ""
+        workspace_diverges = bool(real_workspace_id) and (
+            current_workspace_id != real_workspace_id
+        )
+        if current_count == real_count and not workspace_diverges:
             continue
 
         mode_col = _normalize_mode(session["mode"])
-        # ON CONFLICT (não IF current_count is None / else): duas execuções
+        patch_json = (
+            json.dumps({"workspace_id": real_workspace_id})
+            if real_workspace_id
+            else "{}"
+        )
+        # ON CONFLICT (não IF/else INSERT-ou-UPDATE): duas execuções
         # concorrentes (loop periódico + recuperação manual, ou dois boots
         # sobrepostos) podem ambas ler a mesma thread como ausente antes de
         # qualquer INSERT — a 2ª bateria na PRIMARY KEY e derrubava o loop
-        # de hygiene. UPDATE só toca message_count; extra/pinned/mode já
-        # gravados por outro caminho (upsert_session, UpdateThread) nunca
-        # são pisados por uma reconciliação.
+        # de hygiene. `json_patch` mescla só a chave workspace_id no extra
+        # já existente (título/pins gravados por outro caminho nunca são
+        # apagados por uma reconciliação).
         await db.execute(
             """
             INSERT INTO vectora_sessions
                 (thread_id, created_at, last_activity, message_count, extra, mode)
-            VALUES (?, ?, ?, ?, '{}', ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(thread_id) DO UPDATE SET
-                message_count = excluded.message_count
+                message_count = excluded.message_count,
+                extra = json_patch(vectora_sessions.extra, excluded.extra)
             """,
             (
                 thread_id,
                 session["created_at"],
                 session["updated_at"],
                 real_count,
+                patch_json,
                 mode_col,
             ),
         )

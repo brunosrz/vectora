@@ -111,6 +111,7 @@ class SessionSummary(TypedDict):
 
     thread_id: str
     user_id: str
+    workspace_id: str | None
     mode: str
     created_at: str
     updated_at: str
@@ -401,7 +402,8 @@ class SessionStore:
         await self.setup()
         async with self._pool.acquire() as conn:
             cur = await conn.execute(
-                "SELECT s.thread_id, s.user_id, s.mode, s.created_at, s.updated_at, "
+                "SELECT s.thread_id, s.user_id, s.workspace_id, s.mode, "
+                "s.created_at, s.updated_at, "
                 "(SELECT COUNT(*) FROM messages m WHERE m.thread_id = s.thread_id) "
                 "AS message_count FROM sessions s"
             )
@@ -410,10 +412,11 @@ class SessionStore:
             {
                 "thread_id": r[0],
                 "user_id": r[1],
-                "mode": r[2],
-                "created_at": r[3],
-                "updated_at": r[4],
-                "message_count": r[5],
+                "workspace_id": r[2],
+                "mode": r[3],
+                "created_at": r[4],
+                "updated_at": r[5],
+                "message_count": r[6],
             }
             for r in rows
         ]
