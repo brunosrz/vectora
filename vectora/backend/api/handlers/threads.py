@@ -773,8 +773,12 @@ async def reconcile_vectora_sessions() -> int:
 
     Para cada thread real em `sessions.db` com pelo menos 1 mensagem:
     - Ausente de `vectora_sessions` → cria (repovoa a visibilidade na sidebar).
-    - Presente mas com `message_count` divergente do real → corrige a
-      contagem, sem mexer no `extra` (título/pins já gravados na UI).
+    - Presente mas com `message_count` divergente do real → corrige a contagem.
+    - `workspace_id` ausente/divergente de `extra` → mescla (nunca apaga
+      título/pins já gravados — usa `json_patch`, só adiciona/atualiza a
+      chave `workspace_id`). Sem isso, uma thread repovoada aparecia na
+      sidebar sem o workspace correto (achado real, 2026-09-04 — o INSERT
+      gravava `extra` fixo como `'{}'`, nunca lendo `sessions.workspace_id`).
     Nunca apaga nada — só preenche o que está faltando ou errado.
     """
     session_store = await _get_session_store()
@@ -787,34 +791,53 @@ async def reconcile_vectora_sessions() -> int:
     thread_ids = [s["thread_id"] for s in real_with_messages]
     placeholders = ",".join("?" for _ in thread_ids)
     async with db.execute(
-        f"SELECT thread_id, message_count FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+        f"SELECT thread_id, message_count, extra FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
         thread_ids,
     ) as cur:
-        existing = {row[0]: row[1] for row in await cur.fetchall()}
+        existing = {row[0]: (row[1], row[2]) for row in await cur.fetchall()}
 
     reconciled = 0
     for session in real_with_messages:
         thread_id = session["thread_id"]
         real_count = session["message_count"]
-        current_count = existing.get(thread_id)
-        if current_count == real_count:
+        real_workspace_id = session["workspace_id"] or ""
+        current_count, current_extra_json = existing.get(thread_id, (None, None))
+        try:
+            current_workspace_id = json.loads(current_extra_json or "{}").get(
+                "workspace_id", ""
+            )
+        except Exception:
+            current_workspace_id = ""
+        # Diverge tanto quando SessionStore tem um workspace que `extra`
+        # ainda não reflete QUANTO quando SessionStore não tem workspace
+        # nenhum mas `extra` guarda um valor obsoleto (thread que perdeu o
+        # workspace, ou um valor stale de antes desta correção).
+        workspace_diverges = current_workspace_id != real_workspace_id
+        if current_count == real_count and not workspace_diverges:
             continue
 
         mode_col = _normalize_mode(session["mode"])
-        # ON CONFLICT (não IF current_count is None / else): duas execuções
-        # concorrentes (loop periódico + recuperação manual, ou dois boots
-        # sobrepostos) podem ambas ler a mesma thread como ausente antes de
-        # qualquer INSERT — a 2ª bateria na PRIMARY KEY e derrubava o loop
-        # de hygiene. UPDATE só toca message_count; extra/pinned/mode já
-        # gravados por outro caminho (upsert_session, UpdateThread) nunca
-        # são pisados por uma reconciliação.
+        # Dois statements, não um só INSERT...ON CONFLICT com extra
+        # calculado em VALUES: um `null` de verdade em `patch_json` (pra
+        # REMOVER workspace_id obsoleto via JSON Merge Patch, RFC 7396, é o
+        # que `json_patch` do SQLite implementa) não pode virar o `extra`
+        # de uma linha NOVA — `Thread.workspace_id` é `str` estrito no
+        # schema (nunca `str | None`); um `{"workspace_id": null}` literal
+        # ali quebraria a validação Pydantic na próxima leitura. INSERT
+        # sempre nasce com extra limpo (nunca null); o UPDATE seguinte —
+        # sempre executado, idempotente por PK — aplica o merge-patch de
+        # verdade (populando ou removendo a chave conforme o caso).
+        #
+        # `INSERT ... ON CONFLICT DO NOTHING` nunca lança em PK duplicada
+        # (protege a mesma corrida de execuções sobrepostas de antes), e o
+        # UPDATE por thread_id é seguro mesmo se dois processos rodarem o
+        # mesmo par de statements ao mesmo tempo.
         await db.execute(
             """
             INSERT INTO vectora_sessions
                 (thread_id, created_at, last_activity, message_count, extra, mode)
             VALUES (?, ?, ?, ?, '{}', ?)
-            ON CONFLICT(thread_id) DO UPDATE SET
-                message_count = excluded.message_count
+            ON CONFLICT(thread_id) DO NOTHING
             """,
             (
                 thread_id,
@@ -823,6 +846,22 @@ async def reconcile_vectora_sessions() -> int:
                 real_count,
                 mode_col,
             ),
+        )
+        patch_json = json.dumps({"workspace_id": real_workspace_id or None})
+        # `json_valid` normaliza um `extra` corrompido pra `'{}'` antes do
+        # merge — senão `json_patch` lança em JSON malformado e derruba o
+        # lote inteiro antes do commit.
+        await db.execute(
+            """
+            UPDATE vectora_sessions
+            SET message_count = ?,
+                extra = json_patch(
+                    CASE WHEN json_valid(extra) THEN extra ELSE '{}' END,
+                    ?
+                )
+            WHERE thread_id = ?
+            """,
+            (real_count, patch_json, thread_id),
         )
         reconciled += 1
 

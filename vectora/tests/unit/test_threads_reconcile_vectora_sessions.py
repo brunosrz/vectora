@@ -65,9 +65,14 @@ def _wire_stores(
 
 
 async def _real_thread(
-    session_store: SessionStore, thread_id: str, n_messages: int
+    session_store: SessionStore,
+    thread_id: str,
+    n_messages: int,
+    workspace_id: str = "",
 ) -> None:
-    await session_store.create_session(thread_id, user_id="alice", mode="code")
+    await session_store.create_session(
+        thread_id, user_id="alice", workspace_id=workspace_id or None, mode="code"
+    )
     for i in range(n_messages):
         await session_store.append_message(
             thread_id, text_message(MessageRole.USER, f"mensagem {i}")
@@ -194,3 +199,125 @@ class TestReconcileNaoMexeEmThreadJaSincronizada:
 
         assert first == 1
         assert second == 0
+
+
+class TestReconcilePreservaWorkspaceId:
+    """Achado real (2026-09-04): a reconciliação recuperava a thread na
+    sidebar mas gravava `extra` fixo como `'{}'` — nunca lia
+    `sessions.workspace_id` de SessionStore. A conversa reaparecia sem o
+    workspace correto."""
+
+    async def test_thread_repovoada_recebe_workspace_id_de_session_store(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        await _real_thread(session_store, "thread-1", 3, workspace_id="ws-real")
+
+        await th.reconcile_vectora_sessions()
+
+        async with checkpoints_db.execute(
+            "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert json.loads(row[0])["workspace_id"] == "ws-real"
+
+    async def test_thread_sem_workspace_id_nao_grava_chave_vazia(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        await _real_thread(session_store, "thread-1", 3)
+
+        await th.reconcile_vectora_sessions()
+
+        async with checkpoints_db.execute(
+            "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert "workspace_id" not in json.loads(row[0])
+
+    async def test_repara_thread_ja_recuperada_sem_workspace_id_sem_apagar_titulo(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        """Regressão específica: uma thread já recuperada por uma versão
+        anterior do reconcile (extra='{}', sem workspace_id) precisa ser
+        reparada numa próxima rodada — sem apagar título já gravado
+        nesse meio-tempo pela UI (GenerateTitle)."""
+        await _real_thread(session_store, "thread-1", 3, workspace_id="ws-real")
+        await checkpoints_db.execute(
+            "INSERT INTO vectora_sessions "
+            "(thread_id, created_at, last_activity, message_count, extra) "
+            "VALUES ('thread-1', '2026-01-01', '2026-01-01', 3, ?)",
+            (json.dumps({"title": "Ja titulada"}),),
+        )
+        await checkpoints_db.commit()
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 1
+        async with checkpoints_db.execute(
+            "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        extra = json.loads(row[0])
+        assert extra["workspace_id"] == "ws-real"
+        assert extra["title"] == "Ja titulada"
+
+    async def test_remove_workspace_id_obsoleto_quando_session_store_nao_tem_mais(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        """Erro/borda: a divergência precisa ser detectada mesmo quando
+        SessionStore NÃO tem workspace — se a thread perdeu o workspace
+        (ou o valor em `extra` ficou obsoleto de outra forma) e
+        `sessions.workspace_id` virou None, a chave velha precisa ser
+        removida, não deixar a thread associada ao workspace errado."""
+        await _real_thread(session_store, "thread-1", 3)  # sem workspace_id
+        await checkpoints_db.execute(
+            "INSERT INTO vectora_sessions "
+            "(thread_id, created_at, last_activity, message_count, extra) "
+            "VALUES ('thread-1', '2026-01-01', '2026-01-01', 3, ?)",
+            (json.dumps({"workspace_id": "ws-obsoleto", "title": "Titulo"}),),
+        )
+        await checkpoints_db.commit()
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 1
+        async with checkpoints_db.execute(
+            "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        extra = json.loads(row[0])
+        assert "workspace_id" not in extra
+        assert extra["title"] == "Titulo"
+
+    async def test_extra_json_corrompido_nao_derruba_a_reconciliacao(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        """Erro/borda: `extra` malformado não pode fazer json_patch lançar
+        e derrubar o lote inteiro antes do commit."""
+        await _real_thread(session_store, "thread-1", 3, workspace_id="ws-real")
+        await checkpoints_db.execute(
+            "INSERT INTO vectora_sessions "
+            "(thread_id, created_at, last_activity, message_count, extra) "
+            "VALUES ('thread-1', '2026-01-01', '2026-01-01', 1, 'nao-e-json-valido')"
+        )
+        await checkpoints_db.commit()
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 1
+        async with checkpoints_db.execute(
+            "SELECT message_count, extra FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        count, extra_json = row
+        assert count == 3
+        assert json.loads(extra_json)["workspace_id"] == "ws-real"
