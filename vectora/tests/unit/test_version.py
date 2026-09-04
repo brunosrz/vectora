@@ -68,19 +68,28 @@ def test_pyproject_version_bate_com_frontend_package_json() -> None:
     )
 
 
-def test_release_please_config_sincroniza_frontend_package_json() -> None:
-    """Sem essa entrada, release-please bumpa só pyproject.toml a cada
-    release e o teste acima volta a falhar na release seguinte.
+def test_release_please_config_sincroniza_todos_os_arquivos_de_versao() -> None:
+    """Sem essas entradas, release-please bumpa só o manifest e o teste
+    acima (pyproject.toml vs frontend/package.json) volta a falhar na
+    release seguinte — o mesmo vale pra services/company ficarem pra trás.
 
     release-please-config.json rastreia o monorepo INTEIRO como um único
     pacote (chave "." — path é interpretado literalmente pelo release-please,
     não é um nome arbitrário; uma chave "vectora" faria o path virar
     `vectora/`, restringindo commits contados só àquela pasta). Os paths de
-    extra-files, por isso, são relativos à raiz do repo."""
+    extra-files, por isso, são relativos à raiz do repo.
+
+    Compara o CONJUNTO inteiro (==), não só "in" pra cada path — remover uma
+    entrada (ex.: company/package.json parar de ser sincronizado) precisa
+    quebrar este teste, não só a adição de uma nova passar despercebida."""
     config: _ReleasePleaseConfig = json.loads(
         (_MONOREPO_ROOT / "release-please-config.json").read_text(encoding="utf-8")
     )
     extra_files: list[_ExtraFile] = config["packages"]["."].get("extra-files", [])
     paths: set[str] = {entry["path"] for entry in extra_files}
-    assert "vectora/frontend/package.json" in paths
-    assert "vectora/pyproject.toml" in paths
+    assert paths == {
+        "vectora/pyproject.toml",
+        "vectora/frontend/package.json",
+        "services/package.json",
+        "company/package.json",
+    }
