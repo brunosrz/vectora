@@ -95,7 +95,7 @@ class TestLifespan:
             events.append("cleanup")
             return 0
 
-        async def _fake_reconcile(*_a, **_k) -> int:
+        async def _fake_reconcile() -> int:
             # Mockada só pra não competir por tempo com cleanup_empty_threads
             # nesse teste — reconcile_vectora_sessions roda ANTES dela no
             # loop real (ver server.py) e faz I/O de verdade (SessionStore),
