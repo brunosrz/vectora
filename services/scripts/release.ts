@@ -356,6 +356,33 @@ async function publishVersionAndPrune(
   }
 }
 
+/**
+ * Indexa os instaladores reais de `files` por `os/arch`, restrito à
+ * `version` publicada — um instalador de release anterior sobrando em
+ * `dist` (build incremental, limpeza incompleta) nunca vira o conteúdo do
+ * manifesto desta versão. Usado ANTES de montar qualquer manifesto: cada
+ * um é reconstruído a partir do instalador real da combinação (ver
+ * `buildArchManifest`), nunca do `latest.yml` bruto do disco.
+ */
+export function indexInstallersByOsArch(
+  files: string[],
+  dist: string,
+  version: string,
+): Map<string, InstallerEntry> {
+  const installersByOsArch = new Map<string, InstallerEntry>();
+  for (const file of files) {
+    const match = INSTALLER_RE.exec(file);
+    if (!match?.groups) continue;
+    const { version: installerVersion, os, arch } = match.groups;
+    if (installerVersion !== version) continue;
+    installersByOsArch.set(`${os}/${arch}`, {
+      filename: file,
+      path: join(dist, file),
+    });
+  }
+  return installersByOsArch;
+}
+
 async function main(): Promise<void> {
   const { channel, version, dist } = parseArgs(process.argv.slice(2));
   const bucket = "vectora-r2";
@@ -364,23 +391,7 @@ async function main(): Promise<void> {
     (f) => !f.endsWith(".yml.tmp") && !f.startsWith("."),
   );
 
-  // Indexa os instaladores reais por (os, arch) ANTES de montar qualquer
-  // manifesto — o manifesto de cada arch é reconstruído a partir do
-  // instalador real dessa combinação, nunca do latest.yml bruto do disco
-  // (ver comentário de `buildArchManifest`).
-  const installersByOsArch = new Map<
-    string,
-    { filename: string; path: string }
-  >();
-  for (const file of files) {
-    const match = INSTALLER_RE.exec(file);
-    if (!match?.groups) continue;
-    const { os, arch } = match.groups;
-    installersByOsArch.set(`${os}/${arch}`, {
-      filename: file,
-      path: join(dist, file),
-    });
-  }
+  const installersByOsArch = indexInstallersByOsArch(files, dist, version);
 
   const uploadedKeys: string[] = [];
   for (const file of files) {

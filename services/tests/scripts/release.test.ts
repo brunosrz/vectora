@@ -15,6 +15,7 @@ import {
   buildArchManifest,
   resolveInstaller,
   sha512Base64,
+  indexInstallersByOsArch,
 } from "../../scripts/release";
 
 describe("parseArgs", () => {
@@ -277,5 +278,32 @@ describe("buildArchManifest / resolveInstaller — regressão do manifesto cross
     expect(() =>
       resolveInstaller(installers, "win", "arm64", "latest.yml"),
     ).toThrow(/win\/arm64/);
+  });
+
+  it("indexInstallersByOsArch ignora instalador de versão anterior sobrando em dist (achado CodeRabbit)", () => {
+    writeFileSync(join(dir, "Vectora-0.1.0-win-x64.exe"), "versao-antiga");
+    writeFileSync(join(dir, "Vectora-0.1.1-win-x64.exe"), "versao-atual");
+
+    const installers = indexInstallersByOsArch(
+      ["Vectora-0.1.0-win-x64.exe", "Vectora-0.1.1-win-x64.exe"],
+      dir,
+      "0.1.1",
+    );
+
+    expect(installers.get("win/x64")?.filename).toBe(
+      "Vectora-0.1.1-win-x64.exe",
+    );
+  });
+
+  it("indexInstallersByOsArch não indexa nada quando só existe instalador de outra versão (par de erro)", () => {
+    writeFileSync(join(dir, "Vectora-0.1.0-win-x64.exe"), "versao-antiga");
+
+    const installers = indexInstallersByOsArch(
+      ["Vectora-0.1.0-win-x64.exe"],
+      dir,
+      "0.1.1",
+    );
+
+    expect(installers.size).toBe(0);
   });
 });
