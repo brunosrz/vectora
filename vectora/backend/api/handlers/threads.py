@@ -891,6 +891,13 @@ async def delete_thread(
         (request.thread_id,),
     )
     await db.commit()
+    # Precisa apagar também de `sessions.db` (SessionStore) — é a fonte de
+    # verdade que `reconcile_vectora_sessions` usa pra repovoar a sidebar;
+    # sem isso, a próxima rodada de reconciliação (boot ou hora em hora)
+    # via `_thread_cleanup_loop` encontra a thread ainda viva ali e a
+    # recria em `vectora_sessions`, ressuscitando uma conversa apagada.
+    session_store = await _get_session_store()
+    await session_store.delete_session(request.thread_id)
     return {}
 
 

@@ -494,3 +494,27 @@ class SessionStore:
                 "DELETE FROM pending_approvals WHERE thread_id = ?", (thread_id,)
             )
             await conn.commit()
+
+    async def delete_session(self, thread_id: str) -> None:
+        """Apaga `thread_id` e tudo que referencia ela (`messages`,
+        `pending_approvals`) desta fonte de verdade. Precisa ser chamado
+        junto de qualquer exclusão em `vectora_sessions` — do contrário a
+        thread continua existindo aqui, e a reconciliação periódica
+        (`reconcile_vectora_sessions`) a repovoa na sidebar na próxima
+        rodada."""
+        await self.setup()
+        async with self._pool.acquire() as conn:
+            try:
+                await conn.execute(
+                    "DELETE FROM pending_approvals WHERE thread_id = ?", (thread_id,)
+                )
+                await conn.execute(
+                    "DELETE FROM messages WHERE thread_id = ?", (thread_id,)
+                )
+                await conn.execute(
+                    "DELETE FROM sessions WHERE thread_id = ?", (thread_id,)
+                )
+                await conn.commit()
+            except Exception:
+                await conn.rollback()
+                raise
