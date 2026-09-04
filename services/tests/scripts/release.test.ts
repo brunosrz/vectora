@@ -1,4 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import {
   parseArgs,
   extOf,
@@ -8,6 +12,10 @@ import {
   RETENTION_COUNT,
   computeRetention,
   r2ClientConfig,
+  buildArchManifest,
+  resolveInstaller,
+  sha512Base64,
+  indexInstallersByOsArch,
 } from "../../scripts/release";
 
 describe("parseArgs", () => {
@@ -177,5 +185,125 @@ describe("r2ClientConfig", () => {
     expect(() =>
       r2ClientConfig({ ...FULL_ENV, R2_SECRET_ACCESS_KEY: "" }),
     ).toThrow(/R2_SECRET_ACCESS_KEY/);
+  });
+});
+
+describe("buildArchManifest / resolveInstaller — regressão do manifesto cross-arch", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "vectora-release-test-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("manifesto de x64 nunca aponta pro instalador de arm64 (bug real corrigido)", () => {
+    const x64Path = join(dir, "Vectora-0.1.1-win-x64.exe");
+    const arm64Path = join(dir, "Vectora-0.1.1-win-arm64.exe");
+    writeFileSync(x64Path, "conteudo-x64");
+    writeFileSync(arm64Path, "conteudo-arm64-diferente");
+
+    const installers = new Map([
+      ["win/x64", { filename: "Vectora-0.1.1-win-x64.exe", path: x64Path }],
+      [
+        "win/arm64",
+        { filename: "Vectora-0.1.1-win-arm64.exe", path: arm64Path },
+      ],
+    ]);
+
+    const x64Installer = resolveInstaller(
+      installers,
+      "win",
+      "x64",
+      "latest.yml",
+    );
+    const arm64Installer = resolveInstaller(
+      installers,
+      "win",
+      "arm64",
+      "latest.yml",
+    );
+    const x64Manifest = buildArchManifest(
+      "0.1.1",
+      x64Installer.path,
+      x64Installer.filename,
+    );
+    const arm64Manifest = buildArchManifest(
+      "0.1.1",
+      arm64Installer.path,
+      arm64Installer.filename,
+    );
+
+    expect(x64Manifest.path).toBe("Vectora-0.1.1-win-x64.exe");
+    expect(x64Manifest.files[0].url).toBe("Vectora-0.1.1-win-x64.exe");
+    expect(arm64Manifest.path).toBe("Vectora-0.1.1-win-arm64.exe");
+    expect(arm64Manifest.files[0].url).toBe("Vectora-0.1.1-win-arm64.exe");
+    expect(x64Manifest.path).not.toBe(arm64Manifest.path);
+    expect(x64Manifest.sha512).not.toBe(arm64Manifest.sha512);
+  });
+
+  it("YAML serializado é o que o worker consome (version/files/path/sha512)", () => {
+    const filePath = join(dir, "Vectora-0.2.0-win-x64.exe");
+    writeFileSync(filePath, "binario-fake");
+    const manifest = buildArchManifest(
+      "0.2.0",
+      filePath,
+      "Vectora-0.2.0-win-x64.exe",
+    );
+
+    const parsed = parseYaml(stringifyYaml(manifest));
+    expect(parsed.version).toBe("0.2.0");
+    expect(parsed.path).toBe("Vectora-0.2.0-win-x64.exe");
+    expect(parsed.files).toEqual([
+      {
+        url: "Vectora-0.2.0-win-x64.exe",
+        sha512: manifest.sha512,
+        size: manifest.files[0].size,
+      },
+    ]);
+  });
+
+  it("sha512Base64 muda quando o conteúdo do arquivo muda (par de erro)", () => {
+    const a = join(dir, "a.exe");
+    const b = join(dir, "b.exe");
+    writeFileSync(a, "conteudo-1");
+    writeFileSync(b, "conteudo-2");
+    expect(sha512Base64(a)).not.toBe(sha512Base64(b));
+  });
+
+  it("resolveInstaller lança quando a arch declarada não tem instalador (par de erro)", () => {
+    const installers = new Map<string, { filename: string; path: string }>();
+    expect(() =>
+      resolveInstaller(installers, "win", "arm64", "latest.yml"),
+    ).toThrow(/win\/arm64/);
+  });
+
+  it("indexInstallersByOsArch ignora instalador de versão anterior sobrando em dist (achado CodeRabbit)", () => {
+    writeFileSync(join(dir, "Vectora-0.1.0-win-x64.exe"), "versao-antiga");
+    writeFileSync(join(dir, "Vectora-0.1.1-win-x64.exe"), "versao-atual");
+
+    const installers = indexInstallersByOsArch(
+      ["Vectora-0.1.0-win-x64.exe", "Vectora-0.1.1-win-x64.exe"],
+      dir,
+      "0.1.1",
+    );
+
+    expect(installers.get("win/x64")?.filename).toBe(
+      "Vectora-0.1.1-win-x64.exe",
+    );
+  });
+
+  it("indexInstallersByOsArch não indexa nada quando só existe instalador de outra versão (par de erro)", () => {
+    writeFileSync(join(dir, "Vectora-0.1.0-win-x64.exe"), "versao-antiga");
+
+    const installers = indexInstallersByOsArch(
+      ["Vectora-0.1.0-win-x64.exe"],
+      dir,
+      "0.1.1",
+    );
+
+    expect(installers.size).toBe(0);
   });
 });
