@@ -801,26 +801,29 @@ async def reconcile_vectora_sessions() -> int:
             continue
 
         mode_col = _normalize_mode(session["mode"])
-        if current_count is None:
-            await db.execute(
-                """
-                INSERT INTO vectora_sessions
-                    (thread_id, created_at, last_activity, message_count, extra, mode)
-                VALUES (?, ?, ?, ?, '{}', ?)
-                """,
-                (
-                    thread_id,
-                    session["created_at"],
-                    session["updated_at"],
-                    real_count,
-                    mode_col,
-                ),
-            )
-        else:
-            await db.execute(
-                "UPDATE vectora_sessions SET message_count = ? WHERE thread_id = ?",
-                (real_count, thread_id),
-            )
+        # ON CONFLICT (não IF current_count is None / else): duas execuções
+        # concorrentes (loop periódico + recuperação manual, ou dois boots
+        # sobrepostos) podem ambas ler a mesma thread como ausente antes de
+        # qualquer INSERT — a 2ª bateria na PRIMARY KEY e derrubava o loop
+        # de hygiene. UPDATE só toca message_count; extra/pinned/mode já
+        # gravados por outro caminho (upsert_session, UpdateThread) nunca
+        # são pisados por uma reconciliação.
+        await db.execute(
+            """
+            INSERT INTO vectora_sessions
+                (thread_id, created_at, last_activity, message_count, extra, mode)
+            VALUES (?, ?, ?, ?, '{}', ?)
+            ON CONFLICT(thread_id) DO UPDATE SET
+                message_count = excluded.message_count
+            """,
+            (
+                thread_id,
+                session["created_at"],
+                session["updated_at"],
+                real_count,
+                mode_col,
+            ),
+        )
         reconciled += 1
 
     if reconciled:

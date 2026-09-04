@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from backend.vtypes.message import VMessage
 
@@ -103,6 +103,18 @@ def _row_to_message(row: Any) -> VMessage:
         "is_error": bool(is_error),
     }
     return VMessage.from_dict(data)
+
+
+class SessionSummary(TypedDict):
+    """Uma linha de `SessionStore.list_all_sessions` — metadados da thread
+    em `sessions` mais a contagem real de mensagens em `messages`."""
+
+    thread_id: str
+    user_id: str
+    mode: str
+    created_at: str
+    updated_at: str
+    message_count: int
 
 
 class SessionStore:
@@ -380,7 +392,7 @@ class SessionStore:
             rows = await cur.fetchall()
         return {r[0] for r in rows}
 
-    async def list_all_sessions(self) -> list[dict[str, Any]]:
+    async def list_all_sessions(self) -> list[SessionSummary]:
         """Todas as threads registradas em `sessions` (fonte de verdade),
         com a contagem real de mensagens de cada uma — usado pela
         reconciliação de `vectora_sessions` (metadados de UI), que precisa
