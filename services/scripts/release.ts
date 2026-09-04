@@ -375,7 +375,17 @@ export function indexInstallersByOsArch(
     if (!match?.groups) continue;
     const { version: installerVersion, os, arch } = match.groups;
     if (installerVersion !== version) continue;
-    installersByOsArch.set(`${os}/${arch}`, {
+    const key = `${os}/${arch}`;
+    const already = installersByOsArch.get(key);
+    if (already) {
+      // Dois formatos pra mesma combinação os/arch (ex.: .AppImage e .deb
+      // pra linux/x64) não podem escolher um silenciosamente por ordem de
+      // `files` — o auto-updater espera exatamente um instalador por arch.
+      throw new Error(
+        `Dois instaladores pra ${key} na versão ${version}: ${already.filename} e ${file}. Remova um antes de publicar.`,
+      );
+    }
+    installersByOsArch.set(key, {
       filename: file,
       path: join(dist, file),
     });
@@ -423,7 +433,11 @@ async function main(): Promise<void> {
 
     const match = INSTALLER_RE.exec(file);
     if (!match?.groups) continue; // blockmap e outros artefatos auxiliares — não distribuídos
-    const { os, arch } = match.groups;
+    const { version: installerVersion, os, arch } = match.groups;
+    // Mesmo filtro de indexInstallersByOsArch — um instalador de release
+    // anterior sobrando em dist/ não pode ser publicado sob a key da
+    // versão atual só porque casa o regex.
+    if (installerVersion !== version) continue;
     const key = `${channel}/${os}/${arch}/${version}/${file}`;
     const contentType =
       CONTENT_TYPES[extOf(file)] ?? "application/octet-stream";
