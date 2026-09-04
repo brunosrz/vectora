@@ -80,13 +80,19 @@ class TestLifespan:
     ):
         """`cleanup_empty_threads` roda imediatamente no boot, sem esperar
         o primeiro `asyncio.sleep` do loop de limpeza — threads vazias de
-        sessões anteriores não ficam visíveis até essa espera."""
+        sessões anteriores não ficam visíveis até essa espera. Também
+        confirma a ORDEM: reconcile_vectora_sessions sempre roda antes de
+        cleanup_empty_threads (uma thread real com message_count zerado por
+        alguma falha não pode ser apagada antes da reconciliação ter a
+        chance de corrigir a contagem — ver server.py)."""
         import backend.api.handlers.threads as threads_handler
 
         call_count = {"value": 0}
+        events: list[str] = []
 
         async def _fake_cleanup(*_a, **_k) -> int:
             call_count["value"] += 1
+            events.append("cleanup")
             return 0
 
         async def _fake_reconcile(*_a, **_k) -> int:
@@ -94,6 +100,7 @@ class TestLifespan:
             # nesse teste — reconcile_vectora_sessions roda ANTES dela no
             # loop real (ver server.py) e faz I/O de verdade (SessionStore),
             # o que atrasaria o assert abaixo além da janela do TestClient.
+            events.append("reconcile")
             return 0
 
         monkeypatch.setattr(threads_handler, "cleanup_empty_threads", _fake_cleanup)
@@ -104,6 +111,11 @@ class TestLifespan:
         with TestClient(headless_app, raise_server_exceptions=False):
             pass
 
+        assert events[:2] == ["reconcile", "cleanup"], (
+            "reconcile_vectora_sessions precisa rodar ANTES de "
+            "cleanup_empty_threads no boot — ordem real observada: "
+            f"{events!r}"
+        )
         assert call_count["value"] >= 1, (
             "cleanup_empty_threads não rodou no boot — o loop só chama "
             "após o primeiro asyncio.sleep(3600), deixando threads "
