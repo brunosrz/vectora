@@ -6,21 +6,47 @@ import json
 import re
 import tomllib
 from pathlib import Path
+from typing import TypedDict
 
 from backend.version import __version__
 
 _MONOREPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def test_version_is_string():
+class _ExtraFile(TypedDict):
+    type: str
+    path: str
+    jsonpath: str
+
+
+# Chaves com hífen ("release-type", "extra-files", ...) não são
+# identificadores Python válidos — sintaxe funcional do TypedDict em vez da
+# de classe.
+_ReleasePleasePackage = TypedDict(
+    "_ReleasePleasePackage",
+    {
+        "release-type": str,
+        "package-name": str,
+        "changelog-path": str,
+        "extra-files": list[_ExtraFile],
+    },
+    total=False,
+)
+
+
+class _ReleasePleaseConfig(TypedDict):
+    packages: dict[str, _ReleasePleasePackage]
+
+
+def test_version_is_string() -> None:
     assert isinstance(__version__, str)
 
 
-def test_version_semver():
+def test_version_semver() -> None:
     assert re.match(r"^\d+\.\d+\.\d+", __version__), f"Not semver: {__version__}"
 
 
-def test_pyproject_version_bate_com_frontend_package_json():
+def test_pyproject_version_bate_com_frontend_package_json() -> None:
     """Regressão do bug real (2026-08-30): electron-builder deriva o nome do
     instalador e o conteúdo do latest.yml de frontend/package.json, não de
     pyproject.toml — se os dois divergirem, o instalador publicado mente sua
@@ -28,10 +54,10 @@ def test_pyproject_version_bate_com_frontend_package_json():
     "downgrade". Sem release-please-config.json::extra-files sincronizando
     os dois, esse teste é o único jeito de pegar a divergência antes do
     build de produção."""
-    pyproject = tomllib.loads(
+    pyproject: dict[str, dict[str, str]] = tomllib.loads(
         (_MONOREPO_ROOT / "vectora" / "pyproject.toml").read_text(encoding="utf-8")
     )
-    frontend_pkg = json.loads(
+    frontend_pkg: dict[str, str] = json.loads(
         (_MONOREPO_ROOT / "vectora" / "frontend" / "package.json").read_text(
             encoding="utf-8"
         )
@@ -42,14 +68,28 @@ def test_pyproject_version_bate_com_frontend_package_json():
     )
 
 
-def test_release_please_config_sincroniza_frontend_package_json():
-    """Sem essa entrada, release-please bumpa só pyproject.toml a cada
-    release e o teste acima volta a falhar na release seguinte."""
-    config = json.loads(
+def test_release_please_config_sincroniza_todos_os_arquivos_de_versao() -> None:
+    """Sem essas entradas, release-please bumpa só o manifest e o teste
+    acima (pyproject.toml vs frontend/package.json) volta a falhar na
+    release seguinte — o mesmo vale pra services/company ficarem pra trás.
+
+    release-please-config.json rastreia o monorepo INTEIRO como um único
+    pacote (chave "." — path é interpretado literalmente pelo release-please,
+    não é um nome arbitrário; uma chave "vectora" faria o path virar
+    `vectora/`, restringindo commits contados só àquela pasta). Os paths de
+    extra-files, por isso, são relativos à raiz do repo.
+
+    Compara o CONJUNTO inteiro (==), não só "in" pra cada path — remover uma
+    entrada (ex.: company/package.json parar de ser sincronizado) precisa
+    quebrar este teste, não só a adição de uma nova passar despercebida."""
+    config: _ReleasePleaseConfig = json.loads(
         (_MONOREPO_ROOT / "release-please-config.json").read_text(encoding="utf-8")
     )
-    extra_files = config["packages"]["vectora"].get("extra-files", [])
-    paths = {
-        entry.get("path") if isinstance(entry, dict) else entry for entry in extra_files
+    extra_files: list[_ExtraFile] = config["packages"]["."].get("extra-files", [])
+    paths: set[str] = {entry["path"] for entry in extra_files}
+    assert paths == {
+        "vectora/pyproject.toml",
+        "vectora/frontend/package.json",
+        "services/package.json",
+        "company/package.json",
     }
-    assert "frontend/package.json" in paths
