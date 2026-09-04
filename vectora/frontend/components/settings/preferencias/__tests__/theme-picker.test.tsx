@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import { ThemePicker, ThemeModeToggle } from "../theme-picker";
-import { THEME_PRESETS, type BaseThemeColors } from "@/lib/theme/presets";
+import { ThemePicker } from "../theme-picker";
+import {
+  THEME_PRESETS,
+  type BaseThemeColors,
+  type ThemePresetDef,
+} from "@/lib/theme/presets";
 
 afterEach(() => {
   cleanup();
@@ -13,6 +17,13 @@ afterEach(() => {
 function hexToRgb(hex: string): string {
   const n = Number.parseInt(hex.slice(1), 16);
   return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+}
+
+/** O nome do tema agora é uma legenda fora do card (não mais texto dentro
+ * do botão) — acha o botão pelo container que envolve os dois. */
+function cardButtonFor(label: string): HTMLButtonElement {
+  const container = screen.getByText(label).closest("div")!;
+  return container.querySelector("button")!;
 }
 
 const customColors: BaseThemeColors = {
@@ -27,18 +38,31 @@ const customColors: BaseThemeColors = {
   userBubble: "#004488",
 };
 
+function renderPicker(
+  overrides: Partial<React.ComponentProps<typeof ThemePicker>> = {},
+) {
+  return render(
+    <ThemePicker
+      value={THEME_PRESETS[0]!.id}
+      onChange={vi.fn()}
+      presets={THEME_PRESETS}
+      installedThemes={[]}
+      customLabel="Personalizado"
+      customColors={customColors}
+      searchPlaceholder="Buscar..."
+      marketplaceSupported={false}
+      marketplaceErrorLabel="Erro"
+      marketplaceInstallLabel="Instalar"
+      marketplaceInstalledLabel="Instalado"
+      onThemeInstalled={vi.fn()}
+      {...overrides}
+    />,
+  );
+}
+
 describe("ThemePicker", () => {
   it("renderiza todos os presets + custom, um card por opção (sem 'system' no grid)", () => {
-    render(
-      <ThemePicker
-        value={THEME_PRESETS[0].id}
-        onChange={vi.fn()}
-        presets={THEME_PRESETS}
-        customLabel="Personalizado"
-        customColors={customColors}
-        searchPlaceholder="Buscar..."
-      />,
-    );
+    renderPicker();
 
     const buttons = screen.getAllByRole("button");
     expect(buttons).toHaveLength(THEME_PRESETS.length + 1);
@@ -48,93 +72,61 @@ describe("ThemePicker", () => {
     }
   });
 
+  it("inclui temas instalados (marketplace) como cards adicionais", () => {
+    const installed: ThemePresetDef = {
+      id: "vscode-publisher.tema",
+      label: "Tema Instalado",
+      colors: customColors,
+    };
+    renderPicker({ installedThemes: [installed] });
+
+    expect(screen.getByText("Tema Instalado")).toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(
+      THEME_PRESETS.length + 2,
+    );
+  });
+
   it("clicar num preset chama onChange com o id do preset", () => {
     const onChange = vi.fn();
-    render(
-      <ThemePicker
-        value={THEME_PRESETS[0].id}
-        onChange={onChange}
-        presets={THEME_PRESETS}
-        customLabel="Personalizado"
-        customColors={customColors}
-        searchPlaceholder="Buscar..."
-      />,
-    );
+    renderPicker({ onChange });
 
-    fireEvent.click(screen.getByText(THEME_PRESETS[1].label));
+    fireEvent.click(cardButtonFor(THEME_PRESETS[1]!.label));
 
-    expect(onChange).toHaveBeenCalledWith(THEME_PRESETS[1].id);
+    expect(onChange).toHaveBeenCalledWith(THEME_PRESETS[1]!.id);
   });
 
   it("opção ativa fica marcada com aria-pressed e as demais não", () => {
-    render(
-      <ThemePicker
-        value={THEME_PRESETS[0].id}
-        onChange={vi.fn()}
-        presets={THEME_PRESETS}
-        customLabel="Personalizado"
-        customColors={customColors}
-        searchPlaceholder="Buscar..."
-      />,
+    renderPicker();
+
+    expect(cardButtonFor(THEME_PRESETS[0]!.label)).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
-
-    const activeButton = screen
-      .getByText(THEME_PRESETS[0].label)
-      .closest("button");
-    expect(activeButton).toHaveAttribute("aria-pressed", "true");
-
-    const otherButton = screen
-      .getByText(THEME_PRESETS[1].label)
-      .closest("button");
-    expect(otherButton).toHaveAttribute("aria-pressed", "false");
+    expect(cardButtonFor(THEME_PRESETS[1]!.label)).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
-  it("card pintado usa a cor real de background do preset (não um valor fixo) — erro/borda", () => {
-    render(
-      <ThemePicker
-        value={THEME_PRESETS[0].id}
-        onChange={vi.fn()}
-        presets={THEME_PRESETS}
-        customLabel="Personalizado"
-        customColors={customColors}
-        searchPlaceholder="Buscar..."
-      />,
-    );
+  it("card de preview usa a cor real de background do preset (não um valor fixo) — erro/borda", () => {
+    renderPicker();
 
-    const firstPreset = THEME_PRESETS[0];
-    const button = screen.getByText(firstPreset.label).closest("button")!;
+    const firstPreset = THEME_PRESETS[0]!;
+    const button = cardButtonFor(firstPreset.label);
     expect(button.style.background).toBe(
       hexToRgb(firstPreset.colors.background),
     );
   });
 
   it("card do custom reflete customColors passado, não os presets — erro/borda", () => {
-    render(
-      <ThemePicker
-        value="custom"
-        onChange={vi.fn()}
-        presets={THEME_PRESETS}
-        customLabel="Personalizado"
-        customColors={customColors}
-        searchPlaceholder="Buscar..."
-      />,
-    );
+    renderPicker({ value: "custom" });
 
-    const button = screen.getByText("Personalizado").closest("button")!;
+    const button = cardButtonFor("Personalizado");
     expect(button.style.background).toBe(hexToRgb(customColors.background));
   });
 
   it("busca filtra as opções por label", () => {
-    render(
-      <ThemePicker
-        value={THEME_PRESETS[0].id}
-        onChange={vi.fn()}
-        presets={THEME_PRESETS}
-        customLabel="Personalizado"
-        customColors={customColors}
-        searchPlaceholder="Buscar..."
-      />,
-    );
+    renderPicker();
 
     const target = THEME_PRESETS.find((p) => p.label === "GitHub Dark")!;
     fireEvent.change(screen.getByPlaceholderText("Buscar..."), {
@@ -149,16 +141,7 @@ describe("ThemePicker", () => {
   });
 
   it("erro de borda — busca sem nenhum resultado não quebra, só não renderiza cards", () => {
-    render(
-      <ThemePicker
-        value={THEME_PRESETS[0].id}
-        onChange={vi.fn()}
-        presets={THEME_PRESETS}
-        customLabel="Personalizado"
-        customColors={customColors}
-        searchPlaceholder="Buscar..."
-      />,
-    );
+    renderPicker();
 
     fireEvent.change(screen.getByPlaceholderText("Buscar..."), {
       target: { value: "paleta-que-nao-existe-em-lugar-nenhum" },
@@ -166,30 +149,16 @@ describe("ThemePicker", () => {
 
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
-});
 
-describe("ThemeModeToggle", () => {
-  const labels = { system: "Sistema", light: "Claro", dark: "Escuro" };
+  it("seção de marketplace fica oculta quando marketplaceSupported é false", () => {
+    renderPicker({ marketplaceSupported: false });
 
-  it("renderiza os 3 modos, com o valor atual marcado ativo", () => {
-    render(<ThemeModeToggle value="dark" onChange={vi.fn()} labels={labels} />);
+    fireEvent.change(screen.getByPlaceholderText("Buscar..."), {
+      target: { value: "monokai" },
+    });
 
-    expect(screen.getByText("Sistema")).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
-    expect(screen.getByText("Claro")).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByText("Escuro")).toHaveAttribute("aria-pressed", "true");
-  });
-
-  it("clicar num modo chama onChange com esse modo", () => {
-    const onChange = vi.fn();
-    render(
-      <ThemeModeToggle value="system" onChange={onChange} labels={labels} />,
-    );
-
-    fireEvent.click(screen.getByText("Claro"));
-
-    expect(onChange).toHaveBeenCalledWith("light");
+    // Sem resultados locais (nenhum preset se chama "monokai") e sem seção
+    // de marketplace — nenhum botão sobra na tela.
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });

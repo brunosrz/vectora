@@ -53,7 +53,11 @@ const TOKEN_VAR_NAMES = [
   "--scrollbar-thumb-hover",
 ] as const;
 
-/** Presets baseados nos temas originais do VS Code (paletas open-source). */
+/** Presets baseados nos temas originais do VS Code (paletas open-source).
+ * `github-*`, `nous-*`, `catppuccin-*`, `everforest-*` e `solarized-*` usam
+ * exatamente as cores da extensão VS Code correspondente; `midnight`, `ember`,
+ * `mono`, `cyberpunk` e `slate` não têm variante clara na extensão de origem
+ * (dark-only). */
 export const THEME_PRESETS: ThemePresetDef[] = [
   {
     id: "dark",
@@ -91,13 +95,13 @@ export const THEME_PRESETS: ThemePresetDef[] = [
     colors: {
       background: "#0d1117",
       foreground: "#e6edf3",
-      card: "#161b22",
+      card: "#010409",
       border: "#30363d",
-      primary: "#58a6ff",
-      accent: "#21262d",
-      muted: "#21262d",
+      primary: "#4f9e5e",
+      accent: "#192a24",
+      muted: "#1a1e24",
       sidebar: "#010409",
-      userBubble: "#1f6feb",
+      userBubble: "#0f2018",
     },
   },
   {
@@ -105,14 +109,209 @@ export const THEME_PRESETS: ThemePresetDef[] = [
     label: "GitHub Light",
     colors: {
       background: "#ffffff",
-      foreground: "#24292f",
+      foreground: "#1f2328",
       card: "#f6f8fa",
       border: "#d0d7de",
-      primary: "#0969da",
-      accent: "#eaeef2",
-      muted: "#f6f8fa",
+      primary: "#196d31",
+      accent: "#e3ede6",
+      muted: "#f6f6f6",
       sidebar: "#f6f8fa",
-      userBubble: "#0969da",
+      userBubble: "#dbe7e2",
+    },
+  },
+  {
+    id: "nous-light",
+    label: "Nous Light",
+    colors: {
+      background: "#ffffff",
+      foreground: "#1f2328",
+      card: "#f6f8fa",
+      border: "#d0d7de",
+      primary: "#0053fd",
+      accent: "#e3edff",
+      muted: "#f6f6f6",
+      sidebar: "#f6f8fa",
+      userBubble: "#dae7fd",
+    },
+  },
+  {
+    id: "nous-dark",
+    label: "Nous Dark",
+    colors: {
+      background: "#0d1117",
+      foreground: "#e6edf3",
+      card: "#010409",
+      border: "#30363d",
+      primary: "#4a84fe",
+      accent: "#17243a",
+      muted: "#1a1e24",
+      sidebar: "#010409",
+      userBubble: "#07162c",
+    },
+  },
+  {
+    id: "catppuccin-light",
+    label: "Catppuccin Latte",
+    colors: {
+      background: "#eff1f5",
+      foreground: "#4c4f69",
+      card: "#e6e9ef",
+      border: "#acb0be",
+      primary: "#6d2ebf",
+      accent: "#dfdaef",
+      muted: "#e8ebef",
+      sidebar: "#e6e9ef",
+      userBubble: "#d7d3e9",
+    },
+  },
+  {
+    id: "catppuccin-dark",
+    label: "Catppuccin Mocha",
+    colors: {
+      background: "#1e1e2e",
+      foreground: "#cdd6f4",
+      card: "#181825",
+      border: "#585b70",
+      primary: "#cba6f7",
+      accent: "#3d3652",
+      muted: "#29293a",
+      sidebar: "#181825",
+      userBubble: "#38324b",
+    },
+  },
+  {
+    id: "everforest-light",
+    label: "Everforest Light",
+    colors: {
+      background: "#fdf6e3",
+      foreground: "#5c6a72",
+      card: "#fdf6e3",
+      border: "#e5ddc0",
+      primary: "#586b35",
+      accent: "#e9e5ce",
+      muted: "#f7f0de",
+      sidebar: "#fdf6e3",
+      userBubble: "#e9e5ce",
+    },
+  },
+  {
+    id: "everforest-dark",
+    label: "Everforest Dark",
+    colors: {
+      background: "#2d353b",
+      foreground: "#d3c6aa",
+      card: "#2d353b",
+      border: "#3a4248",
+      primary: "#a7c080",
+      accent: "#434e47",
+      muted: "#373e42",
+      sidebar: "#2d353b",
+      userBubble: "#434e47",
+    },
+  },
+  {
+    id: "solarized-light",
+    label: "Solarized Light",
+    colors: {
+      background: "#fdf6e3",
+      foreground: "#1f1f1f",
+      card: "#d3cbb7",
+      border: "#ddd6c1",
+      primary: "#675e34",
+      accent: "#ebe4ce",
+      muted: "#f4eddb",
+      sidebar: "#eee8d5",
+      userBubble: "#c6bea7",
+    },
+  },
+  {
+    id: "solarized-dark",
+    label: "Solarized Dark",
+    colors: {
+      background: "#002b36",
+      foreground: "#839496",
+      card: "#002b36",
+      border: "#234751",
+      primary: "#6ea1c4",
+      accent: "#144050",
+      muted: "#08313c",
+      sidebar: "#001f26",
+      userBubble: "#144050",
+    },
+  },
+  {
+    id: "midnight",
+    label: "Midnight",
+    colors: {
+      background: "#08081c",
+      foreground: "#ddd6ff",
+      card: "#0d0d28",
+      border: "#1e1e52",
+      primary: "#ddd6ff",
+      accent: "#1a1a44",
+      muted: "#13133a",
+      sidebar: "#06061a",
+      userBubble: "#14143a",
+    },
+  },
+  {
+    id: "ember",
+    label: "Ember",
+    colors: {
+      background: "#160800",
+      foreground: "#ffd8b0",
+      card: "#1e0e04",
+      border: "#3a1c08",
+      primary: "#ffd8b0",
+      accent: "#301600",
+      muted: "#2a1408",
+      sidebar: "#100600",
+      userBubble: "#2a1000",
+    },
+  },
+  {
+    id: "mono",
+    label: "Mono",
+    colors: {
+      background: "#0e0e0e",
+      foreground: "#eaeaea",
+      card: "#141414",
+      border: "#2a2a2a",
+      primary: "#eaeaea",
+      accent: "#222222",
+      muted: "#1e1e1e",
+      sidebar: "#0a0a0a",
+      userBubble: "#1a1a1a",
+    },
+  },
+  {
+    id: "cyberpunk",
+    label: "Cyberpunk",
+    colors: {
+      background: "#000a00",
+      foreground: "#00ff41",
+      card: "#001200",
+      border: "#003000",
+      primary: "#00ff41",
+      accent: "#002000",
+      muted: "#001a00",
+      sidebar: "#000600",
+      userBubble: "#001400",
+    },
+  },
+  {
+    id: "slate",
+    label: "Slate",
+    colors: {
+      background: "#0d1117",
+      foreground: "#c9d1d9",
+      card: "#161b22",
+      border: "#30363d",
+      primary: "#c9d1d9",
+      accent: "#1e2530",
+      muted: "#21262d",
+      sidebar: "#090d13",
+      userBubble: "#1e2a38",
     },
   },
 ];
@@ -143,6 +342,20 @@ function contrastFg(hex: string): string {
   return relativeLuminance(hex) > 0.5 ? "#0a0a0a" : "#fafafa";
 }
 
+/** Cor de texto secundário — mistura de `foreground` com `background`, usada
+ * tanto pelo token `--muted-foreground` (`buildThemeTokens`) quanto pela
+ * barra de subtítulo do card de preview de tema (`ThemePreview`). */
+export function deriveMutedForeground(base: BaseThemeColors): string {
+  return `color-mix(in srgb, ${base.foreground} 65%, ${base.background})`;
+}
+
+/** Tom de borda derivado de uma cor de preenchimento (ex.: `sidebar`,
+ * `userBubble`) — usado onde a paleta não define uma borda própria para
+ * esses elementos (ex.: a tira lateral e a pílula do card de preview). */
+export function deriveBorderTint(hex: string, base: BaseThemeColors): string {
+  return `color-mix(in srgb, ${hex} 70%, ${base.foreground})`;
+}
+
 /**
  * Expande as 7 cores-base de um preset/customização para o conjunto completo
  * de tokens do design system, retornando um mapa `--var → valor` pronto
@@ -159,7 +372,7 @@ export function buildThemeTokens(
     "--popover": base.card,
     "--popover-foreground": base.foreground,
     "--muted": base.muted,
-    "--muted-foreground": `color-mix(in srgb, ${base.foreground} 65%, ${base.background})`,
+    "--muted-foreground": deriveMutedForeground(base),
     "--secondary": base.muted,
     "--secondary-foreground": base.foreground,
     "--accent": base.accent,

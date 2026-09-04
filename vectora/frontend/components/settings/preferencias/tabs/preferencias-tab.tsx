@@ -9,8 +9,7 @@
  */
 
 import { Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -25,10 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   useSettingsStore,
   SUPPORTED_LANGS,
-  FONT_SCALE_MIN,
-  FONT_SCALE_MAX,
-  MONACO_FONT_SIZE_MIN,
-  MONACO_FONT_SIZE_MAX,
+  UI_SCALE_PRESETS,
   type Theme,
   type Lang,
   type SidebarPosition,
@@ -37,11 +33,10 @@ import {
   THEME_PRESETS,
   DEFAULT_CUSTOM_COLORS,
   type BaseThemeColors,
+  type ThemePresetDef,
 } from "@/lib/theme/presets";
-import {
-  ThemePicker,
-  ThemeModeToggle,
-} from "@/components/settings/preferencias/theme-picker";
+import { ThemePicker } from "@/components/settings/preferencias/theme-picker";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 
@@ -191,172 +186,6 @@ function TimezoneSection() {
   );
 }
 
-/** Aparência — 4 escalas de fonte independentes (UI, chat, markdown, Monaco).
- * Cada uma aplicada só na superfície correspondente (ver __root.tsx e
- * markdown-view.tsx/message-item.tsx/file-editor.tsx). */
-export function FontScaleNumberInput({
-  id,
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  id: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (v: number) => void;
-}) {
-  const [text, setText] = useState(String(value));
-  // `text` sincroniza com `value` quando ele muda por fora (ex.: reset de
-  // configurações) mas continua editável localmente enquanto o usuário
-  // digita — comparação durante o render (não num effect) é o padrão que o
-  // próprio React recomenda pra "ajustar estado quando uma prop muda":
-  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
-  const [prevValue, setPrevValue] = useState(value);
-  if (value !== prevValue) {
-    setPrevValue(value);
-    setText(String(value));
-  }
-
-  const commit = useCallback(() => {
-    const n = Number(text);
-    if (text.trim() === "" || Number.isNaN(n)) {
-      setText(String(value));
-      return;
-    }
-    const clamped = Math.max(min, Math.min(max, Math.round(n)));
-    setText(String(clamped));
-    if (clamped !== value) onChange(clamped);
-  }, [text, value, min, max, onChange]);
-
-  return (
-    <Input
-      id={`${id}-number`}
-      type="number"
-      min={min}
-      max={max}
-      value={text}
-      onChange={(e) => {
-        const raw = e.target.value;
-        setText(raw);
-        const n = Number(raw);
-        if (raw.trim() !== "" && !Number.isNaN(n)) onChange(n);
-      }}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") commit();
-      }}
-      className="h-7 w-16 shrink-0 px-2 text-right text-xs tabular-nums"
-    />
-  );
-}
-
-function FontScaleSection({
-  fontScaleUi,
-  fontScaleChat,
-  fontScaleMarkdown,
-  monacoFontSize,
-  setFontScaleUi,
-  setFontScaleChat,
-  setFontScaleMarkdown,
-  setMonacoFontSize,
-}: {
-  fontScaleUi: number;
-  fontScaleChat: number;
-  fontScaleMarkdown: number;
-  monacoFontSize: number;
-  setFontScaleUi: (v: number) => void;
-  setFontScaleChat: (v: number) => void;
-  setFontScaleMarkdown: (v: number) => void;
-  setMonacoFontSize: (v: number) => void;
-}) {
-  const rows: {
-    id: string;
-    label: string;
-    value: number;
-    onChange: (v: number) => void;
-    min: number;
-    max: number;
-    step: number;
-    unit: string;
-  }[] = [
-    {
-      id: "font-scale-ui",
-      label: m.prefs_font_scale_ui(),
-      value: fontScaleUi,
-      onChange: setFontScaleUi,
-      min: FONT_SCALE_MIN,
-      max: FONT_SCALE_MAX,
-      step: 1,
-      unit: "px",
-    },
-    {
-      id: "font-scale-chat",
-      label: m.prefs_font_scale_chat(),
-      value: fontScaleChat,
-      onChange: setFontScaleChat,
-      min: FONT_SCALE_MIN,
-      max: FONT_SCALE_MAX,
-      step: 1,
-      unit: "px",
-    },
-    {
-      id: "font-scale-markdown",
-      label: m.prefs_font_scale_markdown(),
-      value: fontScaleMarkdown,
-      onChange: setFontScaleMarkdown,
-      min: FONT_SCALE_MIN,
-      max: FONT_SCALE_MAX,
-      step: 1,
-      unit: "px",
-    },
-    {
-      id: "monaco-font-size",
-      label: m.prefs_font_size_monaco(),
-      value: monacoFontSize,
-      onChange: setMonacoFontSize,
-      min: MONACO_FONT_SIZE_MIN,
-      max: MONACO_FONT_SIZE_MAX,
-      step: 1,
-      unit: "px",
-    },
-  ];
-
-  return (
-    <div className="space-y-3">
-      <Label>{m.prefs_typography_section()}</Label>
-      {rows.map((row) => (
-        <div key={row.id} className="flex items-center gap-3">
-          <Label htmlFor={row.id} className="flex-1 text-xs font-normal">
-            {row.label}
-          </Label>
-          <input
-            id={row.id}
-            type="range"
-            min={row.min}
-            max={row.max}
-            step={row.step}
-            value={row.value}
-            onChange={(e) => row.onChange(Number(e.target.value))}
-            className="w-32 accent-primary"
-          />
-          <FontScaleNumberInput
-            id={row.id}
-            value={row.value}
-            min={row.min}
-            max={row.max}
-            onChange={row.onChange}
-          />
-          <span className="w-4 shrink-0 text-left text-xs text-muted-foreground">
-            {row.unit}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function PreferenciasTab() {
   const {
     theme,
@@ -377,15 +206,14 @@ export function PreferenciasTab() {
     setTrainingInstructions,
     autoUpdateEnabled,
     setAutoUpdateEnabled,
-    fontScaleUi,
-    fontScaleChat,
-    fontScaleMarkdown,
-    monacoFontSize,
-    setFontScaleUi,
-    setFontScaleChat,
-    setFontScaleMarkdown,
-    setMonacoFontSize,
+    installedThemes,
+    addInstalledTheme,
+    uiScalePercent,
+    setUiScalePercent,
   } = useSettingsStore();
+
+  const marketplaceSupported =
+    typeof window !== "undefined" && Boolean(window.vectora?.themes);
 
   const activeCustomColors = customThemeColors ?? DEFAULT_CUSTOM_COLORS;
 
@@ -396,11 +224,11 @@ export function PreferenciasTab() {
     setCustomThemeColors({ ...activeCustomColors, [key]: value });
   };
 
-  // Grid de paletas: "custom" | id de THEME_PRESETS — "default" (sentinela
-  // de "sem preset, usa o tema base") não corresponde a nenhum card, então
-  // nenhum fica marcado como ativo (comportamento correto: nenhuma paleta
-  // específica escolhida ainda). Claro/escuro/sistema agora é um controle
-  // próprio (ThemeModeToggle), não mais uma entrada do grid.
+  // Grid de paletas: "custom" | id de THEME_PRESETS/installedThemes —
+  // "default" (sentinela de "sem preset, usa o tema base") não corresponde
+  // a nenhum card, então nenhum fica marcado como ativo (comportamento
+  // correto: nenhuma paleta específica escolhida ainda). Claro/escuro/
+  // sistema é um controle à parte, embutido no cabeçalho da grade.
   const selectedTheme = themePreset === "custom" ? "custom" : themePreset;
 
   const handleThemeChange = (value: string) => {
@@ -431,35 +259,43 @@ export function PreferenciasTab() {
 
   return (
     <div className="space-y-6">
-      {/* Aparência — tema (com preview) + escalas de fonte, agrupados numa
-          seção só, em vez de espalhados sem relação visual entre si. */}
+      {/* Aparência — tema (com preview) + UI Scale, agrupados numa seção só,
+          em vez de espalhados sem relação visual entre si. */}
       <div className="space-y-6">
         <h3 className="text-sm font-medium text-foreground">
           {m.prefs_appearance_section()}
         </h3>
 
         <div className="space-y-2">
-          <Label>{m.prefs_theme_mode()}</Label>
-          <ThemeModeToggle
-            value={theme}
-            onChange={handleModeChange}
-            labels={{
-              system: m.prefs_theme_system(),
-              light: m.prefs_theme_light(),
-              dark: m.prefs_theme_dark(),
-            }}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="theme">{m.prefs_theme()}</Label>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="theme">{m.prefs_theme()}</Label>
+            <SegmentedControl
+              value={theme}
+              onChange={handleModeChange}
+              aria-label={m.prefs_theme_mode()}
+              options={[
+                { id: "system" as Theme, label: m.prefs_theme_system() },
+                { id: "light" as Theme, label: m.prefs_theme_light() },
+                { id: "dark" as Theme, label: m.prefs_theme_dark() },
+              ]}
+            />
+          </div>
           <ThemePicker
             value={selectedTheme}
             onChange={handleThemeChange}
             presets={THEME_PRESETS}
+            installedThemes={installedThemes}
             customLabel={m.prefs_theme_palette_custom()}
             customColors={activeCustomColors}
             searchPlaceholder={m.prefs_theme_search_placeholder()}
+            marketplaceSupported={marketplaceSupported}
+            marketplaceErrorLabel={m.prefs_theme_marketplace_error()}
+            marketplaceInstallLabel={m.prefs_theme_marketplace_install()}
+            marketplaceInstalledLabel={m.prefs_theme_marketplace_installed()}
+            onThemeInstalled={(installed: ThemePresetDef) => {
+              addInstalledTheme(installed);
+              setThemePreset(installed.id);
+            }}
           />
           <p className="text-xs text-muted-foreground">
             {m.prefs_theme_palette_help()}
@@ -492,16 +328,23 @@ export function PreferenciasTab() {
           )}
         </div>
 
-        <FontScaleSection
-          fontScaleUi={fontScaleUi}
-          fontScaleChat={fontScaleChat}
-          fontScaleMarkdown={fontScaleMarkdown}
-          monacoFontSize={monacoFontSize}
-          setFontScaleUi={setFontScaleUi}
-          setFontScaleChat={setFontScaleChat}
-          setFontScaleMarkdown={setFontScaleMarkdown}
-          setMonacoFontSize={setMonacoFontSize}
-        />
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <Label>{m.prefs_ui_scale()}</Label>
+            <p className="text-xs text-muted-foreground">
+              {m.prefs_ui_scale_help()}
+            </p>
+          </div>
+          <SegmentedControl
+            value={String(uiScalePercent)}
+            onChange={(id) => setUiScalePercent(Number(id))}
+            aria-label={m.prefs_ui_scale()}
+            options={UI_SCALE_PRESETS.map((preset) => ({
+              id: String(preset),
+              label: `${preset}%`,
+            }))}
+          />
+        </div>
       </div>
 
       {/* Idioma */}

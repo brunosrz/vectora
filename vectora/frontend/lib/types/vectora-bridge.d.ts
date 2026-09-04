@@ -40,6 +40,20 @@ export type VectoraBrowserViewEvent =
       url: string;
     };
 
+export interface VectoraVscodeThemeFile {
+  extensionId: string;
+  displayName: string;
+  themes: { label: string; uiTheme: string; contents: string }[];
+}
+
+export interface VectoraVscodeMarketplaceSearchItem {
+  extensionId: string;
+  displayName: string;
+  publisher: string;
+  description: string;
+  installs: number;
+}
+
 export interface VectoraDesktopBridge {
   readonly platform?: NodeJS.Platform;
   readonly appVersion?: string;
@@ -89,6 +103,25 @@ export interface VectoraDesktopBridge {
     onEvent: (
       handler: (viewId: number, event: VectoraBrowserViewEvent) => void,
     ) => () => void;
+  };
+  /** Instalação de temas do VS Code Marketplace — só existe no desktop
+   * Electron (baixa e descompacta o `.vsix` no processo principal, via
+   * `https`/`zlib` nativos do Node); em modo navegador/servidor
+   * `window.vectora?.themes` é `undefined` e a UI de busca/instalação
+   * fica oculta (CORS bloquearia a chamada direta do browser mesmo se
+   * tentássemos). */
+  themes?: {
+    fetchMarketplace: (extensionId: string) => Promise<VectoraVscodeThemeFile>;
+    searchMarketplace: (
+      query: string,
+      limit?: number,
+    ) => Promise<VectoraVscodeMarketplaceSearchItem[]>;
+  };
+  /** Zoom nativo do Electron (`webContents.setZoomLevel`) — mais nítido que
+   * o fallback CSS usado no navegador. Ausente em modo web. */
+  zoom?: {
+    setPercent: (percent: number) => void;
+    get: () => Promise<number>;
   };
 }
 

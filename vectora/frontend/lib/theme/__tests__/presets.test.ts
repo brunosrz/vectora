@@ -6,7 +6,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { buildThemeTokens, type BaseThemeColors } from "../presets";
+import {
+  buildThemeTokens,
+  deriveBorderTint,
+  deriveMutedForeground,
+  THEME_PRESETS,
+  type BaseThemeColors,
+} from "../presets";
 
 // Paleta mínima válida para os testes
 const DARK_BASE: BaseThemeColors = {
@@ -135,5 +141,77 @@ describe("applyThemeTokens — --sidebar no DOM", () => {
     applyThemeTokens(null);
     const val = document.documentElement.style.getPropertyValue("--sidebar");
     expect(val).toBe("");
+  });
+});
+
+// ── Catálogo de presets ────────────────────────────────────────────────────
+
+describe("THEME_PRESETS — catálogo expandido", () => {
+  it("todo id é único", () => {
+    const ids = THEME_PRESETS.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("inclui os presets portados (claro e escuro, mais os dark-only)", () => {
+    const ids = new Set(THEME_PRESETS.map((p) => p.id));
+    for (const id of [
+      "github-dark",
+      "github-light",
+      "nous-light",
+      "nous-dark",
+      "catppuccin-light",
+      "catppuccin-dark",
+      "everforest-light",
+      "everforest-dark",
+      "solarized-light",
+      "solarized-dark",
+      "midnight",
+      "ember",
+      "mono",
+      "cyberpunk",
+      "slate",
+    ]) {
+      expect(ids.has(id), `faltando preset ${id}`).toBe(true);
+    }
+  });
+
+  it("todo preset tem os 9 campos de BaseThemeColors preenchidos com hex válido", () => {
+    const hexRe = /^#[0-9a-f]{6}$/i;
+    for (const preset of THEME_PRESETS) {
+      for (const [key, value] of Object.entries(preset.colors)) {
+        expect(value, `${preset.id}.${key}`).toMatch(hexRe);
+      }
+    }
+  });
+});
+
+// ── deriveMutedForeground / deriveBorderTint ───────────────────────────────
+
+describe("deriveMutedForeground", () => {
+  it("produz uma expressão color-mix válida entre foreground e background", () => {
+    const result = deriveMutedForeground(DARK_BASE);
+    expect(result).toBe(
+      `color-mix(in srgb, ${DARK_BASE.foreground} 65%, ${DARK_BASE.background})`,
+    );
+  });
+
+  it("bate com a mesma fórmula usada em --muted-foreground de buildThemeTokens", () => {
+    const tokens = buildThemeTokens(DARK_BASE);
+    expect(tokens["--muted-foreground"]).toBe(deriveMutedForeground(DARK_BASE));
+  });
+});
+
+describe("deriveBorderTint", () => {
+  it("produz uma expressão color-mix válida entre a cor dada e o foreground", () => {
+    const result = deriveBorderTint(DARK_BASE.sidebar, DARK_BASE);
+    expect(result).toBe(
+      `color-mix(in srgb, ${DARK_BASE.sidebar} 70%, ${DARK_BASE.foreground})`,
+    );
+  });
+
+  it("erro/borda — cores diferentes produzem tints diferentes", () => {
+    const a = deriveBorderTint(DARK_BASE.sidebar, DARK_BASE);
+    const b = deriveBorderTint(DARK_BASE.userBubble, DARK_BASE);
+    expect(a).not.toBe(b);
   });
 });

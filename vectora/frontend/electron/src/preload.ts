@@ -83,6 +83,34 @@ export interface VectoraDesktopBridge {
       handler: (viewId: number, event: BrowserViewEvent) => void,
     ) => () => void;
   };
+  /** Busca/instalação de temas do VS Code Marketplace — baixa e
+   * descompacta o `.vsix` no processo principal (ver
+   * electron/src/vscode-marketplace.ts), fora do sandbox do renderer. */
+  themes: {
+    fetchMarketplace: (extensionId: string) => Promise<{
+      extensionId: string;
+      displayName: string;
+      themes: { label: string; uiTheme: string; contents: string }[];
+    }>;
+    searchMarketplace: (
+      query: string,
+      limit?: number,
+    ) => Promise<
+      {
+        extensionId: string;
+        displayName: string;
+        publisher: string;
+        description: string;
+        installs: number;
+      }[]
+    >;
+  };
+  /** Zoom nativo (`webContents.setZoomLevel`) — mais nítido que o fallback
+   * CSS usado no navegador (ver Preferências → Aparência → UI Scale). */
+  zoom: {
+    setPercent: (percent: number) => void;
+    get: () => Promise<number>;
+  };
 }
 
 const bridge: VectoraDesktopBridge = {
@@ -151,6 +179,17 @@ const bridge: VectoraDesktopBridge = {
         ipcRenderer.removeListener("vectora:browser-view-event", listener);
       };
     },
+  },
+  themes: {
+    fetchMarketplace: (extensionId) =>
+      ipcRenderer.invoke("vectora:themes-fetch-marketplace", extensionId),
+    searchMarketplace: (query, limit) =>
+      ipcRenderer.invoke("vectora:themes-search-marketplace", query, limit),
+  },
+  zoom: {
+    setPercent: (percent) =>
+      ipcRenderer.send("vectora:set-zoom-percent", percent),
+    get: () => ipcRenderer.invoke("vectora:get-zoom-percent"),
   },
 };
 
