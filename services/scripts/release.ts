@@ -21,9 +21,18 @@
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { execFileSync } from "node:child_process";
-import { createReadStream, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  createReadStream,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { stringify } from "yaml";
 
 const CONTENT_TYPES: Record<string, string> = {
   exe: "application/x-msdownload",
@@ -55,6 +64,73 @@ export const MANIFEST_ARCHES: Record<string, string[]> = {
   mac: ["arm64"],
   linux: ["x64", "arm64"],
 };
+
+export interface InstallerManifestFile {
+  url: string;
+  sha512: string;
+  size: number;
+}
+
+export interface ArchManifest {
+  version: string;
+  files: InstallerManifestFile[];
+  path: string;
+  sha512: string;
+  releaseDate: string;
+}
+
+export function sha512Base64(filePath: string): string {
+  return createHash("sha512").update(readFileSync(filePath)).digest("base64");
+}
+
+/**
+ * Monta o manifesto `latest.yml` de UMA arch a partir do instalador real
+ * daquela combinação (os, arch) — nunca do `latest.yml` bruto gerado pelo
+ * electron-builder, que ao buildar duas arches na mesma job (win, linux)
+ * sobrescreve o arquivo a cada arch buildada e nunca contém as duas
+ * variantes. Publicar o YAML cru sob os dois prefixos R2 faz uma das arches
+ * apontar pro instalador da outra — daí a reconstrução por arch aqui.
+ */
+export interface InstallerEntry {
+  filename: string;
+  path: string;
+}
+
+/**
+ * Acha o instalador real de uma combinação (os, arch), ou lança — nunca
+ * deixa `main()` publicar um manifesto de arch sem instalador
+ * correspondente no `dist/` (regressão do bug de manifesto cross-arch).
+ */
+export function resolveInstaller(
+  installersByOsArch: Map<string, InstallerEntry>,
+  os: string,
+  arch: string,
+  manifestFile: string,
+): InstallerEntry {
+  const installer = installersByOsArch.get(`${os}/${arch}`);
+  if (!installer) {
+    throw new Error(
+      `Manifesto ${manifestFile} precisa de um instalador ${os}/${arch}, mas nenhum foi encontrado — recusando publicar um latest.yml sem instalador correspondente.`,
+    );
+  }
+  return installer;
+}
+
+export function buildArchManifest(
+  version: string,
+  installerPath: string,
+  installerFilename: string,
+): ArchManifest {
+  const sha512 = sha512Base64(installerPath);
+  const size = statSync(installerPath).size;
+  return {
+    version,
+    files: [{ url: installerFilename, sha512, size }],
+    path: installerFilename,
+    sha512,
+    releaseDate: new Date().toISOString(),
+  };
+}
 
 // Quantas versões ficam disponíveis em R2 por canal. A poda apaga pelas
 // chaves que cada versão gravou no KV (`uploads` abaixo), não por listagem
@@ -155,6 +231,19 @@ async function uploadFile(
       Body: createReadStream(filePath),
       ContentType: contentType,
     },
+  }).done();
+}
+
+async function uploadBuffer(
+  bucket: string,
+  key: string,
+  body: Buffer,
+  contentType: string,
+): Promise<void> {
+  console.log(`↑ ${key}`);
+  await new Upload({
+    client: s3Client(),
+    params: { Bucket: bucket, Key: key, Body: body, ContentType: contentType },
   }).done();
 }
 
@@ -275,13 +364,47 @@ async function main(): Promise<void> {
     (f) => !f.endsWith(".yml.tmp") && !f.startsWith("."),
   );
 
+  // Indexa os instaladores reais por (os, arch) ANTES de montar qualquer
+  // manifesto — o manifesto de cada arch é reconstruído a partir do
+  // instalador real dessa combinação, nunca do latest.yml bruto do disco
+  // (ver comentário de `buildArchManifest`).
+  const installersByOsArch = new Map<
+    string,
+    { filename: string; path: string }
+  >();
+  for (const file of files) {
+    const match = INSTALLER_RE.exec(file);
+    if (!match?.groups) continue;
+    const { os, arch } = match.groups;
+    installersByOsArch.set(`${os}/${arch}`, {
+      filename: file,
+      path: join(dist, file),
+    });
+  }
+
   const uploadedKeys: string[] = [];
   for (const file of files) {
     const manifestOs = MANIFEST_OS[file];
     if (manifestOs) {
       for (const arch of MANIFEST_ARCHES[manifestOs] ?? []) {
+        const installer = resolveInstaller(
+          installersByOsArch,
+          manifestOs,
+          arch,
+          file,
+        );
+        const manifest = buildArchManifest(
+          version,
+          installer.path,
+          installer.filename,
+        );
         const key = `${channel}/${manifestOs}/${arch}/${version}/latest.yml`;
-        await uploadFile(bucket, key, join(dist, file), CONTENT_TYPES.yml);
+        await uploadBuffer(
+          bucket,
+          key,
+          Buffer.from(stringify(manifest)),
+          CONTENT_TYPES.yml,
+        );
         uploadedKeys.push(key);
       }
       continue;
