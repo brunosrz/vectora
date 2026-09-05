@@ -90,6 +90,33 @@ describe("convertVscodeColorTheme", () => {
     expect(() => convertVscodeColorTheme({})).toThrow();
     expect(() => convertVscodeColorTheme(null)).toThrow();
   });
+
+  it("erro/borda — valores de cor não-string (número/objeto/null) não quebram, caem no fallback", () => {
+    const malformed = {
+      colors: {
+        "editor.background": "#1e1e1e",
+        "editor.foreground": "#d4d4d4",
+        "button.background": 42,
+        "list.hoverBackground": { r: 1, g: 2, b: 3 },
+        "editorWidget.border": null,
+      },
+    };
+
+    expect(() => convertVscodeColorTheme(malformed)).not.toThrow();
+    const result = convertVscodeColorTheme(malformed);
+    // Nenhuma das chaves malformadas foi usada — cai no fallback (foreground).
+    expect(result.primary).toBe("#d4d4d4");
+    expect(result.accent).toBe("#d4d4d4");
+    expect(result.border).toBe("#d4d4d4");
+  });
+
+  it("erro/borda — editor.background/foreground não-string também são tratados como ausentes", () => {
+    expect(() =>
+      convertVscodeColorTheme({
+        colors: { "editor.background": 123, "editor.foreground": "#fff" },
+      }),
+    ).toThrow();
+  });
 });
 
 describe("isLightTheme", () => {

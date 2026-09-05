@@ -1,7 +1,16 @@
 import type { BaseThemeColors } from "@/lib/theme/presets";
 
 interface VscodeColorTheme {
-  colors?: Record<string, string>;
+  colors?: Record<string, unknown>;
+}
+
+/** Um tema VS Code é JSON de terceiros — nada garante que uma chave de cor
+ * seja de fato uma string (extensão maliciosa/corrompida pode declarar
+ * número, objeto, null). Devolve `undefined` pra qualquer coisa que não
+ * seja string não-vazia, em vez de deixar `.trim()` lançar `TypeError`
+ * mais adiante. */
+function asColorString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 /** Cores VS Code que cada campo de `BaseThemeColors` lê, em ordem de
@@ -26,12 +35,12 @@ function relativeLuminance(hex: string): number {
 }
 
 function firstDefined(
-  colors: Record<string, string>,
+  colors: Record<string, unknown>,
   keys: string[],
   fallback: string,
 ): string {
   for (const key of keys) {
-    const v = colors[key];
+    const v = asColorString(colors[key]);
     if (v) return v;
   }
   return fallback;
@@ -74,8 +83,8 @@ function normalizeHex(value: string): string {
 export function convertVscodeColorTheme(json: unknown): BaseThemeColors {
   const parsed = json as VscodeColorTheme;
   const colors = parsed?.colors ?? {};
-  const background = colors["editor.background"];
-  const foreground = colors["editor.foreground"];
+  const background = asColorString(colors["editor.background"]);
+  const foreground = asColorString(colors["editor.foreground"]);
   if (!background || !foreground) {
     throw new Error(
       "Tema VS Code sem editor.background/editor.foreground — não é possível converter.",

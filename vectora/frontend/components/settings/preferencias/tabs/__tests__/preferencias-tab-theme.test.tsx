@@ -14,6 +14,7 @@ import {
 } from "@testing-library/react";
 import { PreferenciasTab } from "../preferencias-tab";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { m } from "@/lib/paraglide/messages";
 
 afterEach(cleanup);
 
@@ -34,7 +35,7 @@ describe("PreferenciasTab — modo e paleta não se contaminam", () => {
 
   it("toggle claro/escuro/sistema fica embutido no cabeçalho da grade (mesma linha do título)", () => {
     render(<PreferenciasTab />);
-    const label = screen.getByText(/interface theme/i);
+    const label = screen.getByText(m.prefs_theme());
     const header = label.parentElement!;
     expect(within(header).getByRole("group")).toBeInTheDocument();
   });
