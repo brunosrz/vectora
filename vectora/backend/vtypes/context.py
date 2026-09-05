@@ -48,13 +48,6 @@ class VectoraContext:
     thread_id: str = ""
     """ID da thread/conversa corrente."""
 
-    tool_call_id: str = ""
-    """ID da chamada de tool que está executando este contexto.
-
-    É efêmero e serve para correlacionar eventos de uma delegação interna
-    com o card da chamada no stream da thread pai.
-    """
-
     background_task_id: str = ""
     """ID do card do Kanban cuja run está executando este turno.
 
@@ -75,6 +68,14 @@ class VectoraContext:
 
     _extra: dict = field(default_factory=dict, repr=False, compare=False)
     """Campos adicionais não cobertos pelos atributos tipados acima."""
+
+    tool_call_id: str = ""
+    """ID da chamada de tool que está executando este contexto.
+
+    É efêmero e serve para correlacionar eventos de uma delegação interna
+    com o card da chamada no stream da thread pai. Fica após os campos
+    posicionais existentes para preservar a compatibilidade dos chamadores.
+    """
 
 
 def ctx_from_config(config: dict | None) -> VectoraContext:
