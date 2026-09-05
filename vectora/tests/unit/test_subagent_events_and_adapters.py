@@ -114,6 +114,7 @@ class TestSubagentOutputEventSchema:
         assert subs[0]["subagent_type"] == "coder"
         assert subs[0]["tool_call_id"] == "r1"
         assert subs[0]["is_delta"] is True
+        assert subs[0]["content"] == "feito "
         assert subs[1]["status"] == "complete"
         assert subs[1]["content"] == "feito X"
         assert subs[1]["is_delta"] is False
