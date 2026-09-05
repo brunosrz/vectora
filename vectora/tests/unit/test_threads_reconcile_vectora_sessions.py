@@ -361,7 +361,15 @@ class TestReconcileRespeitaTombstoneDeExclusao:
     async def test_erro_borda_tombstone_de_thread_nunca_apagada_nao_afeta_outras(
         self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
     ) -> None:
+        """Erro/borda: um tombstone de OUTRA thread não pode bloquear a
+        recriação de uma thread ativa sem tombstone nenhum — a checagem
+        precisa ser por thread_id, não um interruptor global."""
         await _real_thread(session_store, "thread-nunca-apagada", 4)
+        await checkpoints_db.execute(
+            "INSERT INTO deleted_threads (thread_id, deleted_at) VALUES (?, ?)",
+            ("thread-de-outra-conversa-ja-apagada", "2026-01-01T00:00:00+00:00"),
+        )
+        await checkpoints_db.commit()
 
         reconciled = await th.reconcile_vectora_sessions()
 
