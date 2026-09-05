@@ -209,6 +209,39 @@ class TestOwnershipEnforcement:
             await th.get_thread(GetThreadRequest(thread_id="thread-alice"))
         assert exc_info.value.status_code == 404
 
+    async def test_delete_thread_apaga_tambem_do_session_store(
+        self, session_store: SessionStore
+    ) -> None:
+        """Regressão real (2026-09-04): `delete_thread` só apagava de
+        `vectora_sessions`, nunca de `SessionStore` — a próxima rodada de
+        `reconcile_vectora_sessions` (boot ou hora em hora) encontrava a
+        thread ainda viva em `sessions.db` e a recriava na sidebar, fazendo
+        uma conversa apagada pelo usuário reaparecer sozinha."""
+        from backend.vtypes.message import MessageRole, text_message
+
+        await session_store.create_session("thread-alice", user_id="alice")
+        await session_store.append_message(
+            "thread-alice", text_message(MessageRole.USER, "oi")
+        )
+        await th._upsert_session("thread-alice")
+        await th._increment_message_count("thread-alice")
+
+        await th.delete_thread(
+            DeleteThreadRequest(thread_id="thread-alice"), _http_request("alice")
+        )
+
+        assert await session_store.get_session("thread-alice") is None
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 0
+
+        from fastapi import HTTPException
+
+        with pytest.raises(HTTPException) as exc_info:
+            await th.get_thread(GetThreadRequest(thread_id="thread-alice"))
+        assert exc_info.value.status_code == 404
+
 
 class TestUpsertSessionRegistersOwnership:
     """`_upsert_session(..., user_id=...)` garante (idempotente) o registro

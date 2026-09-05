@@ -13,6 +13,7 @@ correção é uma reconciliação idempotente que repovoa qualquer divergência
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncIterator
 from unittest.mock import MagicMock
@@ -21,6 +22,7 @@ import aiosqlite
 import pytest
 
 from backend.api.handlers import threads as th
+from backend.api.schemas import DeleteThreadRequest
 from backend.persistence.native.session_store import SessionStore
 from backend.storage.sqlite.pool import AsyncConnectionPool
 from backend.vtypes.message import MessageRole, text_message
@@ -321,3 +323,110 @@ class TestReconcilePreservaWorkspaceId:
         count, extra_json = row
         assert count == 3
         assert json.loads(extra_json)["workspace_id"] == "ws-real"
+
+
+class TestReconcileRespeitaTombstoneDeExclusao:
+    """Achado real (CodeRabbit, 2026-09-04): `delete_thread` só apagava
+    `vectora_sessions`/`sessions.db` sem deixar rastro — uma reconciliação
+    que já tivesse lido `list_all_sessions()` ANTES da exclusão (achando a
+    thread ainda viva) escrevia de volta em `vectora_sessions` DEPOIS,
+    ressuscitando a thread. O tombstone em `deleted_threads` (gravado por
+    `delete_thread` antes de qualquer exclusão) fecha essa corrida."""
+
+    async def test_thread_com_tombstone_nunca_e_recriada_mesmo_presente_no_session_store(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        await _real_thread(session_store, "thread-1", 5)
+        await th.delete_thread(
+            DeleteThreadRequest(thread_id="thread-1"),
+            _http_request_alice(),
+        )
+
+        # Simula a corrida: SessionStore "ainda tem" a thread (leitura
+        # concorrente que rodou antes da exclusão terminar, ou um retry
+        # que recriou a sessão) — o tombstone precisa bloquear mesmo assim.
+        await _real_thread(session_store, "thread-1", 5)
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 0
+        async with checkpoints_db.execute(
+            "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 0
+
+    async def test_erro_borda_tombstone_de_thread_nunca_apagada_nao_afeta_outras(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        """Erro/borda: um tombstone de OUTRA thread não pode bloquear a
+        recriação de uma thread ativa sem tombstone nenhum — a checagem
+        precisa ser por thread_id, não um interruptor global."""
+        await _real_thread(session_store, "thread-nunca-apagada", 4)
+        await checkpoints_db.execute(
+            "INSERT INTO deleted_threads (thread_id, deleted_at) VALUES (?, ?)",
+            ("thread-de-outra-conversa-ja-apagada", "2026-01-01T00:00:00+00:00"),
+        )
+        await checkpoints_db.commit()
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 1
+        async with checkpoints_db.execute(
+            "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-nunca-apagada",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 1
+
+    @pytest.mark.parametrize("delete_primeiro", [False, True])
+    async def test_reconcile_e_delete_thread_concorrentes_convergem_sem_ressuscitar(
+        self,
+        session_store: SessionStore,
+        checkpoints_db: aiosqlite.Connection,
+        delete_primeiro: bool,
+    ) -> None:
+        """`reconcile_vectora_sessions` e `delete_thread` rodando de verdade
+        ao mesmo tempo (`asyncio.gather`) — não um mock de atraso simulado —
+        precisam convergir pro mesmo estado final (thread apagada e nunca
+        recriada) não importa qual dos dois vence a corrida pelo lock
+        (`_reconcile_delete_lock`), já que `delete_thread` sempre termina
+        gravando o tombstone e apagando, incondicionalmente. Parametrizado
+        nas duas ordens de argumento — `asyncio.gather` inicia as corrotinas
+        na ordem dada e o escalonamento resultante é estável, então só uma
+        ordem não provaria que o lock (e não a sorte) garante a convergência."""
+        await _real_thread(session_store, "thread-1", 5)
+
+        delete_coro = th.delete_thread(
+            DeleteThreadRequest(thread_id="thread-1"),
+            _http_request_alice(),
+        )
+        reconcile_coro = th.reconcile_vectora_sessions()
+        if delete_primeiro:
+            await asyncio.gather(delete_coro, reconcile_coro)
+        else:
+            await asyncio.gather(reconcile_coro, delete_coro)
+
+        async with checkpoints_db.execute(
+            "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 0
+
+        # Roda a reconciliação de novo (sem mais corrida) — se o tombstone
+        # não tivesse pego por causa da corrida, essa segunda rodada
+        # ressuscitaria a thread.
+        reconciled_depois = await th.reconcile_vectora_sessions()
+        assert reconciled_depois == 0
+        async with checkpoints_db.execute(
+            "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 0

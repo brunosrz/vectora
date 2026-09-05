@@ -72,6 +72,18 @@ def _user_id(request: Request) -> str:
 _db_conn: Any = None
 _db_conn_lock: asyncio.Lock = asyncio.Lock()
 
+# Serializa `reconcile_vectora_sessions` contra `delete_thread` — as duas
+# compartilham a mesma conexão `_db_conn`, então sem essa exclusão mútua a
+# leitura do tombstone em `deleted_threads` e o UPSERT de `vectora_sessions`
+# (vários `await` entre si, dentro do loop de reconciliação) podem intercalar
+# com uma exclusão concorrente: a reconciliação lê "sem tombstone", a
+# exclusão grava tombstone + apaga tudo, e a reconciliação — usando o
+# instantâneo já obsoleto — reinsere a thread mesmo assim. O lock cobre a
+# seção crítica inteira (leitura do tombstone → upserts → commit) em
+# `reconcile_vectora_sessions`, e a escrita do tombstone + as duas exclusões
+# em `delete_thread`, garantindo que nunca rodam entrelaçados.
+_reconcile_delete_lock: asyncio.Lock = asyncio.Lock()
+
 
 async def _ensure_schema(db: Any) -> None:
     """Cria as tabelas do banco de checkpoints/sessões se não existirem.
@@ -84,6 +96,7 @@ async def _ensure_schema(db: Any) -> None:
     Tabelas gerenciadas:
     - ``vectora_sessions`` — metadados de cada thread/sessão.
     - ``vectora_checkpoint_artifacts`` — metadados dos snapshots de rewind.
+    - ``deleted_threads`` — tombstone de exclusão (ver ``delete_thread``).
     """
     await db.execute("""
         CREATE TABLE IF NOT EXISTS vectora_sessions (
@@ -109,6 +122,12 @@ async def _ensure_schema(db: Any) -> None:
             snapshot_path   TEXT,
             files_touched   TEXT NOT NULL DEFAULT '[]',
             created_at      TEXT NOT NULL
+        )
+    """)
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS deleted_threads (
+            thread_id  TEXT PRIMARY KEY,
+            deleted_at TEXT NOT NULL
         )
     """)
     await db.commit()
@@ -790,87 +809,103 @@ async def reconcile_vectora_sessions() -> int:
     db = await _get_db()
     thread_ids = [s["thread_id"] for s in real_with_messages]
     placeholders = ",".join("?" for _ in thread_ids)
-    async with db.execute(
-        f"SELECT thread_id, message_count, extra FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
-        thread_ids,
-    ) as cur:
-        existing = {row[0]: (row[1], row[2]) for row in await cur.fetchall()}
 
-    reconciled = 0
-    for session in real_with_messages:
-        thread_id = session["thread_id"]
-        real_count = session["message_count"]
-        real_workspace_id = session["workspace_id"] or ""
-        current_count, current_extra_json = existing.get(thread_id, (None, None))
-        try:
-            current_workspace_id = json.loads(current_extra_json or "{}").get(
-                "workspace_id", ""
-            )
-        except Exception:
-            current_workspace_id = ""
-        # Diverge tanto quando SessionStore tem um workspace que `extra`
-        # ainda não reflete QUANTO quando SessionStore não tem workspace
-        # nenhum mas `extra` guarda um valor obsoleto (thread que perdeu o
-        # workspace, ou um valor stale de antes desta correção).
-        workspace_diverges = current_workspace_id != real_workspace_id
-        if current_count == real_count and not workspace_diverges:
-            continue
+    # Lock cobrindo a seção crítica inteira (leitura do tombstone → upserts →
+    # commit) — sem isso, os vários `await` entre a leitura de
+    # `deleted_threads` e o commit final dão espaço pra `delete_thread`
+    # (mesma conexão) intercalar: gravar o tombstone e apagar a thread bem no
+    # meio deste loop, que então reinsere a thread usando o instantâneo já
+    # obsoleto (ver `_reconcile_delete_lock`).
+    async with _reconcile_delete_lock:
+        async with db.execute(
+            f"SELECT thread_id, message_count, extra FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+            thread_ids,
+        ) as cur:
+            existing = {row[0]: (row[1], row[2]) for row in await cur.fetchall()}
+        async with db.execute(
+            f"SELECT thread_id FROM deleted_threads WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+            thread_ids,
+        ) as cur:
+            tombstoned = {row[0] for row in await cur.fetchall()}
 
-        mode_col = _normalize_mode(session["mode"])
-        # Dois statements, não um só INSERT...ON CONFLICT com extra
-        # calculado em VALUES: um `null` de verdade em `patch_json` (pra
-        # REMOVER workspace_id obsoleto via JSON Merge Patch, RFC 7396, é o
-        # que `json_patch` do SQLite implementa) não pode virar o `extra`
-        # de uma linha NOVA — `Thread.workspace_id` é `str` estrito no
-        # schema (nunca `str | None`); um `{"workspace_id": null}` literal
-        # ali quebraria a validação Pydantic na próxima leitura. INSERT
-        # sempre nasce com extra limpo (nunca null); o UPDATE seguinte —
-        # sempre executado, idempotente por PK — aplica o merge-patch de
-        # verdade (populando ou removendo a chave conforme o caso).
-        #
-        # `INSERT ... ON CONFLICT DO NOTHING` nunca lança em PK duplicada
-        # (protege a mesma corrida de execuções sobrepostas de antes), e o
-        # UPDATE por thread_id é seguro mesmo se dois processos rodarem o
-        # mesmo par de statements ao mesmo tempo.
-        await db.execute(
-            """
-            INSERT INTO vectora_sessions
-                (thread_id, created_at, last_activity, message_count, extra, mode)
-            VALUES (?, ?, ?, ?, '{}', ?)
-            ON CONFLICT(thread_id) DO NOTHING
-            """,
-            (
-                thread_id,
-                session["created_at"],
-                session["updated_at"],
-                real_count,
-                mode_col,
-            ),
-        )
-        patch_json = json.dumps({"workspace_id": real_workspace_id or None})
-        # `json_valid` normaliza um `extra` corrompido pra `'{}'` antes do
-        # merge — senão `json_patch` lança em JSON malformado e derruba o
-        # lote inteiro antes do commit.
-        await db.execute(
-            """
-            UPDATE vectora_sessions
-            SET message_count = ?,
-                extra = json_patch(
-                    CASE WHEN json_valid(extra) THEN extra ELSE '{}' END,
-                    ?
+        reconciled = 0
+        for session in real_with_messages:
+            thread_id = session["thread_id"]
+            if thread_id in tombstoned:
+                continue
+            real_count = session["message_count"]
+            real_workspace_id = session["workspace_id"] or ""
+            current_count, current_extra_json = existing.get(thread_id, (None, None))
+            try:
+                current_workspace_id = json.loads(current_extra_json or "{}").get(
+                    "workspace_id", ""
                 )
-            WHERE thread_id = ?
-            """,
-            (real_count, patch_json, thread_id),
-        )
-        reconciled += 1
+            except Exception:
+                current_workspace_id = ""
+            # Diverge tanto quando SessionStore tem um workspace que `extra`
+            # ainda não reflete QUANTO quando SessionStore não tem workspace
+            # nenhum mas `extra` guarda um valor obsoleto (thread que perdeu o
+            # workspace, ou um valor stale de antes desta correção).
+            workspace_diverges = current_workspace_id != real_workspace_id
+            if current_count == real_count and not workspace_diverges:
+                continue
 
-    if reconciled:
-        await db.commit()
-        logger.info(
-            "threads: %d thread(s) real(is) repovoada(s)/corrigida(s) em vectora_sessions",
-            reconciled,
-        )
+            mode_col = _normalize_mode(session["mode"])
+            # Dois statements, não um só INSERT...ON CONFLICT com extra
+            # calculado em VALUES: um `null` de verdade em `patch_json` (pra
+            # REMOVER workspace_id obsoleto via JSON Merge Patch, RFC 7396, é
+            # o que `json_patch` do SQLite implementa) não pode virar o
+            # `extra` de uma linha NOVA — `Thread.workspace_id` é `str`
+            # estrito no schema (nunca `str | None`); um
+            # `{"workspace_id": null}` literal ali quebraria a validação
+            # Pydantic na próxima leitura. INSERT sempre nasce com extra
+            # limpo (nunca null); o UPDATE seguinte — sempre executado,
+            # idempotente por PK — aplica o merge-patch de verdade
+            # (populando ou removendo a chave conforme o caso).
+            #
+            # `INSERT ... ON CONFLICT DO NOTHING` nunca lança em PK
+            # duplicada, e o UPDATE por thread_id é seguro mesmo repetido —
+            # a exclusão mútua acima é que impede a reconciliação e a
+            # exclusão de intercalarem entre si.
+            await db.execute(
+                """
+                INSERT INTO vectora_sessions
+                    (thread_id, created_at, last_activity, message_count, extra, mode)
+                VALUES (?, ?, ?, ?, '{}', ?)
+                ON CONFLICT(thread_id) DO NOTHING
+                """,
+                (
+                    thread_id,
+                    session["created_at"],
+                    session["updated_at"],
+                    real_count,
+                    mode_col,
+                ),
+            )
+            patch_json = json.dumps({"workspace_id": real_workspace_id or None})
+            # `json_valid` normaliza um `extra` corrompido pra `'{}'` antes do
+            # merge — senão `json_patch` lança em JSON malformado e derruba o
+            # lote inteiro antes do commit.
+            await db.execute(
+                """
+                UPDATE vectora_sessions
+                SET message_count = ?,
+                    extra = json_patch(
+                        CASE WHEN json_valid(extra) THEN extra ELSE '{}' END,
+                        ?
+                    )
+                WHERE thread_id = ?
+                """,
+                (real_count, patch_json, thread_id),
+            )
+            reconciled += 1
+
+        if reconciled:
+            await db.commit()
+            logger.info(
+                "threads: %d thread(s) real(is) repovoada(s)/corrigida(s) em vectora_sessions",
+                reconciled,
+            )
     return reconciled
 
 
@@ -886,11 +921,35 @@ async def delete_thread(
 ) -> dict:
     await _assert_owns_thread(request.thread_id, http_request)
     db = await _get_db()
-    await db.execute(
-        "DELETE FROM vectora_sessions WHERE thread_id = ?",
-        (request.thread_id,),
-    )
-    await db.commit()
+    # Grava o tombstone ANTES de qualquer exclusão: fecha a corrida onde
+    # uma reconciliação concorrente já tinha lido `list_all_sessions()`
+    # antes desta chamada (ainda vendo a thread) e só escreveria de volta
+    # em `vectora_sessions` DEPOIS — sem o tombstone já presente nesse
+    # momento, esse UPSERT tardio ressuscitaria a thread recém-apagada.
+    # `INSERT OR REPLACE` também cobre o caso raro de reexcluir uma thread
+    # cujo tombstone já existisse (não deve acontecer, mas não é erro).
+    #
+    # Mesmo `_reconcile_delete_lock` de `reconcile_vectora_sessions`: as duas
+    # rotinas escrevem na mesma conexão (`_db_conn`), então sem essa exclusão
+    # mútua os `await` entre as três chamadas abaixo dão espaço pra uma
+    # reconciliação em andamento intercalar leitura/escrita com este bloco.
+    async with _reconcile_delete_lock:
+        await db.execute(
+            "INSERT OR REPLACE INTO deleted_threads (thread_id, deleted_at) VALUES (?, ?)",
+            (request.thread_id, datetime.now(UTC).isoformat()),
+        )
+        await db.execute(
+            "DELETE FROM vectora_sessions WHERE thread_id = ?",
+            (request.thread_id,),
+        )
+        await db.commit()
+    # Precisa apagar também de `sessions.db` (SessionStore) — é a fonte de
+    # verdade que `reconcile_vectora_sessions` usa pra repovoar a sidebar;
+    # sem isso, a próxima rodada de reconciliação (boot ou hora em hora)
+    # via `_thread_cleanup_loop` encontra a thread ainda viva ali e a
+    # recria em `vectora_sessions`, ressuscitando uma conversa apagada.
+    session_store = await _get_session_store()
+    await session_store.delete_session(request.thread_id)
     return {}
 
 
