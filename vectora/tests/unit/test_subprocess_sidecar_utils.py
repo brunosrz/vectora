@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Coroutine
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -47,7 +49,9 @@ class TestTerminateGracefully:
         logger = MagicMock()
         wait_for_timeouts: list[float] = []
 
-        def _wait_for_with_timeout(awaitable, *, timeout: float):
+        def _wait_for_with_timeout(
+            awaitable: Coroutine[Any, Any, None], *, timeout: float
+        ) -> Coroutine[Any, Any, None]:
             wait_for_timeouts.append(timeout)
 
             async def _consume() -> None:
