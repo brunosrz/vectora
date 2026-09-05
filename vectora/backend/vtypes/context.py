@@ -48,6 +48,13 @@ class VectoraContext:
     thread_id: str = ""
     """ID da thread/conversa corrente."""
 
+    tool_call_id: str = ""
+    """ID da chamada de tool que está executando este contexto.
+
+    É efêmero e serve para correlacionar eventos de uma delegação interna
+    com o card da chamada no stream da thread pai.
+    """
+
     background_task_id: str = ""
     """ID do card do Kanban cuja run está executando este turno.
 
@@ -88,5 +95,6 @@ def ctx_from_config(config: dict | None) -> VectoraContext:
         locale=str(c.get("language") or c.get("locale") or ""),
         model=str(c.get("model") or ""),
         thread_id=str(c.get("thread_id") or ""),
+        tool_call_id=str(c.get("tool_call_id") or ""),
         background_task_id=str(c.get("background_task_id") or ""),
     )

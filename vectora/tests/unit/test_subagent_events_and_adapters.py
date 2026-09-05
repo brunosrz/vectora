@@ -52,9 +52,11 @@ class TestSubagentOutputEventSchema:
             status="complete",
             tool_call_id="call-1",
             content="achei X",
+            is_delta=True,
         )
         assert full.status == "complete"
         assert full.content == "achei X"
+        assert full.is_delta is True
 
     def test_encode_tem_type_subagent_output(self):
         from backend.api.schemas import SubagentOutputEvent, encode_event

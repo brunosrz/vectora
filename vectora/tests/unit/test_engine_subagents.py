@@ -205,8 +205,11 @@ class TestRunSubagentSincrono:
             should_require_approval=None,
         )
 
-        assert [e.status for e in eventos] == ["running", "complete"]
+        assert [e.status for e in eventos] == ["running", "running", "complete"]
+        assert eventos[1].is_delta is True
+        assert eventos[1].content == "feito"
         assert eventos[-1].content == "feito"
+        assert eventos[0].tool_call_id == eventos[-1].tool_call_id == ctx.tool_call_id
 
     async def test_hitl_dentro_do_subagente_pausa_sem_emitir_complete(
         self, session_store, ctx
