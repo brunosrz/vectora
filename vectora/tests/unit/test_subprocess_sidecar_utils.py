@@ -43,12 +43,17 @@ class TestTerminateGracefully:
     @pytest.mark.asyncio
     async def test_taskkill_tem_timeout_e_ainda_encerra_o_killer(self) -> None:
         killer = MagicMock()
-
-        async def _never_returns() -> None:
-            await asyncio.sleep(10)
-
-        killer.wait = AsyncMock(side_effect=_never_returns)
+        killer.wait = AsyncMock(return_value=None)
         logger = MagicMock()
+        wait_for_timeouts: list[float] = []
+
+        async def _wait_for_with_timeout(awaitable, timeout: float):
+            wait_for_timeouts.append(timeout)
+            if len(wait_for_timeouts) == 1:
+                awaitable.close()
+                raise asyncio.TimeoutError
+            return await awaitable
+
         with (
             patch("backend.services.subprocess_sidecar_utils.sys.platform", "win32"),
             patch(
@@ -59,10 +64,15 @@ class TestTerminateGracefully:
                 "backend.services.subprocess_sidecar_utils.asyncio.create_subprocess_exec",
                 new=AsyncMock(return_value=killer),
             ),
+            patch(
+                "backend.services.subprocess_sidecar_utils.asyncio.wait_for",
+                side_effect=_wait_for_with_timeout,
+            ),
         ):
             await _terminate_windows_tree(123, logger, "x", 0.01)
 
         killer.kill.assert_called_once()
+        assert wait_for_timeouts == [0.01, 0.01]
 
     @pytest.mark.asyncio
     async def test_termina_gracioso_dentro_do_timeout(self):
