@@ -7,7 +7,12 @@
 
 // @vitest-environment jsdom
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
-import { useSettingsStore, FONT_SCALE_BASE_PX } from "../settings-store";
+import {
+  useSettingsStore,
+  loadUserSettings,
+  getStorageKey,
+  FONT_SCALE_BASE_PX,
+} from "../settings-store";
 
 beforeEach(() => {
   useSettingsStore.setState({
@@ -18,10 +23,12 @@ beforeEach(() => {
     monacoFontSize: 13,
   });
   delete window.vectora;
+  localStorage.clear();
 });
 
 afterEach(() => {
   delete window.vectora;
+  localStorage.clear();
 });
 
 describe("settings-store — uiScalePercent (modo navegador, sem window.vectora)", () => {
@@ -66,5 +73,38 @@ describe("settings-store — uiScalePercent (desktop Electron, window.vectora.zo
     expect(s.fontScaleChat).toBe(FONT_SCALE_BASE_PX);
     expect(s.fontScaleMarkdown).toBe(FONT_SCALE_BASE_PX);
     expect(s.monacoFontSize).toBe(13);
+  });
+
+  it("loadUserSettings reaplica o zoom nativo com o uiScalePercent reidratado do localStorage", async () => {
+    // Escreve direto no localStorage um estado persistido com 150% — como
+    // se uma sessão anterior (talvez ainda em modo navegador, sem zoom
+    // nativo) tivesse salvo essa preferência antes do app reabrir.
+    const key = getStorageKey();
+    localStorage.setItem(
+      key,
+      JSON.stringify({ state: { uiScalePercent: 150 }, version: 4 }),
+    );
+
+    const setPercent = vi.fn();
+    window.vectora = { zoom: { setPercent, get: vi.fn() } };
+
+    loadUserSettings();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(setPercent).toHaveBeenCalledWith(150);
+  });
+
+  it("erro/borda — loadUserSettings não chama zoom nativo fora do Electron", async () => {
+    const key = getStorageKey();
+    localStorage.setItem(
+      key,
+      JSON.stringify({ state: { uiScalePercent: 150 }, version: 4 }),
+    );
+    delete window.vectora;
+
+    loadUserSettings();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(window.vectora).toBeUndefined();
   });
 });

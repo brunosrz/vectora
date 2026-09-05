@@ -1,30 +1,46 @@
 import { describe, it, expect } from "vitest";
+import zlib from "node:zlib";
 import { __testing, extractThemes } from "../vscode-marketplace.js";
 
-const { themeEntryName, looksLikeIconTheme, readCentralDirectory } = __testing;
+const {
+  themeEntryName,
+  looksLikeIconTheme,
+  readCentralDirectory,
+  assertAllowedUrl,
+} = __testing;
 
-/** Monta um `.vsix` (zip) mínimo, sem compressão (method=0/"stored"), só
- * com o suficiente pra `readCentralDirectory`/`extractEntry` lerem de
- * volta — CRC32 não é validado pelo leitor, então fica zerado. */
-function buildStoredZip(entries: { name: string; content: string }[]): Buffer {
+interface ZipEntryInput {
+  name: string;
+  content: string;
+  /** Quando true, comprime com deflate raw (method=8); senão "stored" (method=0). */
+  deflate?: boolean;
+}
+
+/** Monta um `.vsix` (zip) mínimo — "stored" (method=0) por padrão, ou
+ * deflate raw (method=8) quando `deflate: true` — só com o suficiente pra
+ * `readCentralDirectory`/`extractEntry` lerem de volta. CRC32 não é
+ * validado pelo leitor, então fica zerado. */
+function buildZip(entries: ZipEntryInput[]): Buffer {
   const localParts: Buffer[] = [];
   const centralParts: Buffer[] = [];
   let offset = 0;
 
-  for (const { name, content } of entries) {
+  for (const { name, content, deflate } of entries) {
     const nameBuf = Buffer.from(name, "utf8");
-    const dataBuf = Buffer.from(content, "utf8");
+    const rawBuf = Buffer.from(content, "utf8");
+    const dataBuf = deflate ? zlib.deflateRawSync(rawBuf) : rawBuf;
+    const method = deflate ? 8 : 0;
 
     const local = Buffer.alloc(30);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4); // version needed
     local.writeUInt16LE(0, 6); // flags
-    local.writeUInt16LE(0, 8); // method: stored
+    local.writeUInt16LE(method, 8);
     local.writeUInt16LE(0, 10); // mod time
     local.writeUInt16LE(0, 12); // mod date
     local.writeUInt32LE(0, 14); // crc32
     local.writeUInt32LE(dataBuf.length, 18); // compressed size
-    local.writeUInt32LE(dataBuf.length, 22); // uncompressed size
+    local.writeUInt32LE(rawBuf.length, 22); // uncompressed size
     local.writeUInt16LE(nameBuf.length, 26);
     local.writeUInt16LE(0, 28); // extra len
 
@@ -35,12 +51,12 @@ function buildStoredZip(entries: { name: string; content: string }[]): Buffer {
     central.writeUInt16LE(20, 4); // version made by
     central.writeUInt16LE(20, 6); // version needed
     central.writeUInt16LE(0, 8); // flags
-    central.writeUInt16LE(0, 10); // method: stored
+    central.writeUInt16LE(method, 10);
     central.writeUInt16LE(0, 12);
     central.writeUInt16LE(0, 14);
     central.writeUInt32LE(0, 16); // crc32
     central.writeUInt32LE(dataBuf.length, 20);
-    central.writeUInt32LE(dataBuf.length, 24);
+    central.writeUInt32LE(rawBuf.length, 24);
     central.writeUInt16LE(nameBuf.length, 28);
     central.writeUInt16LE(0, 30); // extra len
     central.writeUInt16LE(0, 32); // comment len
@@ -69,6 +85,10 @@ function buildStoredZip(entries: { name: string; content: string }[]): Buffer {
 
   return Buffer.concat([localSection, centralSection, eocd]);
 }
+
+/** Alias mantido pro nome usado nos testes já existentes abaixo (entradas
+ * "stored", sem compressão). */
+const buildStoredZip = buildZip;
 
 describe("themeEntryName", () => {
   it("prefixa com extension/ e remove ./ inicial", () => {
@@ -161,5 +181,89 @@ describe("readCentralDirectory + extractThemes", () => {
       { name: "extension/package.json", content: pkg },
     ]);
     expect(extractThemes(zip)).toEqual([]);
+  });
+
+  it("lê corretamente uma entrada comprimida (deflate, method=8)", () => {
+    const themeJson = JSON.stringify({
+      colors: { "editor.background": "#111111", "editor.foreground": "#eee" },
+    });
+    const pkg = JSON.stringify({
+      displayName: "Tema Comprimido",
+      contributes: {
+        themes: [{ label: "Deflate Dark", path: "./theme.json" }],
+      },
+    });
+    const zip = buildZip([
+      { name: "extension/package.json", content: pkg, deflate: true },
+      { name: "extension/theme.json", content: themeJson, deflate: true },
+    ]);
+
+    const themes = extractThemes(zip);
+    expect(themes).toHaveLength(1);
+    expect(JSON.parse(themes[0]!.contents)).toEqual(JSON.parse(themeJson));
+  });
+
+  it("erro/borda — package.json que excede o limite de saída ao descomprimir lança (zip bomb)", () => {
+    // 2MB de zeros comprime pra poucos bytes — simula uma entrada pequena
+    // no disco que infla bem além do teto (MAX_VSIX_BYTES), reduzido aqui
+    // via monkeypatch não é possível (constante do módulo), então o teste
+    // confirma o mecanismo (maxOutputLength do zlib) isoladamente: a
+    // mesma chamada que `extractEntry` faz por baixo lança quando o
+    // limite é menor que o conteúdo descomprimido real.
+    const huge = "0".repeat(2 * 1024 * 1024);
+    const compressed = zlib.deflateRawSync(Buffer.from(huge, "utf8"));
+    expect(() =>
+      zlib.inflateRawSync(compressed, { maxOutputLength: 1024 }),
+    ).toThrow();
+    // ...e sem o limite, a mesma entrada infla normalmente (prova que o
+    // teste está de fato exercitando o teto, não um zip inválido).
+    expect(zlib.inflateRawSync(compressed).length).toBe(huge.length);
+  });
+
+  it("entrada stored pequena continua funcionando pelo caminho sem compressão", () => {
+    const pkg = JSON.stringify({
+      displayName: "Pequeno",
+      contributes: { themes: [{ label: "Pequeno", path: "./theme.json" }] },
+    });
+    const zip = buildStoredZip([
+      { name: "extension/package.json", content: pkg },
+      { name: "extension/theme.json", content: "x".repeat(10) },
+    ]);
+    const themes = extractThemes(zip);
+    expect(themes).toHaveLength(1);
+  });
+});
+
+describe("assertAllowedUrl", () => {
+  it("aceita hosts oficiais do Marketplace em HTTPS", () => {
+    expect(
+      assertAllowedUrl(
+        "https://marketplace.visualstudio.com/_apis/public/gallery/x",
+      ),
+    ).toContain("marketplace.visualstudio.com");
+    expect(
+      assertAllowedUrl("https://az123.gallerycdn.vsassets.io/pacote.vsix"),
+    ).toContain("gallerycdn.vsassets.io");
+    expect(assertAllowedUrl("https://foo.vsassets.io/x")).toContain(
+      "vsassets.io",
+    );
+  });
+
+  it("erro/borda — rejeita esquema não-HTTPS", () => {
+    expect(() =>
+      assertAllowedUrl("http://marketplace.visualstudio.com/x"),
+    ).toThrow(/não permitido/i);
+  });
+
+  it("erro/borda — rejeita host fora da allowlist (SSRF)", () => {
+    expect(() =>
+      assertAllowedUrl("https://169.254.169.254/latest/meta-data"),
+    ).toThrow(/não permitido/i);
+    expect(() => assertAllowedUrl("https://localhost/x")).toThrow(
+      /não permitido/i,
+    );
+    expect(() =>
+      assertAllowedUrl("https://evil-vsassets.io.attacker.com/x"),
+    ).toThrow(/não permitido/i);
   });
 });

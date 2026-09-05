@@ -91,6 +91,7 @@ function MarketplaceResults({
   errorLabel,
   installLabel,
   installedLabel,
+  loadingLabel,
 }: {
   query: string;
   installedIds: Set<string>;
@@ -98,6 +99,7 @@ function MarketplaceResults({
   errorLabel: string;
   installLabel: string;
   installedLabel: string;
+  loadingLabel: string;
 }) {
   const [results, setResults] = useState<VscodeMarketplaceSearchItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -146,8 +148,12 @@ function MarketplaceResults({
   return (
     <div className="mt-3 space-y-2">
       {loading && (
-        <p className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        <p
+          role="status"
+          className="flex items-center gap-2 text-xs text-muted-foreground"
+        >
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+          <span className="sr-only">{loadingLabel}</span>
         </p>
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}
@@ -203,6 +209,7 @@ export function ThemePicker({
   marketplaceErrorLabel,
   marketplaceInstallLabel,
   marketplaceInstalledLabel,
+  marketplaceLoadingLabel,
   onThemeInstalled,
 }: {
   value: string;
@@ -216,6 +223,7 @@ export function ThemePicker({
   marketplaceErrorLabel: string;
   marketplaceInstallLabel: string;
   marketplaceInstalledLabel: string;
+  marketplaceLoadingLabel: string;
   onThemeInstalled: (theme: ThemePresetDef) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -283,6 +291,7 @@ export function ThemePicker({
           errorLabel={marketplaceErrorLabel}
           installLabel={marketplaceInstallLabel}
           installedLabel={marketplaceInstalledLabel}
+          loadingLabel={marketplaceLoadingLabel}
           onInstalled={onThemeInstalled}
         />
       )}

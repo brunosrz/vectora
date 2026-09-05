@@ -485,7 +485,17 @@ export const useSettingsStore = create<SettingsState>()(
 export function loadUserSettings(userId?: string): void {
   const key = getStorageKey(userId);
   useSettingsStore.persist.setOptions({ name: key });
-  void useSettingsStore.persist.rehydrate();
+  void Promise.resolve(useSettingsStore.persist.rehydrate()).then(() => {
+    // No desktop Electron o zoom nativo vive só no processo principal —
+    // sem reaplicar aqui, o `uiScalePercent` reidratado (ex.: trocar de
+    // usuário, reabrir o app) ficaria só na store, com o zoom nativo
+    // ainda no valor da sessão anterior (ou 100% no primeiro boot).
+    if (typeof window !== "undefined" && window.vectora?.zoom) {
+      window.vectora.zoom.setPercent(
+        useSettingsStore.getState().uiScalePercent,
+      );
+    }
+  });
 }
 
 /**

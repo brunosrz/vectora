@@ -1,6 +1,25 @@
+import {
+  parse as parseJsonc,
+  printParseErrorCode,
+  type ParseError,
+} from "jsonc-parser";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import type { ThemePresetDef } from "@/lib/theme/presets";
 import { convertVscodeColorTheme } from "@/lib/theme/vscode-convert";
+
+/** Temas do VS Code são arquivos JSONC (comentários `//`/`/* *\/` e vírgula
+ * final permitidos pelo próprio schema oficial do editor) — `JSON.parse`
+ * lançaria `SyntaxError` num tema legítimo que usa qualquer um dos dois. */
+export function parseVscodeThemeJson(contents: string): unknown {
+  const errors: ParseError[] = [];
+  const value = parseJsonc(contents, errors, { allowTrailingComma: true });
+  if (errors.length > 0) {
+    throw new Error(
+      `Tema VS Code com JSON inválido: ${printParseErrorCode(errors[0]!.error)}.`,
+    );
+  }
+  return value;
+}
 
 const MARKETPLACE_ID_RE = /^[\w-]+\.[\w-]+$/;
 
@@ -50,7 +69,7 @@ export async function installVscodeThemeFromMarketplace(
   if (!first) {
     throw new Error(`A extensão ${extensionId} não declara nenhum tema.`);
   }
-  const colors = convertVscodeColorTheme(JSON.parse(first.contents));
+  const colors = convertVscodeColorTheme(parseVscodeThemeJson(first.contents));
   const theme: ThemePresetDef = {
     id: `vscode-${extensionId}`,
     label: file.displayName,

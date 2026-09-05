@@ -146,6 +146,7 @@
   "prefs_theme_marketplace_install": "Instalar",
   "prefs_theme_marketplace_installed": "Já instalado",
   "prefs_theme_marketplace_error": "Não foi possível instalar esse tema.",
+  "prefs_theme_marketplace_loading": "Buscando temas no VS Code Marketplace…",
   "prefs_theme_palette": "Paleta de cores",
   "prefs_theme_palette_default": "Dark (padrão)",
   "prefs_theme_palette_custom": "Personalizada",

@@ -268,7 +268,7 @@ export function PreferenciasTab() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <Label htmlFor="theme">{m.prefs_theme()}</Label>
+            <Label>{m.prefs_theme()}</Label>
             <SegmentedControl
               value={theme}
               onChange={handleModeChange}
@@ -292,6 +292,7 @@ export function PreferenciasTab() {
             marketplaceErrorLabel={m.prefs_theme_marketplace_error()}
             marketplaceInstallLabel={m.prefs_theme_marketplace_install()}
             marketplaceInstalledLabel={m.prefs_theme_marketplace_installed()}
+            marketplaceLoadingLabel={m.prefs_theme_marketplace_loading()}
             onThemeInstalled={(installed: ThemePresetDef) => {
               addInstalledTheme(installed);
               setThemePreset(installed.id);

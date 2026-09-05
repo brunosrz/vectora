@@ -37,6 +37,31 @@ function firstDefined(
   return fallback;
 }
 
+const HEX_RE = /^#?([a-f\d]{3,4}|[a-f\d]{6}|[a-f\d]{8})$/i;
+
+/** Normaliza um valor de cor do VS Code pro formato `#rrggbb` que
+ * `BaseThemeColors` espera: expande as formas curtas (`#rgb`/`#rgba`) e
+ * descarta o canal alfa das formas longas (`#rrggbbaa`). Temas reais usam
+ * cores com alfa com frequência (ex. overlays semi-transparentes) — sem
+ * essa normalização, um valor de 8 dígitos vaza pro campo, quebra
+ * `relativeLuminance`/`contrastFg` (que só casam hex de 6 dígitos) e
+ * produz texto escuro sobre fundo escuro em `--accent-foreground`.
+ * Valores que não são hex (nomes de cor CSS, `rgba(...)`, `transparent`)
+ * passam direto — não há como normalizá-los pro mesmo formato sem uma
+ * lib de cor inteira, e são raros nas chaves que `FIELD_SOURCES` lê. */
+function normalizeHex(value: string): string {
+  const m = HEX_RE.exec(value.trim());
+  if (!m) return value;
+  let digits = m[1]!.toLowerCase();
+  if (digits.length === 3 || digits.length === 4) {
+    digits = digits
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  }
+  return `#${digits.slice(0, 6)}`;
+}
+
 /**
  * Converte um tema de cores do VS Code (`colors` de um arquivo
  * `contributes.themes[].path`) nos 9 campos de `BaseThemeColors` — mapeia
@@ -60,7 +85,9 @@ export function convertVscodeColorTheme(json: unknown): BaseThemeColors {
   const result = {} as BaseThemeColors;
   for (const key of Object.keys(FIELD_SOURCES) as (keyof BaseThemeColors)[]) {
     const fallback = key === "background" ? background : foreground;
-    result[key] = firstDefined(colors, FIELD_SOURCES[key], fallback);
+    result[key] = normalizeHex(
+      firstDefined(colors, FIELD_SOURCES[key], fallback),
+    );
   }
   return result;
 }

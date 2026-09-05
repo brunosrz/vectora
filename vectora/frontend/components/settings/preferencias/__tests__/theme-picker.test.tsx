@@ -54,6 +54,7 @@ function renderPicker(
       marketplaceErrorLabel="Erro"
       marketplaceInstallLabel="Instalar"
       marketplaceInstalledLabel="Instalado"
+      marketplaceLoadingLabel="Buscando…"
       onThemeInstalled={vi.fn()}
       {...overrides}
     />,

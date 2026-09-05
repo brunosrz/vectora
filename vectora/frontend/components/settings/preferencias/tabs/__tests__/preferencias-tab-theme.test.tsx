@@ -34,7 +34,7 @@ describe("PreferenciasTab — modo e paleta não se contaminam", () => {
 
   it("toggle claro/escuro/sistema fica embutido no cabeçalho da grade (mesma linha do título)", () => {
     render(<PreferenciasTab />);
-    const label = document.querySelector('label[for="theme"]')!;
+    const label = screen.getByText(/interface theme/i);
     const header = label.parentElement!;
     expect(within(header).getByRole("group")).toBeInTheDocument();
   });

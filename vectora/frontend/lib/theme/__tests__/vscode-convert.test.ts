@@ -51,6 +51,37 @@ describe("convertVscodeColorTheme", () => {
     expect(result.border).toBe("#000000");
   });
 
+  it("normaliza cores com canal alfa (8 dígitos) pra #rrggbb, descartando o alfa", () => {
+    const withAlpha = {
+      colors: {
+        "editor.background": "#1e1e1eff",
+        "editor.foreground": "#d4d4d4ff",
+        "list.hoverBackground": "#2a2d2e80",
+        "editor.selectionBackground": "#3a3d3e40",
+      },
+    };
+    const result = convertVscodeColorTheme(withAlpha);
+
+    expect(result.background).toBe("#1e1e1e");
+    expect(result.foreground).toBe("#d4d4d4");
+    // accent lê list.hoverBackground primeiro — 8 dígitos vira 6, sem alfa.
+    expect(result.accent).toBe("#2a2d2e");
+    expect(result.accent).toMatch(/^#[0-9a-f]{6}$/i);
+  });
+
+  it("expande formas curtas (#rgb/#rgba) pro equivalente de 6 dígitos", () => {
+    const shortHex = {
+      colors: {
+        "editor.background": "#000",
+        "editor.foreground": "#fffe",
+      },
+    };
+    const result = convertVscodeColorTheme(shortHex);
+
+    expect(result.background).toBe("#000000");
+    expect(result.foreground).toBe("#ffffff");
+  });
+
   it("erro/borda — lança quando faltam editor.background/editor.foreground", () => {
     expect(() => convertVscodeColorTheme({ colors: {} })).toThrow();
     expect(() =>

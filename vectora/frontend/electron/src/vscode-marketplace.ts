@@ -27,6 +27,35 @@ const USER_AGENT = "Vectora-Desktop";
 
 const ID_RE = /^[\w-]+\.[\w-]+$/;
 
+/** Hosts que servem os assets reais do Marketplace (gallery + CDN) — o
+ * domínio-mãe e sufixos de subdomínio que a Microsoft usa pra hospedar o
+ * `.vsix` propriamente dito. */
+const ALLOWED_HOSTS = [
+  "marketplace.visualstudio.com",
+  ".vsassets.io",
+  ".gallerycdn.vsassets.io",
+];
+
+/** O `Location` de um redirect e o `source` do asset vêm de resposta
+ * remota (gallery/CDN) — nunca confiar neles sem checar antes de abrir
+ * conexão. Sem isso, um `Location` apontando pra rede interna do usuário
+ * vira SSRF a partir do processo principal do Electron, e um esquema
+ * `http://` chega a `https.request` como erro genérico em vez de falha
+ * de download compreensível. */
+function assertAllowedUrl(raw: string): string {
+  const parsed = new URL(raw);
+  const host = parsed.hostname.toLowerCase();
+  const ok =
+    parsed.protocol === "https:" &&
+    ALLOWED_HOSTS.some((h) =>
+      h.startsWith(".") ? host.endsWith(h) : host === h,
+    );
+  if (!ok) {
+    throw new Error(`Destino de download não permitido: ${parsed.origin}`);
+  }
+  return parsed.toString();
+}
+
 export interface VscodeThemeFile {
   extensionId: string;
   displayName: string;
@@ -69,16 +98,26 @@ function request(
           reject(new Error("Redirecionamentos demais."));
           return;
         }
-        const next = new URL(res.headers.location, url).toString();
         res.resume();
-        // Redirects pro CDN são GETs simples (descarta o body do POST).
-        resolve(
-          request(
-            next,
-            { method: "GET", headers: { "User-Agent": USER_AGENT }, maxBytes },
-            redirectsLeft - 1,
-          ),
-        );
+        try {
+          const next = assertAllowedUrl(
+            new URL(res.headers.location, url).toString(),
+          );
+          // Redirects pro CDN são GETs simples (descarta o body do POST).
+          resolve(
+            request(
+              next,
+              {
+                method: "GET",
+                headers: { "User-Agent": USER_AGENT },
+                maxBytes,
+              },
+              redirectsLeft - 1,
+            ),
+          );
+        } catch (err) {
+          reject(err);
+        }
         return;
       }
 
@@ -309,9 +348,18 @@ function extractEntry(buf: Buffer, record: ZipRecord): string {
   const dataStart = record.localOffset + 30 + nameLen + extraLen;
   const data = buf.subarray(dataStart, dataStart + record.compressedSize);
   // 0 = stored, 8 = deflate. Arquivo de tema é sempre um dos dois.
-  return record.method === 0
-    ? data.toString("utf8")
-    : zlib.inflateRawSync(data).toString("utf8");
+  // `maxOutputLength` limita a saída DESCOMPRIMIDA — sem isso um `.vsix`
+  // pequeno mas malicioso (zip bomb) poderia inflar bem além do teto já
+  // aplicado ao buffer comprimido (`MAX_VSIX_BYTES`) e estourar memória.
+  if (record.method === 0) {
+    if (data.length > MAX_VSIX_BYTES) {
+      throw new Error("Entrada do zip excede o limite de tamanho.");
+    }
+    return data.toString("utf8");
+  }
+  return zlib
+    .inflateRawSync(data, { maxOutputLength: MAX_VSIX_BYTES })
+    .toString("utf8");
 }
 
 /** Normaliza um path de tema do package.json pro nome da entrada no zip. */
@@ -379,7 +427,7 @@ export async function fetchMarketplaceThemes(
     throw new Error('Esperado um id do Marketplace tipo "publisher.extensao".');
   }
   const { displayName, vsixUrl } = await resolveExtension(trimmed);
-  const vsix = await request(vsixUrl, {
+  const vsix = await request(assertAllowedUrl(vsixUrl), {
     headers: { "User-Agent": USER_AGENT },
   });
   const themes = extractThemes(vsix);
@@ -391,4 +439,5 @@ export const __testing = {
   looksLikeIconTheme,
   readCentralDirectory,
   extractThemes,
+  assertAllowedUrl,
 };
