@@ -84,6 +84,7 @@ async def _ensure_schema(db: Any) -> None:
     Tabelas gerenciadas:
     - ``vectora_sessions`` — metadados de cada thread/sessão.
     - ``vectora_checkpoint_artifacts`` — metadados dos snapshots de rewind.
+    - ``deleted_threads`` — tombstone de exclusão (ver ``delete_thread``).
     """
     await db.execute("""
         CREATE TABLE IF NOT EXISTS vectora_sessions (
@@ -109,6 +110,12 @@ async def _ensure_schema(db: Any) -> None:
             snapshot_path   TEXT,
             files_touched   TEXT NOT NULL DEFAULT '[]',
             created_at      TEXT NOT NULL
+        )
+    """)
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS deleted_threads (
+            thread_id  TEXT PRIMARY KEY,
+            deleted_at TEXT NOT NULL
         )
     """)
     await db.commit()
@@ -795,10 +802,23 @@ async def reconcile_vectora_sessions() -> int:
         thread_ids,
     ) as cur:
         existing = {row[0]: (row[1], row[2]) for row in await cur.fetchall()}
+    # Threads com tombstone (`delete_thread` já rodou) nunca são recriadas
+    # aqui — fecha a corrida onde este `list_all_sessions()` já tinha lido
+    # a thread ANTES de uma exclusão concorrente: sem essa checagem, o
+    # UPSERT abaixo ressuscitaria a thread na sidebar mesmo depois de
+    # apagada (o tombstone é gravado por `delete_thread` antes de
+    # qualquer exclusão, então já existe nesse momento).
+    async with db.execute(
+        f"SELECT thread_id FROM deleted_threads WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+        thread_ids,
+    ) as cur:
+        tombstoned = {row[0] for row in await cur.fetchall()}
 
     reconciled = 0
     for session in real_with_messages:
         thread_id = session["thread_id"]
+        if thread_id in tombstoned:
+            continue
         real_count = session["message_count"]
         real_workspace_id = session["workspace_id"] or ""
         current_count, current_extra_json = existing.get(thread_id, (None, None))
@@ -886,6 +906,17 @@ async def delete_thread(
 ) -> dict:
     await _assert_owns_thread(request.thread_id, http_request)
     db = await _get_db()
+    # Grava o tombstone ANTES de qualquer exclusão: fecha a corrida onde
+    # uma reconciliação concorrente já tinha lido `list_all_sessions()`
+    # antes desta chamada (ainda vendo a thread) e só escreveria de volta
+    # em `vectora_sessions` DEPOIS — sem o tombstone já presente nesse
+    # momento, esse UPSERT tardio ressuscitaria a thread recém-apagada.
+    # `INSERT OR REPLACE` também cobre o caso raro de reexcluir uma thread
+    # cujo tombstone já existisse (não deve acontecer, mas não é erro).
+    await db.execute(
+        "INSERT OR REPLACE INTO deleted_threads (thread_id, deleted_at) VALUES (?, ?)",
+        (request.thread_id, datetime.now(UTC).isoformat()),
+    )
     await db.execute(
         "DELETE FROM vectora_sessions WHERE thread_id = ?",
         (request.thread_id,),

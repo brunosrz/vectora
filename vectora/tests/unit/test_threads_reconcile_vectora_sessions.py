@@ -21,6 +21,7 @@ import aiosqlite
 import pytest
 
 from backend.api.handlers import threads as th
+from backend.api.schemas import DeleteThreadRequest
 from backend.persistence.native.session_store import SessionStore
 from backend.storage.sqlite.pool import AsyncConnectionPool
 from backend.vtypes.message import MessageRole, text_message
@@ -321,3 +322,53 @@ class TestReconcilePreservaWorkspaceId:
         count, extra_json = row
         assert count == 3
         assert json.loads(extra_json)["workspace_id"] == "ws-real"
+
+
+class TestReconcileRespeitaTombstoneDeExclusao:
+    """Achado real (CodeRabbit, 2026-09-04): `delete_thread` só apagava
+    `vectora_sessions`/`sessions.db` sem deixar rastro — uma reconciliação
+    que já tivesse lido `list_all_sessions()` ANTES da exclusão (achando a
+    thread ainda viva) escrevia de volta em `vectora_sessions` DEPOIS,
+    ressuscitando a thread. O tombstone em `deleted_threads` (gravado por
+    `delete_thread` antes de qualquer exclusão) fecha essa corrida."""
+
+    async def test_thread_com_tombstone_nunca_e_recriada_mesmo_presente_no_session_store(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        await _real_thread(session_store, "thread-1", 5)
+        await th.delete_thread(
+            DeleteThreadRequest(thread_id="thread-1"),
+            _http_request_alice(),
+        )
+
+        # Simula a corrida: SessionStore "ainda tem" a thread (leitura
+        # concorrente que rodou antes da exclusão terminar, ou um retry
+        # que recriou a sessão) — o tombstone precisa bloquear mesmo assim.
+        await _real_thread(session_store, "thread-1", 5)
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 0
+        async with checkpoints_db.execute(
+            "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 0
+
+    async def test_erro_borda_tombstone_de_thread_nunca_apagada_nao_afeta_outras(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        await _real_thread(session_store, "thread-nunca-apagada", 4)
+
+        reconciled = await th.reconcile_vectora_sessions()
+
+        assert reconciled == 1
+        async with checkpoints_db.execute(
+            "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-nunca-apagada",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 1
