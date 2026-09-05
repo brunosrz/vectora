@@ -8,7 +8,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { BaseThemeColors } from "@/lib/theme/presets";
+import type { BaseThemeColors, ThemePresetDef } from "@/lib/theme/presets";
 import { getDefaultModel } from "@/lib/config/deployment-config";
 import { fetchPrefs, pushPrefs } from "@/lib/api/settings-prefs";
 
@@ -32,6 +32,11 @@ export type ReasoningEffort = "low" | "medium" | "high" | "max";
  *  padrão de chat+workbench; "ide" é o layout VS Code com editor docked;
  *  "kanban" é o board multi-agente. */
 export type UiMode = "assistant" | "ide" | "kanban";
+
+/** Presets de UI Scale exibidos no seletor — percentuais, não pixels; 100 =
+ *  tamanho base (`FONT_SCALE_BASE_PX`). */
+export const UI_SCALE_PRESETS = [90, 100, 110, 125, 150, 175] as const;
+export type UiScalePercent = (typeof UI_SCALE_PRESETS)[number];
 
 /** Modos de permissão em ordem de exibição no seletor. */
 export const PERMISSION_MODES: PermissionMode[] = [
@@ -79,6 +84,15 @@ export interface SettingsState {
   themePreset: ThemePreset;
   /** Cores base da paleta customizada (quando themePreset === "custom") */
   customThemeColors: BaseThemeColors | null;
+  /** Temas instalados pelo usuário via VS Code Marketplace (só desktop) —
+   *  `themePreset` pode apontar pro `id` de qualquer item aqui, igual a um
+   *  preset embutido. Local-only, não sincroniza com o backend. */
+  installedThemes: ThemePresetDef[];
+  /** Escala geral da UI (%) — substitui os 4 sliders de fonte separados por
+   *  um único controle; internamente ainda deriva `fontScaleUi/Chat/
+   *  Markdown/monacoFontSize` (consumidos por __root.tsx/message-item.tsx/
+   *  markdown-view.tsx/monaco-readonly.tsx), só que todos em sincronia. */
+  uiScalePercent: number;
   /** Instrução personalizada prefixada ao system prompt */
   customSystemPrompt: string;
   /** Blocos de instrução de treinamento adicionais (um item por bloco) */
@@ -122,6 +136,9 @@ export interface SettingsState {
   setTheme: (v: Theme) => void;
   setThemePreset: (v: ThemePreset) => void;
   setCustomThemeColors: (v: BaseThemeColors | null) => void;
+  addInstalledTheme: (theme: ThemePresetDef) => void;
+  removeInstalledTheme: (id: string) => void;
+  setUiScalePercent: (v: number) => void;
   setCustomSystemPrompt: (v: string) => void;
   setTrainingInstructions: (v: string[]) => void;
   setLanguage: (v: Lang) => void;
@@ -237,6 +254,8 @@ const DEFAULTS = {
   theme: "system" as Theme,
   themePreset: "default" as ThemePreset,
   customThemeColors: null as BaseThemeColors | null,
+  installedThemes: [] as ThemePresetDef[],
+  uiScalePercent: 100,
   customSystemPrompt: "",
   trainingInstructions: [] as string[],
   language: "en" as Lang, // Sobrescrito pelo detectLanguage() no create()
@@ -286,6 +305,49 @@ export const useSettingsStore = create<SettingsState>()(
       },
       setThemePreset: (v) => set({ themePreset: v }),
       setCustomThemeColors: (v) => set({ customThemeColors: v }),
+      addInstalledTheme: (theme) =>
+        set((s) => ({
+          installedThemes: [
+            ...s.installedThemes.filter((t) => t.id !== theme.id),
+            theme,
+          ],
+        })),
+      removeInstalledTheme: (id) =>
+        set((s) => ({
+          installedThemes: s.installedThemes.filter((t) => t.id !== id),
+        })),
+      setUiScalePercent: (v) => {
+        const percent = Math.max(50, Math.min(200, Math.round(v)));
+        const nativeZoom =
+          typeof window !== "undefined" && Boolean(window.vectora?.zoom);
+        if (nativeZoom) {
+          // Desktop Electron: o zoom nativo do Chromium já escala TODO o
+          // conteúdo pintado na tela (incluindo o canvas do Monaco, que
+          // não é CSS-relativo) — aplicar a escala por CSS/fonte por cima
+          // dobraria o efeito. Os campos derivados ficam no tamanho base;
+          // só o zoom nativo muda.
+          window.vectora?.zoom?.setPercent(percent);
+          set({
+            uiScalePercent: percent,
+            fontScaleUi: FONT_SCALE_BASE_PX,
+            fontScaleChat: FONT_SCALE_BASE_PX,
+            fontScaleMarkdown: FONT_SCALE_BASE_PX,
+            monacoFontSize: DEFAULTS.monacoFontSize,
+          });
+          return;
+        }
+        set({
+          uiScalePercent: percent,
+          fontScaleUi: clampFontScale((FONT_SCALE_BASE_PX * percent) / 100),
+          fontScaleChat: clampFontScale((FONT_SCALE_BASE_PX * percent) / 100),
+          fontScaleMarkdown: clampFontScale(
+            (FONT_SCALE_BASE_PX * percent) / 100,
+          ),
+          monacoFontSize: clampMonacoFontSize(
+            (DEFAULTS.monacoFontSize * percent) / 100,
+          ),
+        });
+      },
       setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
       setTrainingInstructions: (v) => set({ trainingInstructions: v }),
       setLanguage: (v) => {
@@ -391,6 +453,8 @@ export const useSettingsStore = create<SettingsState>()(
         theme: state.theme,
         themePreset: state.themePreset,
         customThemeColors: state.customThemeColors,
+        installedThemes: state.installedThemes,
+        uiScalePercent: state.uiScalePercent,
         customSystemPrompt: state.customSystemPrompt,
         trainingInstructions: state.trainingInstructions,
         language: state.language,
@@ -421,7 +485,17 @@ export const useSettingsStore = create<SettingsState>()(
 export function loadUserSettings(userId?: string): void {
   const key = getStorageKey(userId);
   useSettingsStore.persist.setOptions({ name: key });
-  void useSettingsStore.persist.rehydrate();
+  void Promise.resolve(useSettingsStore.persist.rehydrate()).then(() => {
+    // No desktop Electron o zoom nativo vive só no processo principal —
+    // sem reaplicar aqui, o `uiScalePercent` reidratado (ex.: trocar de
+    // usuário, reabrir o app) ficaria só na store, com o zoom nativo
+    // ainda no valor da sessão anterior (ou 100% no primeiro boot).
+    if (typeof window !== "undefined" && window.vectora?.zoom) {
+      window.vectora.zoom.setPercent(
+        useSettingsStore.getState().uiScalePercent,
+      );
+    }
+  });
 }
 
 /**

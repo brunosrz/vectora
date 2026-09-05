@@ -1,35 +1,30 @@
 "use client";
 
-import { Check, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Check, Download, Loader2, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import type { BaseThemeColors, ThemePresetDef } from "@/lib/theme/presets";
+import { selectableCardClass } from "@/lib/selectable-card";
+import {
+  deriveBorderTint,
+  deriveMutedForeground,
+  type BaseThemeColors,
+  type ThemePresetDef,
+} from "@/lib/theme/presets";
+import {
+  installVscodeThemeFromMarketplace,
+  searchVscodeMarketplaceThemes,
+  type VscodeMarketplaceSearchItem,
+} from "@/lib/theme/vscode-install";
 
-/** Luminância relativa aproximada (sRGB) — mesmo cálculo de
- * `lib/theme/presets.ts::contrastFg`, duplicado aqui (função privada lá)
- * só pra decidir a cor do texto do pill de exemplo sem exportar um
- * utilitário novo pro módulo inteiro. */
-function relativeLuminance(hex: string): number {
-  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim());
-  if (!m) return 1;
-  const [r, g, b] = [m[1]!, m[2]!, m[3]!].map((h) => parseInt(h, 16) / 255);
-  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
-}
-
-function contrastFg(hex: string): string {
-  return relativeLuminance(hex) > 0.5 ? "#0a0a0a" : "#fafafa";
-}
-
-/** Card pintado com as cores reais da paleta — barra dupla (primary/accent)
- * + pill de exemplo (userBubble/contrastFg) dá pra reconhecer o tema de
- * relance, sem precisar aplicá-lo primeiro. */
-function PaintedCard({
-  label,
+/** Card de preview de tema: mini-UI fake (tira lateral + linhas de
+ * título/subtítulo + pílula de bolha de usuário) pintada com as cores reais
+ * da paleta — dá pra reconhecer o tema de relance, sem precisar aplicá-lo
+ * primeiro. Nome/descrição ficam como legenda fora do card. */
+function ThemePreview({
   colors,
   active,
   onClick,
 }: {
-  label: string;
   colors: BaseThemeColors;
   active: boolean;
   onClick: () => void;
@@ -39,40 +34,39 @@ function PaintedCard({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`group relative flex flex-col overflow-hidden rounded-lg border text-left transition-colors ${
-        active
-          ? "border-primary ring-1 ring-primary"
-          : "border-border hover:border-foreground/30"
-      }`}
-      style={{ background: colors.background }}
+      className={`relative h-20 w-full overflow-hidden rounded-xl border shadow-xs ${selectableCardClass({ active })}`}
+      style={{ background: colors.background, borderColor: colors.border }}
     >
-      <div className="flex h-9 w-full" aria-hidden>
-        <span className="flex-1" style={{ background: colors.primary }} />
-        <span className="flex-1" style={{ background: colors.accent }} />
-      </div>
-      <div className="flex items-center justify-between gap-2 px-2.5 py-2">
-        <span
-          className="truncate text-xs font-medium"
-          style={{ color: colors.foreground }}
-        >
-          {label}
-        </span>
-        <span
-          className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
+      <div className="flex h-full">
+        <div
+          className="w-12 border-r"
           style={{
-            background: colors.userBubble,
-            color: contrastFg(colors.userBubble),
+            background: colors.sidebar,
+            borderColor: deriveBorderTint(colors.sidebar, colors),
           }}
-          aria-hidden
-        >
-          Aa
-        </span>
+        />
+        <div className="flex flex-1 flex-col gap-2 p-3">
+          <div
+            className="h-2.5 w-16 rounded-full"
+            style={{ background: colors.foreground }}
+          />
+          <div
+            className="h-2 w-24 rounded-full"
+            style={{ background: deriveMutedForeground(colors) }}
+          />
+          <div className="mt-auto flex justify-end">
+            <div
+              className="h-5 w-16 rounded-full border"
+              style={{
+                background: colors.userBubble,
+                borderColor: deriveBorderTint(colors.userBubble, colors),
+              }}
+            />
+          </div>
+        </div>
       </div>
       {active && (
-        <span
-          className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
-          aria-hidden
-        >
+        <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <Check className="h-2.5 w-2.5" />
         </span>
       )}
@@ -86,20 +80,151 @@ interface ThemePickerOption {
   colors: BaseThemeColors;
 }
 
+/** Busca (debounced) contra o VS Code Marketplace ao vivo — só existe no
+ * app desktop (`window.vectora?.themes`); em modo navegador
+ * `searchVscodeMarketplaceThemes` nunca é chamada porque o caller (abaixo)
+ * já esconde a seção inteira quando a ponte não existe. */
+function MarketplaceResults({
+  query,
+  installedIds,
+  onInstalled,
+  errorLabel,
+  installLabel,
+  installedLabel,
+  loadingLabel,
+}: {
+  query: string;
+  installedIds: Set<string>;
+  onInstalled: (theme: ThemePresetDef) => void;
+  errorLabel: string;
+  installLabel: string;
+  installedLabel: string;
+  loadingLabel: string;
+}) {
+  const [results, setResults] = useState<VscodeMarketplaceSearchItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [installingId, setInstallingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setResults([]);
+      return;
+    }
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    const timer = setTimeout(() => {
+      void searchVscodeMarketplaceThemes(q)
+        .then((items) => {
+          if (alive) setResults(items);
+        })
+        .catch(() => {
+          if (alive) setError(errorLabel);
+        })
+        .finally(() => {
+          if (alive) setLoading(false);
+        });
+    }, 300);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [query, errorLabel]);
+
+  if (!query.trim()) return null;
+
+  const install = (item: VscodeMarketplaceSearchItem) => {
+    if (installingId) return;
+    setInstallingId(item.extensionId);
+    setError(null);
+    installVscodeThemeFromMarketplace(item.extensionId)
+      .then((theme) => onInstalled(theme))
+      .catch(() => setError(errorLabel))
+      .finally(() => setInstallingId(null));
+  };
+
+  return (
+    <div className="mt-3 space-y-2">
+      {loading && (
+        <p
+          role="status"
+          className="flex items-center gap-2 text-xs text-muted-foreground"
+        >
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+          <span className="sr-only">{loadingLabel}</span>
+        </p>
+      )}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <div className="grid gap-2 sm:grid-cols-2">
+        {results.map((item) => {
+          const installed = installedIds.has(item.extensionId);
+          const busy = installingId === item.extensionId;
+          return (
+            <button
+              key={item.extensionId}
+              type="button"
+              disabled={Boolean(installingId) && !busy}
+              onClick={() => install(item)}
+              className={`flex items-center gap-2.5 px-2.5 py-2 text-left disabled:opacity-60 ${selectableCardClass({ prominent: installed })}`}
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-medium">
+                  {item.displayName}
+                </span>
+                <span className="block truncate text-[11px] text-muted-foreground">
+                  {item.publisher}
+                </span>
+              </span>
+              <span
+                className="shrink-0 text-muted-foreground"
+                title={installed ? installedLabel : installLabel}
+              >
+                {busy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : installed ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function ThemePicker({
   value,
   onChange,
   presets,
+  installedThemes,
   customLabel,
   customColors,
   searchPlaceholder,
+  marketplaceSupported,
+  marketplaceErrorLabel,
+  marketplaceInstallLabel,
+  marketplaceInstalledLabel,
+  marketplaceLoadingLabel,
+  onThemeInstalled,
 }: {
   value: string;
   onChange: (id: string) => void;
   presets: ThemePresetDef[];
+  installedThemes: ThemePresetDef[];
   customLabel: string;
   customColors: BaseThemeColors;
   searchPlaceholder: string;
+  marketplaceSupported: boolean;
+  marketplaceErrorLabel: string;
+  marketplaceInstallLabel: string;
+  marketplaceInstalledLabel: string;
+  marketplaceLoadingLabel: string;
+  onThemeInstalled: (theme: ThemePresetDef) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -110,9 +235,14 @@ export function ThemePicker({
         label: preset.label,
         colors: preset.colors,
       })),
+      ...installedThemes.map((theme) => ({
+        id: theme.id,
+        label: theme.label,
+        colors: theme.colors,
+      })),
       { id: "custom", label: customLabel, colors: customColors },
     ],
-    [presets, customLabel, customColors],
+    [presets, installedThemes, customLabel, customColors],
   );
 
   const filtered = useMemo(() => {
@@ -121,78 +251,50 @@ export function ThemePicker({
     return options.filter((opt) => opt.label.toLowerCase().includes(q));
   }, [options, query]);
 
+  const installedIds = useMemo(
+    () => new Set(installedThemes.map((t) => t.id.replace(/^vscode-/, ""))),
+    [installedThemes],
+  );
+
   return (
     <div className="space-y-2">
-      {/* Busca só ganha espaço quando há paletas suficientes pra valer a
-          pena filtrar — poucas opções não precisam de mais um campo pra
-          escanear visualmente. */}
-      {options.length > 4 && (
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="h-8 pl-7 text-xs"
-          />
-        </div>
-      )}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="h-8 pl-7 text-xs"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {filtered.map((opt) => (
-          <PaintedCard
-            key={opt.id}
-            label={opt.label}
-            colors={opt.colors}
-            active={opt.id === value}
-            onClick={() => onChange(opt.id)}
-          />
+          <div key={opt.id} className="space-y-1.5">
+            <ThemePreview
+              colors={opt.colors}
+              active={opt.id === value}
+              onClick={() => onChange(opt.id)}
+            />
+            <p className="truncate px-0.5 text-xs font-medium text-foreground">
+              {opt.label}
+            </p>
+          </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-/** Toggle Light/Dark/System — separado do grid de paletas: controla só o
- * campo `theme` (claro/escuro/sistema) do store, independente de qual
- * paleta está ativa. Antes "system" era só mais uma entrada do grid de
- * presets, sem opção de forçar claro/escuro sem também trocar de paleta. */
-export function ThemeModeToggle({
-  value,
-  onChange,
-  labels,
-}: {
-  value: "light" | "dark" | "system";
-  onChange: (v: "light" | "dark" | "system") => void;
-  labels: { system: string; light: string; dark: string };
-}) {
-  const options: { id: "system" | "light" | "dark"; label: string }[] = [
-    { id: "system", label: labels.system },
-    { id: "light", label: labels.light },
-    { id: "dark", label: labels.dark },
-  ];
-  return (
-    <div
-      role="group"
-      className="inline-flex rounded-md border border-border p-0.5"
-    >
-      {options.map((opt) => (
-        <button
-          key={opt.id}
-          type="button"
-          aria-pressed={value === opt.id}
-          onClick={() => onChange(opt.id)}
-          className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-            value === opt.id
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {opt.label}
-        </button>
-      ))}
+      {marketplaceSupported && (
+        <MarketplaceResults
+          query={query}
+          installedIds={installedIds}
+          errorLabel={marketplaceErrorLabel}
+          installLabel={marketplaceInstallLabel}
+          installedLabel={marketplaceInstalledLabel}
+          loadingLabel={marketplaceLoadingLabel}
+          onInstalled={onThemeInstalled}
+        />
+      )}
     </div>
   );
 }

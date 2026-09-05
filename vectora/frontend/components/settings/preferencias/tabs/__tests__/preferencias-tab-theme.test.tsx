@@ -14,6 +14,7 @@ import {
 } from "@testing-library/react";
 import { PreferenciasTab } from "../preferencias-tab";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { m } from "@/lib/paraglide/messages";
 
 afterEach(cleanup);
 
@@ -24,17 +25,25 @@ beforeEach(() => {
 describe("PreferenciasTab — modo e paleta não se contaminam", () => {
   it("selecionar uma paleta (github-dark) em modo 'system' preserva o modo", () => {
     render(<PreferenciasTab />);
-    fireEvent.click(screen.getByText("GitHub Dark"));
+    const card = screen.getByText("GitHub Dark").closest("div")!;
+    fireEvent.click(card.querySelector("button")!);
 
     const state = useSettingsStore.getState();
     expect(state.themePreset).toBe("github-dark");
     expect(state.theme).toBe("system");
   });
 
+  it("toggle claro/escuro/sistema fica embutido no cabeçalho da grade (mesma linha do título)", () => {
+    render(<PreferenciasTab />);
+    const label = screen.getByText(m.prefs_theme());
+    const header = label.parentElement!;
+    expect(within(header).getByRole("group")).toBeInTheDocument();
+  });
+
   it("selecionar o modo 'dark' preserva a paleta ativa (github-dark)", () => {
     useSettingsStore.setState({ theme: "system", themePreset: "github-dark" });
     render(<PreferenciasTab />);
-    const modeToggle = within(screen.getByRole("group"));
+    const modeToggle = within(screen.getAllByRole("group")[0]!);
     fireEvent.click(
       modeToggle.getByRole("button", { name: /^dark$|^escuro$/i }),
     );
@@ -47,7 +56,7 @@ describe("PreferenciasTab — modo e paleta não se contaminam", () => {
   it("selecionar 'system' não descarta uma paleta custom ativa", () => {
     useSettingsStore.setState({ theme: "light", themePreset: "custom" });
     render(<PreferenciasTab />);
-    const modeToggle = within(screen.getByRole("group"));
+    const modeToggle = within(screen.getAllByRole("group")[0]!);
     fireEvent.click(
       modeToggle.getByRole("button", { name: /^system|^sistema/i }),
     );

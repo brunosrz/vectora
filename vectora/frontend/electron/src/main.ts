@@ -59,6 +59,10 @@ import {
   type ViewBounds,
 } from "./browser-view-manager.js";
 import { computeDefaultWindowSize } from "./window-size.js";
+import {
+  fetchMarketplaceThemes,
+  searchMarketplaceThemes,
+} from "./vscode-marketplace.js";
 
 interface UpdateStatus {
   state:
@@ -835,6 +839,33 @@ function registerIpc(): void {
       getBrowserViewManager().setVisible(viewId, visible);
     },
   );
+
+  // Instalação de temas do VS Code Marketplace (Preferências → Aparência) —
+  // download + extração rodam aqui (fora do sandbox do renderer); erros
+  // propagam pro renderer via rejeição da Promise do invoke.
+  ipcMain.handle(
+    "vectora:themes-fetch-marketplace",
+    (_event, extensionId: string) => fetchMarketplaceThemes(extensionId),
+  );
+  ipcMain.handle(
+    "vectora:themes-search-marketplace",
+    (_event, query: string, limit?: number) =>
+      searchMarketplaceThemes(query, limit),
+  );
+
+  // Zoom nativo (Preferências → Aparência → UI Scale) — mais nítido que o
+  // fallback CSS usado no navegador. `factor = 1.2^level` é a própria
+  // conversão do Chromium entre zoomLevel e fator visual.
+  ipcMain.on("vectora:set-zoom-percent", (_event, percent: number) => {
+    if (!mainWindow) return;
+    const factor = Math.max(0.5, Math.min(2, percent / 100));
+    mainWindow.webContents.setZoomLevel(Math.log(factor) / Math.log(1.2));
+  });
+  ipcMain.handle("vectora:get-zoom-percent", () => {
+    if (!mainWindow) return 100;
+    const factor = Math.pow(1.2, mainWindow.webContents.getZoomLevel());
+    return Math.round(factor * 100);
+  });
 }
 
 // ---------------------------------------------------------------------------
