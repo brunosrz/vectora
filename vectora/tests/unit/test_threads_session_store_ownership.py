@@ -122,7 +122,9 @@ class TestListThreadsReflectsSessionStore:
 
         assert [t.id for t in result.threads] == ["thread-legada"]
 
-    async def test_subagent_interno_nao_aparece_na_listagem(self, session_store):
+    async def test_subagent_interno_nao_aparece_na_listagem(
+        self, session_store: SessionStore
+    ) -> None:
         """Sessões internas podem existir para histórico e auditoria, mas
         nunca viram conversas selecionáveis pelo usuário."""
         await session_store.create_session(

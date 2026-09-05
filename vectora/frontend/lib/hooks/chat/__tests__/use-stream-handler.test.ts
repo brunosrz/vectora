@@ -1003,7 +1003,7 @@ describe("useStreamHandler.processStream", () => {
           subagent_type: "search",
           status: "complete",
           tool_call_id: "r-delta",
-          content: "parte do resultado",
+          content: "",
         },
         { type: "done", thread_id: "t1" },
       ]),
@@ -1014,6 +1014,8 @@ describe("useStreamHandler.processStream", () => {
     const a = messages.find((m) => m.id === "a1");
     expect(a?.content).toBe("");
     expect(a?.subgraphOutputs?.[0].output).toBe("parte do resultado");
+    expect(a?.subgraphOutputs?.[0].isComplete).toBe(true);
+    expect(a?.subgraphOutputs?.[0].isStreaming).toBe(false);
   });
 
   // Achados da auditoria: estes 5 tipos de evento nunca eram

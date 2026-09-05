@@ -90,6 +90,8 @@ class TestSubagentOutputEventSchema:
                     description="faz X",
                     status="running",
                     tool_call_id="r1",
+                    content="feito ",
+                    is_delta=True,
                 )
             )
             await on_event(
@@ -111,8 +113,10 @@ class TestSubagentOutputEventSchema:
         assert subs[0]["status"] == "running"
         assert subs[0]["subagent_type"] == "coder"
         assert subs[0]["tool_call_id"] == "r1"
+        assert subs[0]["is_delta"] is True
         assert subs[1]["status"] == "complete"
         assert subs[1]["content"] == "feito X"
+        assert subs[1]["is_delta"] is False
 
     @pytest.mark.asyncio
     async def test_subagent_output_status_error(self):

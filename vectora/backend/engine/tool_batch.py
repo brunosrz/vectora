@@ -63,6 +63,7 @@ async def _run_one(
     ctx: ToolContext,
     turn_budget: TurnBudget | None,
 ) -> VMessage:
+    """Executa uma chamada do lote com contexto correlacionado à própria tool."""
     spec = tool_registry.get(tool_call.name)
 
     if turn_budget is not None:

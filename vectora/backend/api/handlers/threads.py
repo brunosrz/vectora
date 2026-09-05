@@ -700,6 +700,7 @@ async def list_threads(
     request: ListThreadsRequest,
     http_request: Request = None,  # ty: ignore[invalid-parameter-default]
 ) -> ListThreadsResponse:
+    """Lista threads visíveis ao usuário, excluindo sessões internas."""
     limit = max(1, min(request.limit or 50, 200))
     db = await _get_db()
     cols = (
