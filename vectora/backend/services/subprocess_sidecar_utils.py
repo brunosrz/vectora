@@ -15,13 +15,14 @@ import sys
 
 
 async def _terminate_windows_tree(
-    pid: int, logger: logging.Logger, log_prefix: str
+    pid: int, logger: logging.Logger, log_prefix: str, timeout_seconds: float
 ) -> None:
     """Encerra descendentes de um sidecar no Windows.
 
     ``Process.terminate()`` atua apenas no PID raiz. Electron cria renderers
     e utilitários filhos, então ``taskkill /T /F`` garante que a árvore não
-    fique órfã durante o encerramento do backend.
+    fique órfã durante o encerramento do backend. No Windows, ``taskkill /F``
+    é um fallback forçado: não representa um encerramento gracioso.
     """
     if sys.platform != "win32":
         return
@@ -38,7 +39,12 @@ async def _terminate_windows_tree(
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.DEVNULL,
         )
-        await killer.wait()
+        try:
+            await asyncio.wait_for(killer.wait(), timeout=timeout_seconds)
+        except TimeoutError:
+            killer.kill()
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(killer.wait(), timeout=timeout_seconds)
     except Exception:
         logger.debug("%s: taskkill da árvore falhou", log_prefix, exc_info=True)
 
@@ -71,9 +77,13 @@ async def terminate_gracefully(
     logger: logging.Logger,
     log_prefix: str,
 ) -> None:
-    """``terminate()`` → espera ``timeout_seconds``s → ``kill()`` se não
-    morreu a tempo. Nunca lança — best-effort, loga qualquer exceção além
-    do timeout esperado.
+    """Solicita encerramento, aguarda com limite e aplica fallback forçado.
+
+    ``terminate()`` → espera ``timeout_seconds``s → ``kill()`` se não morreu a
+    tempo. No Windows, tanto ``terminate()`` quanto ``kill()`` chamam
+    ``TerminateProcess``; ``taskkill /T /F`` também é forçado e existe apenas
+    para limpar descendentes do sidecar. Nunca lança — best-effort, loga
+    qualquer exceção além do timeout esperado.
 
     ``ProcessLookupError`` é tratado como caso esperado (idempotente), não
     erro: o processo já pode ter saído sozinho entre o momento em que o
@@ -84,7 +94,7 @@ async def terminate_gracefully(
     """
     # No Windows, encerra a árvore enquanto o PID raiz ainda existe; depois
     # aguardamos o mesmo objeto asyncio para manter o contrato comum.
-    await _terminate_windows_tree(proc.pid, logger, log_prefix)
+    await _terminate_windows_tree(proc.pid, logger, log_prefix, timeout_seconds)
     try:
         proc.terminate()
         await asyncio.wait_for(proc.wait(), timeout=timeout_seconds)
@@ -95,4 +105,4 @@ async def terminate_gracefully(
     except Exception:
         logger.warning("%s: erro ao encerrar", log_prefix, exc_info=True)
     with contextlib.suppress(Exception):
-        await proc.wait()
+        await asyncio.wait_for(proc.wait(), timeout=timeout_seconds)

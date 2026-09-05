@@ -6,11 +6,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.services.subprocess_sidecar_utils import LazyLock, terminate_gracefully
+from backend.services.subprocess_sidecar_utils import (
+    LazyLock,
+    _terminate_windows_tree,
+    terminate_gracefully,
+)
 
 
 class TestLazyLock:
@@ -36,6 +40,30 @@ class TestLazyLock:
 
 
 class TestTerminateGracefully:
+    @pytest.mark.asyncio
+    async def test_taskkill_tem_timeout_e_ainda_encerra_o_killer(self) -> None:
+        killer = MagicMock()
+
+        async def _never_returns() -> None:
+            await asyncio.sleep(10)
+
+        killer.wait = AsyncMock(side_effect=_never_returns)
+        logger = MagicMock()
+        with (
+            patch("backend.services.subprocess_sidecar_utils.sys.platform", "win32"),
+            patch(
+                "backend.services.subprocess_sidecar_utils.shutil.which",
+                return_value="taskkill",
+            ),
+            patch(
+                "backend.services.subprocess_sidecar_utils.asyncio.create_subprocess_exec",
+                new=AsyncMock(return_value=killer),
+            ),
+        ):
+            await _terminate_windows_tree(123, logger, "x", 0.01)
+
+        killer.kill.assert_called_once()
+
     @pytest.mark.asyncio
     async def test_termina_gracioso_dentro_do_timeout(self):
         proc = MagicMock()
