@@ -13,6 +13,7 @@ correção é uma reconciliação idempotente que repovoa qualquer divergência
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncIterator
 from unittest.mock import MagicMock
@@ -372,3 +373,43 @@ class TestReconcileRespeitaTombstoneDeExclusao:
             row = await cur.fetchone()
         assert row is not None
         assert row[0] == 1
+
+    async def test_reconcile_e_delete_thread_concorrentes_convergem_sem_ressuscitar(
+        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+    ) -> None:
+        """`reconcile_vectora_sessions` e `delete_thread` rodando de verdade
+        ao mesmo tempo (`asyncio.gather`) — não um mock de atraso simulado —
+        precisam convergir pro mesmo estado final (thread apagada e nunca
+        recriada) não importa qual dos dois vence a corrida pelo lock
+        (`_reconcile_delete_lock`), já que `delete_thread` sempre termina
+        gravando o tombstone e apagando, incondicionalmente."""
+        await _real_thread(session_store, "thread-1", 5)
+
+        await asyncio.gather(
+            th.reconcile_vectora_sessions(),
+            th.delete_thread(
+                DeleteThreadRequest(thread_id="thread-1"),
+                _http_request_alice(),
+            ),
+        )
+
+        async with checkpoints_db.execute(
+            "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 0
+
+        # Roda a reconciliação de novo (sem mais corrida) — se o tombstone
+        # não tivesse pego por causa da corrida, essa segunda rodada
+        # ressuscitaria a thread.
+        reconciled_depois = await th.reconcile_vectora_sessions()
+        assert reconciled_depois == 0
+        async with checkpoints_db.execute(
+            "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
+            ("thread-1",),
+        ) as cur:
+            row = await cur.fetchone()
+        assert row is not None
+        assert row[0] == 0
