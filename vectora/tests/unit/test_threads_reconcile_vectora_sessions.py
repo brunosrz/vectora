@@ -374,24 +374,33 @@ class TestReconcileRespeitaTombstoneDeExclusao:
         assert row is not None
         assert row[0] == 1
 
+    @pytest.mark.parametrize("delete_primeiro", [False, True])
     async def test_reconcile_e_delete_thread_concorrentes_convergem_sem_ressuscitar(
-        self, session_store: SessionStore, checkpoints_db: aiosqlite.Connection
+        self,
+        session_store: SessionStore,
+        checkpoints_db: aiosqlite.Connection,
+        delete_primeiro: bool,
     ) -> None:
         """`reconcile_vectora_sessions` e `delete_thread` rodando de verdade
         ao mesmo tempo (`asyncio.gather`) — não um mock de atraso simulado —
         precisam convergir pro mesmo estado final (thread apagada e nunca
         recriada) não importa qual dos dois vence a corrida pelo lock
         (`_reconcile_delete_lock`), já que `delete_thread` sempre termina
-        gravando o tombstone e apagando, incondicionalmente."""
+        gravando o tombstone e apagando, incondicionalmente. Parametrizado
+        nas duas ordens de argumento — `asyncio.gather` inicia as corrotinas
+        na ordem dada e o escalonamento resultante é estável, então só uma
+        ordem não provaria que o lock (e não a sorte) garante a convergência."""
         await _real_thread(session_store, "thread-1", 5)
 
-        await asyncio.gather(
-            th.reconcile_vectora_sessions(),
-            th.delete_thread(
-                DeleteThreadRequest(thread_id="thread-1"),
-                _http_request_alice(),
-            ),
+        delete_coro = th.delete_thread(
+            DeleteThreadRequest(thread_id="thread-1"),
+            _http_request_alice(),
         )
+        reconcile_coro = th.reconcile_vectora_sessions()
+        if delete_primeiro:
+            await asyncio.gather(delete_coro, reconcile_coro)
+        else:
+            await asyncio.gather(reconcile_coro, delete_coro)
 
         async with checkpoints_db.execute(
             "SELECT COUNT(*) FROM vectora_sessions WHERE thread_id = ?",
