@@ -8,7 +8,39 @@ palavra-por-palavra.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
+import shutil
+import sys
+
+
+async def _terminate_windows_tree(
+    pid: int, logger: logging.Logger, log_prefix: str
+) -> None:
+    """Encerra descendentes de um sidecar no Windows.
+
+    ``Process.terminate()`` atua apenas no PID raiz. Electron cria renderers
+    e utilitários filhos, então ``taskkill /T /F`` garante que a árvore não
+    fique órfã durante o encerramento do backend.
+    """
+    if sys.platform != "win32":
+        return
+    taskkill = shutil.which("taskkill")
+    if taskkill is None:
+        return
+    try:
+        killer = await asyncio.create_subprocess_exec(
+            taskkill,
+            "/PID",
+            str(pid),
+            "/T",
+            "/F",
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        await killer.wait()
+    except Exception:
+        logger.debug("%s: taskkill da árvore falhou", log_prefix, exc_info=True)
 
 
 class LazyLock:
@@ -50,6 +82,9 @@ async def terminate_gracefully(
     sidecar. Logar isso como warning com traceback completo só polui o log
     de shutdown sem indicar nenhum problema real.
     """
+    # No Windows, encerra a árvore enquanto o PID raiz ainda existe; depois
+    # aguardamos o mesmo objeto asyncio para manter o contrato comum.
+    await _terminate_windows_tree(proc.pid, logger, log_prefix)
     try:
         proc.terminate()
         await asyncio.wait_for(proc.wait(), timeout=timeout_seconds)
@@ -59,3 +94,5 @@ async def terminate_gracefully(
         logger.debug("%s: processo já havia saído antes do terminate()", log_prefix)
     except Exception:
         logger.warning("%s: erro ao encerrar", log_prefix, exc_info=True)
+    with contextlib.suppress(Exception):
+        await proc.wait()
