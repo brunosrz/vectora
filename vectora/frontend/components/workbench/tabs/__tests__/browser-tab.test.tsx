@@ -38,6 +38,18 @@ vi.mock("@/lib/paraglide/messages", () => ({
   ),
 }));
 
+const makeBrowserTestTab = (viewId: number) => ({
+  id: `tab-${viewId}`,
+  title: "",
+  history: [],
+  historyIndex: -1,
+  iframeKey: 0,
+  viewId,
+  desktopUrl: "",
+  canGoBack: false,
+  canGoForward: false,
+});
+
 vi.mock("@/lib/stores/workspaces-store", () => ({
   useWorkspacesStore: (
     sel: (s: { getActive: () => { id: string } | undefined }) => unknown,
@@ -652,24 +664,13 @@ describe("BrowserTab — caminho desktop (WebContentsView real via window.vector
 
   it("descarta as sessões de todas as threads quando um workspace é removido", () => {
     const bridge = mockBrowserView();
-    const tab = (viewId: number) => ({
-      id: `tab-${viewId}`,
-      title: "",
-      history: [],
-      historyIndex: -1,
-      iframeKey: 0,
-      viewId,
-      desktopUrl: "",
-      canGoBack: false,
-      canGoForward: false,
-    });
     setBrowserSession("ws-deleted:t1", {
       activeTabId: "tab-21",
-      tabs: [tab(21)],
+      tabs: [makeBrowserTestTab(21)],
     });
     setBrowserSession("ws-deleted:t2", {
       activeTabId: "tab-22",
-      tabs: [tab(22)],
+      tabs: [makeBrowserTestTab(22)],
     });
 
     disposeBrowserWorkspace("ws-deleted");

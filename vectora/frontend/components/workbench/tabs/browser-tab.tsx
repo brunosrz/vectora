@@ -141,6 +141,7 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
   });
   const [consoleFor, setConsoleFor] = useState<string | null>(null);
   const [consoleLines, setConsoleLines] = useState<string[]>([]);
+  const consoleSelectionRef = useRef(0);
   const [consoleLoading, setConsoleLoading] = useState(false);
   // Painel de devtools da sessão do AGENTE (Playwright headless) — distinto
   // do console de stdout do dev server acima, que é sobre o processo, não
@@ -387,6 +388,13 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
   // Cria uma WebContentsView para cada aba restaurada. A troca de workbench
   // apenas torna as views invisíveis; fechar uma aba continua sendo a ação
   // destrutiva explícita.
+  const hideAllBrowserViews = useCallback(() => {
+    if (!desktopBrowser) return;
+    for (const tab of tabsRef.current) {
+      if (tab.viewId !== null) desktopBrowser.setVisible(tab.viewId, false);
+    }
+  }, [desktopBrowser]);
+
   useEffect(() => {
     if (!desktopBrowser) return;
     let cancelled = false;
@@ -424,18 +432,18 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
     }
     return () => {
       cancelled = true;
-      for (const t of tabsRef.current) {
-        if (t.viewId !== null) desktopBrowser.setVisible(t.viewId, false);
-      }
+      hideAllBrowserViews();
     };
-  }, [desktopBrowser, sessionKey]);
+  }, [desktopBrowser, hideAllBrowserViews, sessionKey]);
 
   useEffect(() => {
+    const pendingNavigate = pendingNavigateRef.current;
+    const pendingViewCreates = pendingViewCreatesRef.current;
     return () => {
       // The session is intentionally retained while the workbench is hidden;
       // deletion flows call disposeBrowserSession explicitly.
-      pendingNavigateRef.current.clear();
-      pendingViewCreatesRef.current.clear();
+      pendingNavigate.clear();
+      pendingViewCreates.clear();
     };
   }, []);
 
@@ -520,108 +528,131 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
     };
   }, [desktopBrowser, activeViewId, hasUrl]);
 
-  const fetchLaunch = useCallback(async () => {
-    if (!wsId) return;
-    try {
-      const res = await fetch(
-        `/workspaces/${encodeURIComponent(wsId)}/browser/launch`,
-      );
-      if (res.ok) {
-        const data = (await res.json()) as { configurations: LaunchConfig[] };
-        setConfigs(data.configurations ?? []);
-      }
-    } catch {
-      // silently ignore
-    } finally {
-      setIsLoading(false);
-    }
-  }, [wsId]);
-
-  const fetchStatus = useCallback(async (): Promise<ServerStatus[] | null> => {
-    if (!wsId) return null;
-    try {
-      const res = await fetch(
-        `/workspaces/${encodeURIComponent(wsId)}/browser/status`,
-      );
-      if (res.ok) {
-        const data = (await res.json()) as { servers: ServerStatus[] };
-        const servers = data.servers ?? [];
-        setStatuses(servers);
-
-        // Auto-navegação: qualquer servidor que passe de parado pra rodando
-        // entre um poll e outro abre sozinho numa aba NOVA — funciona tanto
-        // pro clique manual (handleStart) quanto pra tool `browser_start` do
-        // agente, que sobe o servidor sem passar por nenhum handler do UI.
-        // Aba nova (não substitui a ativa) preserva a navegação livre que o
-        // usuário já tinha aberto.
-        const prevRunning = prevRunningRef.current;
-        const nextRunning: Record<string, boolean> = {};
-        for (const server of servers) {
-          nextRunning[server.name] = server.running;
-          if (prevRunning && server.running && !prevRunning[server.name]) {
-            addTab(`http://localhost:${server.port}`);
-          }
+  const fetchLaunch = useCallback(
+    async (isCurrent: () => boolean = () => true) => {
+      if (!wsId) return;
+      try {
+        const res = await fetch(
+          `/workspaces/${encodeURIComponent(wsId)}/browser/launch`,
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { configurations: LaunchConfig[] };
+          if (isCurrent()) setConfigs(data.configurations ?? []);
         }
-        prevRunningRef.current = nextRunning;
-
-        return servers;
+      } catch {
+        // silently ignore
+      } finally {
+        if (isCurrent()) setIsLoading(false);
       }
-    } catch {
-      // silently ignore
-    }
-    return null;
-  }, [wsId, addTab]);
+    },
+    [wsId],
+  );
+
+  const fetchStatus = useCallback(
+    async (
+      isCurrent: () => boolean = () => true,
+    ): Promise<ServerStatus[] | null> => {
+      if (!wsId) return null;
+      try {
+        const res = await fetch(
+          `/workspaces/${encodeURIComponent(wsId)}/browser/status`,
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { servers: ServerStatus[] };
+          const servers = data.servers ?? [];
+          if (!isCurrent()) return servers;
+          setStatuses(servers);
+
+          // Auto-navegação: qualquer servidor que passe de parado pra rodando
+          // entre um poll e outro abre sozinho numa aba NOVA — funciona tanto
+          // pro clique manual (handleStart) quanto pra tool `browser_start` do
+          // agente, que sobe o servidor sem passar por nenhum handler do UI.
+          // Aba nova (não substitui a ativa) preserva a navegação livre que o
+          // usuário já tinha aberto.
+          const prevRunning = prevRunningRef.current;
+          const nextRunning: Record<string, boolean> = {};
+          for (const server of servers) {
+            nextRunning[server.name] = server.running;
+            if (prevRunning && server.running && !prevRunning[server.name]) {
+              addTab(`http://localhost:${server.port}`);
+            }
+          }
+          prevRunningRef.current = nextRunning;
+
+          return servers;
+        }
+      } catch {
+        // silently ignore
+      }
+      return null;
+    },
+    [wsId, addTab],
+  );
 
   const fetchConsoleLogs = useCallback(
-    async (name: string) => {
+    async (name: string, isCurrent: () => boolean) => {
       if (!wsId) return;
-      setConsoleLoading(true);
+      if (isCurrent()) setConsoleLoading(true);
       try {
         const res = await fetch(
           `/workspaces/${encodeURIComponent(wsId)}/browser/logs?name=${encodeURIComponent(name)}`,
         );
         if (res.ok) {
           const data = (await res.json()) as { lines: string[] };
-          setConsoleLines(data.lines ?? []);
+          if (isCurrent()) setConsoleLines(data.lines ?? []);
         }
       } catch {
         // silently ignore — o painel continua com as últimas linhas conhecidas
       } finally {
-        setConsoleLoading(false);
+        if (isCurrent()) setConsoleLoading(false);
       }
     },
     [wsId],
   );
 
   useEffect(() => {
+    let alive = true;
+    const selection = ++consoleSelectionRef.current;
     if (!consoleFor) {
       if (consolePollRef.current) clearInterval(consolePollRef.current);
-      return;
+      return () => {
+        alive = false;
+      };
     }
-    fetchConsoleLogs(consoleFor);
-    consolePollRef.current = setInterval(
-      () => fetchConsoleLogs(consoleFor),
-      3000,
-    );
+    const load = () =>
+      fetchConsoleLogs(
+        consoleFor,
+        () => alive && consoleSelectionRef.current === selection,
+      );
+    void Promise.resolve().then(load);
+    consolePollRef.current = setInterval(load, 3000);
     return () => {
+      alive = false;
       if (consolePollRef.current) clearInterval(consolePollRef.current);
     };
   }, [consoleFor, fetchConsoleLogs]);
 
   useEffect(() => {
     const el = consoleLogRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (el && consoleLines.length > 0) el.scrollTop = el.scrollHeight;
   }, [consoleLines]);
 
   useEffect(() => {
-    fetchLaunch();
+    let alive = true;
+    void Promise.resolve().then(() => fetchLaunch(() => alive));
+    return () => {
+      alive = false;
+    };
   }, [fetchLaunch]);
 
   useEffect(() => {
+    let alive = true;
     if (!wsId || configs.length === 0) return;
-    fetchStatus();
-    pollRef.current = setInterval(fetchStatus, 3000);
+    const load = () => fetchStatus(() => alive);
+    void Promise.resolve().then(load);
+    pollRef.current = setInterval(load, 3000);
     return () => {
+      alive = false;
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [wsId, configs.length, fetchStatus]);
@@ -1125,7 +1156,14 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
             </span>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => consoleFor && fetchConsoleLogs(consoleFor)}
+                onClick={() => {
+                  if (!consoleFor) return;
+                  const selection = consoleSelectionRef.current;
+                  void fetchConsoleLogs(
+                    consoleFor,
+                    () => consoleSelectionRef.current === selection,
+                  );
+                }}
                 className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 title={msg.workbench_browser_console_refresh()}
               >
