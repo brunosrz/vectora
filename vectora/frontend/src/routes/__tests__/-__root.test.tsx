@@ -280,6 +280,16 @@ describe("RootComponent — hydrate de workspaces", () => {
     ).toBe("#101010");
   });
 
+  it("usa o modo escuro quando system não tem matchMedia", () => {
+    vi.stubGlobal("matchMedia", undefined);
+    useSettingsStore.setState({ theme: "system", themePreset: "default" });
+    const Component = (Route as unknown as { component: ComponentType })
+      .component;
+
+    expect(() => render(<Component />)).not.toThrow();
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+  });
+
   it("hidrata workspaces ao montar numa rota protegida", async () => {
     const hydrateSpy = vi
       .spyOn(useWorkspacesStore.getState(), "hydrate")

@@ -295,6 +295,10 @@ function RootComponent() {
     };
 
     if (theme === "system") {
+      if (typeof window.matchMedia !== "function") {
+        apply(true);
+        return;
+      }
       const mq = window.matchMedia("(prefers-color-scheme: dark)");
       apply(mq.matches);
       const handler = (e: MediaQueryListEvent) => apply(e.matches);
