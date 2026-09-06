@@ -433,7 +433,7 @@ async def openrouter_model_image_state(model_id: str) -> CapabilityState:
 
     for m in _catalog_cache["models"]:
         if m.id == model_id:
-            modalities = {item.lower().replace("-", "_") for item in m.input_modalities}
+            modalities = _normalize_modalities(m.input_modalities)
             return (
                 CapabilityState.SUPPORTED
                 if {"image", "image_url", "vision"} & modalities
