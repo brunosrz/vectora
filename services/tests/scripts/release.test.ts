@@ -349,11 +349,11 @@ describe("buildArchManifest / resolveInstaller — regressão do manifesto cross
         "Vectora-0.1.1-win-x64.exe",
       ]),
     ).toBe("Vectora-0.1.1-win-x64.exe");
-    expect(
+    expect(() =>
       selectManifestInstaller("linux", [
         "Vectora-0.1.1-linux-x64.deb",
         "Vectora-0.1.1-linux-x64.rpm",
       ]),
-    ).toBe("Vectora-0.1.1-linux-x64.deb");
+    ).toThrow(/\.AppImage/);
   });
 });

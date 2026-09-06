@@ -431,13 +431,13 @@ export function selectManifestInstaller(
 ): string {
   const updaterExtension =
     os === "win" ? ".exe" : os === "mac" ? ".dmg" : ".AppImage";
-  return (
-    filenames.find((filename) => filename.endsWith(updaterExtension)) ??
-    filenames[0] ??
-    (() => {
-      throw new Error(`Nenhum instalador disponível para ${os}`);
-    })()
-  );
+  const filename = filenames.find((name) => name.endsWith(updaterExtension));
+  if (!filename) {
+    throw new Error(
+      `Nenhum instalador ${updaterExtension} disponível para ${os}`,
+    );
+  }
+  return filename;
 }
 
 async function main(): Promise<void> {

@@ -108,7 +108,10 @@ function MarketplaceResults({
 
   useEffect(() => {
     const q = query.trim();
-    if (!q) return;
+    if (!q) {
+      setResults([]);
+      return;
+    }
     let alive = true;
     const timer = setTimeout(() => {
       if (!alive) return;
