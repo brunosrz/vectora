@@ -133,13 +133,15 @@ def _provider_has_key(provider: str) -> bool:
         return True
     from backend.settings import settings
 
+    if provider == "nine_router":
+        return bool(settings.nine_router_api_key and settings.nine_router_base_url)
+
     keymap = {
         "openai": settings.openai_api_key,
         "google_genai": settings.google_api_key,
         "anthropic": settings.anthropic_api_key,
         "cohere": settings.cohere_api_key,
         "openrouter": settings.openrouter_api_key,
-        "nine_router": settings.nine_router_api_key,
     }
     return bool(keymap.get(provider))
 

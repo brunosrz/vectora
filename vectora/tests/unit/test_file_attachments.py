@@ -22,6 +22,7 @@ from backend.api.schemas import (
     ChatConfig,
     StreamChatRequest,
 )
+from backend.settings import CapabilityState
 
 # ===========================================================================
 # Helpers
@@ -651,8 +652,8 @@ class TestStreamChatBlocksImageForNonVisionProvider:
                 "backend.services.agent_factory.get_native_agent", mock_get_native_agent
             ),
             patch(
-                "backend.api.handlers.provider_routing.openrouter_model_supports_image",
-                new=AsyncMock(return_value=False),
+                "backend.api.handlers.provider_routing.openrouter_model_image_state",
+                new=AsyncMock(return_value=CapabilityState.UNSUPPORTED),
             ),
         ):
             request = StreamChatRequest(
@@ -686,8 +687,8 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             )
             stack.enter_context(
                 patch(
-                    "backend.api.handlers.provider_routing.openrouter_model_supports_image",
-                    new=AsyncMock(return_value=True),
+                    "backend.api.handlers.provider_routing.openrouter_model_image_state",
+                    new=AsyncMock(return_value=CapabilityState.SUPPORTED),
                 )
             )
             request = StreamChatRequest(
@@ -701,6 +702,34 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             body = await _collect_sse_body(response)
 
         assert "MODEL_NO_VISION" not in body
+
+    @pytest.mark.asyncio
+    async def test_openrouter_model_with_unknown_capability_is_not_blocked(
+        self,
+    ) -> None:
+        """Catálogo indisponível não deve bloquear o envio preventivamente."""
+        from backend.api.handlers import chat as chat_mod
+
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                stack.enter_context(p)
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.provider_routing.openrouter_model_image_state",
+                    new=AsyncMock(return_value=CapabilityState.UNKNOWN),
+                )
+            )
+            request = StreamChatRequest(
+                content="o que tem nessa imagem?",
+                config=ChatConfig(model="openrouter:openai/gpt-4o"),
+                attachments=[_image_attachment()],
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert '"code": "MODEL_NO_VISION"' not in body
 
 
 class TestStreamChatBlocksToolIncompatibleModelInCodeMode:

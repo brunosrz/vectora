@@ -178,6 +178,38 @@ describe("ModelSelector", () => {
     });
   });
 
+  it("oculta modelos dinâmicos indisponíveis e mantém o modelo ativo", async () => {
+    const active = "nine_router:cx/gpt-5.6-luna";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              providers: ["openai"],
+              dynamic_models: [
+                {
+                  id: "openrouter:private/model",
+                  label: "private/model",
+                  available: false,
+                },
+                { id: active, label: active, available: false },
+              ],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+        ),
+      ),
+    );
+
+    render(<ModelSelector value={active} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+    await waitFor(() => {
+      expect(screen.queryByText("private/model")).not.toBeInTheDocument();
+      expect(screen.getAllByText(active).length).toBeGreaterThan(0);
+    });
+  });
+
   it("esconde modelo incompatível com tool-calling no code mode, mas mantém no chat mode", async () => {
     const models = getAllowedModels();
     const cohere = models.find((m) => m === "cohere:command-a-plus-05-2026");

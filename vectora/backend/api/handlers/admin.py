@@ -641,8 +641,13 @@ async def patch_fallback_order(request: Request, body: FallbackOrderBody) -> dic
     valid: list[str] = []
     for raw in body.order:
         model = raw.strip()
-        provider, separator, _ = model.partition(":")
-        if separator and provider and _provider_has_key(provider.replace("-", "_")):
+        provider, separator, model_name = model.partition(":")
+        if (
+            separator
+            and provider
+            and model_name.strip()
+            and _provider_has_key(provider.replace("-", "_"))
+        ):
             valid.append(model)
     runtime_settings.set_fallback_order(valid)
     return {"status": "updated", "fallback_order": runtime_settings.fallback_order}
@@ -681,10 +686,15 @@ async def patch_image_fallback_model(
 
     model = body.model.strip()
     if model:
-        provider, separator, _ = model.partition(":")
+        provider, separator, model_name = model.partition(":")
         from backend.llm.provider_fallback import _provider_has_key
 
-        if not separator or not _provider_has_key(provider.replace("-", "_")):
+        if (
+            not separator
+            or not provider
+            or not model_name.strip()
+            or not _provider_has_key(provider.replace("-", "_"))
+        ):
             raise HTTPException(
                 status_code=422, detail="Modelo ou provider indisponível"
             )
