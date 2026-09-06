@@ -18,6 +18,11 @@ import {
 } from "@testing-library/react";
 
 import { BrowserTab, clearBrowserSessionCache } from "../browser-tab";
+import {
+  disposeBrowserWorkspace,
+  disposeBrowserSession,
+  setBrowserSession,
+} from "@/lib/browser-session-store";
 
 vi.mock("@/lib/paraglide/messages", () => ({
   m: new Proxy(
@@ -607,6 +612,87 @@ describe("BrowserTab — caminho desktop (WebContentsView real via window.vector
     unmount();
     expect(bridge.setVisible).toHaveBeenCalledWith(1, false);
     expect(bridge.destroyView).not.toHaveBeenCalled();
+  });
+
+  it("descarta todas as views ao excluir a sessão explicitamente", () => {
+    const bridge = mockBrowserView();
+    setBrowserSession("ws1:thread-to-delete", {
+      activeTabId: "tab-1",
+      tabs: [
+        {
+          id: "tab-1",
+          title: "",
+          history: [],
+          historyIndex: -1,
+          iframeKey: 0,
+          viewId: 11,
+          desktopUrl: "https://one.example",
+          canGoBack: false,
+          canGoForward: false,
+        },
+        {
+          id: "tab-2",
+          title: "",
+          history: [],
+          historyIndex: -1,
+          iframeKey: 0,
+          viewId: 12,
+          desktopUrl: "https://two.example",
+          canGoBack: false,
+          canGoForward: false,
+        },
+      ],
+    });
+
+    disposeBrowserSession("ws1:thread-to-delete");
+
+    expect(bridge.destroyView).toHaveBeenCalledWith(11);
+    expect(bridge.destroyView).toHaveBeenCalledWith(12);
+  });
+
+  it("descarta as sessões de todas as threads quando um workspace é removido", () => {
+    const bridge = mockBrowserView();
+    const tab = (viewId: number) => ({
+      id: `tab-${viewId}`,
+      title: "",
+      history: [],
+      historyIndex: -1,
+      iframeKey: 0,
+      viewId,
+      desktopUrl: "",
+      canGoBack: false,
+      canGoForward: false,
+    });
+    setBrowserSession("ws-deleted:t1", {
+      activeTabId: "tab-21",
+      tabs: [tab(21)],
+    });
+    setBrowserSession("ws-deleted:t2", {
+      activeTabId: "tab-22",
+      tabs: [tab(22)],
+    });
+
+    disposeBrowserWorkspace("ws-deleted");
+
+    expect(bridge.destroyView).toHaveBeenCalledWith(21);
+    expect(bridge.destroyView).toHaveBeenCalledWith(22);
+  });
+
+  it("fecha uma aba antes de createView resolver sem navegar nem deixar view órfã", async () => {
+    const resolvers: Array<(viewId: number) => void> = [];
+    const bridge = mockBrowserView();
+    bridge.createView = vi.fn(
+      () => new Promise<number>((resolve) => resolvers.push(resolve)),
+    );
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalled());
+    const close = await screen.findByTitle("workbench_browser_close_tab");
+    fireEvent.click(close);
+
+    await act(async () => resolvers[0](99));
+    expect(bridge.destroyView).toHaveBeenCalledWith(99);
+    expect(bridge.navigate).not.toHaveBeenCalled();
   });
 });
 

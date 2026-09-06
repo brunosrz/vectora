@@ -68,6 +68,7 @@ import {
 import { useGlobalShortcuts } from "@/lib/hooks/use-global-shortcuts";
 import { buildOptimisticThread } from "./-thread-cache-helpers";
 import { m } from "@/lib/paraglide/messages";
+import { disposeBrowserThread } from "@/lib/browser-session-store";
 export const Route = createFileRoute("/session/$threadId")({
   // Só a lista de threads (sidebar) bloqueia a navegação — o histórico da
   // thread ativa é prefetch em background (ver comentário abaixo). O
@@ -415,6 +416,7 @@ function SessionPage() {
   const handleDeleteThread = useCallback(
     async (id: string) => {
       await deleteThreadMutation.mutateAsync(id);
+      disposeBrowserThread(id);
       if (id !== threadId) return;
       useWindowsStore.getState().closeAll();
       if (chatMode) {
@@ -765,6 +767,7 @@ function SessionPage() {
             // ── Layout IDE ──────────────────────────────────────────────
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <IdeModeLayout
+                workbenchOpen={workbenchOpen}
                 isNarrow={isNarrowViewport}
                 header={headerEl}
                 navBar={<WorkbenchNavBar threadId={threadId} side="left" />}
