@@ -501,7 +501,7 @@ jobs:
     needs: release-native
     runs-on: ubuntu-latest
     concurrency:
-      group: vectora-production-d1-schema
+      group: vectora-update-channel-publish
       cancel-in-progress: false
     environment:
       name: production
