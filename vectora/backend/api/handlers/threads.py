@@ -723,8 +723,15 @@ async def list_threads(
     async with db.execute(query, params) as cur:
         rows = await cur.fetchall()
 
+    session_store = await _get_session_store()
+    subagent_thread_ids = {
+        session["thread_id"]
+        for session in await session_store.list_all_sessions()
+        if session["mode"] == "subagent"
+    }
+    rows = [row for row in rows if row[0] not in subagent_thread_ids]
+
     if http_request is not None:
-        session_store = await _get_session_store()
         user_id = _user_id(http_request)
         foreign_ids = await session_store.foreign_thread_ids(
             [r[0] for r in rows], user_id
@@ -803,15 +810,17 @@ async def reconcile_vectora_sessions() -> int:
     """
     session_store = await _get_session_store()
     real_sessions = await session_store.list_all_sessions()
+    subagent_thread_ids = {
+        session["thread_id"]
+        for session in real_sessions
+        if session["mode"] == "subagent"
+    }
     real_with_messages = [
         s for s in real_sessions if s["message_count"] > 0 and s["mode"] != "subagent"
     ]
-    if not real_with_messages:
-        return 0
 
     db = await _get_db()
     thread_ids = [s["thread_id"] for s in real_with_messages]
-    placeholders = ",".join("?" for _ in thread_ids)
 
     # Lock cobrindo a seção crítica inteira (leitura do tombstone → upserts →
     # commit) — sem isso, os vários `await` entre a leitura de
@@ -820,16 +829,27 @@ async def reconcile_vectora_sessions() -> int:
     # meio deste loop, que então reinsere a thread usando o instantâneo já
     # obsoleto (ver `_reconcile_delete_lock`).
     async with _reconcile_delete_lock:
-        async with db.execute(
-            f"SELECT thread_id, message_count, extra FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
-            thread_ids,
-        ) as cur:
-            existing = {row[0]: (row[1], row[2]) for row in await cur.fetchall()}
-        async with db.execute(
-            f"SELECT thread_id FROM deleted_threads WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
-            thread_ids,
-        ) as cur:
-            tombstoned = {row[0] for row in await cur.fetchall()}
+        if subagent_thread_ids:
+            placeholders = ",".join("?" for _ in subagent_thread_ids)
+            await db.execute(
+                f"DELETE FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+                tuple(subagent_thread_ids),
+            )
+
+        existing: dict[str, tuple[int, str]] = {}
+        tombstoned: set[str] = set()
+        if thread_ids:
+            placeholders = ",".join("?" for _ in thread_ids)
+            async with db.execute(
+                f"SELECT thread_id, message_count, extra FROM vectora_sessions WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+                thread_ids,
+            ) as cur:
+                existing = {row[0]: (row[1], row[2]) for row in await cur.fetchall()}
+            async with db.execute(
+                f"SELECT thread_id FROM deleted_threads WHERE thread_id IN ({placeholders})",  # noqa: S608  # nosec B608
+                thread_ids,
+            ) as cur:
+                tombstoned = {row[0] for row in await cur.fetchall()}
 
         reconciled = 0
         for session in real_with_messages:
@@ -903,7 +923,7 @@ async def reconcile_vectora_sessions() -> int:
             )
             reconciled += 1
 
-        if reconciled:
+        if reconciled or subagent_thread_ids:
             await db.commit()
             logger.info(
                 "threads: %d thread(s) real(is) repovoada(s)/corrigida(s) em vectora_sessions",

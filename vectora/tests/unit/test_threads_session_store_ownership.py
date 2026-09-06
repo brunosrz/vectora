@@ -141,6 +141,21 @@ class TestListThreadsReflectsSessionStore:
 
         assert result.threads == []
 
+    async def test_subagent_legado_com_mode_code_nao_aparece_na_listagem(
+        self, session_store: SessionStore
+    ) -> None:
+        """A fonte de verdade também filtra linhas legadas gravadas como code."""
+        thread_id = "thread-pai:search:legado"
+        await session_store.create_session(thread_id, user_id="alice", mode="subagent")
+        await th._upsert_session(thread_id, title="search", mode="code")
+        await th._increment_message_count(thread_id)
+
+        result = await th.list_threads(
+            ListThreadsRequest(limit=50), _http_request("alice")
+        )
+
+        assert result.threads == []
+
 
 class TestOwnershipEnforcement:
     """GetThread/UpdateThread/DeleteThread/GenerateTitle não vazam threads
