@@ -21,11 +21,13 @@ from typing import TYPE_CHECKING
 from backend.llm.provider_fallback import (
     QuotaExhaustedError,
     get_fallback_chain,
+    is_multimodal_incompatible_error,
     is_provider_incompatible_error,
     is_quota_error,
     is_transient_error,
     record_switch,
 )
+from backend.settings import CapabilityState
 
 if TYPE_CHECKING:
     from backend.llm.base import ChatClient
@@ -41,17 +43,55 @@ def _has_images(messages: list[VMessage]) -> bool:
     return any(b.kind == "image_url" for m in messages for b in m.content)
 
 
-def _candidates(primary_model_id: str, *, has_images: bool) -> list[str]:
-    from backend.settings import VISION_CAPABLE_PROVIDERS, find_provider_for_model
+async def _vision_state(model_id: str) -> CapabilityState:
+    from backend.settings import provider_capability_state
 
+    provider, _, model_name = model_id.partition(":")
+    provider = provider.replace("-", "_")
+    if provider == "openrouter":
+        from backend.api.handlers.provider_routing import openrouter_model_image_state
+
+        return await openrouter_model_image_state(model_name)
+    if provider == "nine_router":
+        from backend.api.handlers.provider_routing import (
+            nine_router_model_supports_image,
+        )
+
+        return await nine_router_model_supports_image(model_name)
+    return provider_capability_state(provider.replace("_", "-"), "vision")
+
+
+async def _candidates(primary_model_id: str, *, has_images: bool) -> list[str]:
     all_candidates = [primary_model_id, *get_fallback_chain(primary_model_id)]
-    if not has_images:
-        return all_candidates
-    return [
-        mid
-        for mid in all_candidates
-        if find_provider_for_model(mid) in VISION_CAPABLE_PROVIDERS
-    ]
+    if has_images:
+        filtered = [primary_model_id]
+        for mid in all_candidates[1:]:
+            if await _vision_state(mid) is CapabilityState.SUPPORTED:
+                filtered.append(mid)  # noqa: PERF401 - await is required per model
+        from backend.llm.provider_fallback import _provider_has_key
+        from backend.workspace.runtime_settings import runtime_settings
+
+        configured = runtime_settings.get("image_fallback_model")
+        if isinstance(configured, str) and configured.strip():
+            configured = configured.strip()
+            provider, separator, model_id = configured.partition(":")
+            if (
+                separator
+                and provider
+                and model_id.strip()
+                and _provider_has_key(provider.replace("-", "_"))
+                and await _vision_state(configured) is CapabilityState.SUPPORTED
+            ):
+                filtered.append(configured)
+        all_candidates = filtered
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for mid in all_candidates:
+        normalized = mid.strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            deduped.append(normalized)
+    return deduped
 
 
 def load_chat_client(model_id: str) -> ChatClient:  # noqa: PLR0911
@@ -179,6 +219,7 @@ def _deve_tentar_proximo(exc: BaseException, *, indice: int) -> bool:
         is_quota_error(exc)
         or is_transient_error(exc)
         or is_provider_incompatible_error(exc)
+        or is_multimodal_incompatible_error(exc)
         or indice > 0
     )
 
@@ -196,8 +237,8 @@ class FallbackChatClient:
         self.primary_model_id = primary_model_id
         self.on_model_switch = on_model_switch
 
-    def _candidate_ids(self, messages: list[VMessage]) -> list[str]:
-        candidatos = _candidates(
+    async def _candidate_ids(self, messages: list[VMessage]) -> list[str]:
+        candidatos = await _candidates(
             self.primary_model_id, has_images=_has_images(messages)
         )
         if not candidatos:
@@ -213,7 +254,7 @@ class FallbackChatClient:
         temperature: float | None = None,
         max_tokens: int | None = None,
     ) -> VMessage:
-        candidatos = self._candidate_ids(messages)
+        candidatos = await self._candidate_ids(messages)
 
         last_exc: BaseException | None = None
         for i, mid in enumerate(candidatos):
@@ -234,6 +275,8 @@ class FallbackChatClient:
                     await _emit_switch(self.on_model_switch, mid, candidatos[i + 1])
 
         last_mid = candidatos[-1] if candidatos else self.primary_model_id
+        if last_exc is not None and is_multimodal_incompatible_error(last_exc):
+            raise last_exc
         msg = f"Todos os providers esgotaram a quota (último: {last_mid})."
         raise QuotaExhaustedError(msg, model_id=last_mid) from last_exc
 
@@ -245,7 +288,7 @@ class FallbackChatClient:
         temperature: float | None = None,
         max_tokens: int | None = None,
     ) -> AsyncIterator[VMessageChunk]:
-        candidatos = self._candidate_ids(messages)
+        candidatos = await self._candidate_ids(messages)
 
         last_exc: BaseException | None = None
         for i, mid in enumerate(candidatos):
@@ -272,5 +315,7 @@ class FallbackChatClient:
                     await _emit_switch(self.on_model_switch, mid, candidatos[i + 1])
 
         last_mid = candidatos[-1] if candidatos else self.primary_model_id
+        if last_exc is not None and is_multimodal_incompatible_error(last_exc):
+            raise last_exc
         msg = f"Todos os providers esgotaram a quota (último: {last_mid})."
         raise QuotaExhaustedError(msg, model_id=last_mid) from last_exc

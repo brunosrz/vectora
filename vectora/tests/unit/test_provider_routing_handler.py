@@ -634,6 +634,30 @@ class TestOpenRouterModelSupportsImage:
         assert await openrouter_model_supports_image("openai/gpt-4o") is True
 
     @pytest.mark.asyncio
+    async def test_modelo_com_modalidade_image_com_espacos_retorna_true(self):
+        from backend.api.handlers import provider_routing as pr
+        from backend.api.handlers.provider_routing import (
+            CapabilityState,
+            OpenRouterModelInfo,
+            openrouter_model_image_state,
+        )
+
+        self._reset_cache()
+        pr._catalog_cache["fetched_at"] = 0.0
+        pr._catalog_cache["models"] = [
+            OpenRouterModelInfo(
+                id="openai/gpt-4o",
+                name="GPT-4o",
+                input_modalities=["text", " image ", "vision "],
+            )
+        ]
+
+        assert (
+            await openrouter_model_image_state("openai/gpt-4o")
+            is CapabilityState.SUPPORTED
+        )
+
+    @pytest.mark.asyncio
     async def test_modelo_sem_image_no_catalogo_retorna_false(self):
         """Erro/borda central deste bug: nem todo modelo do OpenRouter
         processa imagem — o catálogo é quem decide, não o provider."""

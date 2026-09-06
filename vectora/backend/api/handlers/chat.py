@@ -50,7 +50,11 @@ from backend.engine.conversation_loop import (
 from backend.engine.hitl import should_require_approval
 from backend.llm.fallback_chat_client import FallbackChatClient
 from backend.services import agent_factory
-from backend.settings import TOOL_CALLING_INCOMPATIBLE_MODELS, VISION_CAPABLE_PROVIDERS
+from backend.settings import (
+    TOOL_CALLING_INCOMPATIBLE_MODELS,
+    VISION_CAPABLE_PROVIDERS,
+    CapabilityState,
+)
 from backend.tools.subagent_delegate import SubagentDeps
 from backend.vtypes.context import ctx_from_config
 from backend.vtypes.message import ContentBlock, MessageRole, VMessage, text_message
@@ -153,22 +157,35 @@ def _resolve_provider(model_spec: str) -> str:
     )
 
 
-async def _model_supports_vision(model_spec: str) -> bool:
-    """Capability de visão do modelo escolhido — provider fixo
-    (``VISION_CAPABLE_PROVIDERS``) pros diretos, mas OpenRouter varia por
-    modelo servido (alguns processam imagem, outros não), então delega pro
-    catálogo público em vez de bloquear o provider inteiro."""
+async def _model_supports_vision(model_spec: str) -> CapabilityState:
+    """Return the tri-state vision capability for a concrete model."""
     provider = _resolve_provider(model_spec)
     if provider in VISION_CAPABLE_PROVIDERS:
-        return True
+        return CapabilityState.SUPPORTED
     if provider == "openrouter":
         from backend.api.handlers.provider_routing import (
-            openrouter_model_supports_image,
+            openrouter_model_image_state,
         )
 
         _, _, model_id = model_spec.partition(":")
-        return await openrouter_model_supports_image(model_id or model_spec)
-    return False
+        return await openrouter_model_image_state(model_id or model_spec)
+    if provider == "nine_router":
+        from backend.api.handlers.provider_routing import (
+            nine_router_model_supports_image,
+        )
+
+        _, _, model_id = model_spec.partition(":")
+        return await nine_router_model_supports_image(model_id or model_spec)
+    from backend.settings import provider_capability_state
+
+    return provider_capability_state(provider, "vision")
+
+
+def _coerce_capability_state(value: CapabilityState | bool) -> CapabilityState:
+    """Keep compatibility with tests/callers that monkeypatch a bool helper."""
+    if isinstance(value, bool):
+        return CapabilityState.SUPPORTED if value else CapabilityState.UNSUPPORTED
+    return value
 
 
 async def _resolve_image_fallback_model() -> str | None:
@@ -183,7 +200,19 @@ async def _resolve_image_fallback_model() -> str | None:
     spec = runtime_settings.get("image_fallback_model")
     if not spec or not isinstance(spec, str):
         return None
-    if not await _model_supports_vision(spec):
+    spec = spec.strip()
+    from backend.llm.provider_fallback import _provider_has_key
+
+    provider, separator, model_id = spec.partition(":")
+    if (
+        not separator
+        or not provider
+        or not model_id.strip()
+        or not _provider_has_key(provider.replace("-", "_"))
+    ):
+        return None
+    state = _coerce_capability_state(await _model_supports_vision(spec))
+    if state is not CapabilityState.SUPPORTED:
         return None
     return spec
 
@@ -638,7 +667,10 @@ async def stream_chat(
     # hífen do resto de settings.py; comparar contra a forma normalizada
     # bloqueava até modelos com suporte real a visão (ex.: Gemini).
     has_image = any(att.kind == AttachmentKind.IMAGE for att in request.attachments)
-    if has_image and not await _model_supports_vision(request.config.model):
+    if has_image and (
+        _coerce_capability_state(await _model_supports_vision(request.config.model))
+        is CapabilityState.UNSUPPORTED
+    ):
         fallback_spec = await _resolve_image_fallback_model()
         if fallback_spec is None:
             return StreamingResponse(

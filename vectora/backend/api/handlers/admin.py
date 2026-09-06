@@ -635,9 +635,21 @@ async def get_fallback_order(request: Request) -> dict:
 async def patch_fallback_order(request: Request, body: FallbackOrderBody) -> dict:
     """Define a ordem de fallback de LLM; devolve a lista normalizada persistida."""
     require_admin(_get_user(request))
+    from backend.llm.provider_fallback import _provider_has_key
     from backend.workspace.runtime_settings import runtime_settings
 
-    runtime_settings.set_fallback_order(body.order)
+    valid: list[str] = []
+    for raw in body.order:
+        model = raw.strip()
+        provider, separator, model_name = model.partition(":")
+        if (
+            separator
+            and provider
+            and model_name.strip()
+            and _provider_has_key(provider.replace("-", "_"))
+        ):
+            valid.append(model)
+    runtime_settings.set_fallback_order(valid)
     return {"status": "updated", "fallback_order": runtime_settings.fallback_order}
 
 
@@ -665,12 +677,37 @@ async def patch_image_fallback_model(
 ) -> dict:
     """Define (ou limpa, com string vazia) o modelo de fallback de imagem."""
     require_admin(_get_user(request))
+    from backend.api.handlers.chat import (
+        _coerce_capability_state,
+        _model_supports_vision,
+    )
     from backend.config.registry import get_field
+    from backend.settings import CapabilityState
 
+    model = body.model.strip()
+    if model:
+        provider, separator, model_name = model.partition(":")
+        from backend.llm.provider_fallback import _provider_has_key
+
+        if (
+            not separator
+            or not provider
+            or not model_name.strip()
+            or not _provider_has_key(provider.replace("-", "_"))
+        ):
+            raise HTTPException(
+                status_code=422, detail="Modelo ou provider indisponível"
+            )
+        state = _coerce_capability_state(await _model_supports_vision(model))
+        if state is not CapabilityState.SUPPORTED:
+            raise HTTPException(
+                status_code=422,
+                detail="O modelo precisa declarar suporte conhecido a imagens",
+            )
     field = get_field("image_fallback_model")
     if field is not None:
-        field.set(body.model.strip())
-    return {"status": "updated", "model": body.model.strip()}
+        field.set(model)
+    return {"status": "updated", "model": model}
 
 
 class MediaModelsBody(BaseModel):

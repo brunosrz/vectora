@@ -214,7 +214,9 @@ def _patch_env(order, keyed_providers):
     """Patcha runtime_settings.get(llm_fallback_order) e _provider_has_key."""
     rt = patch.object(pf, "_fallback_order", return_value=list(order))
     keys = patch.object(
-        pf, "_provider_has_key", side_effect=lambda p: p in keyed_providers
+        pf,
+        "_provider_has_key",
+        side_effect=lambda p: p in keyed_providers,
     )
     return rt, keys
 
@@ -222,20 +224,20 @@ def _patch_env(order, keyed_providers):
 class TestGetFallbackChain:
     def test_removes_current_provider(self):
         order = ["openai:gpt-4o", "google-genai:gemini-2.5-flash", "cohere:command-a"]
-        rt, keys = _patch_env(order, {"openai", "google-genai", "cohere"})
+        rt, keys = _patch_env(order, {"openai", "google_genai", "cohere"})
         with rt, keys:
             chain = pf.get_fallback_chain("openai:gpt-4o")
         assert chain == ["google-genai:gemini-2.5-flash", "cohere:command-a"]
 
     def test_removes_providers_without_key(self):
         order = ["openai:gpt-4o", "google-genai:gemini-2.5-flash", "cohere:command-a"]
-        rt, keys = _patch_env(order, {"openai", "google-genai"})  # sem cohere
+        rt, keys = _patch_env(order, {"openai", "google_genai"})  # sem cohere
         with rt, keys:
             chain = pf.get_fallback_chain("openai:gpt-4o")
         assert chain == ["google-genai:gemini-2.5-flash"]
 
     def test_empty_order(self):
-        rt, keys = _patch_env([], {"openai", "google-genai"})
+        rt, keys = _patch_env([], {"openai", "google_genai"})
         with rt, keys:
             assert pf.get_fallback_chain("openai:gpt-4o") == []
 
@@ -248,7 +250,7 @@ class TestGetFallbackChain:
 
     def test_preserves_order(self):
         order = ["cohere:command-a", "google-genai:gemini-2.5-flash"]
-        rt, keys = _patch_env(order, {"cohere", "google-genai"})
+        rt, keys = _patch_env(order, {"cohere", "google_genai"})
         with rt, keys:
             chain = pf.get_fallback_chain("openai:gpt-4o")
         assert chain == ["cohere:command-a", "google-genai:gemini-2.5-flash"]
@@ -281,6 +283,18 @@ class TestGetFallbackChainAutoDefault:
         ):
             chain = pf.get_fallback_chain("google_genai:gemini-2.5-pro")
         assert chain == []
+
+    def test_normalizes_catalog_provider_aliases_for_credentials(
+        self: TestGetFallbackChainAutoDefault,
+    ) -> None:
+        order = [
+            "google-genai:gemini-2.5-flash",
+            "nine-router:cx/gpt-5.6-luna",
+        ]
+        rt, keys = _patch_env(order, {"google_genai", "nine_router"})
+        with rt, keys:
+            chain = pf.get_fallback_chain("openai:gpt-4o")
+        assert chain == order
 
     def test_fallback_nao_configurado_ignora_ollama(self):
         from backend.settings import settings

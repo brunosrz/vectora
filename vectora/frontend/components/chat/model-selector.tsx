@@ -42,6 +42,7 @@ interface ModelSelectorProps {
 interface DynamicModel {
   id: string;
   label: string;
+  available?: boolean;
 }
 
 export function ModelSelector({
@@ -139,7 +140,9 @@ export function ModelSelector({
             configuredProviders.includes(getModelProvider(model)),
         )
       : allowedModels),
-    ...dynamicModels.map((dm) => dm.id),
+    ...dynamicModels
+      .filter((dm) => dm.available !== false || dm.id === value)
+      .map((dm) => dm.id),
   ].filter(
     (model) =>
       model === value || !codeMode || !toolIncompatibleModels.includes(model),

@@ -360,6 +360,20 @@ export function isProviderVisionCapable(
   return VISION_CAPABLE_PROVIDERS.has(provider);
 }
 
+export type ImageCapability = "known_capable" | "known_incapable" | "unknown";
+
+export interface ProviderModelInfo {
+  id: string;
+  label: string;
+  provider: string;
+  available: boolean;
+  image_capability: ImageCapability;
+}
+
+export function isModelImageCapable(model: ProviderModelInfo): boolean {
+  return model.available && model.image_capability === "known_capable";
+}
+
 /**
  * Janela de contexto em tokens por modelo. Espelha
  * `src/ui/commands/_shared.py::MODEL_CONTEXT_WINDOWS`. Atualizar nos dois

@@ -22,6 +22,7 @@ from backend.api.schemas import (
     ChatConfig,
     StreamChatRequest,
 )
+from backend.settings import CapabilityState
 
 # ===========================================================================
 # Helpers
@@ -606,6 +607,7 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             )
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)
+            http_request.is_disconnected = AsyncMock(return_value=False)
             response = await chat_mod.stream_chat(request, http_request)
 
         body = await _collect_sse_body(response)
@@ -651,8 +653,8 @@ class TestStreamChatBlocksImageForNonVisionProvider:
                 "backend.services.agent_factory.get_native_agent", mock_get_native_agent
             ),
             patch(
-                "backend.api.handlers.provider_routing.openrouter_model_supports_image",
-                new=AsyncMock(return_value=False),
+                "backend.api.handlers.provider_routing.openrouter_model_image_state",
+                new=AsyncMock(return_value=CapabilityState.UNSUPPORTED),
             ),
         ):
             request = StreamChatRequest(
@@ -662,6 +664,7 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             )
             http_request = MagicMock()
             http_request.state = MagicMock(user=None)
+            http_request.is_disconnected = AsyncMock(return_value=False)
             response = await chat_mod.stream_chat(request, http_request)
 
         body = await _collect_sse_body(response)
@@ -686,8 +689,8 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             )
             stack.enter_context(
                 patch(
-                    "backend.api.handlers.provider_routing.openrouter_model_supports_image",
-                    new=AsyncMock(return_value=True),
+                    "backend.api.handlers.provider_routing.openrouter_model_image_state",
+                    new=AsyncMock(return_value=CapabilityState.SUPPORTED),
                 )
             )
             request = StreamChatRequest(
@@ -701,6 +704,89 @@ class TestStreamChatBlocksImageForNonVisionProvider:
             body = await _collect_sse_body(response)
 
         assert "MODEL_NO_VISION" not in body
+
+    @pytest.mark.asyncio
+    async def test_openrouter_model_with_unknown_capability_is_not_blocked(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Catálogo indisponível não deve bloquear o envio preventivamente."""
+        from backend.api.handlers import chat as chat_mod
+
+        native_agent = None
+        with ExitStack() as stack:
+            for p in _native_dispatch_patches():
+                entered = stack.enter_context(p)
+                if p.attribute == "get_native_agent":
+                    native_agent = entered
+            stack.enter_context(
+                patch(
+                    "backend.api.handlers.provider_routing.openrouter_model_image_state",
+                    new=AsyncMock(return_value=CapabilityState.UNKNOWN),
+                )
+            )
+            request = StreamChatRequest(
+                content="o que tem nessa imagem?",
+                config=ChatConfig(model="openrouter:openai/gpt-4o"),
+                attachments=[_image_attachment()],
+            )
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            http_request.is_disconnected = AsyncMock(return_value=False)
+            response = await chat_mod.stream_chat(request, http_request)
+
+        body = await _collect_sse_body(response)
+        assert '"code": "MODEL_NO_VISION"' not in body
+        assert native_agent is not None
+        native_agent.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_ignora_fallback_persistido_apos_remover_credencial(
+        self, monkeypatch
+    ) -> None:
+        from backend.api.handlers import chat as chat_mod
+        from backend.settings import CapabilityState
+
+        monkeypatch.setattr(
+            "backend.workspace.runtime_settings.runtime_settings.get",
+            lambda key: "openai:gpt-4o" if key == "image_fallback_model" else None,
+        )
+        monkeypatch.setattr(
+            "backend.llm.provider_fallback._provider_has_key",
+            lambda _provider: False,
+        )
+        monkeypatch.setattr(
+            chat_mod,
+            "_model_supports_vision",
+            AsyncMock(return_value=CapabilityState.SUPPORTED),
+        )
+
+        assert await chat_mod._resolve_image_fallback_model() is None
+
+    @pytest.mark.asyncio
+    async def test_ignora_fallback_persistido_sem_modelo(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from backend.api.handlers import chat as chat_mod
+        from backend.settings import CapabilityState
+
+        monkeypatch.setattr(
+            "backend.workspace.runtime_settings.runtime_settings.get",
+            lambda key, default=None: (
+                "openai:" if key == "image_fallback_model" else default
+            ),
+        )
+        monkeypatch.setattr(
+            "backend.llm.provider_fallback._provider_has_key",
+            lambda _provider: True,
+        )
+        monkeypatch.setattr(
+            chat_mod,
+            "_model_supports_vision",
+            AsyncMock(return_value=CapabilityState.SUPPORTED),
+        )
+
+        assert await chat_mod._resolve_image_fallback_model() is None
 
 
 class TestStreamChatBlocksToolIncompatibleModelInCodeMode:

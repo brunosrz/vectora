@@ -24,6 +24,9 @@ import {
   getAllowedModels,
   getModelDisplayName,
   getModelProvider,
+  isProviderVisionCapable,
+  isModelImageCapable,
+  type ProviderModelInfo,
   type ModelOption,
 } from "@/lib/config/deployment-config";
 import { ProviderIcon } from "@/components/icons/provider-icons";
@@ -36,12 +39,15 @@ async function fetchFallbackOrder(): Promise<string[]> {
   return data.fallback_order ?? [];
 }
 
-async function saveFallbackOrder(order: string[]): Promise<void> {
-  await fetch("/admin/model/fallback-order", {
+async function saveFallbackOrder(order: string[]): Promise<string[]> {
+  const res = await fetch("/admin/model/fallback-order", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ order }),
   });
+  if (!res.ok) return order;
+  const data = (await res.json()) as { fallback_order?: string[] };
+  return data.fallback_order ?? order;
 }
 
 const IMAGE_FALLBACK_NONE = "__none__";
@@ -63,11 +69,27 @@ async function saveImageFallbackModel(model: string): Promise<void> {
 
 function ImageFallbackModelSection() {
   const [model, setModel] = useState<string>(IMAGE_FALLBACK_NONE);
+  const [models, setModels] = useState<ProviderModelInfo[]>([]);
 
   useEffect(() => {
     fetchImageFallbackModel()
       .then((fetched) => setModel(fetched || IMAGE_FALLBACK_NONE))
       .catch(() => setModel(IMAGE_FALLBACK_NONE));
+  }, []);
+
+  useEffect(() => {
+    fetch("/models/providers")
+      .then((res) =>
+        res.ok ? res.json() : Promise.reject(new Error("catalog")),
+      )
+      .then(
+        (data: {
+          models?: ProviderModelInfo[];
+          dynamic_models?: ProviderModelInfo[];
+        }) =>
+          setModels([...(data.models ?? []), ...(data.dynamic_models ?? [])]),
+      )
+      .catch(() => setModels([]));
   }, []);
 
   const onChange = (value: string) => {
@@ -89,7 +111,12 @@ function ImageFallbackModelSection() {
           <SelectItem value={IMAGE_FALLBACK_NONE} className="text-xs">
             {m.prefs_image_fallback_none()}
           </SelectItem>
-          {getAllowedModels().map((mid) => (
+          {(models.length > 0
+            ? models.filter(isModelImageCapable).map((item) => item.id)
+            : getAllowedModels().filter((mid) =>
+                isProviderVisionCapable(getModelProvider(mid)),
+              )
+          ).map((mid) => (
             <SelectItem key={mid} value={mid} className="text-xs">
               {getModelDisplayName(mid as ModelOption) || mid}
             </SelectItem>
@@ -103,6 +130,7 @@ function ImageFallbackModelSection() {
 export function FallbacksTab() {
   const [order, setOrder] = useState<string[]>([]);
   const [addModel, setAddModel] = useState<string>("");
+  const [catalogModels, setCatalogModels] = useState<ProviderModelInfo[]>([]);
 
   useEffect(() => {
     fetchFallbackOrder()
@@ -110,9 +138,27 @@ export function FallbacksTab() {
       .catch(() => setOrder([]));
   }, []);
 
+  useEffect(() => {
+    fetch("/models/providers")
+      .then((res) =>
+        res.ok ? res.json() : Promise.reject(new Error("catalog")),
+      )
+      .then(
+        (data: {
+          models?: ProviderModelInfo[];
+          dynamic_models?: ProviderModelInfo[];
+        }) =>
+          setCatalogModels([
+            ...(data.models ?? []),
+            ...(data.dynamic_models ?? []),
+          ]),
+      )
+      .catch(() => setCatalogModels([]));
+  }, []);
+
   const persist = useCallback(async (next: string[]) => {
     setOrder(next);
-    await saveFallbackOrder(next);
+    setOrder(await saveFallbackOrder(next));
   }, []);
 
   const moveUp = (i: number) => {
@@ -139,7 +185,11 @@ export function FallbacksTab() {
     setAddModel("");
   };
 
-  const available = getAllowedModels().filter((mid) => !order.includes(mid));
+  const available = (
+    catalogModels.length > 0
+      ? catalogModels.filter((item) => item.available).map((item) => item.id)
+      : getAllowedModels()
+  ).filter((mid) => !order.includes(mid));
 
   return (
     <div className="space-y-6">

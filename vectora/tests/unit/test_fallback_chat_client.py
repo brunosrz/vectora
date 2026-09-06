@@ -137,11 +137,14 @@ class TestAgenerate:
         with pytest.raises(QuotaExhaustedError, match="anthropic:claude-sonnet"):
             await cliente.agenerate([text_message(MessageRole.USER, "oi")])
 
-    async def test_sem_candidato_com_visao_para_mensagem_com_imagem_lanca_quota_exhausted(
-        self, monkeypatch
-    ):
-        monkeypatch.setattr("backend.settings.VISION_CAPABLE_PROVIDERS", set())
-        cliente = _make_client(monkeypatch, fallback_chain=[], clients_por_modelo={})
+    async def test_modelo_ativo_desconhecido_tenta_imagem_sem_bloqueio(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        cliente = _make_client(
+            monkeypatch,
+            fallback_chain=[],
+            clients_por_modelo={"openai:gpt-4o": _FakeChatClient(_resposta_ok("ok"))},
+        )
         mensagem = VMessage(
             role=MessageRole.USER,
             content=[
@@ -149,8 +152,35 @@ class TestAgenerate:
             ],
         )
 
-        with pytest.raises(QuotaExhaustedError, match=r"[Nn]enhum provider"):
-            await cliente.agenerate([mensagem])
+        resultado = await cliente.agenerate([mensagem])
+        assert resultado.text() == "ok"
+
+    async def test_ignora_fallback_de_imagem_sem_credencial(self, monkeypatch):
+        from backend.settings import CapabilityState
+
+        async def _supported(_model: str) -> CapabilityState:
+            return CapabilityState.SUPPORTED
+
+        monkeypatch.setattr(
+            "backend.llm.fallback_chat_client._vision_state",
+            _supported,
+        )
+        monkeypatch.setattr(
+            "backend.llm.provider_fallback._provider_has_key",
+            lambda _provider: False,
+        )
+        monkeypatch.setattr(
+            "backend.workspace.runtime_settings.runtime_settings.get",
+            lambda key, default=None: (
+                "openai:gpt-4o" if key == "image_fallback_model" else default
+            ),
+        )
+
+        from backend.llm.fallback_chat_client import _candidates
+
+        assert await _candidates("cohere:command-a", has_images=True) == [
+            "cohere:command-a"
+        ]
 
 
 class TestAstream:

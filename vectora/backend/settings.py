@@ -13,6 +13,7 @@ error messages instead of silent NoneType errors mid-execution.
 
 import logging
 import os
+from enum import StrEnum
 from importlib import resources
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -58,7 +59,13 @@ class Settings(BaseSettings):
     # ============================================================================
 
     llm_provider: Literal[
-        "google-genai", "openai", "anthropic", "ollama", "cohere", "openrouter"
+        "google-genai",
+        "openai",
+        "anthropic",
+        "ollama",
+        "cohere",
+        "openrouter",
+        "nine_router",
     ] = "google-genai"
     """Active LLM provider (auto-detected from API keys if not set)."""
 
@@ -758,6 +765,7 @@ class Settings(BaseSettings):
                     "ollama": "OLLAMA_MODEL",
                     "cohere": "COHERE_CHAT_MODEL",
                     "openrouter": "OPENROUTER_MODEL",
+                    "nine_router": "NINE_ROUTER_MODEL",
                 }
                 if _env_var := _model_env_map.get(_provider):
                     os.environ.setdefault(_env_var, _model)
@@ -944,6 +952,7 @@ class Settings(BaseSettings):
             "ollama": self.ollama_model,
             "cohere": self.cohere_chat_model,
             "openrouter": self.openrouter_model,
+            "nine_router": self.nine_router_default_model or "",
         }
         return model_map.get(self.llm_provider, self.google_model)
 
@@ -960,6 +969,7 @@ class Settings(BaseSettings):
             "ollama": None,  # Ollama doesn't require API key
             "cohere": self.cohere_api_key,
             "openrouter": self.openrouter_api_key,
+            "nine_router": self.nine_router_api_key,
         }
         return key_map.get(self.llm_provider)
 
@@ -980,6 +990,10 @@ class Settings(BaseSettings):
             providers.append("cohere")
         if self.openrouter_api_key:
             providers.append("openrouter")
+        if getattr(self, "nine_router_base_url", None) and getattr(
+            self, "nine_router_api_key", None
+        ):
+            providers.append("nine_router")
         if getattr(self, "ollama_base_url", ""):
             providers.append("ollama")
         return providers
@@ -1041,6 +1055,7 @@ class Settings(BaseSettings):
             "ollama",
             "cohere",
             "openrouter",
+            "nine_router",
         ]:
             raise ValueError(f"Unknown LLM provider: {provider}")
 
@@ -1056,6 +1071,8 @@ class Settings(BaseSettings):
             self.cohere_chat_model = model
         elif provider == "openrouter":
             self.openrouter_model = model
+        elif provider == "nine_router":
+            self.nine_router_default_model = model
 
         logger.info(f"Model updated: {provider}={model}")
 
@@ -1126,6 +1143,20 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
 # uma mensagem crua (ex.: Cohere "image content is not supported").
 VISION_CAPABLE_PROVIDERS: set[str] = {"google-genai", "openai", "anthropic"}
 
+
+class CapabilityState(StrEnum):
+    """Knowledge state for a model/provider capability.
+
+    ``UNKNOWN`` is deliberately distinct from ``UNSUPPORTED``: an active
+    model may be attempted when metadata is unavailable, while an unknown
+    model must never be selected as a multimodal fallback.
+    """
+
+    SUPPORTED = "known_capable"
+    UNSUPPORTED = "known_incapable"
+    UNKNOWN = "unknown"
+
+
 # Subconjunto de `VISION_CAPABLE_PROVIDERS`: ler vídeo é bem mais restrito
 # que ler imagem. OpenAI e Anthropic aceitam imagem na mensagem e recusam
 # vídeo, então herdar a lista acima faria `analyze_video` prometer uma
@@ -1156,17 +1187,34 @@ PROVIDER_CAPABILITIES: dict[str, set[str]] = {
 _GATEWAY_PROVIDERS: frozenset[str] = frozenset({"ollama", "openrouter"})
 
 
-def provider_supports(provider: str, capability: str) -> bool:
-    """True se `provider` atende `capability` ("image"/"tts"/"embedding"/...).
+def provider_capability_state(provider: str, capability: str) -> CapabilityState:
+    """Return the tri-state capability contract for a provider.
 
-    Pra Ollama/OpenRouter a resposta depende de o usuário ter escolhido um
-    modelo pra essa capacidade — sem modelo configurado a capacidade
-    simplesmente não existe ali, e a tool avisa em vez de tentar adivinhar
-    qual dos modelos instalados serviria.
+    Gateway providers are ``UNKNOWN`` at provider level because their model,
+    rather than the gateway itself, declares capabilities.
     """
     if provider in _GATEWAY_PROVIDERS:
-        return bool(configured_gateway_model(provider, capability))
-    return capability in PROVIDER_CAPABILITIES.get(provider, set())
+        return (
+            CapabilityState.SUPPORTED
+            if configured_gateway_model(provider, capability)
+            else CapabilityState.UNKNOWN
+        )
+    if provider not in PROVIDER_CAPABILITIES:
+        return CapabilityState.UNKNOWN
+    return (
+        CapabilityState.SUPPORTED
+        if capability in PROVIDER_CAPABILITIES[provider]
+        else CapabilityState.UNSUPPORTED
+    )
+
+
+def provider_supports(provider: str, capability: str) -> bool:
+    """Boolean, fail-closed compatibility wrapper for existing media tools.
+
+    For gateway providers, capability depends on the configured model; when
+    no model is configured, the wrapper returns ``False``.
+    """
+    return provider_capability_state(provider, capability) is CapabilityState.SUPPORTED
 
 
 def configured_gateway_model(provider: str, capability: str) -> str:
@@ -1271,6 +1319,7 @@ PROVIDER_API_KEY_ENV: dict[str, str | None] = {
     "ollama": None,
     "cohere": "COHERE_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
+    "nine_router": "NINE_ROUTER_API_KEY",
     "tavily": "TAVILY_API_KEY",
 }
 
@@ -1282,6 +1331,7 @@ PROVIDER_MODEL_ENV: dict[str, str] = {
     "ollama": "OLLAMA_MODEL",
     "cohere": "COHERE_CHAT_MODEL",
     "openrouter": "OPENROUTER_MODEL",
+    "nine_router": "NINE_ROUTER_MODEL",
 }
 
 # Nome amigável para exibição no TUI / setup wizard.

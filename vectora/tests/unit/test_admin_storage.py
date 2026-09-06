@@ -6,18 +6,26 @@ Usa httpx.AsyncClient com a app FastAPI mockando storage_health.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import Request
+from httpx import AsyncClient
 
 
 @pytest.fixture
-async def admin_client():
+async def admin_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> AsyncIterator[AsyncClient]:
     """httpx.AsyncClient apontando para a app FastAPI em memória."""
-    from httpx import ASGITransport, AsyncClient
+    from httpx import ASGITransport
 
+    import backend.api.handlers.admin as admin_handlers
     from backend.api.server import create_app
+
+    monkeypatch.setattr(admin_handlers, "require_admin", lambda _user: None)
 
     app = create_app()
     async with AsyncClient(
@@ -194,17 +202,20 @@ class TestFallbackOrderEndpoint:
     @pytest.mark.asyncio
     async def test_patch_sets_order(self, admin_client, tmp_path, monkeypatch):
         fresh = self._fresh_runtime(tmp_path, monkeypatch)
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "openai_api_key", "test-openai-key")
+        monkeypatch.setattr(settings, "cohere_api_key", "test-cohere-key")
         resp = await admin_client.patch(
             "/admin/model/fallback-order",
             json={"order": ["openai:gpt-4o", "cohere:command-a"]},
         )
-        assert resp.status_code in (200, 401, 403, 422)
-        if resp.status_code == 200:
-            assert resp.json()["fallback_order"] == [
-                "openai:gpt-4o",
-                "cohere:command-a",
-            ]
-            assert fresh.fallback_order == ["openai:gpt-4o", "cohere:command-a"]
+        assert resp.status_code == 200
+        assert resp.json()["fallback_order"] == [
+            "openai:gpt-4o",
+            "cohere:command-a",
+        ]
+        assert fresh.fallback_order == ["openai:gpt-4o", "cohere:command-a"]
 
     @pytest.mark.asyncio
     async def test_get_returns_order(self, admin_client, tmp_path, monkeypatch):
@@ -218,12 +229,35 @@ class TestFallbackOrderEndpoint:
     @pytest.mark.asyncio
     async def test_patch_filters_empty(self, admin_client, tmp_path, monkeypatch):
         self._fresh_runtime(tmp_path, monkeypatch)
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "openai_api_key", "test-openai-key")
         resp = await admin_client.patch(
             "/admin/model/fallback-order",
             json={"order": ["openai:gpt-4o", "", "   "]},
         )
-        if resp.status_code == 200:
-            assert resp.json()["fallback_order"] == ["openai:gpt-4o"]
+        assert resp.status_code == 200
+        assert resp.json()["fallback_order"] == ["openai:gpt-4o"]
+
+    @pytest.mark.asyncio
+    async def test_patch_rejects_incomplete_model_ids(
+        self,
+        admin_client: AsyncClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self._fresh_runtime(tmp_path, monkeypatch)
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "openai_api_key", "test-openai-key")
+        monkeypatch.setattr(settings, "nine_router_api_key", "test-nine-key")
+        monkeypatch.setattr(settings, "nine_router_base_url", None)
+        resp = await admin_client.patch(
+            "/admin/model/fallback-order",
+            json={"order": ["openai:", "nine_router:test-model"]},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["fallback_order"] == []
 
     @pytest.mark.asyncio
     async def test_patch_empty_clears(self, admin_client, tmp_path, monkeypatch):
@@ -291,6 +325,39 @@ class TestImageFallbackModelEndpoint:
         if resp.status_code == 200:
             assert resp.json()["model"] == ""
             assert fresh.get("image_fallback_model") == ""
+
+    @pytest.mark.asyncio
+    async def test_patch_rejects_incomplete_image_model_id(
+        self,
+        admin_client: AsyncClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self._fresh_runtime(tmp_path, monkeypatch)
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "openai_api_key", "test-openai-key")
+        resp = await admin_client.patch(
+            "/admin/model/image-fallback", json={"model": "openai:"}
+        )
+        assert resp.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_patch_rejects_nine_router_without_base_url(
+        self,
+        admin_client: AsyncClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self._fresh_runtime(tmp_path, monkeypatch)
+        from backend.settings import settings
+
+        monkeypatch.setattr(settings, "nine_router_api_key", "test-nine-key")
+        monkeypatch.setattr(settings, "nine_router_base_url", None)
+        resp = await admin_client.patch(
+            "/admin/model/image-fallback", json={"model": "nine_router:test-model"}
+        )
+        assert resp.status_code == 422
 
 
 class TestPatchStorageRequiresPro:

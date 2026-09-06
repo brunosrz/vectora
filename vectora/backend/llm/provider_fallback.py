@@ -46,6 +46,14 @@ _PROVIDER_INCOMPATIBLE_MARKERS = (
     "tool plan` cannot be used with this model",
     "tool_plan",
 )
+_MULTIMODAL_INCOMPATIBLE_MARKERS = (
+    "image content is not supported",
+    "image input is not supported",
+    "image_url is not supported",
+    "unsupported content type: image",
+    "does not support image",
+    "model does not support vision",
+)
 
 
 class QuotaExhaustedError(Exception):
@@ -101,6 +109,14 @@ def is_provider_incompatible_error(exc: BaseException) -> bool:
     return any(marker in msg for marker in _PROVIDER_INCOMPATIBLE_MARKERS)
 
 
+def is_multimodal_incompatible_error(exc: BaseException) -> bool:
+    """Return true only for explicit image/vision incompatibility errors."""
+    msg = str(exc).lower()
+    if is_quota_error(exc) or is_transient_error(exc):
+        return False
+    return any(marker in msg for marker in _MULTIMODAL_INCOMPATIBLE_MARKERS)
+
+
 def _provider_of(model_id: str) -> str:
     return model_id.split(":", 1)[0]
 
@@ -116,6 +132,9 @@ def _provider_has_key(provider: str) -> bool:
     if provider == "ollama":
         return True
     from backend.settings import settings
+
+    if provider == "nine_router":
+        return bool(settings.nine_router_api_key and settings.nine_router_base_url)
 
     keymap = {
         "openai": settings.openai_api_key,
@@ -158,8 +177,11 @@ def get_fallback_chain(current_model_id: str) -> list[str]:
 
     chain: list[str] = []
     for mid in configured:
-        prov = _provider_of(mid)
-        if prov == _provider_of(current_model_id):
+        # Catalog/runtime IDs use hyphens while the credential key map uses
+        # underscores (for example ``google-genai`` and ``nine-router``).
+        prov = _provider_of(mid).replace("-", "_")
+        current_prov = _provider_of(current_model_id).replace("-", "_")
+        if prov == current_prov:
             continue
         if not _provider_has_key(prov):
             continue
