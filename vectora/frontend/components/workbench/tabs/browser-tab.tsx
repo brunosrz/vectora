@@ -387,6 +387,13 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
   // Cria uma WebContentsView para cada aba restaurada. A troca de workbench
   // apenas torna as views invisíveis; fechar uma aba continua sendo a ação
   // destrutiva explícita.
+  const hideAllBrowserViews = useCallback(() => {
+    if (!desktopBrowser) return;
+    for (const tab of tabsRef.current) {
+      if (tab.viewId !== null) desktopBrowser.setVisible(tab.viewId, false);
+    }
+  }, [desktopBrowser]);
+
   useEffect(() => {
     if (!desktopBrowser) return;
     let cancelled = false;
@@ -424,18 +431,18 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
     }
     return () => {
       cancelled = true;
-      for (const t of tabsRef.current) {
-        if (t.viewId !== null) desktopBrowser.setVisible(t.viewId, false);
-      }
+      hideAllBrowserViews();
     };
-  }, [desktopBrowser, sessionKey]);
+  }, [desktopBrowser, hideAllBrowserViews, sessionKey]);
 
   useEffect(() => {
+    const pendingNavigate = pendingNavigateRef.current;
+    const pendingViewCreates = pendingViewCreatesRef.current;
     return () => {
       // The session is intentionally retained while the workbench is hidden;
       // deletion flows call disposeBrowserSession explicitly.
-      pendingNavigateRef.current.clear();
-      pendingViewCreatesRef.current.clear();
+      pendingNavigate.clear();
+      pendingViewCreates.clear();
     };
   }, []);
 
@@ -598,7 +605,7 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
       if (consolePollRef.current) clearInterval(consolePollRef.current);
       return;
     }
-    fetchConsoleLogs(consoleFor);
+    void Promise.resolve().then(() => fetchConsoleLogs(consoleFor));
     consolePollRef.current = setInterval(
       () => fetchConsoleLogs(consoleFor),
       3000,
@@ -610,16 +617,16 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
 
   useEffect(() => {
     const el = consoleLogRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (el && consoleLines.length > 0) el.scrollTop = el.scrollHeight;
   }, [consoleLines]);
 
   useEffect(() => {
-    fetchLaunch();
+    void Promise.resolve().then(() => fetchLaunch());
   }, [fetchLaunch]);
 
   useEffect(() => {
     if (!wsId || configs.length === 0) return;
-    fetchStatus();
+    void Promise.resolve().then(() => fetchStatus());
     pollRef.current = setInterval(fetchStatus, 3000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
