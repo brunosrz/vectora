@@ -14,7 +14,7 @@
  * ao nível dos três painéis de topo (Chat/Workbench/Editor).
  */
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { MessageSquare, PanelsTopLeft, Code2 } from "lucide-react";
 import { mDyn } from "@/lib/i18n-dyn";
 
@@ -40,6 +40,8 @@ interface IdeModeLayoutProps {
   chat: ReactNode;
   /** Painel inicial em viewport estreita. Default: "editor". */
   defaultMobilePanel?: IdeMobilePanel;
+  /** Estado de visibilidade da workbench, usado para evitar selecionar painel fechado. */
+  workbenchOpen?: boolean;
 }
 
 export function IdeModeLayout({
@@ -50,9 +52,16 @@ export function IdeModeLayout({
   editor,
   chat,
   defaultMobilePanel = "editor",
+  workbenchOpen = true,
 }: IdeModeLayoutProps) {
   const [mobilePanel, setMobilePanel] =
     useState<IdeMobilePanel>(defaultMobilePanel);
+
+  useEffect(() => {
+    if (isNarrow && !workbenchOpen && mobilePanel === "workbench") {
+      setMobilePanel("editor");
+    }
+  }, [isNarrow, mobilePanel, workbenchOpen]);
 
   if (!isNarrow) {
     return (

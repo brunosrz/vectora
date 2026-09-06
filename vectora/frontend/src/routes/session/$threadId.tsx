@@ -68,6 +68,7 @@ import {
 import { useGlobalShortcuts } from "@/lib/hooks/use-global-shortcuts";
 import { buildOptimisticThread } from "./-thread-cache-helpers";
 import { m } from "@/lib/paraglide/messages";
+import { disposeBrowserThread } from "@/lib/browser-session-store";
 export const Route = createFileRoute("/session/$threadId")({
   // Só a lista de threads (sidebar) bloqueia a navegação — o histórico da
   // thread ativa é prefetch em background (ver comentário abaixo). O
@@ -415,6 +416,7 @@ function SessionPage() {
   const handleDeleteThread = useCallback(
     async (id: string) => {
       await deleteThreadMutation.mutateAsync(id);
+      disposeBrowserThread(id);
       if (id !== threadId) return;
       useWindowsStore.getState().closeAll();
       if (chatMode) {
@@ -765,42 +767,45 @@ function SessionPage() {
             // ── Layout IDE ──────────────────────────────────────────────
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <IdeModeLayout
+                workbenchOpen={workbenchOpen}
                 isNarrow={isNarrowViewport}
                 header={headerEl}
                 navBar={<WorkbenchNavBar threadId={threadId} side="left" />}
                 workbenchContent={
-                  hydrated && workbenchOpen ? (
-                    <div
-                      ref={workbenchResizeRef}
-                      className={
-                        isNarrowViewport
-                          ? "relative flex-1 min-w-0"
-                          : "relative shrink-0"
-                      }
-                      style={
-                        isNarrowViewport ? undefined : { width: splitSize }
-                      }
-                    >
-                      <WorkbenchContent
-                        threadId={threadId}
-                        side="left"
-                        onAddToContext={pushMention}
-                        onSendPrompt={pushDraft}
+                  <div
+                    ref={workbenchResizeRef}
+                    className={
+                      isNarrowViewport
+                        ? "relative flex-1 min-w-0"
+                        : "relative shrink-0 overflow-hidden"
+                    }
+                    style={
+                      isNarrowViewport
+                        ? undefined
+                        : { width: hydrated && workbenchOpen ? splitSize : 0 }
+                    }
+                    aria-hidden={!workbenchOpen}
+                  >
+                    <WorkbenchContent
+                      threadId={threadId}
+                      side="left"
+                      visible={hydrated && workbenchOpen}
+                      onAddToContext={pushMention}
+                      onSendPrompt={pushDraft}
+                    />
+                    {!isNarrowViewport && workbenchOpen && (
+                      <div
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label="Redimensionar workbench"
+                        onPointerDown={onWorkbenchResizeDown}
+                        onPointerMove={onWorkbenchResizeMove}
+                        onPointerUp={onWorkbenchResizeUp}
+                        onPointerCancel={onWorkbenchResizeUp}
+                        className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
                       />
-                      {!isNarrowViewport && (
-                        <div
-                          role="separator"
-                          aria-orientation="vertical"
-                          aria-label="Redimensionar workbench"
-                          onPointerDown={onWorkbenchResizeDown}
-                          onPointerMove={onWorkbenchResizeMove}
-                          onPointerUp={onWorkbenchResizeUp}
-                          onPointerCancel={onWorkbenchResizeUp}
-                          className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/30 transition-colors"
-                        />
-                      )}
-                    </div>
-                  ) : null
+                    )}
+                  </div>
                 }
                 editor={
                   // min-w-[360px]: piso mínimo pro editor continuar usável
@@ -884,6 +889,7 @@ function SessionPage() {
                     <div className="flex-1 min-h-0 min-w-0 overflow-visible">
                       <WorkbenchContent
                         threadId={threadId}
+                        visible={hydrated && workbenchOpen}
                         onAddToContext={pushMention}
                         onSendPrompt={pushDraft}
                       />
@@ -909,6 +915,7 @@ function SessionPage() {
                     right={
                       <WorkbenchContent
                         threadId={threadId}
+                        visible={hydrated && workbenchOpen && !chatMode}
                         onAddToContext={pushMention}
                         onSendPrompt={pushDraft}
                       />

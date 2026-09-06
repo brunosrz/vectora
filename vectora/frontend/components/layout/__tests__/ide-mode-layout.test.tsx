@@ -99,4 +99,34 @@ describe("IdeModeLayout", () => {
     fireEvent.click(screen.getByTestId("ide-mobile-tab-chat"));
     expect(screen.getByTestId("panel-header")).toBeInTheDocument();
   });
+
+  it("viewport estreita: fechar a workbench troca automaticamente para o editor", () => {
+    const { rerender } = render(
+      <IdeModeLayout
+        isNarrow
+        workbenchOpen
+        header={<div data-testid="panel-header">Header</div>}
+        navBar={<div data-testid="panel-navbar">NavBar</div>}
+        workbenchContent={<div data-testid="panel-workbench">Workbench</div>}
+        editor={<div data-testid="panel-editor">Editor</div>}
+        chat={<div data-testid="panel-chat">Chat</div>}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("ide-mobile-tab-workbench"));
+    expect(screen.getByTestId("panel-workbench")).toBeInTheDocument();
+
+    rerender(
+      <IdeModeLayout
+        isNarrow
+        workbenchOpen={false}
+        header={<div data-testid="panel-header">Header</div>}
+        navBar={<div data-testid="panel-navbar">NavBar</div>}
+        workbenchContent={null}
+        editor={<div data-testid="panel-editor">Editor</div>}
+        chat={<div data-testid="panel-chat">Chat</div>}
+      />,
+    );
+    expect(screen.getByTestId("panel-editor")).toBeInTheDocument();
+    expect(screen.queryByTestId("panel-workbench")).not.toBeInTheDocument();
+  });
 });

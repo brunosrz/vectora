@@ -17,7 +17,12 @@ import {
   act,
 } from "@testing-library/react";
 
-import { BrowserTab } from "../browser-tab";
+import { BrowserTab, clearBrowserSessionCache } from "../browser-tab";
+import {
+  disposeBrowserWorkspace,
+  disposeBrowserSession,
+  setBrowserSession,
+} from "@/lib/browser-session-store";
 
 vi.mock("@/lib/paraglide/messages", () => ({
   m: new Proxy(
@@ -43,7 +48,10 @@ vi.mock("@/lib/stores/chat-input-store", () => ({
   useChatInputStore: { getState: () => ({ pushDraft: vi.fn() }) },
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  clearBrowserSessionCache();
+});
 
 // jsdom não implementa ResizeObserver — só o caminho desktop (efeito de
 // bounds da WebContentsView) o usa; um stub no-op basta pros testes.
@@ -580,14 +588,153 @@ describe("BrowserTab — caminho desktop (WebContentsView real via window.vector
     });
   });
 
-  it("desmontar a aba destroi a view (não deixa WebContentsView órfã)", async () => {
+  it("oculta as views nativas quando o painel está fechado e as mostra ao reabrir", async () => {
+    const bridge = mockBrowserView();
+    mockFetch({ configurations: [] });
+    const { rerender } = render(<BrowserTab threadId="t1" visible={false} />);
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(bridge.setVisible).toHaveBeenCalledWith(1, false),
+    );
+
+    rerender(<BrowserTab threadId="t1" visible />);
+    await waitFor(() =>
+      expect(bridge.setVisible).toHaveBeenCalledWith(1, true),
+    );
+  });
+
+  it("desmontar o painel apenas oculta a view para preservá-la ao reabrir", async () => {
     const bridge = mockBrowserView();
     mockFetch({ configurations: [] });
     const { unmount } = render(<BrowserTab threadId="t1" />);
     await waitFor(() => expect(bridge.onEvent).toHaveBeenCalled());
 
     unmount();
-    expect(bridge.destroyView).toHaveBeenCalledWith(1);
+    expect(bridge.setVisible).toHaveBeenCalledWith(1, false);
+    expect(bridge.destroyView).not.toHaveBeenCalled();
+  });
+
+  it("descarta todas as views ao excluir a sessão explicitamente", () => {
+    const bridge = mockBrowserView();
+    setBrowserSession("ws1:thread-to-delete", {
+      activeTabId: "tab-1",
+      tabs: [
+        {
+          id: "tab-1",
+          title: "",
+          history: [],
+          historyIndex: -1,
+          iframeKey: 0,
+          viewId: 11,
+          desktopUrl: "https://one.example",
+          canGoBack: false,
+          canGoForward: false,
+        },
+        {
+          id: "tab-2",
+          title: "",
+          history: [],
+          historyIndex: -1,
+          iframeKey: 0,
+          viewId: 12,
+          desktopUrl: "https://two.example",
+          canGoBack: false,
+          canGoForward: false,
+        },
+      ],
+    });
+
+    disposeBrowserSession("ws1:thread-to-delete");
+
+    expect(bridge.destroyView).toHaveBeenCalledWith(11);
+    expect(bridge.destroyView).toHaveBeenCalledWith(12);
+  });
+
+  it("descarta as sessões de todas as threads quando um workspace é removido", () => {
+    const bridge = mockBrowserView();
+    const tab = (viewId: number) => ({
+      id: `tab-${viewId}`,
+      title: "",
+      history: [],
+      historyIndex: -1,
+      iframeKey: 0,
+      viewId,
+      desktopUrl: "",
+      canGoBack: false,
+      canGoForward: false,
+    });
+    setBrowserSession("ws-deleted:t1", {
+      activeTabId: "tab-21",
+      tabs: [tab(21)],
+    });
+    setBrowserSession("ws-deleted:t2", {
+      activeTabId: "tab-22",
+      tabs: [tab(22)],
+    });
+
+    disposeBrowserWorkspace("ws-deleted");
+
+    expect(bridge.destroyView).toHaveBeenCalledWith(21);
+    expect(bridge.destroyView).toHaveBeenCalledWith(22);
+  });
+
+  it("fecha uma aba antes de createView resolver sem navegar nem deixar view órfã", async () => {
+    const resolvers: Array<(viewId: number) => void> = [];
+    const bridge = mockBrowserView();
+    bridge.createView = vi.fn(
+      () => new Promise<number>((resolve) => resolvers.push(resolve)),
+    );
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="t1" />);
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalled());
+    const close = await screen.findByTitle("workbench_browser_close_tab");
+    fireEvent.click(close);
+
+    await act(async () => resolvers[0](99));
+    expect(bridge.destroyView).toHaveBeenCalledWith(99);
+    expect(bridge.navigate).not.toHaveBeenCalled();
+  });
+
+  it("ignora uma view criada depois que a sessão foi descartada", async () => {
+    const resolvers: Array<(viewId: number) => void> = [];
+    const bridge = mockBrowserView();
+    bridge.createView = vi.fn(
+      () => new Promise<number>((resolve) => resolvers.push(resolve)),
+    );
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="generation-thread" />);
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalled());
+
+    disposeBrowserSession("ws1:generation-thread");
+    await act(async () => resolvers[0](101));
+
+    expect(bridge.destroyView).toHaveBeenCalledWith(101);
+    expect(bridge.navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe("BrowserTab — restauração por sessão", () => {
+  it("restaura a URL da mesma thread depois de ocultar/remontar o painel", async () => {
+    mockFetch({ configurations: [] });
+    const first = render(<BrowserTab threadId="restore-thread" />);
+    const urlBar = await screen.findByTestId("browser-url-bar");
+    fireEvent.focus(urlBar);
+    fireEvent.change(urlBar, { target: { value: "example.com" } });
+    fireEvent.keyDown(urlBar, { key: "Enter" });
+    await waitFor(() =>
+      expect(document.querySelector("iframe")).toHaveAttribute(
+        "src",
+        "https://example.com",
+      ),
+    );
+
+    first.unmount();
+    render(<BrowserTab threadId="restore-thread" />);
+    await waitFor(() =>
+      expect(screen.getByTestId("browser-url-bar")).toHaveValue(
+        "https://example.com",
+      ),
+    );
   });
 });
 
@@ -831,7 +978,7 @@ describe("BrowserTab — múltiplas abas no caminho desktop (WebContentsView por
     });
   });
 
-  it("desmontar com múltiplas abas abertas destroi TODAS as WebContentsView, não só a ativa", async () => {
+  it("desmontar com múltiplas abas oculta todas as WebContentsView, sem destruí-las", async () => {
     const bridge = mockBrowserViewMultiTab();
     mockFetch({ configurations: [] });
     const { unmount } = render(<BrowserTab threadId="t1" />);
@@ -841,7 +988,8 @@ describe("BrowserTab — múltiplas abas no caminho desktop (WebContentsView por
     await waitFor(() => expect(bridge.createView).toHaveBeenCalledTimes(2));
 
     unmount();
-    expect(bridge.destroyView).toHaveBeenCalledWith(1);
-    expect(bridge.destroyView).toHaveBeenCalledWith(2);
+    expect(bridge.setVisible).toHaveBeenCalledWith(1, false);
+    expect(bridge.setVisible).toHaveBeenCalledWith(2, false);
+    expect(bridge.destroyView).not.toHaveBeenCalled();
   });
 });

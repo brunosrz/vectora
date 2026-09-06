@@ -12,8 +12,9 @@
  * Características:
  * - Painel esquerdo (`left`): ocupa o espaço restante via `flex: 1`.
  * - Painel direito (`right`): largura controlada por `rightSize` em px
- *   (mesma unidade da sidebar esquerda), só renderizado quando
- *   `showRight=true`. Quando oculto, layout = 100% esquerda; sem painel
+ *   (mesma unidade da sidebar esquerda), visualmente recolhido quando
+ *   `showRight=false`. O conteúdo permanece montado para preservar estado;
+ *   quando oculto, layout = 100% esquerda; sem painel
  *   residual sobrando 20px e estragando a janela.
  * - `rightCollapsed`: trata o painel direito como a sidebar esquerda
  *   colapsada — mantém uma faixa estreita de largura fixa com borda
@@ -184,7 +185,7 @@ export function HorizontalSplit({
           : ""
       }`}
     >
-      {showRight && right}
+      {right}
     </motion.div>
   );
 

@@ -31,6 +31,7 @@ import {
   type ActionResult,
 } from "@/lib/types/async-state";
 import { m } from "@/lib/paraglide/messages";
+import { disposeBrowserWorkspace } from "@/lib/browser-session-store";
 
 export type WorkspaceTransport = "local" | "ssh" | "codespace";
 
@@ -254,11 +255,19 @@ export const useWorkspacesStore = create<WorkspacesState>()(
       hasLoaded: () => computeHasLoaded(get().fetchedAt),
 
       setWorkspaces: (list, activeId) =>
-        set({
-          workspaces: list,
-          active_id: activeId,
-          fetchedAt: Date.now(),
-          ...asyncSuccess(),
+        set((state) => {
+          const nextIds = new Set(list.map((workspace) => workspace.id));
+          for (const workspace of state.workspaces) {
+            if (!nextIds.has(workspace.id)) {
+              disposeBrowserWorkspace(workspace.id);
+            }
+          }
+          return {
+            workspaces: list,
+            active_id: activeId,
+            fetchedAt: Date.now(),
+            ...asyncSuccess(),
+          };
         }),
 
       invalidate: () => set({ fetchedAt: null }),
@@ -278,13 +287,23 @@ export const useWorkspacesStore = create<WorkspacesState>()(
           if (!data?.workspaces) {
             throw new Error("Resposta inesperada do servidor.");
           }
-          set((s) => ({
-            workspaces: data.workspaces,
-            active_id: data.active_id ?? null,
-            fetchedAt: Date.now(),
-            ...asyncSuccess(),
-            pending: { ...s.pending, hydrate: false },
-          }));
+          set((s) => {
+            const nextIds = new Set(
+              data.workspaces.map((workspace) => workspace.id),
+            );
+            for (const workspace of s.workspaces) {
+              if (!nextIds.has(workspace.id)) {
+                disposeBrowserWorkspace(workspace.id);
+              }
+            }
+            return {
+              workspaces: data.workspaces,
+              active_id: data.active_id ?? null,
+              fetchedAt: Date.now(),
+              ...asyncSuccess(),
+              pending: { ...s.pending, hydrate: false },
+            };
+          });
         } catch (err) {
           const message = httpErrorMessage(err) ?? toErrorMessage(err);
           set((s) => ({

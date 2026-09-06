@@ -22,8 +22,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useSettingsOverlayStore } from "@/lib/stores/settings-overlay-store";
 import { m as msg } from "@/lib/paraglide/messages";
 import { BrowserDevtoolsPanel } from "./browser-devtools-panel";
+import {
+  getBrowserSessionGeneration,
+  getBrowserSession,
+  setBrowserSession,
+} from "@/lib/browser-session-store";
+
+export { clearBrowserSessionCache } from "@/lib/browser-session-store";
 
 interface LaunchConfig {
   name: string;
@@ -42,9 +50,10 @@ interface ServerStatus {
 
 interface BrowserTabProps {
   threadId: string;
+  visible?: boolean;
 }
 
-/** Esqueleto do .vectora/launch.json enviado ao agente (formato Claude Code). */
+/** Esqueleto do .vectora/launch.json enviado ao agente. */
 const LAUNCH_JSON_TEMPLATE = `\`\`\`json
 {
   "version": "0.0.1",
@@ -106,9 +115,11 @@ function makeTab(id: string): TabState {
   };
 }
 
-export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
+export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
+  const sessionKey = `${wsId}:${threadId}`;
+  const settingsOpen = useSettingsOverlayStore((s) => s.open);
 
   // Presente só no desktop Electron — quando ausente, cai no `<iframe>` de
   // fallback abaixo (sujeito a X-Frame-Options, único caminho possível fora
@@ -140,18 +151,38 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   // própria WebContentsView (desktop, cada uma com viewId próprio; o
   // BrowserViewManager do main process já suporta N views por design, ver
   // electron/src/browser-view-manager.ts — esta camada é só a UI de gestão).
-  const [tabs, setTabs] = useState<TabState[]>(() => [makeTab(genId())]);
-  const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0].id);
+  const [tabs, setTabs] = useState<TabState[]>(() => {
+    const restored = getBrowserSession(sessionKey);
+    return restored
+      ? restored.tabs.map((tab) => ({
+          ...tab,
+          loading: false,
+          loadError: null,
+        }))
+      : [makeTab(genId())];
+  });
+  const [activeTabId, setActiveTabId] = useState<string>(() => {
+    const restored = getBrowserSession(sessionKey);
+    return restored?.activeTabId ?? tabs[0].id;
+  });
   const tabsRef = useRef(tabs);
   useEffect(() => {
     tabsRef.current = tabs;
   }, [tabs]);
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
+  useEffect(() => {
+    setBrowserSession(sessionKey, {
+      activeTabId,
+      tabs: tabs.map(({ loading, loadError, ...tab }) => tab),
+    });
+  }, [sessionKey, tabs, activeTabId]);
+
   const [urlInput, setUrlInput] = useState("");
   const [editingUrl, setEditingUrl] = useState(false);
 
   const pendingNavigateRef = useRef<Map<string, string>>(new Map());
+  const pendingViewCreatesRef = useRef<Set<string>>(new Set());
   const browserViewContainerRef = useRef<HTMLDivElement>(null);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -232,7 +263,22 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   const createDesktopView = useCallback(
     (tabId: string) => {
       if (!desktopBrowser) return;
+      const sessionGeneration = getBrowserSessionGeneration(sessionKey);
+      pendingViewCreatesRef.current.add(tabId);
       void desktopBrowser.createView().then((viewId) => {
+        if (
+          !pendingViewCreatesRef.current.has(tabId) ||
+          getBrowserSessionGeneration(sessionKey) !== sessionGeneration
+        ) {
+          desktopBrowser.destroyView(viewId);
+          return;
+        }
+        pendingViewCreatesRef.current.delete(tabId);
+        if (!tabsRef.current.some((tab) => tab.id === tabId)) {
+          pendingNavigateRef.current.delete(tabId);
+          desktopBrowser.destroyView(viewId);
+          return;
+        }
         const pending = pendingNavigateRef.current.get(tabId);
         updateTab(tabId, {
           viewId,
@@ -247,7 +293,7 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
         }
       });
     },
-    [desktopBrowser, updateTab],
+    [desktopBrowser, sessionKey, updateTab],
   );
 
   const addTab = useCallback(
@@ -269,7 +315,10 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
           );
         }
       }
-      if (desktopBrowser) createDesktopView(id);
+      if (desktopBrowser) {
+        pendingViewCreatesRef.current.add(id);
+        createDesktopView(id);
+      }
       return id;
     },
     [desktopBrowser, createDesktopView],
@@ -278,6 +327,8 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   const closeTab = useCallback(
     (id: string) => {
       const closing = tabsRef.current.find((t) => t.id === id);
+      pendingViewCreatesRef.current.delete(id);
+      pendingNavigateRef.current.delete(id);
       if (desktopBrowser && closing?.viewId != null) {
         desktopBrowser.destroyView(closing.viewId);
       }
@@ -333,26 +384,59 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
     updateTab(activeTabId, (t) => ({ ...t, iframeKey: t.iframeKey + 1 }));
   }, [desktopBrowser, activeTab.viewId, activeTabId, updateTab]);
 
-  // Nasce a WebContentsView da aba inicial uma vez por montagem e destroi
-  // TODAS as views (de todas as abas abertas) ao desmontar — a aba do
-  // workbench já desmonta/remonta ao trocar de tab, ver workbench-panel.tsx.
+  // Cria uma WebContentsView para cada aba restaurada. A troca de workbench
+  // apenas torna as views invisíveis; fechar uma aba continua sendo a ação
+  // destrutiva explícita.
   useEffect(() => {
     if (!desktopBrowser) return;
     let cancelled = false;
-    void desktopBrowser.createView().then((viewId) => {
-      if (cancelled) {
-        desktopBrowser.destroyView(viewId);
-        return;
-      }
-      setTabs((prev) => prev.map((t, i) => (i === 0 ? { ...t, viewId } : t)));
-    });
+    for (const tab of tabsRef.current.filter(
+      (candidate) => candidate.viewId === null,
+    )) {
+      pendingViewCreatesRef.current.add(tab.id);
+      const sessionGeneration = getBrowserSessionGeneration(sessionKey);
+      void desktopBrowser.createView().then((viewId) => {
+        if (
+          !pendingViewCreatesRef.current.has(tab.id) ||
+          getBrowserSessionGeneration(sessionKey) !== sessionGeneration
+        ) {
+          desktopBrowser.destroyView(viewId);
+          return;
+        }
+        pendingViewCreatesRef.current.delete(tab.id);
+        if (cancelled) {
+          desktopBrowser.destroyView(viewId);
+          return;
+        }
+        if (!tabsRef.current.some((candidate) => candidate.id === tab.id)) {
+          pendingNavigateRef.current.delete(tab.id);
+          desktopBrowser.destroyView(viewId);
+          return;
+        }
+        setTabs((prev) =>
+          prev.map((candidate) =>
+            candidate.id === tab.id ? { ...candidate, viewId } : candidate,
+          ),
+        );
+        if (tab.desktopUrl)
+          void desktopBrowser.navigate(viewId, tab.desktopUrl);
+      });
+    }
     return () => {
       cancelled = true;
       for (const t of tabsRef.current) {
-        if (t.viewId !== null) desktopBrowser.destroyView(t.viewId);
+        if (t.viewId !== null) desktopBrowser.setVisible(t.viewId, false);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desktopBrowser, sessionKey]);
+
+  useEffect(() => {
+    return () => {
+      // The session is intentionally retained while the workbench is hidden;
+      // deletion flows call disposeBrowserSession explicitly.
+      pendingNavigateRef.current.clear();
+      pendingViewCreatesRef.current.clear();
+    };
   }, []);
 
   // Espelha os eventos de navegação nativos do Chromium (fonte de verdade)
@@ -397,10 +481,14 @@ export function BrowserTab({ threadId: _threadId }: BrowserTabProps) {
   useEffect(() => {
     if (!desktopBrowser) return;
     for (const t of tabs) {
-      if (t.viewId !== null)
-        desktopBrowser.setVisible(t.viewId, t.id === activeTabId);
+      if (t.viewId !== null) {
+        desktopBrowser.setVisible(
+          t.viewId,
+          visible && !settingsOpen && t.id === activeTabId,
+        );
+      }
     }
-  }, [desktopBrowser, tabs, activeTabId]);
+  }, [desktopBrowser, tabs, activeTabId, settingsOpen, visible]);
 
   // Reporta os bounds reais do container (ResizeObserver) pro main process
   // posicionar a WebContentsView ATIVA por cima — só existe depois da
