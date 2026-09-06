@@ -500,15 +500,14 @@ jobs:
     name: Publish to update channel (R2 + KV)
     needs: release-native
     runs-on: ubuntu-latest
+    concurrency:
+      group: vectora-production-d1-schema
+      cancel-in-progress: false
     environment:
       name: production
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # API token R2 (S3) — upload dos instaladores via multipart; o
-      # CLOUDFLARE_API_TOKEN acima autentica só o wrangler (KV).
-      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # As credenciais R2 e do Wrangler ficam limitadas ao passo de publicação.
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
@@ -542,6 +541,11 @@ jobs:
         # (upload S3) o script falha na autenticação — o job fica vermelho
         # de propósito, nunca um no-op silencioso.
         working-directory: services
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
           pnpm run release -- --version=${{ steps.version.outputs.value }} --dist="$GITHUB_WORKSPACE/dist-electron-all"
 
@@ -602,6 +606,9 @@ jobs:
     name: Publish edge production (docs + company + services)
     needs: release-native
     runs-on: ubuntu-latest
+    concurrency:
+      group: vectora-production-d1-schema
+      cancel-in-progress: false
     environment: Production
     steps:
       - uses: actions/checkout@v7
