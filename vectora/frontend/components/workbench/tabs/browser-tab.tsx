@@ -26,6 +26,7 @@ import { useSettingsOverlayStore } from "@/lib/stores/settings-overlay-store";
 import { m as msg } from "@/lib/paraglide/messages";
 import { BrowserDevtoolsPanel } from "./browser-devtools-panel";
 import {
+  getBrowserSessionGeneration,
   getBrowserSession,
   setBrowserSession,
 } from "@/lib/browser-session-store";
@@ -262,9 +263,13 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
   const createDesktopView = useCallback(
     (tabId: string) => {
       if (!desktopBrowser) return;
+      const sessionGeneration = getBrowserSessionGeneration(sessionKey);
       pendingViewCreatesRef.current.add(tabId);
       void desktopBrowser.createView().then((viewId) => {
-        if (!pendingViewCreatesRef.current.has(tabId)) {
+        if (
+          !pendingViewCreatesRef.current.has(tabId) ||
+          getBrowserSessionGeneration(sessionKey) !== sessionGeneration
+        ) {
           desktopBrowser.destroyView(viewId);
           return;
         }
@@ -288,7 +293,7 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
         }
       });
     },
-    [desktopBrowser, updateTab],
+    [desktopBrowser, sessionKey, updateTab],
   );
 
   const addTab = useCallback(
@@ -389,8 +394,12 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
       (candidate) => candidate.viewId === null,
     )) {
       pendingViewCreatesRef.current.add(tab.id);
+      const sessionGeneration = getBrowserSessionGeneration(sessionKey);
       void desktopBrowser.createView().then((viewId) => {
-        if (!pendingViewCreatesRef.current.has(tab.id)) {
+        if (
+          !pendingViewCreatesRef.current.has(tab.id) ||
+          getBrowserSessionGeneration(sessionKey) !== sessionGeneration
+        ) {
           desktopBrowser.destroyView(viewId);
           return;
         }
@@ -419,7 +428,7 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
         if (t.viewId !== null) desktopBrowser.setVisible(t.viewId, false);
       }
     };
-  }, [desktopBrowser]);
+  }, [desktopBrowser, sessionKey]);
 
   useEffect(() => {
     return () => {

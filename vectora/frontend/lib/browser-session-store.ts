@@ -20,6 +20,7 @@ interface BrowserViewBridge {
 }
 
 const browserSessions = new Map<string, PersistedBrowserSession>();
+const browserSessionGenerations = new Map<string, number>();
 
 function getBrowserViewBridge(): BrowserViewBridge | undefined {
   return typeof window !== "undefined"
@@ -40,8 +41,16 @@ export function setBrowserSession(
   browserSessions.set(sessionKey, session);
 }
 
+export function getBrowserSessionGeneration(sessionKey: string): number {
+  return browserSessionGenerations.get(sessionKey) ?? 0;
+}
+
 /** Destroys native views and forgets one thread's persisted browser session. */
 export function disposeBrowserSession(sessionKey: string): void {
+  browserSessionGenerations.set(
+    sessionKey,
+    getBrowserSessionGeneration(sessionKey) + 1,
+  );
   const session = browserSessions.get(sessionKey);
   if (!session) return;
   const browserView = getBrowserViewBridge();
@@ -70,5 +79,11 @@ export function disposeBrowserThread(threadId: string): void {
 }
 
 export function clearBrowserSessionCache(): void {
+  for (const sessionKey of browserSessions.keys()) {
+    browserSessionGenerations.set(
+      sessionKey,
+      getBrowserSessionGeneration(sessionKey) + 1,
+    );
+  }
   browserSessions.clear();
 }

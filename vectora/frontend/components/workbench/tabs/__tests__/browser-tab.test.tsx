@@ -694,6 +694,23 @@ describe("BrowserTab — caminho desktop (WebContentsView real via window.vector
     expect(bridge.destroyView).toHaveBeenCalledWith(99);
     expect(bridge.navigate).not.toHaveBeenCalled();
   });
+
+  it("ignora uma view criada depois que a sessão foi descartada", async () => {
+    const resolvers: Array<(viewId: number) => void> = [];
+    const bridge = mockBrowserView();
+    bridge.createView = vi.fn(
+      () => new Promise<number>((resolve) => resolvers.push(resolve)),
+    );
+    mockFetch({ configurations: [] });
+    render(<BrowserTab threadId="generation-thread" />);
+    await waitFor(() => expect(bridge.createView).toHaveBeenCalled());
+
+    disposeBrowserSession("ws1:generation-thread");
+    await act(async () => resolvers[0](101));
+
+    expect(bridge.destroyView).toHaveBeenCalledWith(101);
+    expect(bridge.navigate).not.toHaveBeenCalled();
+  });
 });
 
 describe("BrowserTab — restauração por sessão", () => {
