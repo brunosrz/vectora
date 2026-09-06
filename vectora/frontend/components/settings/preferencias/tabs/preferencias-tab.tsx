@@ -36,6 +36,8 @@ import {
   type ThemePresetDef,
 } from "@/lib/theme/presets";
 import { ThemePicker } from "@/components/settings/preferencias/theme-picker";
+import { useIsDark } from "@/lib/hooks/use-is-dark";
+import { getPairedPresetId } from "@/lib/theme/presets";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
@@ -212,6 +214,9 @@ export function PreferenciasTab() {
     setUiScalePercent,
   } = useSettingsStore();
 
+  const isDark = useIsDark();
+  const activeMode = isDark ? "dark" : "light";
+
   const marketplaceSupported =
     typeof window !== "undefined" && Boolean(window.vectora?.themes);
 
@@ -239,9 +244,33 @@ export function PreferenciasTab() {
     setThemePreset(value);
   };
 
+  const syncPresetToMode = (targetMode: "light" | "dark") => {
+    if (themePreset === "default" || themePreset === "custom") return;
+    const paired = getPairedPresetId(themePreset, targetMode);
+    if (paired) setThemePreset(paired);
+  };
+
   const handleModeChange = (mode: Theme) => {
+    const targetMode =
+      mode === "system"
+        ? typeof window.matchMedia === "function" &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : activeMode
+        : mode;
+    syncPresetToMode(targetMode);
     setTheme(mode);
   };
+
+  useEffect(() => {
+    if (theme !== "system") return;
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (event: MediaQueryListEvent) =>
+      syncPresetToMode(event.matches ? "dark" : "light");
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
+  }, [theme, themePreset]);
 
   const handleAddTrainingBlock = () => {
     setTrainingInstructions([...trainingInstructions, ""]);
@@ -283,9 +312,12 @@ export function PreferenciasTab() {
           <ThemePicker
             value={selectedTheme}
             onChange={handleThemeChange}
+            activeMode={activeMode}
             presets={THEME_PRESETS}
             installedThemes={installedThemes}
             customLabel={m.prefs_theme_palette_custom()}
+            showMoreLabel={m.prefs_theme_palette_show_more()}
+            showLessLabel={m.prefs_theme_palette_show_less()}
             customColors={activeCustomColors}
             searchPlaceholder={m.prefs_theme_search_placeholder()}
             marketplaceSupported={marketplaceSupported}

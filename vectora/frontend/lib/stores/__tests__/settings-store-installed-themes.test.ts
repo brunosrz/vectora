@@ -12,6 +12,8 @@ import type { ThemePresetDef } from "@/lib/theme/presets";
 const sampleTheme: ThemePresetDef = {
   id: "vscode-publisher.tema",
   label: "Tema de Exemplo",
+  mode: "dark",
+  family: "vscode:publisher:tema",
   colors: {
     background: "#111111",
     foreground: "#eeeeee",

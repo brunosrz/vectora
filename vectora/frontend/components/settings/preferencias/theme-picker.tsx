@@ -10,6 +10,7 @@ import {
   type BaseThemeColors,
   type ThemePresetDef,
 } from "@/lib/theme/presets";
+import { classifyMode } from "@/lib/theme/mode";
 import {
   installVscodeThemeFromMarketplace,
   searchVscodeMarketplaceThemes,
@@ -77,6 +78,7 @@ function ThemePreview({
 interface ThemePickerOption {
   id: string;
   label: string;
+  mode: "light" | "dark";
   colors: BaseThemeColors;
 }
 
@@ -200,9 +202,12 @@ function MarketplaceResults({
 export function ThemePicker({
   value,
   onChange,
+  activeMode,
   presets,
   installedThemes,
   customLabel,
+  showMoreLabel,
+  showLessLabel,
   customColors,
   searchPlaceholder,
   marketplaceSupported,
@@ -214,9 +219,12 @@ export function ThemePicker({
 }: {
   value: string;
   onChange: (id: string) => void;
+  activeMode?: "light" | "dark";
   presets: ThemePresetDef[];
   installedThemes: ThemePresetDef[];
   customLabel: string;
+  showMoreLabel?: string;
+  showLessLabel?: string;
   customColors: BaseThemeColors;
   searchPlaceholder: string;
   marketplaceSupported: boolean;
@@ -227,29 +235,39 @@ export function ThemePicker({
   onThemeInstalled: (theme: ThemePresetDef) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const options: ThemePickerOption[] = useMemo(
     () => [
       ...presets.map((preset) => ({
         id: preset.id,
         label: preset.label,
+        mode: preset.mode,
         colors: preset.colors,
       })),
       ...installedThemes.map((theme) => ({
         id: theme.id,
         label: theme.label,
+        mode: theme.mode ?? classifyMode(theme.colors),
         colors: theme.colors,
       })),
-      { id: "custom", label: customLabel, colors: customColors },
     ],
-    [presets, installedThemes, customLabel, customColors],
+    [presets, installedThemes],
   );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter((opt) => opt.label.toLowerCase().includes(q));
-  }, [options, query]);
+    return options.filter(
+      (opt) =>
+        opt.mode === (activeMode ?? "dark") &&
+        (!q || opt.label.toLowerCase().includes(q)),
+    );
+  }, [options, query, activeMode]);
+
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [query, activeMode]);
+  const visible = filtered.slice(0, visibleCount);
 
   const installedIds = useMemo(
     () => new Set(installedThemes.map((t) => t.id.replace(/^vscode-/, ""))),
@@ -271,7 +289,7 @@ export function ThemePicker({
         />
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {filtered.map((opt) => (
+        {visible.map((opt) => (
           <div key={opt.id} className="space-y-1.5">
             <ThemePreview
               colors={opt.colors}
@@ -283,6 +301,36 @@ export function ThemePicker({
             </p>
           </div>
         ))}
+        <div className="space-y-1.5">
+          <ThemePreview
+            colors={customColors}
+            active={value === "custom"}
+            onClick={() => onChange("custom")}
+          />
+          <p className="truncate px-0.5 text-xs font-medium text-foreground">
+            {customLabel}
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        {filtered.length > visibleCount && (
+          <button
+            type="button"
+            className="text-xs text-primary underline"
+            onClick={() => setVisibleCount((count) => count + 6)}
+          >
+            {showMoreLabel ?? "Show more"}
+          </button>
+        )}
+        {visibleCount > 6 && (
+          <button
+            type="button"
+            className="text-xs text-primary underline"
+            onClick={() => setVisibleCount(6)}
+          >
+            {showLessLabel ?? "Show less"}
+          </button>
+        )}
       </div>
       {marketplaceSupported && (
         <MarketplaceResults

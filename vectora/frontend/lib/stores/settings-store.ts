@@ -9,6 +9,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { BaseThemeColors, ThemePresetDef } from "@/lib/theme/presets";
+import { classifyMode } from "@/lib/theme/mode";
 import { getDefaultModel } from "@/lib/config/deployment-config";
 import { fetchPrefs, pushPrefs } from "@/lib/api/settings-prefs";
 
@@ -414,7 +415,8 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: getStorageKey(), // Chave default; re-hidratada ao chamar loadUserSettings()
-      version: 4, // v4: clampa sidebarWidth/chatSidebarWidth pros limites atuais mesmo fora do default legado exato (teto do chat caiu de 800→480)
+      version: 5, // v5: adiciona metadados de variantes e migra ids legados
+      // v4: clampa sidebarWidth/chatSidebarWidth pros limites atuais mesmo fora do default legado exato (teto do chat caiu de 800→480)
       migrate: (persistedState) => {
         const s = persistedState as Record<string, unknown>;
         if (s && typeof s === "object") {
@@ -436,6 +438,24 @@ export const useSettingsStore = create<SettingsState>()(
           );
           s.sidebarWidth = widths.sidebarWidth;
           s.chatSidebarWidth = widths.chatSidebarWidth;
+          if (s.themePreset === "dark") s.themePreset = "default-dark";
+          else if (s.themePreset === "light") s.themePreset = "default-light";
+          if (Array.isArray(s.installedThemes)) {
+            s.installedThemes = s.installedThemes.map((theme) => {
+              const item = theme as Record<string, unknown>;
+              return {
+                ...item,
+                mode:
+                  item.mode === "light" || item.mode === "dark"
+                    ? item.mode
+                    : classifyMode((item.colors ?? {}) as BaseThemeColors),
+                family:
+                  typeof item.family === "string" && item.family.length > 0
+                    ? item.family
+                    : `vscode:${String(item.id ?? "unknown")}`,
+              };
+            });
+          }
         }
         return s;
       },
