@@ -951,6 +951,7 @@ class Settings(BaseSettings):
             "ollama": self.ollama_model,
             "cohere": self.cohere_chat_model,
             "openrouter": self.openrouter_model,
+            "nine_router": self.nine_router_default_model or "",
         }
         return model_map.get(self.llm_provider, self.google_model)
 
@@ -967,6 +968,7 @@ class Settings(BaseSettings):
             "ollama": None,  # Ollama doesn't require API key
             "cohere": self.cohere_api_key,
             "openrouter": self.openrouter_api_key,
+            "nine_router": self.nine_router_api_key,
         }
         return key_map.get(self.llm_provider)
 
@@ -1052,6 +1054,7 @@ class Settings(BaseSettings):
             "ollama",
             "cohere",
             "openrouter",
+            "nine_router",
         ]:
             raise ValueError(f"Unknown LLM provider: {provider}")
 
@@ -1067,6 +1070,8 @@ class Settings(BaseSettings):
             self.cohere_chat_model = model
         elif provider == "openrouter":
             self.openrouter_model = model
+        elif provider == "nine_router":
+            self.nine_router_default_model = model
 
         logger.info(f"Model updated: {provider}={model}")
 
@@ -1324,6 +1329,7 @@ PROVIDER_MODEL_ENV: dict[str, str] = {
     "ollama": "OLLAMA_MODEL",
     "cohere": "COHERE_CHAT_MODEL",
     "openrouter": "OPENROUTER_MODEL",
+    "nine_router": "NINE_ROUTER_MODEL",
 }
 
 # Nome amigável para exibição no TUI / setup wizard.

@@ -44,6 +44,21 @@ def test_settings_get_cohere_api_key_returns_none_or_str():
     assert key is None or isinstance(key, str)
 
 
+def test_settings_gets_nine_router_model_and_api_key():
+    s = Settings()
+    s.llm_provider = "nine_router"
+    s.nine_router_default_model = "cx/gpt-5.6-luna"
+    s.nine_router_api_key = "test-key"
+    assert s.get_llm_model() == "cx/gpt-5.6-luna"
+    assert s.get_llm_api_key() == "test-key"
+
+
+def test_settings_set_model_updates_nine_router_default():
+    s = Settings()
+    s.set_model("nine_router", "cx/gpt-5.6-luna")
+    assert s.nine_router_default_model == "cx/gpt-5.6-luna"
+
+
 def test_settings_vectora_app_secret_vem_do_defaults_env(monkeypatch):
     """Fixo por produto (backend/defaults.env) — não é auto-gerado por
     instalação, precisa bater com o mesmo valor configurado no Worker via

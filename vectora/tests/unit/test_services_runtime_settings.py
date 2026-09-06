@@ -2,12 +2,34 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 
 import pytest
 
 from backend.workspace.runtime_settings import RuntimeSettings
+
+
+def test_apply_model_change_updates_nine_router_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from backend.settings import settings
+    from backend.workspace import runtime_settings as runtime_module
+
+    monkeypatch.setattr(
+        runtime_module.runtime_settings,
+        "set_active_model",
+        lambda _provider, _model: None,
+    )
+    monkeypatch.setattr(
+        type(settings), "set_model", lambda _self, _provider, _model: None
+    )
+    runtime_module.apply_model_change("nine_router", "cx/gpt-5.6-luna")
+
+    assert os.environ["LLM_PROVIDER"] == "nine_router"
+    assert os.environ["NINE_ROUTER_MODEL"] == "cx/gpt-5.6-luna"
+
 
 # ---------------------------------------------------------------------------
 # Fixtures
