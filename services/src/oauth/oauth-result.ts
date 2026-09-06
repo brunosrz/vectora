@@ -1,0 +1,30 @@
+/** Serializes one-time OAuth result reads per state. */
+export class OAuthResult implements DurableObject {
+  constructor(private readonly state: DurableObjectState) {}
+
+  async fetch(request: Request): Promise<Response> {
+    const key = new URL(request.url).searchParams.get("key");
+    if (!key) return Response.json({ error: "key_required" }, { status: 400 });
+    if (request.method === "POST") {
+      const payload = (await request.json()) as {
+        value: string;
+        expirationTtl: number;
+      };
+      await this.state.storage.put(key, {
+        value: payload.value,
+        expiresAt: Date.now() + payload.expirationTtl * 1000,
+      });
+      return Response.json({ ok: true });
+    }
+    const entry = await this.state.storage.get<{
+      value: string;
+      expiresAt: number;
+    }>(key);
+    if (!entry || entry.expiresAt <= Date.now()) {
+      await this.state.storage.delete(key);
+      return new Response(null, { status: 202 });
+    }
+    await this.state.storage.delete(key);
+    return Response.json(JSON.parse(entry.value));
+  }
+}

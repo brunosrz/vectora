@@ -123,3 +123,40 @@ describe("POST /oauth/device", () => {
     expect(await res.json()).toEqual({ error: "gateway_error" });
   });
 });
+
+describe("OAuth broker de integrações", () => {
+  it("rejeita state curto e redirect fora de vectora.chat", async () => {
+    const originalId = (env as unknown as Record<string, string | undefined>)
+      .GITHUB_OAUTH_CLIENT_ID;
+    const originalSecret = (
+      env as unknown as Record<string, string | undefined>
+    ).GITHUB_OAUTH_CLIENT_SECRET;
+    const runtimeEnv = env as unknown as Record<string, string | undefined>;
+    runtimeEnv.GITHUB_OAUTH_CLIENT_ID = "company-client";
+    runtimeEnv.GITHUB_OAUTH_CLIENT_SECRET = "company-secret";
+    const short = await oauth.request(
+      "/integrations/github/start?state=short&return_to=https%3A%2F%2Fabc.vectora.chat%2Fauth%2Fgithub%2Fcallback",
+      {},
+      env,
+    );
+    expect(short.status).toBe(400);
+    const invalidRedirect = await oauth.request(
+      `/integrations/github/start?state=${"a".repeat(32)}&return_to=https%3A%2F%2Fevil.example%2Fcallback`,
+      {},
+      env,
+    );
+    expect(invalidRedirect.status).toBe(400);
+    runtimeEnv.GITHUB_OAUTH_CLIENT_ID = originalId;
+    runtimeEnv.GITHUB_OAUTH_CLIENT_SECRET = originalSecret;
+  });
+
+  it("exige o segredo de aplicação no polling do resultado", async () => {
+    const state = "a".repeat(32);
+    const response = await oauth.request(
+      `/integrations/github/result/${state}`,
+      {},
+      env,
+    );
+    expect(response.status).toBe(401);
+  });
+});

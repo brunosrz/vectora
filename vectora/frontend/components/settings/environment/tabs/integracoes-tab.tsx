@@ -7,15 +7,15 @@
  *
  * O1 — API key: usuário insere chave manualmente (inclui Slack — Socket
  * Mode exige xoxb-/xapp-, e o app-level token não sai de um OAuth padrão).
- * O2–O4 — OAuth: GitHub (via GitHub App), GitLab/Google (via OAuth App
- * clássico) — token manual também aceito pra quem não quer registrar
- * o app próprio no provider (ver backend/api/handlers/oauth.py). `kind`
- * do backend decide tudo aqui — nada de lista de ids hardcoded no frontend.
+ * OAuth: os apps de GitHub, GitLab e Google são registrados pela Vectora LTDA
+ * no Worker services. O usuário apenas autoriza o acesso; tokens manuais
+ * continuam disponíveis quando o provider declarar suporte. `kind` do backend
+ * decide tudo aqui — nada de lista de ids hardcoded no frontend.
  * Custom: chave+valor livre via /auth/envs, para credenciais sem entrada
  * dedicada no catálogo (MCP servers, providers não listados, etc).
  * Webhook URL: exibida para providers que têm webhook configurado.
- * Callback URL: exibida para providers OAuth ainda não configurados, pro
- * usuário cadastrar o app próprio com o redirect certo.
+ * O callback público fica no Worker e nunca é exibido como configuração para
+ * o usuário final.
  */
 
 import {
@@ -201,10 +201,8 @@ function IntegrationCard({
   onUpdated: () => void;
   gatewayWebhookBase: string | null;
 }) {
-  // Sem OAuth App configurado nesta instância, o token manual é o único
-  // jeito de conectar — abre o campo direto em vez de escondê-lo atrás do
-  // chevron (que faz sentido quando "Conectar via OAuth" também é uma
-  // opção visível e funcional).
+  // O token manual continua sendo uma alternativa explícita e permanece
+  // disponível quando o provider declara suporte a credenciais manuais.
   const [expanded, setExpanded] = useState(
     () =>
       (integ.kind === "oauth" || integ.kind === "hybrid") &&
@@ -219,7 +217,6 @@ function IntegrationCard({
   const [verifyMsg, setVerifyMsg] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [webhookCopied, setWebhookCopied] = useState(false);
-  const [callbackCopied, setCallbackCopied] = useState(false);
 
   // Deriva 100% do registry do backend (`kind`) — nada hardcoded aqui: uma
   // integração nova ganha o comportamento certo só por declarar seu `kind`
@@ -241,16 +238,6 @@ function IntegrationCard({
     : typeof window !== "undefined"
       ? `${window.location.origin}/webhook/${integ.id}`
       : `/webhook/${integ.id}`;
-
-  // Callback URL que o usuário cadastra ao criar o próprio app OAuth no
-  // provider (GitHub App, GitLab Application, Google OAuth client) — mesmo
-  // valor que `_gateway_callback_url()` monta no backend
-  // (backend/api/handlers/oauth.py). Só existe depois do túnel do gateway
-  // estar registrado (subdomínio por-instância); sem isso não há URL fixa
-  // pra mostrar.
-  const oauthCallbackUrl = gatewayWebhookBase
-    ? `${gatewayWebhookBase}/auth/${integ.id}/callback`
-    : null;
 
   const handleSave = async () => {
     if (!keyValue.trim()) return;
@@ -309,13 +296,6 @@ function IntegrationCard({
     await navigator.clipboard.writeText(webhookUrl);
     setWebhookCopied(true);
     setTimeout(() => setWebhookCopied(false), 2000);
-  };
-
-  const handleCopyCallback = async () => {
-    if (!oauthCallbackUrl) return;
-    await navigator.clipboard.writeText(oauthCallbackUrl);
-    setCallbackCopied(true);
-    setTimeout(() => setCallbackCopied(false), 2000);
   };
 
   // Providers filho (google-drive, gmail) herdam conexão do pai — não mostram
@@ -512,41 +492,8 @@ function IntegrationCard({
         </div>
       )}
 
-      {/* Callback URL — o usuário precisa dela ANTES de registrar o app
-          OAuth próprio no provider (client_id/secret nascem desse cadastro,
-          não o contrário). Mostrada sempre que o provider é OAuth-capaz e
-          o gateway já tem um subdomínio, independente de já estar
-          configurado — é a referência que falta pra configurar. */}
-      {isOAuthProvider && !integ.oauth_configured && oauthCallbackUrl && (
-        <div className="px-3 pb-3 border-t pt-3 space-y-1.5">
-          <div className="text-xs text-muted-foreground font-medium">
-            {m.integrations_oauth_callback_hint()}
-          </div>
-          <div className="flex gap-1.5">
-            <code className="flex-1 text-xs bg-muted px-2 py-1 rounded font-mono truncate">
-              {oauthCallbackUrl}
-            </code>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 shrink-0"
-              onClick={handleCopyCallback}
-              title={m.integrations_oauth_callback_copy()}
-            >
-              {callbackCopied ? (
-                <CheckCircle2 className="w-3 h-3 text-green-500" />
-              ) : (
-                <Copy className="w-3 h-3" />
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* OAuth section — botão "Conectar" só quando o operador registrou o
-          app próprio no provider (sem isso, sempre falharia com 503); o botão de
-          desconectar continua disponível mesmo que a config tenha sido
-          removida depois de já haver uma conexão ativa. */}
+      {/* OAuth section — os apps são mantidos pela Vectora LTDA no Worker;
+          o usuário apenas autoriza o acesso no provider. */}
       {isOAuthProvider && (integ.oauth_configured || integ.oauth_connected) && (
         <div className="px-3 pb-3 border-t pt-3 space-y-2">
           {integ.oauth_connected ? (

@@ -9,15 +9,27 @@
 
 ---
 
+## OAuth de integrações
+
+Os OAuth Apps das integrações são registrados pela Vectora LTDA no Worker
+`vectora-services`. O desktop não recebe client secret e a interface não pede
+que o usuário crie um app próprio. O backend gera um state aleatório e inicia
+o broker; o callback público do Worker troca o code, grava o resultado
+temporariamente no KV com TTL de cinco minutos e redireciona apenas o state
+para o subdomínio do gateway. O backend consulta o resultado uma única vez com
+`VECTORA_OAUTH_SECRET` e grava o token no override do usuário. Redirects são
+aceitos somente em `https://*.vectora.chat` e o valor do token nunca aparece
+na URL, no binário ou nos logs.
+
 ## Arquitetura — O que é o gateway e quem faz o quê
 
 ```
-Bruno (desenvolvedor)
-  └── cria UMA vez: OAuth Apps no GitHub/Google/Slack/GitLab, o Worker no Cloudflare
+Vectora LTDA (operador)
+  └── registra UMA vez os OAuth Apps no GitHub/Google/Slack/GitLab e configura os secrets no Worker
 
 Usuário final do Vectora (instala o .exe)
   └── não configura nada de gateway/OAuth — tudo acontece automaticamente
-  └── só conecta sua conta GitHub/Slack/etc. dentro do app Vectora
+  └── só autoriza sua conta GitHub/Slack/etc. dentro do app Vectora
 
 vectora-services (Worker Cloudflare único — services/src/index.ts)
   └── dispatch por hostname: gateway.vectora.chat + {token}.vectora.chat → gateway;
@@ -41,7 +53,7 @@ vectora-services (Worker Cloudflare único — services/src/index.ts)
 | Tipo                     | Propósito                                   | Provider                        | Callback                                                |
 | ------------------------ | ------------------------------------------- | ------------------------------- | ------------------------------------------------------- |
 | **Login na company**     | Entrar em vectora.company                   | `services` (D1, sessão própria) | tratado no próprio `services.vectora.company`           |
-| **Integração do agente** | Agente acessa GitHub/Drive/Slack do usuário | Provider → gateway → Backend    | `https://{token}.vectora.chat/auth/{provider}/callback` |
+| **Integração do agente** | Agente acessa GitHub/Drive/Slack do usuário | Provider → services OAuth broker → Backend | `https://services.vectora.company/oauth/integrations/{provider}/callback` |
 
 A Seção 3 deste plano é sobre o **segundo tipo** — OAuth para que o agente faça chamadas API em nome do usuário.
 
@@ -156,204 +168,44 @@ O token é salvo em `~/.vectora/gateway_token` (`backend/services/gateway/token.
 
 O subdomínio `{token}.vectora.chat` aparece em `GET /gateway/status` no backend para exibir ao usuário no dashboard do app.
 
-**Importante — mecanismo de proxy, não rotas hardcoded**: o Worker não conhece `/auth/github/callback` nem `/webhook/slack` como rotas próprias. Qualquer request em `{token}.vectora.chat/*` (qualquer path, qualquer método) é serializado (`{type:"request", id, method, path, headers, body}`) e mandado pelo WebSocket ativo; o `GatewayClient` no backend Python recebe e refaz a chamada real em `http://localhost:8000{path}`, onde as rotas de fato existem (`backend/api/handlers/oauth.py`, `backend/api/handlers/webhooks.py`). A resposta volta pelo mesmo canal, correlacionada por `id`.
+**Importante — mecanismo de proxy e broker OAuth**: o Worker encaminha requests de túnel em `{token}.vectora.chat/*` para o backend, mas os callbacks OAuth centralizados são tratados diretamente pelo broker em `/oauth/integrations/{provider}/callback`. O `GatewayClient` continua serializando requests de túnel (`{type:"request", id, method, path, headers, body}`) e refazendo-os em `http://localhost:8000{path}` para as rotas locais que não pertencem ao broker.
 
 ---
 
 ## SEÇÃO 3 — OAuth Providers (Integração do Agente)
 
-> **Quem cria:** Bruno (você), uma única vez, como desenvolvedor.
-> **Quem usa:** Todos os usuários do Vectora ao conectar suas contas no app.
->
-> O callback registrado no cadastro do app no provider é
-> `gateway.vectora.chat/auth/{provider}/callback` (aponte pra esse domínio
-> fixo no cadastro — é o host "base" da zona `vectora.chat`). Na prática,
-> cada instalação resolve seu próprio `redirect_uri` **real** como
-> `https://{token}.vectora.chat/auth/{provider}/callback`
-> (`backend/api/handlers/oauth.py::_gateway_callback_url`, lê
-> `~/.vectora/gateway_token`) — o DNS wildcard `*.vectora.chat` cobre
-> qualquer `{token}`, e a maioria dos providers aceita subdomínios do host
-> cadastrado como redirect_uri válido (confirmado pra GitHub:
-> `docs.github.com/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps`).
-> Então o cadastro no provider continua sendo feito **uma única vez** — não
-> é preciso recadastrar por instalação. Ordem de resolução real do
-> `redirect_uri` por provider: env var explícita (`GITHUB_OAUTH_REDIRECT_URI`
-> etc.) → `_gateway_callback_url(provider)` → fallback
-> `http://localhost:8080/auth/{provider}/callback` (dev sem gateway conectado).
+A Vectora LTDA registra e mantém os OAuth Apps no Worker vectora-services.
+O usuário final não cria app, não copia callback URL e nunca recebe client
+secret. A tela de Integrações chama o endpoint local, que gera um state
+criptograficamente aleatório e inicia o broker no Worker.
 
----
+O Worker expõe:
 
-### 3.1 GitHub App — checklist de registro
+- GET /oauth/integrations/providers — lista apenas os providers cujos secrets
+  estão configurados no deploy;
+- GET /oauth/integrations/{provider}/start — grava o state pendente com TTL de
+  cinco minutos e redireciona para o provider;
+- GET /oauth/integrations/{provider}/callback — recebe o callback público,
+  valida o state e o provider, troca o code usando o secret da empresa e grava
+  o resultado no KV sem registrar credenciais nos logs;
+- GET /oauth/integrations/{provider}/result/{state} — exige
+  VECTORA_OAUTH_SECRET, retorna o resultado uma única vez e o apaga do KV.
 
-**Ação manual, uma única vez, feita por você (Bruno) como desenvolvedor.**
-GitHub App, não OAuth App clássico — o GitHub recomenda GitHub Apps pra
-integrações novas (permissões refinadas, usuário escolhe quais repos
-liberar, tokens de curta duração por padrão). O fluxo de autorização de
-usuário de um GitHub App usa os MESMOS endpoints
-`github.com/login/oauth/authorize` e `login/oauth/access_token` de um
-OAuth App clássico, então o código de troca `code → token` em
-`backend/api/handlers/oauth.py::_github_cfg`/`github_oauth_callback` não
-muda — só o cadastro é diferente. Nenhum `client_id`/`client_secret` vai
-hardcoded no código — o app lê
-`GITHUB_OAUTH_CLIENT_ID`/`GITHUB_OAUTH_CLIENT_SECRET`/`GITHUB_OAUTH_REDIRECT_URI`
-do ambiente, com fallback pro domínio do gateway.
+O redirect de retorno recebido do backend é aceito somente em
+https://*.vectora.chat. O retorno contém apenas state; o token nunca é colocado
+em URL, no binário desktop ou no comentário de log. O backend faz polling com
+pequenos retries para acomodar a consistência eventual do KV, associa o token
+ao usuário que iniciou o fluxo e então o salva como override. Instalações sem
+VECTORA_OAUTH_BROKER_URL exibem erro explícito e continuam podendo usar PAT/API
+key manual quando o provider suportar esse modo.
 
-1. **github.com/settings/apps/new** (Developer settings → GitHub Apps →
-   New GitHub App — não "OAuth Apps").
-2. Preencher:
-   ```
-   GitHub App name: Vectora
-   Homepage URL: https://vectora.company
-   Callback URL: https://gateway.vectora.chat/auth/github/callback
-   ```
-   Marcar **"Request user authorization (OAuth) during installation"** —
-   sem isso o app não gera user access token, só installation tokens
-   (fluxo server-to-server, não o que o Vectora usa aqui).
-3. **Permissions** (Repository permissions): Contents (Read & write),
-   Pull requests (Read & write), Issues (Read & write), Metadata
-   (Read-only, obrigatório).
-4. **Optional features**: desmarcar/desativar a expiração de 8h do user
-   access token ("Expire user authorization tokens") — o backend hoje
-   guarda o token direto como `GITHUB_TOKEN` (env override) e não
-   implementa o fluxo de refresh_token; com a expiração ligada, a conexão
-   pararia de funcionar depois de 8h sem aviso.
-5. **Gerar o client secret** (seção "Client secrets" na página do app
-   criado, botão "Generate a new client secret") — visível só uma vez,
-   copiar imediatamente.
-6. **Guardar as credenciais** em `~/.vectora/.env` da instalação (ou nas
-   envs do backend, se rodando em modo servidor):
-   ```env
-   GITHUB_OAUTH_CLIENT_ID=<Client ID>
-   GITHUB_OAUTH_CLIENT_SECRET=<Client Secret>
-   ```
-   O `GITHUB_OAUTH_REDIRECT_URI` não precisa ser setado — sem ele, o
-   backend resolve o callback sozinho (ver o quadro no topo da Seção 3).
-   Só defina a env var pra forçar um callback custom (self-hosted atrás
-   de domínio próprio, por exemplo).
-7. **Instalar o app** na sua conta/org (botão "Install App" na página do
-   app) — sem instalação, o usuário autoriza mas o token não tem acesso a
-   nenhum repositório.
-8. Repetir o cadastro (OAuth App clássico, não GitHub App) para
-   GitLab/Google/Slack se o usuário quiser habilitá-los já — a estrutura
-   de `_gitlab_cfg`/`_google_cfg`/`_slack_cfg` é análoga (ver §3.2-3.4
-   abaixo).
-9. **Teste de validação**: no app Vectora, ir em Configurações →
-   Integrações → GitHub → Conectar. Deve redirecionar para o GitHub,
-   pedir autorização, e voltar ao app já conectado. Confirmar via
-   `GET /auth/github/status` → `{"connected": true, ...}`.
+Os secrets do Worker são configurados fora do repositório:
 
-**Scopes solicitados no fluxo pelo backend** (equivalentes às
-`oauth_scopes` do registry, mas em GitHub Apps o acesso real é definido
-pelas Permissions do passo 3, não pelo parâmetro `scope` da URL de
-autorização):
-
-- `repo` — leitura/escrita em repositórios
-- `user:email` — email do usuário
-- `read:org` — membros de organização
-
----
-
-### 3.2 Google OAuth (Drive + Gmail)
-
-**Onde:** console.cloud.google.com
-
-1. Criar projeto `Vectora` (ou usar existente)
-2. **APIs & Services → Enable APIs:** Google Drive API, Gmail API, People API
-3. **OAuth consent screen:**
-   - App name: `Vectora`
-   - User support email: `bssnem@gmail.com`
-   - Developer contact: `bssnem@gmail.com`
-   - Scopes: `drive`, `gmail.readonly`, `userinfo.email`, `userinfo.profile`
-   - Status: Testing (até 100 usuários sem verificação Google)
-4. **Credentials → OAuth 2.0 Client ID:**
-   - Application type: Web application
-   - Authorized redirect URIs:
-     ```
-     https://gateway.vectora.chat/auth/google/callback
-     http://localhost:8080/auth/google/callback
-     ```
-
-**Backend:**
-
-```env
-GOOGLE_OAUTH_CLIENT_ID=<Client ID>
-GOOGLE_OAUTH_CLIENT_SECRET=<Client Secret>
-GOOGLE_OAUTH_REDIRECT_URI=https://gateway.vectora.chat/auth/google/callback
-```
-
-> O fluxo `/auth/google/...` já está implementado no backend
-> (`backend/api/handlers/oauth.py`): `GET /auth/google` monta a URL de
-> consent (`access_type=offline&prompt=consent`, scopes
-> `drive.readonly`+`gmail.readonly`+`openid email profile`), `GET
-/auth/google/callback` troca `code` por `access_token`/`refresh_token` e
-> grava em `env_overrides["GOOGLE_ACCESS_TOKEN"]`/`["GOOGLE_REFRESH_TOKEN"]`
-> do usuário (`backend/rbac/auth.py::set_env_override`), `GET
-/auth/google/status` informa se está conectado, `DELETE /auth/google`
-> desconecta. `gmail.py`/`gdrive.py` leem esses overrides como qualquer
-> outra credencial de integração — nenhuma tool precisa saber que o token
-> veio do fluxo OAuth em vez de configuração manual.
-
----
-
-### 3.3 Slack OAuth App
-
-**Onde:** api.slack.com/apps → Create New App → From scratch
-
-1. **OAuth & Permissions → Bot Token Scopes:**
-   ```
-   chat:write
-   channels:read
-   users:read
-   channels:history
-   files:read
-   im:read
-   ```
-2. **Redirect URLs:**
-   ```
-   https://gateway.vectora.chat/auth/slack/callback
-   http://localhost:8080/auth/slack/callback
-   ```
-3. **Event Subscriptions:**
-   - Request URL: `https://gateway.vectora.chat/webhook/slack`
-   - Events: `message.channels`, `app_mention`, `message.im`
-
-**Backend:**
-
-```env
-SLACK_OAUTH_CLIENT_ID=<Client ID>
-SLACK_OAUTH_CLIENT_SECRET=<Client Secret>
-SLACK_SIGNING_SECRET=<Signing Secret>
-SLACK_REDIRECT_URI=https://gateway.vectora.chat/auth/slack/callback
-```
-
-> Na prática, o Connect do Slack (`backend/services/connect/`) roda em
-> **Socket Mode** (WebSocket direto com a API do Slack, sem depender do
-> callback público acima) — o fluxo OAuth desta seção cobre a tool
-> `slack.py` (mensagens avulsas via bot token), não o Connect.
-
----
-
-### 3.4 GitLab OAuth
-
-**Onde:** gitlab.com/-/profile/applications
-
-```
-Name: Vectora
-Redirect URI:
-  https://gateway.vectora.chat/auth/gitlab/callback
-  http://localhost:8080/auth/gitlab/callback
-Scopes: api, read_repository, write_repository, read_user
-```
-
-**Backend:**
-
-```env
-GITLAB_OAUTH_CLIENT_ID=<Application ID>
-GITLAB_OAUTH_CLIENT_SECRET=<Secret>
-GITLAB_BASE_URL=https://gitlab.com
-```
-
----
+- VECTORA_OAUTH_SECRET;
+- GITHUB_OAUTH_CLIENT_ID e GITHUB_OAUTH_CLIENT_SECRET;
+- GITLAB_OAUTH_CLIENT_ID e GITLAB_OAUTH_CLIENT_SECRET;
+- GOOGLE_OAUTH_CLIENT_ID e GOOGLE_OAUTH_CLIENT_SECRET;
+- SLACK_OAUTH_CLIENT_ID e SLACK_OAUTH_CLIENT_SECRET.
 
 ## SEÇÃO 4 — Webhooks
 
@@ -607,7 +459,11 @@ curl https://services.vectora.company/license/validate -X POST -d '{"token":"...
 
 ```
 GATEWAY_HMAC_SECRET     → interno ao gateway, gera tokens estáveis por instalação
-VECTORA_OAUTH_SECRET    → compartilhado com company e backend (device flow)
+VECTORA_OAUTH_SECRET    → compartilhado com company e backend (polling one-shot)
+GITHUB_OAUTH_CLIENT_ID / GITHUB_OAUTH_CLIENT_SECRET → secrets do OAuth App da Vectora LTDA
+GITLAB_OAUTH_CLIENT_ID / GITLAB_OAUTH_CLIENT_SECRET → secrets do OAuth App da Vectora LTDA
+GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET → secrets do OAuth App da Vectora LTDA
+SLACK_OAUTH_CLIENT_ID / SLACK_OAUTH_CLIENT_SECRET → secrets do OAuth App da Vectora LTDA
 VECTORA_APP_SECRET      → prova que cliente é Vectora legítimo (fixo por produto)
 STRIPE_SECRET_KEY       → billing internacional
 STRIPE_WEBHOOK_SECRET   → valida webhooks do Stripe
@@ -623,22 +479,9 @@ TURNSTILE_SECRET_KEY    → anti-bot no signup
 ```env
 VECTORA_APP_SECRET=<mesmo do Worker>
 VECTORA_OAUTH_SECRET=<mesmo do Worker>
+VECTORA_OAUTH_BROKER_URL=https://services.vectora.company
 GATEWAY_URL=wss://gateway.vectora.chat
 GATEWAY_ENABLED=true
-
-# OAuth Providers (integração do agente)
-GITHUB_OAUTH_CLIENT_ID=
-GITHUB_OAUTH_CLIENT_SECRET=
-GOOGLE_OAUTH_CLIENT_ID=
-GOOGLE_OAUTH_CLIENT_SECRET=
-GOOGLE_OAUTH_REDIRECT_URI=https://gateway.vectora.chat/auth/google/callback
-SLACK_OAUTH_CLIENT_ID=
-SLACK_OAUTH_CLIENT_SECRET=
-SLACK_SIGNING_SECRET=
-SLACK_REDIRECT_URI=https://gateway.vectora.chat/auth/slack/callback
-GITLAB_OAUTH_CLIENT_ID=
-GITLAB_OAUTH_CLIENT_SECRET=
-GITLAB_BASE_URL=https://gitlab.com
 
 # Webhook Secrets
 GITHUB_WEBHOOK_SECRET=
@@ -718,7 +561,7 @@ gateway.vectora.chat/auth/{provider}/start
     uma vez por Bruno, reaproveitados por todos os usuários finais)
         │
         ▼
-OAuth callback → {token}.vectora.chat/auth/{provider}/callback
+OAuth callback → services.vectora.company/oauth/integrations/{provider}/callback
         │
         ▼
 GatewaySession (Durable Object) encaminha o token via WebSocket pro
