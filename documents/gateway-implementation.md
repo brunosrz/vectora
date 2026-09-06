@@ -53,7 +53,7 @@ vectora-services (Worker Cloudflare único — services/src/index.ts)
 | Tipo                     | Propósito                                   | Provider                        | Callback                                                |
 | ------------------------ | ------------------------------------------- | ------------------------------- | ------------------------------------------------------- |
 | **Login na company**     | Entrar em vectora.company                   | `services` (D1, sessão própria) | tratado no próprio `services.vectora.company`           |
-| **Integração do agente** | Agente acessa GitHub/Drive/Slack do usuário | Provider → gateway → Backend    | `https://{token}.vectora.chat/auth/{provider}/callback` |
+| **Integração do agente** | Agente acessa GitHub/Drive/Slack do usuário | Provider → services OAuth broker → Backend | `https://services.vectora.company/oauth/integrations/{provider}/callback` |
 
 A Seção 3 deste plano é sobre o **segundo tipo** — OAuth para que o agente faça chamadas API em nome do usuário.
 
@@ -168,7 +168,7 @@ O token é salvo em `~/.vectora/gateway_token` (`backend/services/gateway/token.
 
 O subdomínio `{token}.vectora.chat` aparece em `GET /gateway/status` no backend para exibir ao usuário no dashboard do app.
 
-**Importante — mecanismo de proxy, não rotas hardcoded**: o Worker não conhece `/auth/github/callback` nem `/webhook/slack` como rotas próprias. Qualquer request em `{token}.vectora.chat/*` (qualquer path, qualquer método) é serializado (`{type:"request", id, method, path, headers, body}`) e mandado pelo WebSocket ativo; o `GatewayClient` no backend Python recebe e refaz a chamada real em `http://localhost:8000{path}`, onde as rotas de fato existem (`backend/api/handlers/oauth.py`, `backend/api/handlers/webhooks.py`). A resposta volta pelo mesmo canal, correlacionada por `id`.
+**Importante — mecanismo de proxy e broker OAuth**: o Worker encaminha requests de túnel em `{token}.vectora.chat/*` para o backend, mas os callbacks OAuth centralizados são tratados diretamente pelo broker em `/oauth/integrations/{provider}/callback`. O `GatewayClient` continua serializando requests de túnel (`{type:"request", id, method, path, headers, body}`) e refazendo-os em `http://localhost:8000{path}` para as rotas locais que não pertencem ao broker.
 
 ---
 
@@ -561,7 +561,7 @@ gateway.vectora.chat/auth/{provider}/start
     uma vez por Bruno, reaproveitados por todos os usuários finais)
         │
         ▼
-OAuth callback → {token}.vectora.chat/auth/{provider}/callback
+OAuth callback → services.vectora.company/oauth/integrations/{provider}/callback
         │
         ▼
 GatewaySession (Durable Object) encaminha o token via WebSocket pro

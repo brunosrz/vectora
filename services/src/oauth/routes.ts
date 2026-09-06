@@ -67,25 +67,26 @@ function configFor(provider: string, env: Env): OAuthConfig | null {
       callbackPath: "/oauth/integrations/google/callback",
     };
   }
-  if (
-    provider === "slack" &&
-    env.SLACK_OAUTH_CLIENT_ID &&
-    env.SLACK_OAUTH_CLIENT_SECRET
-  ) {
-    return {
-      clientId: env.SLACK_OAUTH_CLIENT_ID,
-      clientSecret: env.SLACK_OAUTH_CLIENT_SECRET,
-      authorizeUrl: "https://slack.com/oauth/v2/authorize",
-      tokenUrl: "https://slack.com/api/oauth.v2.access",
-      scopes: "chat:write,channels:read",
-      callbackPath: "/oauth/integrations/slack/callback",
-    };
-  }
   return null;
 }
 
 function stateKey(kind: "pending" | "result", state: string): string {
   return `oauth:integration:${kind}:${state}`;
+}
+
+async function storeOAuthResult(
+  env: Env,
+  state: string,
+  value: string,
+): Promise<void> {
+  const id = env.OAUTH_RESULT.idFromName(state);
+  await env.OAUTH_RESULT.get(id).fetch(
+    `https://oauth-result/?key=${encodeURIComponent(stateKey("result", state))}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ value, expirationTtl: OAUTH_TTL_SECONDS }),
+    },
+  );
 }
 
 function allowedReturnTo(value: string): boolean {
@@ -199,14 +200,14 @@ oauth.get("/integrations/:provider/callback", async (c) => {
     console.error("oauth_exchange_missing_token", { provider });
     return c.redirect(withState(pending.returnTo, state));
   }
-  await c.env.GATEWAY_METRICS.put(
-    stateKey("result", state),
+  await storeOAuthResult(
+    c.env,
+    state,
     JSON.stringify({
       provider,
       accessToken,
       refreshToken: payload.refresh_token ?? null,
     }),
-    { expirationTtl: OAUTH_TTL_SECONDS },
   );
   await c.env.GATEWAY_METRICS.delete(stateKey("pending", state));
   return c.redirect(withState(pending.returnTo, state));
@@ -220,13 +221,16 @@ oauth.get("/integrations/:provider/result/:state", async (c) => {
   }
   const provider = c.req.param("provider");
   const state = c.req.param("state");
-  const raw = await c.env.GATEWAY_METRICS.get(stateKey("result", state));
-  if (!raw) return c.body(null, 202);
-  const result = JSON.parse(raw) as { provider: string };
+  const id = c.env.OAUTH_RESULT.idFromName(state);
+  const response = await c.env.OAUTH_RESULT.get(id).fetch(
+    `https://oauth-result/?key=${encodeURIComponent(stateKey("result", state))}`,
+  );
+  if (response.status === 202) return c.body(null, 202);
+  if (!response.ok) return c.json({ error: "oauth_result_error" }, 502);
+  const result = (await response.json()) as { provider?: string };
   if (result.provider !== provider)
     return c.json({ error: "provider_mismatch" }, 400);
-  await c.env.GATEWAY_METRICS.delete(stateKey("result", state));
-  return c.json(JSON.parse(raw));
+  return c.json(result);
 });
 
 oauth.post("/device", async (c) => {

@@ -75,10 +75,15 @@ async def _broker_providers() -> set[str]:
 
 async def _broker_start(request: Request, provider: str) -> RedirectResponse:
     user = _get_user(request)
+    now = time.monotonic()
+    for pending_state, (_, _, expires_at) in tuple(_broker_states.items()):
+        if expires_at <= now:
+            _broker_states.pop(pending_state, None)
     state = secrets.token_urlsafe(32)
-    _broker_states[state] = (user.id, provider, time.monotonic() + _BROKER_STATE_TTL)
+    _broker_states[state] = (user.id, provider, now + _BROKER_STATE_TTL)
     callback = _gateway_callback_url(provider)
     if not callback:
+        _broker_states.pop(state, None)
         raise HTTPException(
             status_code=503,
             detail="OAuth centralizado exige um gateway Vectora conectado",
@@ -112,6 +117,7 @@ async def _broker_callback(
 ) -> RedirectResponse:
     record = _broker_states.get(state)
     if record is None or record[1] != provider or record[2] < time.monotonic():
+        _broker_states.pop(state, None)
         raise HTTPException(status_code=400, detail="Estado OAuth expirado ou inválido")
     user_id = record[0]
     import httpx
@@ -131,17 +137,24 @@ async def _broker_callback(
             status_code=502, detail="Resultado OAuth ainda não disponível"
         )
     if not response.is_success:
+        _broker_states.pop(state, None)
         raise HTTPException(
             status_code=502, detail="Broker OAuth falhou ao recuperar o token"
         )
     payload = response.json()
     access_token = payload.get("accessToken")
     if not isinstance(access_token, str) or not access_token:
+        _broker_states.pop(state, None)
         raise HTTPException(status_code=502, detail="Broker OAuth não retornou token")
     env_var = _REGISTRY_BY_ID[provider]["env_var"]
     from backend.rbac import auth as auth_svc
 
     await auth_svc.set_env_override(user_id, env_var, access_token, source="oauth")
+    refresh_token = payload.get("refreshToken")
+    if provider == "google" and isinstance(refresh_token, str) and refresh_token:
+        await auth_svc.set_env_override(
+            user_id, "GOOGLE_REFRESH_TOKEN", refresh_token, source="oauth"
+        )
     _broker_states.pop(state, None)
     logger.info(
         "OAuth broker: token salvo para provider=%s user_id=%s", provider, user_id
@@ -1117,8 +1130,6 @@ def _slack_cfg() -> tuple[str, str, str]:
 
 @router.get("/auth/slack")
 async def slack_oauth_start(request: Request) -> RedirectResponse:
-    if _broker_enabled():
-        return await _broker_start(request, "slack")
     user = _get_user(request)
     client_id, _secret, redirect_uri = _slack_cfg()
     scopes = ",".join(

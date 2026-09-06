@@ -2,6 +2,7 @@ import type { EmailMessage, JobMessage } from "../lib/queue-types";
 
 export interface Env {
   GATEWAY_SESSION: DurableObjectNamespace;
+  OAUTH_RESULT: DurableObjectNamespace;
   GATEWAY_METRICS: KVNamespace;
   VECTORA_APP_SECRET: string;
   // Nunca embutido em nenhum binário distribuído — só o Worker conhece este

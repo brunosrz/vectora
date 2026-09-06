@@ -27,7 +27,8 @@ zone_name = "vectora.chat"
 
 [durable_objects]
 bindings = [
-  { name = "GATEWAY_SESSION", class_name = "GatewaySession" }
+  { name = "GATEWAY_SESSION", class_name = "GatewaySession" },
+  { name = "OAUTH_RESULT", class_name = "OAuthResult" }
 ]
 
 # Migrations de Durable Object são um ledger append-only rastreado pelo
@@ -44,6 +45,10 @@ new_sqlite_classes = ["GatewaySession"]
 [[migrations]]
 tag = "v2"
 renamed_classes = [{ from = "RelaySession", to = "GatewaySession" }]
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["OAuthResult"]
 
 [[kv_namespaces]]
 binding = "GATEWAY_METRICS"
