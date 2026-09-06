@@ -4,7 +4,7 @@
  * store (themePreset vs theme) — trocar um não pode descartar o outro.
  */
 
-import { describe, it, expect, afterEach, beforeEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import {
   render,
   screen,
@@ -16,13 +16,29 @@ import { PreferenciasTab } from "../preferencias-tab";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { m } from "@/lib/paraglide/messages";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 beforeEach(() => {
   useSettingsStore.setState({ theme: "system", themePreset: "default" });
 });
 
 describe("PreferenciasTab — modo e paleta não se contaminam", () => {
+  it("sincroniza a variante pareada ao montar em modo 'system'", () => {
+    useSettingsStore.setState({ theme: "system", themePreset: "github-dark" });
+    vi.stubGlobal("matchMedia", () => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    render(<PreferenciasTab />);
+
+    expect(useSettingsStore.getState().themePreset).toBe("github-light");
+  });
+
   it("selecionar uma paleta (github-dark) em modo 'system' preserva o modo", () => {
     render(<PreferenciasTab />);
     const card = screen.getByText("GitHub Dark").closest("div")!;

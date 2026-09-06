@@ -249,7 +249,7 @@ export function PreferenciasTab() {
     (targetMode: "light" | "dark") => {
       if (themePreset === "default" || themePreset === "custom") return;
       const paired = getPairedPresetId(themePreset, targetMode);
-      if (paired) setThemePreset(paired);
+      if (paired && paired !== themePreset) setThemePreset(paired);
     },
     [setThemePreset, themePreset],
   );
@@ -270,6 +270,7 @@ export function PreferenciasTab() {
     if (theme !== "system") return;
     if (typeof window.matchMedia !== "function") return;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
+    syncPresetToMode(media.matches ? "dark" : "light");
     const handleChange = (event: MediaQueryListEvent) =>
       syncPresetToMode(event.matches ? "dark" : "light");
     media.addEventListener("change", handleChange);

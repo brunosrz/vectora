@@ -242,6 +242,10 @@ export function ThemePicker({
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(6);
 
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [activeMode]);
+
   const options: ThemePickerOption[] = useMemo(
     () => [
       ...presets.map((preset) => ({
