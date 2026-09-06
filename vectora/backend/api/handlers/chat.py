@@ -200,12 +200,14 @@ async def _resolve_image_fallback_model() -> str | None:
     spec = runtime_settings.get("image_fallback_model")
     if not spec or not isinstance(spec, str):
         return None
+    spec = spec.strip()
     from backend.llm.provider_fallback import _provider_has_key
 
-    provider, separator, _ = spec.partition(":")
+    provider, separator, model_id = spec.partition(":")
     if (
         not separator
         or not provider
+        or not model_id.strip()
         or not _provider_has_key(provider.replace("-", "_"))
     ):
         return None

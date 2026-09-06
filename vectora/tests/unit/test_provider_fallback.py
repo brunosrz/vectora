@@ -214,7 +214,12 @@ def _patch_env(order, keyed_providers):
     """Patcha runtime_settings.get(llm_fallback_order) e _provider_has_key."""
     rt = patch.object(pf, "_fallback_order", return_value=list(order))
     keys = patch.object(
-        pf, "_provider_has_key", side_effect=lambda p: p in keyed_providers
+        pf,
+        "_provider_has_key",
+        side_effect=lambda p: (
+            p.replace("-", "_")
+            in {provider.replace("-", "_") for provider in keyed_providers}
+        ),
     )
     return rt, keys
 
@@ -281,6 +286,16 @@ class TestGetFallbackChainAutoDefault:
         ):
             chain = pf.get_fallback_chain("google_genai:gemini-2.5-pro")
         assert chain == []
+
+    def test_normalizes_catalog_provider_aliases_for_credentials(self):
+        order = [
+            "google-genai:gemini-2.5-flash",
+            "nine-router:cx/gpt-5.6-luna",
+        ]
+        rt, keys = _patch_env(order, {"google_genai", "nine_router"})
+        with rt, keys:
+            chain = pf.get_fallback_chain("openai:gpt-4o")
+        assert chain == order
 
     def test_fallback_nao_configurado_ignora_ollama(self):
         from backend.settings import settings

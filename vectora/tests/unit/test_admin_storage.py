@@ -6,6 +6,7 @@ Usa httpx.AsyncClient com a app FastAPI mockando storage_health.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -15,9 +16,11 @@ from httpx import AsyncClient
 
 
 @pytest.fixture
-async def admin_client(monkeypatch):
+async def admin_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> AsyncIterator[AsyncClient]:
     """httpx.AsyncClient apontando para a app FastAPI em memória."""
-    from httpx import ASGITransport, AsyncClient
+    from httpx import ASGITransport
 
     import backend.api.handlers.admin as admin_handlers
     from backend.api.server import create_app

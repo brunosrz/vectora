@@ -708,6 +708,7 @@ class TestStreamChatBlocksImageForNonVisionProvider:
     @pytest.mark.asyncio
     async def test_openrouter_model_with_unknown_capability_is_not_blocked(
         self,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Catálogo indisponível não deve bloquear o envio preventivamente."""
         from backend.api.handlers import chat as chat_mod
@@ -753,6 +754,31 @@ class TestStreamChatBlocksImageForNonVisionProvider:
         monkeypatch.setattr(
             "backend.llm.provider_fallback._provider_has_key",
             lambda _provider: False,
+        )
+        monkeypatch.setattr(
+            chat_mod,
+            "_model_supports_vision",
+            AsyncMock(return_value=CapabilityState.SUPPORTED),
+        )
+
+        assert await chat_mod._resolve_image_fallback_model() is None
+
+    @pytest.mark.asyncio
+    async def test_ignora_fallback_persistido_sem_modelo(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from backend.api.handlers import chat as chat_mod
+        from backend.settings import CapabilityState
+
+        monkeypatch.setattr(
+            "backend.workspace.runtime_settings.runtime_settings.get",
+            lambda key, default=None: (
+                "openai:" if key == "image_fallback_model" else default
+            ),
+        )
+        monkeypatch.setattr(
+            "backend.llm.provider_fallback._provider_has_key",
+            lambda _provider: True,
         )
         monkeypatch.setattr(
             chat_mod,

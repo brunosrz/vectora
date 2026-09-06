@@ -74,10 +74,11 @@ async def _candidates(primary_model_id: str, *, has_images: bool) -> list[str]:
         configured = runtime_settings.get("image_fallback_model")
         if isinstance(configured, str) and configured.strip():
             configured = configured.strip()
-            provider, separator, _ = configured.partition(":")
+            provider, separator, model_id = configured.partition(":")
             if (
                 separator
                 and provider
+                and model_id.strip()
                 and _provider_has_key(provider.replace("-", "_"))
                 and await _vision_state(configured) is CapabilityState.SUPPORTED
             ):

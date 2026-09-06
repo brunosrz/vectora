@@ -177,8 +177,11 @@ def get_fallback_chain(current_model_id: str) -> list[str]:
 
     chain: list[str] = []
     for mid in configured:
-        prov = _provider_of(mid)
-        if prov == _provider_of(current_model_id):
+        # Catalog/runtime IDs use hyphens while the credential key map uses
+        # underscores (for example ``google-genai`` and ``nine-router``).
+        prov = _provider_of(mid).replace("-", "_")
+        current_prov = _provider_of(current_model_id).replace("-", "_")
+        if prov == current_prov:
             continue
         if not _provider_has_key(prov):
             continue

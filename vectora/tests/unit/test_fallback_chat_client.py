@@ -138,8 +138,8 @@ class TestAgenerate:
             await cliente.agenerate([text_message(MessageRole.USER, "oi")])
 
     async def test_modelo_ativo_desconhecido_tenta_imagem_sem_bloqueio(
-        self, monkeypatch
-    ):
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         cliente = _make_client(
             monkeypatch,
             fallback_chain=[],
