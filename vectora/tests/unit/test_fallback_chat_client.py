@@ -137,11 +137,14 @@ class TestAgenerate:
         with pytest.raises(QuotaExhaustedError, match="anthropic:claude-sonnet"):
             await cliente.agenerate([text_message(MessageRole.USER, "oi")])
 
-    async def test_sem_candidato_com_visao_para_mensagem_com_imagem_lanca_quota_exhausted(
+    async def test_modelo_ativo_desconhecido_tenta_imagem_sem_bloqueio(
         self, monkeypatch
     ):
-        monkeypatch.setattr("backend.settings.VISION_CAPABLE_PROVIDERS", set())
-        cliente = _make_client(monkeypatch, fallback_chain=[], clients_por_modelo={})
+        cliente = _make_client(
+            monkeypatch,
+            fallback_chain=[],
+            clients_por_modelo={"openai:gpt-4o": _FakeChatClient(_resposta_ok("ok"))},
+        )
         mensagem = VMessage(
             role=MessageRole.USER,
             content=[
@@ -149,8 +152,8 @@ class TestAgenerate:
             ],
         )
 
-        with pytest.raises(QuotaExhaustedError, match=r"[Nn]enhum provider"):
-            await cliente.agenerate([mensagem])
+        resultado = await cliente.agenerate([mensagem])
+        assert resultado.text() == "ok"
 
 
 class TestAstream:

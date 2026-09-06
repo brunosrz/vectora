@@ -13,6 +13,7 @@ error messages instead of silent NoneType errors mid-execution.
 
 import logging
 import os
+from enum import StrEnum
 from importlib import resources
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -1126,6 +1127,20 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
 # uma mensagem crua (ex.: Cohere "image content is not supported").
 VISION_CAPABLE_PROVIDERS: set[str] = {"google-genai", "openai", "anthropic"}
 
+
+class CapabilityState(StrEnum):
+    """Knowledge state for a model/provider capability.
+
+    ``UNKNOWN`` is deliberately distinct from ``UNSUPPORTED``: an active
+    model may be attempted when metadata is unavailable, while an unknown
+    model must never be selected as a multimodal fallback.
+    """
+
+    SUPPORTED = "known_capable"
+    UNSUPPORTED = "known_incapable"
+    UNKNOWN = "unknown"
+
+
 # Subconjunto de `VISION_CAPABLE_PROVIDERS`: ler vídeo é bem mais restrito
 # que ler imagem. OpenAI e Anthropic aceitam imagem na mensagem e recusam
 # vídeo, então herdar a lista acima faria `analyze_video` prometer uma
@@ -1156,17 +1171,34 @@ PROVIDER_CAPABILITIES: dict[str, set[str]] = {
 _GATEWAY_PROVIDERS: frozenset[str] = frozenset({"ollama", "openrouter"})
 
 
-def provider_supports(provider: str, capability: str) -> bool:
-    """True se `provider` atende `capability` ("image"/"tts"/"embedding"/...).
+def provider_capability_state(provider: str, capability: str) -> CapabilityState:
+    """Return the tri-state capability contract for a provider.
 
-    Pra Ollama/OpenRouter a resposta depende de o usuário ter escolhido um
-    modelo pra essa capacidade — sem modelo configurado a capacidade
-    simplesmente não existe ali, e a tool avisa em vez de tentar adivinhar
-    qual dos modelos instalados serviria.
+    Gateway providers are ``UNKNOWN`` at provider level because their model,
+    rather than the gateway itself, declares capabilities.
     """
     if provider in _GATEWAY_PROVIDERS:
-        return bool(configured_gateway_model(provider, capability))
-    return capability in PROVIDER_CAPABILITIES.get(provider, set())
+        return (
+            CapabilityState.SUPPORTED
+            if configured_gateway_model(provider, capability)
+            else CapabilityState.UNKNOWN
+        )
+    if provider not in PROVIDER_CAPABILITIES:
+        return CapabilityState.UNKNOWN
+    return (
+        CapabilityState.SUPPORTED
+        if capability in PROVIDER_CAPABILITIES[provider]
+        else CapabilityState.UNSUPPORTED
+    )
+
+
+def provider_supports(provider: str, capability: str) -> bool:
+    """Boolean, fail-closed compatibility wrapper for existing media tools.
+
+    For gateway providers, capability depends on the configured model; when
+    no model is configured, the wrapper returns ``False``.
+    """
+    return provider_capability_state(provider, capability) is CapabilityState.SUPPORTED
 
 
 def configured_gateway_model(provider: str, capability: str) -> str:

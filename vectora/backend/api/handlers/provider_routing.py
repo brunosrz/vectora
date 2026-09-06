@@ -49,7 +49,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from backend.settings import settings
+from backend.settings import CapabilityState, settings
 
 logger = logging.getLogger(__name__)
 
@@ -304,6 +304,7 @@ async def set_openrouter_key(body: OpenRouterKeyRequest) -> OpenRouterStatus:
     from backend.settings import settings
 
     object.__setattr__(settings, "openrouter_api_key", api_key)
+    invalidate_catalog_cache()
 
     return OpenRouterStatus(configured=True, masked=_mask_key(api_key))
 
@@ -317,6 +318,7 @@ async def clear_openrouter_key() -> OpenRouterStatus:
     _remove_env_key(_env_file(), "OPENROUTER_API_KEY")
     os.environ.pop("OPENROUTER_API_KEY", None)
     object.__setattr__(settings, "openrouter_api_key", None)
+    invalidate_catalog_cache()
     return OpenRouterStatus(configured=False, masked="")
 
 
@@ -407,16 +409,15 @@ async def discover_openrouter_models(
     return OpenRouterCatalogResponse(models=models[:100])
 
 
-async def openrouter_model_supports_image(model_id: str) -> bool:
+async def openrouter_model_image_state(model_id: str) -> CapabilityState:
     """Capability real de visão do modelo `model_id` (ex.:
     "anthropic/claude-3.5-sonnet"), consultando o catálogo público
     cacheado — nunca trata "openrouter" como um bloco único com/sem visão,
     já que isso varia por modelo servido.
 
     Modelo ausente do catálogo (id incomum, catálogo indisponível e cache
-    vazio) devolve `True` — fail-open: deixa a chamada real ao provider
-    decidir em vez de bloquear um modelo que pode muito bem suportar
-    imagem, já que o catálogo cobre a esmagadora maioria dos ids reais.
+    vazio) devolve ``UNKNOWN``. O modelo ativo pode ser tentado em modo
+    fail-open; a cadeia de fallback deve excluir esse estado.
     """
     import httpx
 
@@ -432,8 +433,20 @@ async def openrouter_model_supports_image(model_id: str) -> bool:
 
     for m in _catalog_cache["models"]:
         if m.id == model_id:
-            return "image" in m.input_modalities
-    return True
+            modalities = {item.lower().replace("-", "_") for item in m.input_modalities}
+            return (
+                CapabilityState.SUPPORTED
+                if {"image", "image_url", "vision"} & modalities
+                else CapabilityState.UNSUPPORTED
+            )
+    return CapabilityState.UNKNOWN
+
+
+async def openrouter_model_supports_image(model_id: str) -> bool:
+    """Backward-compatible boolean wrapper; unknown remains fail-open."""
+    return (
+        await openrouter_model_image_state(model_id)
+    ) is not CapabilityState.UNSUPPORTED
 
 
 @router.get("/openrouter/registered")
@@ -475,6 +488,7 @@ class NineRouterConfigRequest(BaseModel):
 class NineRouterModelInfo(BaseModel):
     id: str
     name: str
+    input_modalities: list[str] = []
 
 
 class NineRouterCatalogResponse(BaseModel):
@@ -514,6 +528,7 @@ async def set_nine_router_config(body: NineRouterConfigRequest) -> NineRouterSta
     os.environ["NINE_ROUTER_API_KEY"] = api_key
     object.__setattr__(settings, "nine_router_base_url", base_url)
     object.__setattr__(settings, "nine_router_api_key", api_key)
+    invalidate_catalog_cache()
 
     return NineRouterStatus(
         configured=True, base_url=base_url, masked=_mask_key(api_key)
@@ -530,6 +545,7 @@ async def clear_nine_router_config() -> NineRouterStatus:
     os.environ.pop("NINE_ROUTER_API_KEY", None)
     object.__setattr__(settings, "nine_router_base_url", None)
     object.__setattr__(settings, "nine_router_api_key", None)
+    invalidate_catalog_cache()
     return NineRouterStatus(configured=False, base_url=None, masked="")
 
 
@@ -559,11 +575,82 @@ async def discover_nine_router_models(
         return NineRouterCatalogResponse(reachable=False, models=[])
 
     models = [
-        NineRouterModelInfo(id=m["id"], name=m.get("name", m["id"]))
+        NineRouterModelInfo(
+            id=m["id"],
+            name=m.get("name", m["id"]),
+            input_modalities=list(
+                m.get("architecture", {}).get("input_modalities")
+                or m.get("input_modalities")
+                or []
+            ),
+        )
         for m in data.get("data", [])
         if m.get("id")
     ]
     return NineRouterCatalogResponse(reachable=True, models=models)
+
+
+_nine_router_catalog_cache: dict[str, Any] = {"fetched_at": float("-inf"), "models": []}
+
+
+def _normalize_modalities(values: list[str]) -> set[str]:
+    return {value.strip().lower().replace("-", "_") for value in values}
+
+
+async def nine_router_model_supports_image(model_id: str) -> CapabilityState:
+    """Resolve image support from the configured Nine Router catalog."""
+    import httpx
+
+    now = time.monotonic()
+    if now - _nine_router_catalog_cache["fetched_at"] > _OPENROUTER_CATALOG_TTL_S:
+        base_url = settings.nine_router_base_url
+        api_key = settings.nine_router_api_key
+        if not base_url or not api_key:
+            return CapabilityState.UNKNOWN
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                response = await client.get(
+                    f"{base_url.rstrip('/')}/models",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+                response.raise_for_status()
+                data = response.json()
+            _nine_router_catalog_cache["models"] = [
+                NineRouterModelInfo(
+                    id=item["id"],
+                    name=item.get("name", item["id"]),
+                    input_modalities=list(
+                        item.get("architecture", {}).get("input_modalities")
+                        or item.get("input_modalities")
+                        or []
+                    ),
+                )
+                for item in data.get("data", [])
+                if item.get("id")
+            ]
+            _nine_router_catalog_cache["fetched_at"] = now
+        except Exception:
+            logger.debug(
+                "provider_routing: Nine Router catalog unavailable", exc_info=True
+            )
+
+    for model in _nine_router_catalog_cache["models"]:
+        if model.id == model_id:
+            modalities = _normalize_modalities(model.input_modalities)
+            return (
+                CapabilityState.SUPPORTED
+                if {"image", "image_url", "vision"} & modalities
+                else CapabilityState.UNSUPPORTED
+            )
+    return CapabilityState.UNKNOWN
+
+
+def invalidate_catalog_cache() -> None:
+    """Invalidate provider model catalogs after credential/config changes."""
+    _catalog_cache["fetched_at"] = float("-inf")
+    _catalog_cache["models"] = []
+    _nine_router_catalog_cache["fetched_at"] = float("-inf")
+    _nine_router_catalog_cache["models"] = []
 
 
 @router.get("/nine-router/registered")

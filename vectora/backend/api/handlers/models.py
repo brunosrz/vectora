@@ -20,29 +20,55 @@ router = APIRouter(prefix="/models", tags=["models"])
 @router.get("/providers")
 async def get_configured_providers() -> dict:
     """Providers de LLM com credencial configurada + modelos dinâmicos."""
+    from backend.api.handlers.chat import _model_supports_vision
     from backend.api.handlers.provider_routing import (
         list_registered_nine_router_models,
         list_registered_ollama_models,
         list_registered_openrouter_models,
     )
-    from backend.settings import TOOL_CALLING_INCOMPATIBLE_MODELS, settings
-
-    dynamic_models = (
-        [
-            {"id": f"ollama:{m.tag}", "label": m.tag}
-            for m in await list_registered_ollama_models()
-        ]
-        + [
-            {"id": f"openrouter:{m.tag}", "label": m.tag}
-            for m in await list_registered_openrouter_models()
-        ]
-        + [
-            {"id": f"nine_router:{m.tag}", "label": m.tag}
-            for m in await list_registered_nine_router_models()
-        ]
+    from backend.settings import (
+        AVAILABLE_MODELS,
+        TOOL_CALLING_INCOMPATIBLE_MODELS,
+        provider_capability_state,
+        settings,
     )
+
+    dynamic_models = []
+    for provider, models in (
+        ("ollama", await list_registered_ollama_models()),
+        ("openrouter", await list_registered_openrouter_models()),
+        ("nine_router", await list_registered_nine_router_models()),
+    ):
+        for model in models:
+            model_id = f"{provider}:{model.tag}"
+            state = await _model_supports_vision(model_id)
+            dynamic_models.append(
+                {
+                    "id": model_id,
+                    "label": model.tag,
+                    "provider": provider,
+                    "available": True,
+                    "image_capability": state.value,
+                }
+            )
+
+    models = []
+    for provider, provider_models in AVAILABLE_MODELS.items():
+        available = provider in settings.configured_llm_providers()
+        state = provider_capability_state(provider, "vision")
+        for model in provider_models:
+            models.append(
+                {
+                    "id": f"{provider}:{model}",
+                    "label": model,
+                    "provider": provider,
+                    "available": available,
+                    "image_capability": state.value,
+                }
+            )
     return {
         "providers": settings.configured_llm_providers(),
+        "models": models,
         "dynamic_models": dynamic_models,
         "tool_incompatible_models": sorted(TOOL_CALLING_INCOMPATIBLE_MODELS),
     }

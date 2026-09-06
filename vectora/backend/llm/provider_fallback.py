@@ -46,6 +46,14 @@ _PROVIDER_INCOMPATIBLE_MARKERS = (
     "tool plan` cannot be used with this model",
     "tool_plan",
 )
+_MULTIMODAL_INCOMPATIBLE_MARKERS = (
+    "image content is not supported",
+    "image input is not supported",
+    "image_url is not supported",
+    "unsupported content type: image",
+    "does not support image",
+    "model does not support vision",
+)
 
 
 class QuotaExhaustedError(Exception):
@@ -101,6 +109,14 @@ def is_provider_incompatible_error(exc: BaseException) -> bool:
     return any(marker in msg for marker in _PROVIDER_INCOMPATIBLE_MARKERS)
 
 
+def is_multimodal_incompatible_error(exc: BaseException) -> bool:
+    """Return true only for explicit image/vision incompatibility errors."""
+    msg = str(exc).lower()
+    if is_quota_error(exc) or is_transient_error(exc):
+        return False
+    return any(marker in msg for marker in _MULTIMODAL_INCOMPATIBLE_MARKERS)
+
+
 def _provider_of(model_id: str) -> str:
     return model_id.split(":", 1)[0]
 
@@ -123,6 +139,7 @@ def _provider_has_key(provider: str) -> bool:
         "anthropic": settings.anthropic_api_key,
         "cohere": settings.cohere_api_key,
         "openrouter": settings.openrouter_api_key,
+        "nine_router": settings.nine_router_api_key,
     }
     return bool(keymap.get(provider))
 
