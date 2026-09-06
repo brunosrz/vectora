@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.16](https://github.com/vectora-ltda/vectora/compare/v0.1.15...v0.1.16) (2026-09-06)
+
+
+### Features
+
+* enviar anexos ao modelo ativo antes do fallback multimodal ([#80](https://github.com/vectora-ltda/vectora/issues/80)) ([0d8f04d](https://github.com/vectora-ltda/vectora/commit/0d8f04d1a518b716dafb8fbe6272f7d32995ddc6))
+* **frontend:** revisa Aparência com novo catálogo de temas e UI Scale ([#69](https://github.com/vectora-ltda/vectora/issues/69)) ([72a48cb](https://github.com/vectora-ltda/vectora/commit/72a48cb35d103b0dcf63ab28d834c38b6b097d84))
+
+
+### Bug Fixes
+
+* **backend:** mantém subagents ao vivo e sessões privadas ([#71](https://github.com/vectora-ltda/vectora/issues/71)) ([9e795f3](https://github.com/vectora-ltda/vectora/commit/9e795f328ef4af43edb5752b7fa951a7dc1dd471))
+* **backend:** remove thread da SessionStore ao excluir ([#68](https://github.com/vectora-ltda/vectora/issues/68)) ([d36ca2b](https://github.com/vectora-ltda/vectora/commit/d36ca2bfda9779790bf78dae098edd3ebb8719eb))
+* encerra arvore de processos dos sidecars no shutdown ([#76](https://github.com/vectora-ltda/vectora/issues/76)) ([51c31ff](https://github.com/vectora-ltda/vectora/commit/51c31ff9652a11805a34da00785608874d5ff39e))
+* preservar estado do navegador ao ocultar workbench ([#78](https://github.com/vectora-ltda/vectora/issues/78)) ([59b9a6a](https://github.com/vectora-ltda/vectora/commit/59b9a6af264f44e8f6da7f6cc2f45fa1a6519abc))
+
 ## [0.1.15](https://github.com/vectora-ltda/vectora/compare/v0.1.14...v0.1.15) (2026-09-04)
 
 
