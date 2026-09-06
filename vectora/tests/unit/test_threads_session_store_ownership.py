@@ -156,6 +156,35 @@ class TestListThreadsReflectsSessionStore:
 
         assert result.threads == []
 
+    async def test_subagent_legado_nao_consumo_o_limite_da_listagem(
+        self, session_store: SessionStore, checkpoints_db
+    ) -> None:
+        """Uma linha legada recente não pode esconder thread regular mais antiga."""
+        await session_store.create_session(
+            "thread-pai:search:legado-recente", user_id="alice", mode="subagent"
+        )
+        await th._upsert_session(
+            "thread-pai:search:legado-recente", title="search", mode="code"
+        )
+        await th._increment_message_count("thread-pai:search:legado-recente")
+
+        await session_store.create_session(
+            "thread-regular-antiga", user_id="alice", mode="code"
+        )
+        await th._upsert_session("thread-regular-antiga", title="Conversa")
+        await th._increment_message_count("thread-regular-antiga")
+        await checkpoints_db.execute(
+            "UPDATE vectora_sessions SET last_activity = ? WHERE thread_id = ?",
+            ("2000-01-01", "thread-regular-antiga"),
+        )
+        await checkpoints_db.commit()
+
+        result = await th.list_threads(
+            ListThreadsRequest(limit=1), _http_request("alice")
+        )
+
+        assert [thread.id for thread in result.threads] == ["thread-regular-antiga"]
+
 
 class TestOwnershipEnforcement:
     """GetThread/UpdateThread/DeleteThread/GenerateTitle não vazam threads

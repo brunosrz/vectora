@@ -702,34 +702,42 @@ async def list_threads(
 ) -> ListThreadsResponse:
     """Lista threads visíveis ao usuário, excluindo sessões internas."""
     limit = max(1, min(request.limit or 50, 200))
-    db = await _get_db()
-    cols = (
-        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode, pinned "
-        "FROM vectora_sessions "
-    )
-    mode_filter = _normalize_mode(request.mode) if request.mode else ""
-    if mode_filter:
-        query = (
-            cols + "WHERE mode = ? AND mode != 'subagent' AND message_count > 0 "
-            "ORDER BY pinned DESC, last_activity DESC LIMIT ?"
-        )
-        params: tuple[Any, ...] = (mode_filter, limit)
-    else:
-        query = (
-            cols + "WHERE mode != 'subagent' AND message_count > 0 "
-            "ORDER BY pinned DESC, last_activity DESC LIMIT ?"
-        )
-        params = (limit,)
-    async with db.execute(query, params) as cur:
-        rows = await cur.fetchall()
-
     session_store = await _get_session_store()
     subagent_thread_ids = {
         session["thread_id"]
         for session in await session_store.list_all_sessions()
         if session["mode"] == "subagent"
     }
-    rows = [row for row in rows if row[0] not in subagent_thread_ids]
+    db = await _get_db()
+    cols = (
+        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra, mode, pinned "
+        "FROM vectora_sessions "
+    )
+    mode_filter = _normalize_mode(request.mode) if request.mode else ""
+    legacy_filter = ""
+    legacy_params: tuple[Any, ...] = ()
+    if subagent_thread_ids:
+        placeholders = ",".join("?" for _ in subagent_thread_ids)
+        legacy_filter = f" AND thread_id NOT IN ({placeholders})"
+        legacy_params = tuple(subagent_thread_ids)
+    if mode_filter:
+        query = (
+            cols
+            + "WHERE mode = ? AND mode != 'subagent' AND message_count > 0"
+            + legacy_filter
+            + " ORDER BY pinned DESC, last_activity DESC LIMIT ?"
+        )
+        params: tuple[Any, ...] = (mode_filter, *legacy_params, limit)
+    else:
+        query = (
+            cols
+            + "WHERE mode != 'subagent' AND message_count > 0"
+            + legacy_filter
+            + " ORDER BY pinned DESC, last_activity DESC LIMIT ?"
+        )
+        params = (*legacy_params, limit)
+    async with db.execute(query, params) as cur:
+        rows = await cur.fetchall()
 
     if http_request is not None:
         user_id = _user_id(http_request)
