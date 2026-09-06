@@ -134,6 +134,7 @@ MAX_PAYLOAD_BYTES = "5242880"
 QUEUE_TTL_MS = "600000"
 APP_URL = "https://vectora.company"
 GATEWAY_URL = "https://gateway.vectora.chat"
+OAUTH_PUBLIC_URL = "https://services.vectora.company"
 
 # Secrets (não vão neste arquivo — `wrangler secret put <nome>`):
 #   VECTORA_APP_SECRET     — gateway: secret fixo por produto (embutido no
@@ -148,7 +149,11 @@ GATEWAY_URL = "https://gateway.vectora.chat"
 #                            (/_health, /_revoke, /_set-secret) — nunca
 #                            distribuído em nenhum binário do produto
 #   GATEWAY_HMAC_SECRET    — gateway: assina o token de 6 chars por fingerprint
-#   VECTORA_OAUTH_SECRET   — gateway: Bearer auth nos endpoints /oauth/token
+#   VECTORA_OAUTH_SECRET   — Bearer auth no polling de resultados OAuth
+#   GITHUB_OAUTH_CLIENT_ID / GITHUB_OAUTH_CLIENT_SECRET — OAuth App da Vectora LTDA
+#   GITLAB_OAUTH_CLIENT_ID / GITLAB_OAUTH_CLIENT_SECRET — OAuth App da Vectora LTDA
+#   GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET — OAuth App da Vectora LTDA
+#   SLACK_OAUTH_CLIENT_ID / SLACK_OAUTH_CLIENT_SECRET — OAuth App da Vectora LTDA
 #   RESEND_API_KEY         — auth/billing/gdpr/issues: envio de email transacional
 #   TURNSTILE_SECRET_KEY   — auth/issues: verificação anti-bot (opcional em dev)
 #   STRIPE_SECRET_KEY      — billing: API Stripe (clientes INTL)

@@ -9,7 +9,225 @@ import { Hono } from "hono";
 import type { Env } from "../gateway/types";
 import { requireUserId } from "../auth/routes";
 
+const OAUTH_TTL_SECONDS = 300;
+const OAUTH_STATE_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
+
+type Provider = "github" | "gitlab" | "google" | "slack";
+type OAuthConfig = {
+  clientId: string;
+  clientSecret: string;
+  authorizeUrl: string;
+  tokenUrl: string;
+  scopes: string;
+  callbackPath: string;
+};
+
+function configFor(provider: string, env: Env): OAuthConfig | null {
+  if (
+    provider === "github" &&
+    env.GITHUB_OAUTH_CLIENT_ID &&
+    env.GITHUB_OAUTH_CLIENT_SECRET
+  ) {
+    return {
+      clientId: env.GITHUB_OAUTH_CLIENT_ID,
+      clientSecret: env.GITHUB_OAUTH_CLIENT_SECRET,
+      authorizeUrl: "https://github.com/login/oauth/authorize",
+      tokenUrl: "https://github.com/login/oauth/access_token",
+      scopes: "repo,user:email,read:org",
+      callbackPath: "/oauth/integrations/github/callback",
+    };
+  }
+  if (
+    provider === "gitlab" &&
+    env.GITLAB_OAUTH_CLIENT_ID &&
+    env.GITLAB_OAUTH_CLIENT_SECRET
+  ) {
+    const base = env.GITLAB_BASE_URL ?? "https://gitlab.com";
+    return {
+      clientId: env.GITLAB_OAUTH_CLIENT_ID,
+      clientSecret: env.GITLAB_OAUTH_CLIENT_SECRET,
+      authorizeUrl: `${base}/oauth/authorize`,
+      tokenUrl: `${base}/oauth/token`,
+      scopes: "api read_repository write_repository read_user",
+      callbackPath: "/oauth/integrations/gitlab/callback",
+    };
+  }
+  if (
+    provider === "google" &&
+    env.GOOGLE_OAUTH_CLIENT_ID &&
+    env.GOOGLE_OAUTH_CLIENT_SECRET
+  ) {
+    return {
+      clientId: env.GOOGLE_OAUTH_CLIENT_ID,
+      clientSecret: env.GOOGLE_OAUTH_CLIENT_SECRET,
+      authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+      tokenUrl: "https://oauth2.googleapis.com/token",
+      scopes:
+        "openid email profile https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/gmail.readonly",
+      callbackPath: "/oauth/integrations/google/callback",
+    };
+  }
+  if (
+    provider === "slack" &&
+    env.SLACK_OAUTH_CLIENT_ID &&
+    env.SLACK_OAUTH_CLIENT_SECRET
+  ) {
+    return {
+      clientId: env.SLACK_OAUTH_CLIENT_ID,
+      clientSecret: env.SLACK_OAUTH_CLIENT_SECRET,
+      authorizeUrl: "https://slack.com/oauth/v2/authorize",
+      tokenUrl: "https://slack.com/api/oauth.v2.access",
+      scopes: "chat:write,channels:read",
+      callbackPath: "/oauth/integrations/slack/callback",
+    };
+  }
+  return null;
+}
+
+function stateKey(kind: "pending" | "result", state: string): string {
+  return `oauth:integration:${kind}:${state}`;
+}
+
+function allowedReturnTo(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "vectora.chat" ||
+        url.hostname.endsWith(".vectora.chat"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function withState(returnTo: string, state: string): string {
+  const url = new URL(returnTo);
+  url.searchParams.set("state", state);
+  return url.toString();
+}
+
 export const oauth = new Hono<{ Bindings: Env }>();
+
+oauth.get("/integrations/providers", (c) => {
+  const providers = (["github", "gitlab", "google", "slack"] as const).filter(
+    (provider) => configFor(provider, c.env) !== null,
+  );
+  return c.json({ providers });
+});
+
+oauth.get("/integrations/:provider/start", async (c) => {
+  const provider = c.req.param("provider");
+  const state = c.req.query("state") ?? "";
+  const returnTo = c.req.query("return_to") ?? "";
+  const config = configFor(provider, c.env);
+  if (!config) return c.json({ error: "provider_not_configured" }, 503);
+  if (!OAUTH_STATE_PATTERN.test(state))
+    return c.json({ error: "invalid_state" }, 400);
+  if (!allowedReturnTo(returnTo))
+    return c.json({ error: "invalid_return_to" }, 400);
+
+  await c.env.GATEWAY_METRICS.put(
+    stateKey("pending", state),
+    JSON.stringify({ provider, returnTo }),
+    { expirationTtl: OAUTH_TTL_SECONDS },
+  );
+  const callback = new URL(
+    config.callbackPath,
+    c.env.OAUTH_PUBLIC_URL ?? c.env.APP_URL,
+  ).toString();
+  const authorize = new URL(config.authorizeUrl);
+  authorize.searchParams.set("client_id", config.clientId);
+  authorize.searchParams.set("redirect_uri", callback);
+  authorize.searchParams.set("response_type", "code");
+  authorize.searchParams.set("scope", config.scopes);
+  authorize.searchParams.set("state", state);
+  if (provider === "google")
+    authorize.searchParams.set("access_type", "offline");
+  return c.redirect(authorize.toString());
+});
+
+oauth.get("/integrations/:provider/callback", async (c) => {
+  const provider = c.req.param("provider");
+  const state = c.req.query("state") ?? "";
+  const code = c.req.query("code") ?? "";
+  const config = configFor(provider, c.env);
+  const pending = state
+    ? await c.env.GATEWAY_METRICS.get<{ provider: string; returnTo: string }>(
+        stateKey("pending", state),
+        "json",
+      )
+    : null;
+  if (!config || !pending || pending.provider !== provider || !code) {
+    return c.text("OAuth state expired or invalid", 400);
+  }
+
+  const body = new URLSearchParams({
+    client_id: config.clientId,
+    client_secret: config.clientSecret,
+    code,
+    redirect_uri: new URL(
+      config.callbackPath,
+      c.env.OAUTH_PUBLIC_URL ?? c.env.APP_URL,
+    ).toString(),
+    grant_type: "authorization_code",
+  });
+  const response = await fetch(config.tokenUrl, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+  if (!response.ok) {
+    console.error("oauth_exchange_failed", {
+      provider,
+      status: response.status,
+    });
+    return c.redirect(withState(pending.returnTo, state));
+  }
+  const payload = (await response.json()) as Record<string, unknown>;
+  const accessToken =
+    typeof payload.access_token === "string"
+      ? payload.access_token
+      : typeof payload.authed_user === "object" && payload.authed_user !== null
+        ? ((payload.authed_user as { access_token?: string }).access_token ??
+          "")
+        : "";
+  if (!accessToken) {
+    console.error("oauth_exchange_missing_token", { provider });
+    return c.redirect(withState(pending.returnTo, state));
+  }
+  await c.env.GATEWAY_METRICS.put(
+    stateKey("result", state),
+    JSON.stringify({
+      provider,
+      accessToken,
+      refreshToken: payload.refresh_token ?? null,
+    }),
+    { expirationTtl: OAUTH_TTL_SECONDS },
+  );
+  await c.env.GATEWAY_METRICS.delete(stateKey("pending", state));
+  return c.redirect(withState(pending.returnTo, state));
+});
+
+oauth.get("/integrations/:provider/result/:state", async (c) => {
+  if (
+    c.req.header("Authorization") !== `Bearer ${c.env.VECTORA_OAUTH_SECRET}`
+  ) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+  const provider = c.req.param("provider");
+  const state = c.req.param("state");
+  const raw = await c.env.GATEWAY_METRICS.get(stateKey("result", state));
+  if (!raw) return c.body(null, 202);
+  const result = JSON.parse(raw) as { provider: string };
+  if (result.provider !== provider)
+    return c.json({ error: "provider_mismatch" }, 400);
+  await c.env.GATEWAY_METRICS.delete(stateKey("result", state));
+  return c.json(JSON.parse(raw));
+});
 
 oauth.post("/device", async (c) => {
   const userId = await requireUserId(c);

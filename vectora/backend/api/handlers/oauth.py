@@ -20,17 +20,19 @@ token do usuário em "Optional features" (senão o token expira e precisa
 de refresh, não implementado aqui) — GITHUB_OAUTH_CLIENT_ID/SECRET vêm
 das credenciais desse GitHub App.
 
-Configuração necessária (env vars):
-    GITHUB_OAUTH_CLIENT_ID / GITHUB_OAUTH_CLIENT_SECRET   (GitHub App)
-    GITLAB_OAUTH_CLIENT_ID / GITLAB_OAUTH_CLIENT_SECRET / GITLAB_BASE_URL
-    GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET
-    SLACK_OAUTH_CLIENT_ID / SLACK_OAUTH_CLIENT_SECRET
+Os client IDs e secrets dos providers são mantidos pelo Worker services. O
+backend local usa apenas VECTORA_OAUTH_BROKER_URL e VECTORA_OAUTH_SECRET para
+iniciar o fluxo e consumir o resultado one-shot; as variáveis dos providers
+abaixo só permanecem como fallback de compatibilidade para instalações antigas.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import secrets
+import time
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +46,107 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["oauth"])
 
 _GATEWAY_TOKEN_PATH = settings.vectora_home / "gateway_token"
+_OAUTH_BROKER_URL = os.getenv("VECTORA_OAUTH_BROKER_URL", "").strip()
+_OAUTH_BROKER_SECRET = os.getenv("VECTORA_OAUTH_SECRET", "").strip()
+_BROKER_STATE_TTL = 300.0
+_broker_states: dict[str, tuple[str, str, float]] = {}
+
+
+def _broker_enabled() -> bool:
+    return bool(_OAUTH_BROKER_URL and _OAUTH_BROKER_SECRET)
+
+
+async def _broker_providers() -> set[str]:
+    if not _broker_enabled():
+        return set()
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.get(
+                f"{_OAUTH_BROKER_URL}/oauth/integrations/providers"
+            )
+        if response.is_success:
+            return {str(item) for item in response.json().get("providers", [])}
+    except Exception as exc:
+        logger.warning("OAuth broker provider discovery failed: %s", exc)
+    return set()
+
+
+async def _broker_start(request: Request, provider: str) -> RedirectResponse:
+    user = _get_user(request)
+    state = secrets.token_urlsafe(32)
+    _broker_states[state] = (user.id, provider, time.monotonic() + _BROKER_STATE_TTL)
+    callback = _gateway_callback_url(provider)
+    if not callback:
+        raise HTTPException(
+            status_code=503,
+            detail="OAuth centralizado exige um gateway Vectora conectado",
+        )
+    import httpx
+
+    async with httpx.AsyncClient(timeout=10, follow_redirects=False) as client:
+        response = await client.get(
+            f"{_OAUTH_BROKER_URL}/oauth/integrations/{provider}/start",
+            params={"state": state, "return_to": callback},
+        )
+    if response.status_code != 302:
+        _broker_states.pop(state, None)
+        detail = (
+            "OAuth broker não configurado"
+            if response.status_code == 503
+            else "Falha ao iniciar OAuth"
+        )
+        raise HTTPException(status_code=response.status_code, detail=detail)
+    location = response.headers.get("location")
+    if not location:
+        _broker_states.pop(state, None)
+        raise HTTPException(
+            status_code=502, detail="Broker OAuth não retornou redirect"
+        )
+    return RedirectResponse(url=location, status_code=302)
+
+
+async def _broker_callback(
+    provider: str, state: str, request: Request
+) -> RedirectResponse:
+    record = _broker_states.get(state)
+    if record is None or record[1] != provider or record[2] < time.monotonic():
+        raise HTTPException(status_code=400, detail="Estado OAuth expirado ou inválido")
+    user_id = record[0]
+    import httpx
+
+    response = None
+    async with httpx.AsyncClient(timeout=10) as client:
+        for attempt in range(5):
+            response = await client.get(
+                f"{_OAUTH_BROKER_URL}/oauth/integrations/{provider}/result/{state}",
+                headers={"Authorization": f"Bearer {_OAUTH_BROKER_SECRET}"},
+            )
+            if response.status_code != 202:
+                break
+            await asyncio.sleep(0.2 * (attempt + 1))
+    if response is None or response.status_code == 202:
+        raise HTTPException(
+            status_code=502, detail="Resultado OAuth ainda não disponível"
+        )
+    if not response.is_success:
+        raise HTTPException(
+            status_code=502, detail="Broker OAuth falhou ao recuperar o token"
+        )
+    payload = response.json()
+    access_token = payload.get("accessToken")
+    if not isinstance(access_token, str) or not access_token:
+        raise HTTPException(status_code=502, detail="Broker OAuth não retornou token")
+    env_var = _REGISTRY_BY_ID[provider]["env_var"]
+    from backend.rbac import auth as auth_svc
+
+    await auth_svc.set_env_override(user_id, env_var, access_token, source="oauth")
+    _broker_states.pop(state, None)
+    logger.info(
+        "OAuth broker: token salvo para provider=%s user_id=%s", provider, user_id
+    )
+    return RedirectResponse(url=f"/?oauth_success={provider}", status_code=302)
 
 
 def _gateway_callback_url(
@@ -368,6 +471,7 @@ async def list_integrations(request: Request) -> dict:
 
     from backend.rbac.auth import is_oauth_sourced
 
+    broker_providers = await _broker_providers()
     items = []
     for integ in INTEGRATIONS_REGISTRY:
         env_vars = [integ["env_var"], *integ.get("env_var_aliases", [])]
@@ -390,7 +494,8 @@ async def list_integrations(request: Request) -> dict:
                 "oauth_connected": oauth_connected,
                 # Nunca expõe o valor — apenas informa se existe
                 "oauth_configured": (
-                    _oauth_configured(oauth_provider_id)
+                    oauth_provider_id in broker_providers
+                    or _oauth_configured(oauth_provider_id)
                     if integ["kind"] in ("oauth", "hybrid")
                     else False
                 ),
@@ -580,6 +685,8 @@ async def _verify_apikey(integration_id: str, token: str) -> tuple[bool, str]:  
 @router.get("/auth/github")
 async def github_oauth_start(request: Request) -> RedirectResponse:
     """Inicia o fluxo OAuth do GitHub — redireciona para github.com/login/oauth."""
+    if _broker_enabled():
+        return await _broker_start(request, "github")
     user = _get_user(request)
     client_id, _secret, redirect_uri = _github_cfg()
 
@@ -604,6 +711,8 @@ async def github_oauth_callback(
     request: Request, code: str = "", state: str = ""
 ) -> RedirectResponse:
     """Callback do GitHub — troca code por token e salva como env_override."""
+    if _broker_enabled() and state in _broker_states:
+        return await _broker_callback("github", state, request)
     if not code:
         raise HTTPException(status_code=400, detail="Parâmetro 'code' ausente")
 
@@ -725,6 +834,8 @@ def _gitlab_cfg() -> tuple[str, str, str, str]:
 
 @router.get("/auth/gitlab")
 async def gitlab_oauth_start(request: Request) -> RedirectResponse:
+    if _broker_enabled():
+        return await _broker_start(request, "gitlab")
     user = _get_user(request)
     client_id, _secret, base_url, redirect_uri = _gitlab_cfg()
     scopes = " ".join(
@@ -745,6 +856,8 @@ async def gitlab_oauth_start(request: Request) -> RedirectResponse:
 async def gitlab_oauth_callback(
     request: Request, code: str = "", state: str = ""
 ) -> RedirectResponse:
+    if _broker_enabled() and state in _broker_states:
+        return await _broker_callback("gitlab", state, request)
     if not code:
         raise HTTPException(status_code=400, detail="Parâmetro 'code' ausente")
     client_id, client_secret, base_url, redirect_uri = _gitlab_cfg()
@@ -853,6 +966,8 @@ def _google_cfg() -> tuple[str, str, str]:
 
 @router.get("/auth/google")
 async def google_oauth_start(request: Request) -> RedirectResponse:
+    if _broker_enabled():
+        return await _broker_start(request, "google")
     user = _get_user(request)
     client_id, _secret, redirect_uri = _google_cfg()
     scopes = (
@@ -879,6 +994,8 @@ async def google_oauth_start(request: Request) -> RedirectResponse:
 async def google_oauth_callback(
     request: Request, code: str = "", state: str = ""
 ) -> RedirectResponse:
+    if _broker_enabled() and state in _broker_states:
+        return await _broker_callback("google", state, request)
     if not code:
         raise HTTPException(status_code=400, detail="Parâmetro 'code' ausente")
     client_id, client_secret, redirect_uri = _google_cfg()
@@ -1000,6 +1117,8 @@ def _slack_cfg() -> tuple[str, str, str]:
 
 @router.get("/auth/slack")
 async def slack_oauth_start(request: Request) -> RedirectResponse:
+    if _broker_enabled():
+        return await _broker_start(request, "slack")
     user = _get_user(request)
     client_id, _secret, redirect_uri = _slack_cfg()
     scopes = ",".join(
@@ -1021,6 +1140,8 @@ async def slack_oauth_start(request: Request) -> RedirectResponse:
 async def slack_oauth_callback(
     request: Request, code: str = "", state: str = ""
 ) -> RedirectResponse:
+    if _broker_enabled() and state in _broker_states:
+        return await _broker_callback("slack", state, request)
     if not code:
         raise HTTPException(status_code=400, detail="Parâmetro 'code' ausente")
     client_id, client_secret, redirect_uri = _slack_cfg()

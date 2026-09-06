@@ -461,7 +461,7 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("provider OAuth sem app configurado exibe a callback URL pra cadastro, quando o gateway já tem subdomínio", async () => {
+  it("provider OAuth não exibe callback para cadastro do usuário", async () => {
     mockFetch(BASE_INTEGRATIONS, {
       connected: true,
       state: "connected",
@@ -472,12 +472,10 @@ describe("IntegracoesTab", () => {
     });
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
-    await waitFor(() => {
-      const callbackUrls = screen.getAllByText(
-        /abc123\.vectora\.chat\/auth\/gitlab\/callback/i,
-      );
-      expect(callbackUrls.length).toBeGreaterThan(0);
-    });
+    await waitFor(() =>
+      expect(screen.getAllByText("GitLab").length).toBeGreaterThan(0),
+    );
+    expect(screen.queryByText(/\/auth\/gitlab\/callback/i)).toBeNull();
   });
 
   it("erro de borda — sem subdomínio do gateway ainda, a callback URL não aparece (nada pra copiar)", async () => {
