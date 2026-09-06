@@ -765,6 +765,7 @@ class Settings(BaseSettings):
                     "ollama": "OLLAMA_MODEL",
                     "cohere": "COHERE_CHAT_MODEL",
                     "openrouter": "OPENROUTER_MODEL",
+                    "nine_router": "NINE_ROUTER_MODEL",
                 }
                 if _env_var := _model_env_map.get(_provider):
                     os.environ.setdefault(_env_var, _model)
@@ -1318,6 +1319,7 @@ PROVIDER_API_KEY_ENV: dict[str, str | None] = {
     "ollama": None,
     "cohere": "COHERE_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
+    "nine_router": "NINE_ROUTER_API_KEY",
     "tavily": "TAVILY_API_KEY",
 }
 

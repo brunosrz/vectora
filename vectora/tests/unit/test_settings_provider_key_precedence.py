@@ -22,6 +22,7 @@ class TestProviderApiKeyEnvRegistry:
         assert PROVIDER_API_KEY_ENV["anthropic"] == "ANTHROPIC_API_KEY"
         assert PROVIDER_API_KEY_ENV["cohere"] == "COHERE_API_KEY"
         assert PROVIDER_API_KEY_ENV["openrouter"] == "OPENROUTER_API_KEY"
+        assert PROVIDER_API_KEY_ENV["nine_router"] == "NINE_ROUTER_API_KEY"
 
 
 @pytest.fixture
@@ -46,6 +47,46 @@ def _isolated_env_hierarchy(tmp_path, monkeypatch):
 
 
 class TestTavilyKeyPrecedence:
+    def test_nine_router_key_user_env_wins_over_project_env(
+        self, _isolated_env_hierarchy
+    ):
+        vectora_home, project_dir = _isolated_env_hierarchy
+        (vectora_home / ".env").write_text(
+            "NINE_ROUTER_API_KEY=user-nine-key\n", encoding="utf-8"
+        )
+        (project_dir / ".env").write_text(
+            "NINE_ROUTER_API_KEY=project-nine-key\n", encoding="utf-8"
+        )
+
+        Settings()
+
+        assert os.environ["NINE_ROUTER_API_KEY"] == "user-nine-key"
+
+    def test_nine_router_model_restored_from_runtime_settings(
+        self, _isolated_env_hierarchy, monkeypatch
+    ):
+        import backend.settings as settings_mod
+        from backend.workspace.runtime_settings import runtime_settings
+
+        original_get = runtime_settings.get
+
+        def fake_get(key: str, default=None):
+            if key == "active_provider":
+                return "nine_router"
+            if key == "active_model":
+                return "cx/gpt-5.6-luna"
+            return original_get(key, default)
+
+        monkeypatch.setattr(runtime_settings, "get", fake_get)
+        monkeypatch.setenv("LLM_PROVIDER", "nine_router")
+        monkeypatch.delenv("NINE_ROUTER_MODEL", raising=False)
+
+        settings = settings_mod.Settings.model_construct()
+        settings._load_environment_hierarchy()
+
+        assert os.environ["LLM_PROVIDER"] == "nine_router"
+        assert os.environ["NINE_ROUTER_MODEL"] == "cx/gpt-5.6-luna"
+
     def test_env_de_projeto_nao_vence_env_do_usuario(self, _isolated_env_hierarchy):
         vectora_home, project_dir = _isolated_env_hierarchy
         (vectora_home / ".env").write_text("TAVILY_API_KEY=tvly-user-value\n")
