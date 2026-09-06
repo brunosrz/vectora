@@ -112,12 +112,18 @@ function MarketplaceResults({
 
   useEffect(() => {
     const q = query.trim();
-    if (!q) return;
     let alive = true;
+    setResults([]);
+    setError(null);
+    if (!q) {
+      setLoading(false);
+      return () => {
+        alive = false;
+      };
+    }
     const timer = setTimeout(() => {
       if (!alive) return;
       setLoading(true);
-      setError(null);
       void searchVscodeMarketplaceThemes(q)
         .then((items) => {
           if (alive) setResults(items);
@@ -268,10 +274,11 @@ export function ThemePicker({
     const q = query.trim().toLowerCase();
     return options.filter(
       (opt) =>
-        opt.mode === (activeMode ?? "dark") &&
-        (!q || opt.label.toLowerCase().includes(q)),
+        (!q || opt.label.toLowerCase().includes(q)) &&
+        (opt.mode === (activeMode ?? "dark") ||
+          (opt.id === value && opt.mode !== (activeMode ?? "dark"))),
     );
-  }, [options, query, activeMode]);
+  }, [options, query, activeMode, value]);
 
   const visible = filtered.slice(0, visibleCount);
 

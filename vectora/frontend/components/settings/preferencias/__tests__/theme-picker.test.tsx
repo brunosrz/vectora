@@ -117,6 +117,13 @@ describe("ThemePicker", () => {
     );
   });
 
+  it("mantém visível o preset selecionado sem variante no modo ativo", () => {
+    renderPicker({ value: "github-dark", activeMode: "light" });
+
+    expect(screen.getByText("GitHub Dark")).toBeInTheDocument();
+    expect(screen.getByText("GitHub Light")).toBeInTheDocument();
+  });
+
   it("card de preview usa a cor real de background do preset (não um valor fixo) — erro/borda", () => {
     renderPicker();
 
