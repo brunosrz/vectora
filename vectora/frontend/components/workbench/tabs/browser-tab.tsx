@@ -141,6 +141,7 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
   });
   const [consoleFor, setConsoleFor] = useState<string | null>(null);
   const [consoleLines, setConsoleLines] = useState<string[]>([]);
+  const consoleSelectionRef = useRef(0);
   const [consoleLoading, setConsoleLoading] = useState(false);
   // Painel de devtools da sessão do AGENTE (Playwright headless) — distinto
   // do console de stdout do dev server acima, que é sobre o processo, não
@@ -589,7 +590,7 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
   );
 
   const fetchConsoleLogs = useCallback(
-    async (name: string, isCurrent: () => boolean = () => true) => {
+    async (name: string, isCurrent: () => boolean) => {
       if (!wsId) return;
       if (isCurrent()) setConsoleLoading(true);
       try {
@@ -611,13 +612,18 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
 
   useEffect(() => {
     let alive = true;
+    const selection = ++consoleSelectionRef.current;
     if (!consoleFor) {
       if (consolePollRef.current) clearInterval(consolePollRef.current);
       return () => {
         alive = false;
       };
     }
-    const load = () => fetchConsoleLogs(consoleFor, () => alive);
+    const load = () =>
+      fetchConsoleLogs(
+        consoleFor,
+        () => alive && consoleSelectionRef.current === selection,
+      );
     void Promise.resolve().then(load);
     consolePollRef.current = setInterval(load, 3000);
     return () => {
@@ -1150,7 +1156,14 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
             </span>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => consoleFor && fetchConsoleLogs(consoleFor)}
+                onClick={() => {
+                  if (!consoleFor) return;
+                  const selection = consoleSelectionRef.current;
+                  void fetchConsoleLogs(
+                    consoleFor,
+                    () => consoleSelectionRef.current === selection,
+                  );
+                }}
                 className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 title={msg.workbench_browser_console_refresh()}
               >

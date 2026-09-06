@@ -162,16 +162,17 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: Install company deploy tooling
-        working-directory: company
-        run: pnpm install --frozen-lockfile --ignore-scripts
-
       - name: Detect deployment credentials
         id: credentials
         shell: bash
         run: |
           echo "has_vercel_token=${{ secrets.VERCEL_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
           echo "has_cloudflare_token=${{ secrets.CLOUDFLARE_API_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Install company deploy tooling
+        if: steps.credentials.outputs.has_vercel_token == 'true'
+        working-directory: company
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       # `always() &&` + `needs.<job>.result == 'success'` em todos os passos
       # daqui pra baixo: cada deploy (docs/company/services) é independente
