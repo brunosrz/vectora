@@ -9,7 +9,7 @@
  */
 
 import { Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -244,11 +244,15 @@ export function PreferenciasTab() {
     setThemePreset(value);
   };
 
-  const syncPresetToMode = (targetMode: "light" | "dark") => {
-    if (themePreset === "default" || themePreset === "custom") return;
-    const paired = getPairedPresetId(themePreset, targetMode);
-    if (paired) setThemePreset(paired);
-  };
+  /** Selects the paired preset whenever the interface mode changes. */
+  const syncPresetToMode = useCallback(
+    (targetMode: "light" | "dark") => {
+      if (themePreset === "default" || themePreset === "custom") return;
+      const paired = getPairedPresetId(themePreset, targetMode);
+      if (paired) setThemePreset(paired);
+    },
+    [setThemePreset, themePreset],
+  );
 
   const handleModeChange = (mode: Theme) => {
     const targetMode =
@@ -270,7 +274,7 @@ export function PreferenciasTab() {
       syncPresetToMode(event.matches ? "dark" : "light");
     media.addEventListener("change", handleChange);
     return () => media.removeEventListener("change", handleChange);
-  }, [theme, themePreset]);
+  }, [syncPresetToMode, theme]);
 
   const handleAddTrainingBlock = () => {
     setTrainingInstructions([...trainingInstructions, ""]);

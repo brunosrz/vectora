@@ -21,6 +21,7 @@ import {
  * título/subtítulo + pílula de bolha de usuário) pintada com as cores reais
  * da paleta — dá pra reconhecer o tema de relance, sem precisar aplicá-lo
  * primeiro. Nome/descrição ficam como legenda fora do card. */
+/** Renders a compact preview card for one theme palette. */
 function ThemePreview({
   colors,
   active,
@@ -86,6 +87,7 @@ interface ThemePickerOption {
  * app desktop (`window.vectora?.themes`); em modo navegador
  * `searchVscodeMarketplaceThemes` nunca é chamada porque o caller (abaixo)
  * já esconde a seção inteira quando a ponte não existe. */
+/** Searches and installs VS Code themes from the desktop marketplace bridge. */
 function MarketplaceResults({
   query,
   installedIds,
@@ -110,14 +112,12 @@ function MarketplaceResults({
 
   useEffect(() => {
     const q = query.trim();
-    if (!q) {
-      setResults([]);
-      return;
-    }
+    if (!q) return;
     let alive = true;
-    setLoading(true);
-    setError(null);
     const timer = setTimeout(() => {
+      if (!alive) return;
+      setLoading(true);
+      setError(null);
       void searchVscodeMarketplaceThemes(q)
         .then((items) => {
           if (alive) setResults(items);
@@ -161,7 +161,11 @@ function MarketplaceResults({
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="grid gap-2 sm:grid-cols-2">
         {results.map((item) => {
-          const installed = installedIds.has(item.extensionId);
+          const installed =
+            installedIds.has(`vscode-${item.extensionId}`) ||
+            Array.from(installedIds).some((id) =>
+              id.startsWith(`vscode-${item.extensionId}-`),
+            );
           const busy = installingId === item.extensionId;
           return (
             <button
@@ -199,6 +203,7 @@ function MarketplaceResults({
   );
 }
 
+/** Filters theme presets by active mode and paginates the visible cards. */
 export function ThemePicker({
   value,
   onChange,
@@ -264,13 +269,10 @@ export function ThemePicker({
     );
   }, [options, query, activeMode]);
 
-  useEffect(() => {
-    setVisibleCount(6);
-  }, [query, activeMode]);
   const visible = filtered.slice(0, visibleCount);
 
   const installedIds = useMemo(
-    () => new Set(installedThemes.map((t) => t.id.replace(/^vscode-/, ""))),
+    () => new Set(installedThemes.map((t) => t.id)),
     [installedThemes],
   );
 
@@ -283,7 +285,10 @@ export function ThemePicker({
         />
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setVisibleCount(6);
+          }}
           placeholder={searchPlaceholder}
           className="h-8 pl-7 text-xs"
         />

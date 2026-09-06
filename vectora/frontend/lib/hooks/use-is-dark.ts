@@ -17,6 +17,11 @@ export function useIsDark(): boolean {
     if (theme !== "system") return;
     if (typeof window.matchMedia !== "function") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    // This synchronizes an external media-query snapshot on mode transition.
+    // oxlint-disable-next-line react/set-state-in-effect
+    setSysDark(mq.matches);
+    // The listener is also an external subscription and must update React state.
+    // oxlint-disable-next-line react/set-state-in-effect
     const handler = (e: MediaQueryListEvent) => setSysDark(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);

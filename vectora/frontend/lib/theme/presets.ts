@@ -437,7 +437,7 @@ export const THEME_PRESETS: ThemePresetDef[] = [
   },
 ];
 
-/** Cor de fallback para customização — espelha o tema escuro padrão (Dark). */
+/** Finds the preset in the same family for the requested light/dark mode. */
 export function getPairedPresetId(
   id: string,
   targetMode: "light" | "dark",

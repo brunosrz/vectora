@@ -5,6 +5,7 @@ describe("classifyMode", () => {
   it("classifica fundos v�lidos por lumin�ncia", () => {
     expect(classifyMode({ background: "#ffffff" })).toBe("light");
     expect(classifyMode({ background: "#000000" })).toBe("dark");
+    expect(classifyMode({ background: "#b0b0b0" })).toBe("dark");
   });
 
   it.each([
