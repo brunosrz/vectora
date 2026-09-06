@@ -249,7 +249,8 @@ export function WorkbenchContent({
   onAddToContext,
   onSendPrompt,
   side = "right",
-}: WorkbenchPanelProps & { side?: "left" | "right" }) {
+  visible = true,
+}: WorkbenchPanelProps & { side?: "left" | "right"; visible?: boolean }) {
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
@@ -311,7 +312,13 @@ export function WorkbenchContent({
           )}
           {activeTab === "diff" && <GitTab threadId={threadId} />}
           {activeTab === "plan" && <PlanTab threadId={threadId} />}
-          {activeTab === "browser" && <BrowserTab threadId={threadId} />}
+          {activeTab === "browser" && (
+            <BrowserTab
+              key={`${wsId}:${threadId}`}
+              threadId={threadId}
+              visible={visible}
+            />
+          )}
           {activeTab === "storage" && <MemoryTab threadId={threadId} />}
           {activeTab === "tasks" && <TasksTab threadId={threadId} />}
           {activeTab === "context_graph" && (
