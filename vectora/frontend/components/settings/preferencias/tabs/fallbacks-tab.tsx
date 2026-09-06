@@ -184,7 +184,7 @@ export function FallbacksTab() {
 
   const available = (
     catalogModels.length > 0
-      ? catalogModels.map((item) => item.id)
+      ? catalogModels.filter((item) => item.available).map((item) => item.id)
       : getAllowedModels()
   ).filter((mid) => !order.includes(mid));
 

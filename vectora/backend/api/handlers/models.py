@@ -34,6 +34,7 @@ async def get_configured_providers() -> dict:
     )
 
     dynamic_models = []
+    configured_providers = set(settings.configured_llm_providers())
     for provider, models in (
         ("ollama", await list_registered_ollama_models()),
         ("openrouter", await list_registered_openrouter_models()),
@@ -47,7 +48,7 @@ async def get_configured_providers() -> dict:
                     "id": model_id,
                     "label": model.tag,
                     "provider": provider,
-                    "available": True,
+                    "available": provider in configured_providers,
                     "image_capability": state.value,
                 }
             )

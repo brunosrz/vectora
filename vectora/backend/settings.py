@@ -981,6 +981,10 @@ class Settings(BaseSettings):
             providers.append("cohere")
         if self.openrouter_api_key:
             providers.append("openrouter")
+        if getattr(self, "nine_router_base_url", None) and getattr(
+            self, "nine_router_api_key", None
+        ):
+            providers.append("nine_router")
         if getattr(self, "ollama_base_url", ""):
             providers.append("ollama")
         return providers
