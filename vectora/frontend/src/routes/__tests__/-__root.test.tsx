@@ -33,6 +33,7 @@ vi.mock("@/components/layout/network-status-banner", () => ({
 vi.mock("@/components/ui/toaster", () => ({ Toaster: () => null }));
 
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import type { ThemePresetDef } from "@/lib/theme/presets";
 import { ensureAuthenticated, resolveThemePreset, Route } from "../__root";
@@ -60,6 +61,11 @@ beforeEach(() => {
   redirectSpy.mockClear();
   currentPathname.value = "/";
   useWorkspacesStore.setState({ workspaces: [], active_id: null });
+  useSettingsStore.setState({
+    theme: "system",
+    themePreset: "default",
+    installedThemes: [],
+  });
   // RootComponent reage a `prefers-color-scheme` quando o tema é "system"
   // (default) — jsdom não implementa matchMedia.
   window.matchMedia =
@@ -241,6 +247,39 @@ describe("ensureAuthenticated — auth_required=true (primeiro acesso / Pro)", (
 // agrupamento por data em vez da árvore por workspace)
 // ============================================================================
 describe("RootComponent — hydrate de workspaces", () => {
+  it("aplica tokens de um tema instalado no document root", () => {
+    const installed: ThemePresetDef = {
+      id: "vscode-root-test",
+      label: "Installed root test",
+      mode: "dark",
+      family: "vscode-root-test",
+      colors: {
+        background: "#101010",
+        foreground: "#f5f5f5",
+        card: "#181818",
+        border: "#303030",
+        primary: "#4f9cff",
+        accent: "#252525",
+        muted: "#202020",
+        sidebar: "#0b0b0b",
+        userBubble: "#4f9cff",
+      },
+    };
+    useSettingsStore.setState({
+      theme: "dark",
+      themePreset: installed.id,
+      installedThemes: [installed],
+    });
+    const Component = (Route as unknown as { component: ComponentType })
+      .component;
+
+    render(<Component />);
+
+    expect(
+      document.documentElement.style.getPropertyValue("--background"),
+    ).toBe("#101010");
+  });
+
   it("hidrata workspaces ao montar numa rota protegida", async () => {
     const hydrateSpy = vi
       .spyOn(useWorkspacesStore.getState(), "hydrate")
