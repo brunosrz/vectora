@@ -402,10 +402,9 @@ export function indexInstallersByOsArch(
         ...(already.availableFiles ?? [already.filename]),
         file,
       ].filter((name, index, names) => names.indexOf(name) === index);
-      const manifestFilename = selectManifestInstaller(os, availableFiles);
       installersByOsArch.set(key, {
-        filename: manifestFilename,
-        path: join(dist, manifestFilename),
+        filename: already.filename,
+        path: already.path,
         availableFiles,
       });
       continue;
@@ -414,6 +413,16 @@ export function indexInstallersByOsArch(
       filename: file,
       path: join(dist, file),
       availableFiles: [file],
+    });
+  }
+  for (const [key, entry] of installersByOsArch) {
+    const os = key.split("/", 1)[0] ?? "";
+    const availableFiles = entry.availableFiles ?? [entry.filename];
+    const filename = selectManifestInstaller(os, availableFiles);
+    installersByOsArch.set(key, {
+      filename,
+      path: join(dist, filename),
+      availableFiles,
     });
   }
   return installersByOsArch;

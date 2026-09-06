@@ -356,4 +356,11 @@ describe("buildArchManifest / resolveInstaller — regressão do manifesto cross
       ]),
     ).toThrow(/\.AppImage/);
   });
+
+  it("recusa indexar um manifesto Linux sem AppImage", () => {
+    writeFileSync(join(dir, "Vectora-0.1.1-linux-x64.deb"), "deb");
+    expect(() =>
+      indexInstallersByOsArch(["Vectora-0.1.1-linux-x64.deb"], dir, "0.1.1"),
+    ).toThrow(/\.AppImage/);
+  });
 });
