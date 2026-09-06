@@ -527,90 +527,101 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
     };
   }, [desktopBrowser, activeViewId, hasUrl]);
 
-  const fetchLaunch = useCallback(async () => {
-    if (!wsId) return;
-    try {
-      const res = await fetch(
-        `/workspaces/${encodeURIComponent(wsId)}/browser/launch`,
-      );
-      if (res.ok) {
-        const data = (await res.json()) as { configurations: LaunchConfig[] };
-        setConfigs(data.configurations ?? []);
-      }
-    } catch {
-      // silently ignore
-    } finally {
-      setIsLoading(false);
-    }
-  }, [wsId]);
-
-  const fetchStatus = useCallback(async (): Promise<ServerStatus[] | null> => {
-    if (!wsId) return null;
-    try {
-      const res = await fetch(
-        `/workspaces/${encodeURIComponent(wsId)}/browser/status`,
-      );
-      if (res.ok) {
-        const data = (await res.json()) as { servers: ServerStatus[] };
-        const servers = data.servers ?? [];
-        setStatuses(servers);
-
-        // Auto-navegação: qualquer servidor que passe de parado pra rodando
-        // entre um poll e outro abre sozinho numa aba NOVA — funciona tanto
-        // pro clique manual (handleStart) quanto pra tool `browser_start` do
-        // agente, que sobe o servidor sem passar por nenhum handler do UI.
-        // Aba nova (não substitui a ativa) preserva a navegação livre que o
-        // usuário já tinha aberto.
-        const prevRunning = prevRunningRef.current;
-        const nextRunning: Record<string, boolean> = {};
-        for (const server of servers) {
-          nextRunning[server.name] = server.running;
-          if (prevRunning && server.running && !prevRunning[server.name]) {
-            addTab(`http://localhost:${server.port}`);
-          }
+  const fetchLaunch = useCallback(
+    async (isCurrent: () => boolean = () => true) => {
+      if (!wsId) return;
+      try {
+        const res = await fetch(
+          `/workspaces/${encodeURIComponent(wsId)}/browser/launch`,
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { configurations: LaunchConfig[] };
+          if (isCurrent()) setConfigs(data.configurations ?? []);
         }
-        prevRunningRef.current = nextRunning;
-
-        return servers;
+      } catch {
+        // silently ignore
+      } finally {
+        if (isCurrent()) setIsLoading(false);
       }
-    } catch {
-      // silently ignore
-    }
-    return null;
-  }, [wsId, addTab]);
+    },
+    [wsId],
+  );
+
+  const fetchStatus = useCallback(
+    async (
+      isCurrent: () => boolean = () => true,
+    ): Promise<ServerStatus[] | null> => {
+      if (!wsId) return null;
+      try {
+        const res = await fetch(
+          `/workspaces/${encodeURIComponent(wsId)}/browser/status`,
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { servers: ServerStatus[] };
+          const servers = data.servers ?? [];
+          if (!isCurrent()) return servers;
+          setStatuses(servers);
+
+          // Auto-navegação: qualquer servidor que passe de parado pra rodando
+          // entre um poll e outro abre sozinho numa aba NOVA — funciona tanto
+          // pro clique manual (handleStart) quanto pra tool `browser_start` do
+          // agente, que sobe o servidor sem passar por nenhum handler do UI.
+          // Aba nova (não substitui a ativa) preserva a navegação livre que o
+          // usuário já tinha aberto.
+          const prevRunning = prevRunningRef.current;
+          const nextRunning: Record<string, boolean> = {};
+          for (const server of servers) {
+            nextRunning[server.name] = server.running;
+            if (prevRunning && server.running && !prevRunning[server.name]) {
+              addTab(`http://localhost:${server.port}`);
+            }
+          }
+          prevRunningRef.current = nextRunning;
+
+          return servers;
+        }
+      } catch {
+        // silently ignore
+      }
+      return null;
+    },
+    [wsId, addTab],
+  );
 
   const fetchConsoleLogs = useCallback(
-    async (name: string) => {
+    async (name: string, isCurrent: () => boolean = () => true) => {
       if (!wsId) return;
-      setConsoleLoading(true);
+      if (isCurrent()) setConsoleLoading(true);
       try {
         const res = await fetch(
           `/workspaces/${encodeURIComponent(wsId)}/browser/logs?name=${encodeURIComponent(name)}`,
         );
         if (res.ok) {
           const data = (await res.json()) as { lines: string[] };
-          setConsoleLines(data.lines ?? []);
+          if (isCurrent()) setConsoleLines(data.lines ?? []);
         }
       } catch {
         // silently ignore — o painel continua com as últimas linhas conhecidas
       } finally {
-        setConsoleLoading(false);
+        if (isCurrent()) setConsoleLoading(false);
       }
     },
     [wsId],
   );
 
   useEffect(() => {
+    let alive = true;
     if (!consoleFor) {
       if (consolePollRef.current) clearInterval(consolePollRef.current);
-      return;
+      return () => {
+        alive = false;
+      };
     }
-    void Promise.resolve().then(() => fetchConsoleLogs(consoleFor));
-    consolePollRef.current = setInterval(
-      () => fetchConsoleLogs(consoleFor),
-      3000,
-    );
+    const load = () => fetchConsoleLogs(consoleFor, () => alive);
+    void Promise.resolve().then(load);
+    consolePollRef.current = setInterval(load, 3000);
     return () => {
+      alive = false;
       if (consolePollRef.current) clearInterval(consolePollRef.current);
     };
   }, [consoleFor, fetchConsoleLogs]);
@@ -621,14 +632,21 @@ export function BrowserTab({ threadId, visible = true }: BrowserTabProps) {
   }, [consoleLines]);
 
   useEffect(() => {
-    void Promise.resolve().then(() => fetchLaunch());
+    let alive = true;
+    void Promise.resolve().then(() => fetchLaunch(() => alive));
+    return () => {
+      alive = false;
+    };
   }, [fetchLaunch]);
 
   useEffect(() => {
+    let alive = true;
     if (!wsId || configs.length === 0) return;
-    void Promise.resolve().then(() => fetchStatus());
-    pollRef.current = setInterval(fetchStatus, 3000);
+    const load = () => fetchStatus(() => alive);
+    void Promise.resolve().then(load);
+    pollRef.current = setInterval(load, 3000);
     return () => {
+      alive = false;
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [wsId, configs.length, fetchStatus]);
