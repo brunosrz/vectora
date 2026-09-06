@@ -97,4 +97,21 @@ describe("PreferenciasTab — modo e paleta não se contaminam", () => {
 
     expect(useSettingsStore.getState().themePreset).toBe("github-dark");
   });
+
+  it("sincroniza a variante clara e filtra a grade ao trocar para light", () => {
+    useSettingsStore.setState({
+      theme: "dark",
+      themePreset: "github-dark",
+    });
+    render(<PreferenciasTab />);
+    const modeToggle = within(screen.getAllByRole("group")[0]!);
+
+    fireEvent.click(
+      modeToggle.getByRole("button", { name: /^light$|^claro$/i }),
+    );
+
+    expect(useSettingsStore.getState().themePreset).toBe("github-light");
+    expect(screen.getByText("GitHub Light")).toBeInTheDocument();
+    expect(screen.queryByText("GitHub Dark")).not.toBeInTheDocument();
+  });
 });

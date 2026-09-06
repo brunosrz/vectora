@@ -239,6 +239,39 @@ export function migrateSidebarWidths(
   };
 }
 
+/** Normalizes installed themes from persisted data without trusting its shape. */
+export function migrateInstalledThemes(value: unknown): ThemePresetDef[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((theme): ThemePresetDef[] => {
+    if (!theme || typeof theme !== "object") return [];
+    const item = theme as Record<string, unknown>;
+    const colors = item.colors;
+    if (!colors || typeof colors !== "object") return [];
+    const rawColors = colors as Record<string, unknown>;
+    const background =
+      typeof rawColors.background === "string" ? rawColors.background : "";
+    const id = typeof item.id === "string" ? item.id : "";
+    const label = typeof item.label === "string" ? item.label : "";
+    if (!id || !label) return [];
+    return [
+      {
+        ...item,
+        id,
+        label,
+        mode:
+          item.mode === "light" || item.mode === "dark"
+            ? item.mode
+            : classifyMode({ background }),
+        family:
+          typeof item.family === "string" && item.family.length > 0
+            ? item.family
+            : `vscode:${id}`,
+        colors: rawColors as unknown as BaseThemeColors,
+      } as unknown as ThemePresetDef,
+    ];
+  });
+}
+
 function clampMonacoFontSize(v: number): number {
   return Math.max(
     MONACO_FONT_SIZE_MIN,
@@ -440,22 +473,7 @@ export const useSettingsStore = create<SettingsState>()(
           s.chatSidebarWidth = widths.chatSidebarWidth;
           if (s.themePreset === "dark") s.themePreset = "default-dark";
           else if (s.themePreset === "light") s.themePreset = "default-light";
-          if (Array.isArray(s.installedThemes)) {
-            s.installedThemes = s.installedThemes.map((theme) => {
-              const item = theme as Record<string, unknown>;
-              return {
-                ...item,
-                mode:
-                  item.mode === "light" || item.mode === "dark"
-                    ? item.mode
-                    : classifyMode((item.colors ?? {}) as BaseThemeColors),
-                family:
-                  typeof item.family === "string" && item.family.length > 0
-                    ? item.family
-                    : `vscode:${String(item.id ?? "unknown")}`,
-              };
-            });
-          }
+          s.installedThemes = migrateInstalledThemes(s.installedThemes);
         }
         return s;
       },

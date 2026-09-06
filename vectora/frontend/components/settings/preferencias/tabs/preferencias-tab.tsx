@@ -257,10 +257,11 @@ export function PreferenciasTab() {
   const handleModeChange = (mode: Theme) => {
     const targetMode =
       mode === "system"
-        ? typeof window.matchMedia === "function" &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? typeof window.matchMedia !== "function"
           ? "dark"
-          : "dark"
+          : window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
         : mode;
     syncPresetToMode(targetMode);
     setTheme(mode);
