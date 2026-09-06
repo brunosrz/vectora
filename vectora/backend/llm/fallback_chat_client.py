@@ -68,12 +68,20 @@ async def _candidates(primary_model_id: str, *, has_images: bool) -> list[str]:
         for mid in all_candidates[1:]:
             if await _vision_state(mid) is CapabilityState.SUPPORTED:
                 filtered.append(mid)  # noqa: PERF401 - await is required per model
+        from backend.llm.provider_fallback import _provider_has_key
         from backend.workspace.runtime_settings import runtime_settings
 
         configured = runtime_settings.get("image_fallback_model")
         if isinstance(configured, str) and configured.strip():
-            if await _vision_state(configured.strip()) is CapabilityState.SUPPORTED:
-                filtered.append(configured.strip())
+            configured = configured.strip()
+            provider, separator, _ = configured.partition(":")
+            if (
+                separator
+                and provider
+                and _provider_has_key(provider.replace("-", "_"))
+                and await _vision_state(configured) is CapabilityState.SUPPORTED
+            ):
+                filtered.append(configured)
         all_candidates = filtered
     deduped: list[str] = []
     seen: set[str] = set()

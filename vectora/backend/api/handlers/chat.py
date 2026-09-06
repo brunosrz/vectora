@@ -200,6 +200,15 @@ async def _resolve_image_fallback_model() -> str | None:
     spec = runtime_settings.get("image_fallback_model")
     if not spec or not isinstance(spec, str):
         return None
+    from backend.llm.provider_fallback import _provider_has_key
+
+    provider, separator, _ = spec.partition(":")
+    if (
+        not separator
+        or not provider
+        or not _provider_has_key(provider.replace("-", "_"))
+    ):
+        return None
     state = _coerce_capability_state(await _model_supports_vision(spec))
     if state is not CapabilityState.SUPPORTED:
         return None

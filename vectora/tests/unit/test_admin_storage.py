@@ -6,18 +6,23 @@ Usa httpx.AsyncClient com a app FastAPI mockando storage_health.
 
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import Request
+from httpx import AsyncClient
 
 
 @pytest.fixture
-async def admin_client():
+async def admin_client(monkeypatch):
     """httpx.AsyncClient apontando para a app FastAPI em memória."""
     from httpx import ASGITransport, AsyncClient
 
+    import backend.api.handlers.admin as admin_handlers
     from backend.api.server import create_app
+
+    monkeypatch.setattr(admin_handlers, "require_admin", lambda _user: None)
 
     app = create_app()
     async with AsyncClient(
@@ -202,13 +207,12 @@ class TestFallbackOrderEndpoint:
             "/admin/model/fallback-order",
             json={"order": ["openai:gpt-4o", "cohere:command-a"]},
         )
-        assert resp.status_code in (200, 401, 403, 422)
-        if resp.status_code == 200:
-            assert resp.json()["fallback_order"] == [
-                "openai:gpt-4o",
-                "cohere:command-a",
-            ]
-            assert fresh.fallback_order == ["openai:gpt-4o", "cohere:command-a"]
+        assert resp.status_code == 200
+        assert resp.json()["fallback_order"] == [
+            "openai:gpt-4o",
+            "cohere:command-a",
+        ]
+        assert fresh.fallback_order == ["openai:gpt-4o", "cohere:command-a"]
 
     @pytest.mark.asyncio
     async def test_get_returns_order(self, admin_client, tmp_path, monkeypatch):
@@ -229,13 +233,16 @@ class TestFallbackOrderEndpoint:
             "/admin/model/fallback-order",
             json={"order": ["openai:gpt-4o", "", "   "]},
         )
-        if resp.status_code == 200:
-            assert resp.json()["fallback_order"] == ["openai:gpt-4o"]
+        assert resp.status_code == 200
+        assert resp.json()["fallback_order"] == ["openai:gpt-4o"]
 
     @pytest.mark.asyncio
     async def test_patch_rejects_incomplete_model_ids(
-        self, admin_client, tmp_path, monkeypatch
-    ):
+        self,
+        admin_client: AsyncClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         self._fresh_runtime(tmp_path, monkeypatch)
         from backend.settings import settings
 
@@ -246,8 +253,8 @@ class TestFallbackOrderEndpoint:
             "/admin/model/fallback-order",
             json={"order": ["openai:", "nine_router:test-model"]},
         )
-        if resp.status_code == 200:
-            assert resp.json()["fallback_order"] == []
+        assert resp.status_code == 200
+        assert resp.json()["fallback_order"] == []
 
     @pytest.mark.asyncio
     async def test_patch_empty_clears(self, admin_client, tmp_path, monkeypatch):
@@ -318,8 +325,11 @@ class TestImageFallbackModelEndpoint:
 
     @pytest.mark.asyncio
     async def test_patch_rejects_incomplete_image_model_id(
-        self, admin_client, tmp_path, monkeypatch
-    ):
+        self,
+        admin_client: AsyncClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         self._fresh_runtime(tmp_path, monkeypatch)
         from backend.settings import settings
 
@@ -327,12 +337,15 @@ class TestImageFallbackModelEndpoint:
         resp = await admin_client.patch(
             "/admin/model/image-fallback", json={"model": "openai:"}
         )
-        assert resp.status_code in (401, 403, 422)
+        assert resp.status_code == 422
 
     @pytest.mark.asyncio
     async def test_patch_rejects_nine_router_without_base_url(
-        self, admin_client, tmp_path, monkeypatch
-    ):
+        self,
+        admin_client: AsyncClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         self._fresh_runtime(tmp_path, monkeypatch)
         from backend.settings import settings
 
@@ -341,7 +354,7 @@ class TestImageFallbackModelEndpoint:
         resp = await admin_client.patch(
             "/admin/model/image-fallback", json={"model": "nine_router:test-model"}
         )
-        assert resp.status_code in (401, 403, 422)
+        assert resp.status_code == 422
 
 
 class TestPatchStorageRequiresPro:

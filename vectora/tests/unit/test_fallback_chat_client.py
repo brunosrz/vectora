@@ -155,6 +155,33 @@ class TestAgenerate:
         resultado = await cliente.agenerate([mensagem])
         assert resultado.text() == "ok"
 
+    async def test_ignora_fallback_de_imagem_sem_credencial(self, monkeypatch):
+        from backend.settings import CapabilityState
+
+        async def _supported(_model: str) -> CapabilityState:
+            return CapabilityState.SUPPORTED
+
+        monkeypatch.setattr(
+            "backend.llm.fallback_chat_client._vision_state",
+            _supported,
+        )
+        monkeypatch.setattr(
+            "backend.llm.provider_fallback._provider_has_key",
+            lambda _provider: False,
+        )
+        monkeypatch.setattr(
+            "backend.workspace.runtime_settings.runtime_settings.get",
+            lambda key, default=None: (
+                "openai:gpt-4o" if key == "image_fallback_model" else default
+            ),
+        )
+
+        from backend.llm.fallback_chat_client import _candidates
+
+        assert await _candidates("cohere:command-a", has_images=True) == [
+            "cohere:command-a"
+        ]
+
 
 class TestAstream:
     async def test_chunks_do_primario_saem_direto(self, monkeypatch):
