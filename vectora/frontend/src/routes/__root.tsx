@@ -19,6 +19,7 @@ import {
   THEME_PRESETS,
   buildThemeTokens,
   applyThemeTokens,
+  type ThemePresetDef,
 } from "@/lib/theme/presets";
 import { Toaster } from "@/components/ui/toaster";
 import { NetworkStatusBanner } from "@/components/layout/network-status-banner";
@@ -53,6 +54,16 @@ function redirectToSignin(currentPath: string): never {
     to: "/auth/signin",
     search: { from: currentPath },
   } as unknown as Parameters<typeof redirect>[0]);
+}
+
+/** Resolves built-in and installed presets to the tokens used by the root. */
+export function resolveThemePreset(
+  themePreset: string,
+  installedThemes: ThemePresetDef[],
+): ThemePresetDef | undefined {
+  return [...THEME_PRESETS, ...installedThemes].find(
+    (preset) => preset.id === themePreset,
+  );
 }
 
 /**
@@ -298,6 +309,7 @@ function RootComponent() {
   // do usuário) sobrepõe os tokens de cor via CSS custom properties em
   // :root, independente de claro/escuro/sistema acima.
   const themePreset = useSettingsStore((s) => s.themePreset);
+  const installedThemes = useSettingsStore((s) => s.installedThemes);
   const customThemeColors = useSettingsStore((s) => s.customThemeColors);
   useEffect(() => {
     if (themePreset === "default") {
@@ -310,9 +322,9 @@ function RootComponent() {
       );
       return;
     }
-    const preset = THEME_PRESETS.find((p) => p.id === themePreset);
+    const preset = resolveThemePreset(themePreset, installedThemes);
     applyThemeTokens(preset ? buildThemeTokens(preset.colors) : null);
-  }, [themePreset, customThemeColors]);
+  }, [themePreset, installedThemes, customThemeColors]);
 
   // Escala de fonte por superfície (Preferências → Aparência) — CSS vars
   // consumidas por styles.css (--font-scale-ui) e por markdown-view.tsx/

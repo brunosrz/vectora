@@ -34,7 +34,8 @@ vi.mock("@/components/ui/toaster", () => ({ Toaster: () => null }));
 
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
-import { ensureAuthenticated, Route } from "../__root";
+import type { ThemePresetDef } from "@/lib/theme/presets";
+import { ensureAuthenticated, resolveThemePreset, Route } from "../__root";
 
 function jsonRes(body: unknown, ok = true, status = 200): Response {
   return { ok, status, json: async () => body } as unknown as Response;
@@ -92,6 +93,30 @@ describe("ensureAuthenticated — path público", () => {
     await ensureAuthenticated("/onboarding");
 
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolveThemePreset", () => {
+  it("resolve temas instalados para aplicar seus tokens", () => {
+    const installed: ThemePresetDef = {
+      id: "vscode-publisher-theme",
+      label: "Installed theme",
+      mode: "dark",
+      family: "vscode-publisher-theme",
+      colors: {
+        background: "#101010",
+        foreground: "#f5f5f5",
+        card: "#181818",
+        border: "#303030",
+        primary: "#4f9cff",
+        accent: "#252525",
+        muted: "#202020",
+        sidebar: "#0b0b0b",
+        userBubble: "#4f9cff",
+      },
+    };
+
+    expect(resolveThemePreset(installed.id, [installed])).toBe(installed);
   });
 });
 
