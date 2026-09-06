@@ -108,6 +108,8 @@ function MarketplaceResults({
 
   useEffect(() => {
     const q = query.trim();
+    setLoading(false);
+    setError(null);
     if (!q) {
       setResults([]);
       return;
@@ -116,7 +118,6 @@ function MarketplaceResults({
     const timer = setTimeout(() => {
       if (!alive) return;
       setLoading(true);
-      setError(null);
       void searchVscodeMarketplaceThemes(q)
         .then((items) => {
           if (alive) setResults(items);
