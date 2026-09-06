@@ -39,12 +39,15 @@ async function fetchFallbackOrder(): Promise<string[]> {
   return data.fallback_order ?? [];
 }
 
-async function saveFallbackOrder(order: string[]): Promise<void> {
-  await fetch("/admin/model/fallback-order", {
+async function saveFallbackOrder(order: string[]): Promise<string[]> {
+  const res = await fetch("/admin/model/fallback-order", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ order }),
   });
+  if (!res.ok) return order;
+  const data = (await res.json()) as { fallback_order?: string[] };
+  return data.fallback_order ?? order;
 }
 
 const IMAGE_FALLBACK_NONE = "__none__";
@@ -155,7 +158,7 @@ export function FallbacksTab() {
 
   const persist = useCallback(async (next: string[]) => {
     setOrder(next);
-    await saveFallbackOrder(next);
+    setOrder(await saveFallbackOrder(next));
   }, []);
 
   const moveUp = (i: number) => {

@@ -591,6 +591,7 @@ async def discover_nine_router_models(
 
 
 _nine_router_catalog_cache: dict[str, Any] = {"fetched_at": float("-inf"), "models": []}
+_CATALOG_FAILURE_BACKOFF_S = 30.0
 
 
 def _normalize_modalities(values: list[str]) -> set[str]:
@@ -632,6 +633,9 @@ async def nine_router_model_supports_image(model_id: str) -> CapabilityState:
         except Exception:
             logger.debug(
                 "provider_routing: Nine Router catalog unavailable", exc_info=True
+            )
+            _nine_router_catalog_cache["fetched_at"] = (
+                now - _OPENROUTER_CATALOG_TTL_S + _CATALOG_FAILURE_BACKOFF_S
             )
 
     for model in _nine_router_catalog_cache["models"]:

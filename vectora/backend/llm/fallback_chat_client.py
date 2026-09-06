@@ -275,6 +275,8 @@ class FallbackChatClient:
                     await _emit_switch(self.on_model_switch, mid, candidatos[i + 1])
 
         last_mid = candidatos[-1] if candidatos else self.primary_model_id
+        if last_exc is not None and is_multimodal_incompatible_error(last_exc):
+            raise last_exc
         msg = f"Todos os providers esgotaram a quota (último: {last_mid})."
         raise QuotaExhaustedError(msg, model_id=last_mid) from last_exc
 
@@ -313,5 +315,7 @@ class FallbackChatClient:
                     await _emit_switch(self.on_model_switch, mid, candidatos[i + 1])
 
         last_mid = candidatos[-1] if candidatos else self.primary_model_id
+        if last_exc is not None and is_multimodal_incompatible_error(last_exc):
+            raise last_exc
         msg = f"Todos os providers esgotaram a quota (último: {last_mid})."
         raise QuotaExhaustedError(msg, model_id=last_mid) from last_exc

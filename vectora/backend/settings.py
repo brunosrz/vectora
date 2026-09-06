@@ -59,7 +59,13 @@ class Settings(BaseSettings):
     # ============================================================================
 
     llm_provider: Literal[
-        "google-genai", "openai", "anthropic", "ollama", "cohere", "openrouter"
+        "google-genai",
+        "openai",
+        "anthropic",
+        "ollama",
+        "cohere",
+        "openrouter",
+        "nine_router",
     ] = "google-genai"
     """Active LLM provider (auto-detected from API keys if not set)."""
 

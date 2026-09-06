@@ -667,10 +667,10 @@ async def stream_chat(
     # hífen do resto de settings.py; comparar contra a forma normalizada
     # bloqueava até modelos com suporte real a visão (ex.: Gemini).
     has_image = any(att.kind == AttachmentKind.IMAGE for att in request.attachments)
-    active_state = _coerce_capability_state(
-        await _model_supports_vision(request.config.model)
-    )
-    if has_image and active_state is CapabilityState.UNSUPPORTED:
+    if has_image and (
+        _coerce_capability_state(await _model_supports_vision(request.config.model))
+        is CapabilityState.UNSUPPORTED
+    ):
         fallback_spec = await _resolve_image_fallback_model()
         if fallback_spec is None:
             return StreamingResponse(
