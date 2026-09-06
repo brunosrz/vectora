@@ -52,6 +52,7 @@ jobs:
       - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
+
       - name: Install deps
         working-directory: company
         run: pnpm install --frozen-lockfile
@@ -157,6 +158,10 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
+      - name: Install company deploy tooling
+        working-directory: company
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
       - name: Detect deployment credentials
         id: credentials
         shell: bash
@@ -192,7 +197,7 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID_DOCS }}
-        run: npx --yes vercel@latest --prod --yes --token="$VERCEL_TOKEN"
+        run: ../company/node_modules/.bin/vercel --prod --yes --token="$VERCEL_TOKEN"
 
       - name: Deploy company (Vercel)
         if: >-
@@ -203,7 +208,7 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID_COMPANY }}
-        run: npx --yes vercel@latest --prod --yes --token="$VERCEL_TOKEN"
+        run: pnpm exec vercel --prod --yes --token="$VERCEL_TOKEN"
 
       # id em cada passo de services/: terceiro achado do CodeRabbit (PR #22)
       # — needs.services.result só garante que a VALIDAÇÃO (job `services`,
