@@ -260,7 +260,7 @@ export function PreferenciasTab() {
         ? typeof window.matchMedia === "function" &&
           window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
-          : activeMode
+          : "dark"
         : mode;
     syncPresetToMode(targetMode);
     setTheme(mode);
@@ -268,7 +268,10 @@ export function PreferenciasTab() {
 
   useEffect(() => {
     if (theme !== "system") return;
-    if (typeof window.matchMedia !== "function") return;
+    if (typeof window.matchMedia !== "function") {
+      syncPresetToMode("dark");
+      return;
+    }
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     syncPresetToMode(media.matches ? "dark" : "light");
     const handleChange = (event: MediaQueryListEvent) =>

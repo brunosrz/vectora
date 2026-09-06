@@ -81,4 +81,20 @@ describe("PreferenciasTab — modo e paleta não se contaminam", () => {
     expect(state.theme).toBe("system");
     expect(state.themePreset).toBe("custom");
   });
+
+  it("usa dark como fallback ao entrar em system sem matchMedia", () => {
+    useSettingsStore.setState({
+      theme: "light",
+      themePreset: "github-light",
+    });
+    vi.stubGlobal("matchMedia", undefined);
+    render(<PreferenciasTab />);
+    const modeToggle = within(screen.getAllByRole("group")[0]!);
+
+    fireEvent.click(
+      modeToggle.getByRole("button", { name: /^system|^sistema/i }),
+    );
+
+    expect(useSettingsStore.getState().themePreset).toBe("github-dark");
+  });
 });
