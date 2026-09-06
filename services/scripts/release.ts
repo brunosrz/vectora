@@ -378,12 +378,19 @@ export function indexInstallersByOsArch(
     const key = `${os}/${arch}`;
     const already = installersByOsArch.get(key);
     if (already) {
-      // Dois formatos pra mesma combinação os/arch (ex.: .AppImage e .deb
-      // pra linux/x64) não podem escolher um silenciosamente por ordem de
-      // `files` — o auto-updater espera exatamente um instalador por arch.
-      throw new Error(
-        `Dois instaladores pra ${key} na versão ${version}: ${already.filename} e ${file}. Remova um antes de publicar.`,
-      );
+      // Os builds Linux produzem AppImage e .deb para a mesma arquitetura.
+      // O manifesto do auto-updater precisa de um único artefato; prefira o
+      // formato portátil e mantenha todos os formatos disponíveis no R2.
+      const preferred = [already.filename, file].sort((a, b) => {
+        const rank = (name: string): number =>
+          name.endsWith(".AppImage") ? 0 : name.endsWith(".deb") ? 1 : 2;
+        return rank(a) - rank(b);
+      })[0];
+      installersByOsArch.set(key, {
+        filename: preferred,
+        path: join(dist, preferred),
+      });
+      continue;
     }
     installersByOsArch.set(key, {
       filename: file,

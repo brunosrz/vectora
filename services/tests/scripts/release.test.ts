@@ -307,16 +307,17 @@ describe("buildArchManifest / resolveInstaller — regressão do manifesto cross
     expect(installers.size).toBe(0);
   });
 
-  it("indexInstallersByOsArch lança quando dois formatos disputam o mesmo os/arch (achado CodeRabbit)", () => {
+  it("indexInstallersByOsArch prefere AppImage quando há formatos Linux duplicados", () => {
     writeFileSync(join(dir, "Vectora-0.1.1-linux-x64.AppImage"), "appimage");
     writeFileSync(join(dir, "Vectora-0.1.1-linux-x64.deb"), "deb");
 
-    expect(() =>
-      indexInstallersByOsArch(
-        ["Vectora-0.1.1-linux-x64.AppImage", "Vectora-0.1.1-linux-x64.deb"],
-        dir,
-        "0.1.1",
-      ),
-    ).toThrow(/linux\/x64/);
+    const installers = indexInstallersByOsArch(
+      ["Vectora-0.1.1-linux-x64.deb", "Vectora-0.1.1-linux-x64.AppImage"],
+      dir,
+      "0.1.1",
+    );
+    expect(installers.get("linux/x64")?.filename).toBe(
+      "Vectora-0.1.1-linux-x64.AppImage",
+    );
   });
 });
