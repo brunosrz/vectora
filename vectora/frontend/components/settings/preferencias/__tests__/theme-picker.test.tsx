@@ -124,6 +124,21 @@ describe("ThemePicker", () => {
     expect(screen.getByText("GitHub Light")).toBeInTheDocument();
   });
 
+  it("prioriza o preset selecionado quando ele está além da primeira página", () => {
+    const presets: ThemePresetDef[] = Array.from({ length: 7 }, (_, index) => ({
+      id: `dark-${index}`,
+      label: `Dark ${index}`,
+      mode: "dark",
+      family: `test:dark-${index}`,
+      colors: customColors,
+    }));
+
+    renderPicker({ presets, value: "dark-6" });
+
+    expect(screen.getByText("Dark 6")).toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(8);
+  });
+
   it("card de preview usa a cor real de background do preset (não um valor fixo) — erro/borda", () => {
     renderPicker();
 

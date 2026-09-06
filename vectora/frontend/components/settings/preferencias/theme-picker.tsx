@@ -280,7 +280,19 @@ export function ThemePicker({
     );
   }, [options, query, activeMode, value]);
 
-  const visible = filtered.slice(0, visibleCount);
+  const visible = useMemo(() => {
+    if (!value) return filtered.slice(0, visibleCount);
+
+    const selectedIndex = filtered.findIndex((opt) => opt.id === value);
+    if (selectedIndex < 0 || selectedIndex < visibleCount) {
+      return filtered.slice(0, visibleCount);
+    }
+
+    return [
+      filtered[selectedIndex]!,
+      ...filtered.filter((opt) => opt.id !== value).slice(0, visibleCount - 1),
+    ];
+  }, [filtered, value, visibleCount]);
 
   const installedIds = useMemo(
     () => new Set(installedThemes.map((t) => t.id)),
