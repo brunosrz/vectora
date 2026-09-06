@@ -20,6 +20,7 @@ import {
   signalWorkspacePreChosen,
   signalWorkspaceChoiceForNewSession,
 } from "@/lib/stores/new-session-signal";
+import { disposeBrowserThread } from "@/lib/browser-session-store";
 
 /** Largura da sidebar na tela inicial — mais larga que o normal para dar destaque. */
 const HOME_SIDEBAR_WIDTH = 280;
@@ -102,6 +103,7 @@ function HomeScreen() {
 
   const handleDeleteThread = async (id: string) => {
     await deleteThread.mutateAsync(id);
+    disposeBrowserThread(id);
   };
 
   return (
